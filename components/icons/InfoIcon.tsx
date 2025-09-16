@@ -9,7 +9,7 @@ const InfoIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
   >
     <path 
       fillRule="evenodd" 
-      d="M10 18a8 8 0 110-16 8 8 0 010 16zM9 7a1 1 0 112 0v4a1 1 0 11-2 0V7zm1 8a1 1 0 100-2 1 1 0 000 2z"
+      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM9 13a1 1 0 112 0 1 1 0 01-2 0zm-1-8a1 1 0 011-1h.008a1 1 0 011 1v4a1 1 0 01-1 1h-.008a1 1 0 01-1-1V5z"
       clipRule="evenodd" 
     />
   </svg>
