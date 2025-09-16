@@ -12,8 +12,6 @@ interface HeroProps {
   onSearchNearMe: (location: { lat: number, lng: number }) => void;
 }
 
-const API_KEY = 'AIzaSyCsX9l10XCu3TtSCU1BSx-qOYrwUKYw2xk';
-
 const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe }) => {
   const [activeTab, setActiveTab] = useState('comprar');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -30,14 +28,14 @@ const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe }) => {
     setHeroTitle(t('hero.defaultTitle'));
 
     const generateTitle = async () => {
-      if (!API_KEY) {
+      if (!process.env.API_KEY) {
         console.error("API Key for Gemini is not configured.");
         setIsLoadingTitle(false);
         return;
       }
 
       try {
-        const ai = new GoogleGenAI({ apiKey: API_KEY });
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const prompt = t('hero.geminiPrompt');
         
         const response = await ai.models.generateContent({
