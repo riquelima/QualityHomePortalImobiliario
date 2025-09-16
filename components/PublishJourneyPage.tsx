@@ -7,9 +7,6 @@ import BriefcaseIcon from './icons/BriefcaseIcon';
 import LocationConfirmationModal from './LocationConfirmationModal';
 import InfoIcon from './icons/InfoIcon';
 
-// Declara a variável global 'google' para o TypeScript, para evitar erros de compilação
-declare const google: any;
-
 interface PublishJourneyPageProps {
   onBack: () => void;
   onPublishAdClick: () => void;
@@ -29,24 +26,6 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
   const [isCitySuggestionsOpen, setIsCitySuggestionsOpen] = useState(false);
   const citySuggestionsRef = useRef<HTMLDivElement>(null);
 
-  // State for Google Maps services
-  const [autocompleteService, setAutocompleteService] = useState<any>(null);
-  const [geocoderService, setGeocoderService] = useState<any>(null);
-
-  // Effect to initialize Google Maps services once the API is loaded
-  useEffect(() => {
-    const initGoogleMapsServices = () => {
-      if (typeof google !== 'undefined' && google.maps && google.maps.places) {
-        setAutocompleteService(new google.maps.places.AutocompleteService());
-        setGeocoderService(new google.maps.Geocoder());
-      } else {
-        // If API is not ready, poll until it is.
-        setTimeout(initGoogleMapsServices, 200);
-      }
-    };
-    initGoogleMapsServices();
-  }, []); // Run only once on component mount
-
   // Efeito para fechar as sugestões ao clicar fora
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -60,30 +39,38 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
     };
   }, []);
 
-  // Efeito para buscar sugestões de localidade com debounce
+  // Efeito para buscar sugestões de localidade com debounce usando Nominatim (OpenStreetMap)
   useEffect(() => {
-    if (address.city.length < 3 || !autocompleteService) {
+    if (address.city.length < 3) {
       setCitySuggestions([]);
       setIsCitySuggestionsOpen(false);
       return;
     }
 
-    const getSuggestions = () => {
-      const request = {
-        input: address.city,
-        types: ['(cities)'],
-        componentRestrictions: { country: 'br' },
-      };
-
-      autocompleteService.getPlacePredictions(request, (predictions: any, status: any) => {
-        if (status === google.maps.places.PlacesServiceStatus.OK && predictions) {
-          setCitySuggestions(predictions);
+    const getSuggestions = async () => {
+      const url = `https://nominatim.openstreetmap.org/search?format=json&city=${encodeURIComponent(address.city)}&countrycodes=br&limit=5&addressdetails=1`;
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+        if (data && data.length > 0) {
+          const uniqueSuggestions = data.reduce((acc: any[], current: any) => {
+              const displayName = current.display_name;
+              if (!acc.some(item => item.display_name === displayName)) {
+                  acc.push(current);
+              }
+              return acc;
+          }, []);
+          setCitySuggestions(uniqueSuggestions);
           setIsCitySuggestionsOpen(true);
         } else {
           setCitySuggestions([]);
           setIsCitySuggestionsOpen(false);
         }
-      });
+      } catch (error) {
+        console.error("Error fetching city suggestions:", error);
+        setCitySuggestions([]);
+        setIsCitySuggestionsOpen(false);
+      }
     };
 
     const handler = setTimeout(getSuggestions, 300); // 300ms debounce
@@ -91,73 +78,70 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
     return () => {
       clearTimeout(handler);
     };
-  }, [address.city, autocompleteService]);
+  }, [address.city]);
 
   const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
     setAddress(prev => ({ ...prev, [id]: value }));
   };
   
-  const handleSuggestionClick = (suggestion: { description: string }) => {
-    setAddress(prev => ({ ...prev, city: suggestion.description }));
+  const handleSuggestionClick = (suggestion: { display_name: string }) => {
+    setAddress(prev => ({ ...prev, city: suggestion.display_name }));
     setCitySuggestions([]);
     setIsCitySuggestionsOpen(false);
   };
 
-  const handleVerifyAddress = (e: React.FormEvent) => {
+  const handleVerifyAddress = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!geocoderService) {
-      alert('O serviço de mapa ainda não está pronto. Por favor, aguarde e tente novamente.');
-      return;
-    }
     
     const fullAddress = `${address.street}, ${address.number}, ${address.city}`;
-    
-    geocoderService.geocode({ address: fullAddress, componentRestrictions: { country: 'BR' } }, (results: any, status: any) => {
-      if (status === 'OK' && results && results[0]) {
-        const location = results[0].geometry.location;
-        setInitialCoords({ lat: location.lat(), lng: location.lng() });
+    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(fullAddress)}&countrycodes=br&limit=1`;
+
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
+
+      if (data && data.length > 0) {
+        const { lat, lon } = data[0];
+        setInitialCoords({ lat: parseFloat(lat), lng: parseFloat(lon) });
         setIsLocationModalOpen(true);
       } else {
-        console.error(`Geocoding failed with status: ${status} for address: ${fullAddress}`);
         alert('Não foi possível encontrar o endereço. Verifique os dados e tente novamente.');
       }
-    });
+    } catch (error) {
+      console.error(`Geocoding failed for address: ${fullAddress}`, error);
+      alert('Ocorreu um erro ao verificar o endereço. Tente novamente mais tarde.');
+    }
   };
 
-  const handleConfirmLocation = (coords: { lat: number; lng: number }) => {
-    if (!geocoderService) {
-      alert('Ocorreu um erro ao processar a localização. Tente novamente.');
-      setIsLocationModalOpen(false);
-      return;
-    }
-  
-    geocoderService.geocode({ location: coords }, (results: any, status: any) => {
-      if (status === 'OK' && results && results[0]) {
-        const addressComponents = results[0].address_components;
+  const handleConfirmLocation = async (coords: { lat: number; lng: number }) => {
+    setIsLocationModalOpen(false);
+    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${coords.lat}&lon=${coords.lng}`;
+
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
+
+      if (data && data.address) {
+        const { road, house_number, city, town, village, state } = data.address;
         
-        const getAddressComponent = (type: string, nameType: 'long_name' | 'short_name' = 'long_name') => {
-          const component = addressComponents.find((comp: any) => comp.types.includes(type));
-          return component ? component[nameType] : '';
-        };
-  
-        const streetNumber = getAddressComponent('street_number');
-        const streetName = getAddressComponent('route');
-        const city = getAddressComponent('administrative_area_level_2');
-        const state = getAddressComponent('administrative_area_level_1', 'short_name');
+        const cityName = city || town || village || '';
+        const stateName = state || '';
         
         setAddress({
-          city: city && state ? `${city}, ${state}` : getAddressComponent('locality') || '',
-          street: streetName,
-          number: streetNumber,
+          city: `${cityName}, ${stateName}`.replace(/^, |,$/g, '').trim(),
+          street: road || '',
+          number: house_number || '',
         });
         
       } else {
-        console.error(`Reverse geocoding failed with status: ${status}`);
+        console.error(`Reverse geocoding failed`, data);
         alert('Não foi possível obter o endereço para a localização selecionada. Tente novamente.');
       }
-      setIsLocationModalOpen(false);
-    });
+    } catch (error) {
+        console.error(`Reverse geocoding failed`, error);
+        alert('Ocorreu um erro ao processar a localização. Tente novamente.');
+    }
   };
 
   return (
@@ -269,7 +253,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
                               onClick={() => handleSuggestionClick(suggestion)}
                               className="w-full text-left px-4 py-3 text-brand-dark hover:bg-gray-100"
                             >
-                              {suggestion.description}
+                              {suggestion.display_name}
                             </button>
                           ))}
                         </div>
