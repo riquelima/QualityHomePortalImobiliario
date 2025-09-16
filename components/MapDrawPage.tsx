@@ -26,19 +26,17 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
   const [isMapReady, setIsMapReady] = useState(false);
   const { t } = useLanguage();
 
-  // Efeito para inicializar a instância do mapa apenas uma vez, após a renderização do DOM.
+  // Fase 1: Inicializa o mapa base e aguarda ele ficar pronto.
   useLayoutEffect(() => {
     if (!mapRef.current || mapInstance.current) {
-        return; // Inicializa apenas uma vez
+        return; // Roda apenas uma vez
     }
 
     try {
-        if (!mapRef.current) return; // Checagem de segurança
-
         const map = L.map(mapRef.current, {
             zoomControl: false,
             scrollWheelZoom: true,
-        }).setView([-12.9777, -38.5016], 13); // Define a visualização inicial aqui
+        }).setView([-12.9777, -38.5016], 13);
         
         mapInstance.current = map;
 
@@ -48,6 +46,33 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
         
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
+        map.whenReady(() => {
+            map.invalidateSize();
+            setIsMapReady(true);
+        });
+
+    } catch (error) {
+        console.error("Failed to initialize map:", error);
+    }
+    
+    return () => {
+      if (mapInstance.current) {
+        mapInstance.current.remove();
+        mapInstance.current = null;
+      }
+    };
+  }, []);
+
+  // Fase 2: Configura camadas, controles e lógica de UI após o mapa estar pronto.
+  useEffect(() => {
+    if (!isMapReady || !mapInstance.current) {
+      return;
+    }
+    
+    const map = mapInstance.current;
+    
+    // Inicializa camadas e controles apenas uma vez, quando o mapa fica pronto.
+    if (!drawnItemsRef.current) {
         drawnItemsRef.current = new L.FeatureGroup();
         map.addLayer(drawnItemsRef.current);
 
@@ -89,38 +114,12 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
                 });
             }
         });
-        
-        // Garante que o mapa esteja totalmente inicializado antes de remover a tela de carregamento
-        map.whenReady(() => {
-            map.invalidateSize(); // Garante que o tamanho do mapa está correto
-            setIsMapReady(true);
-        });
-
-    } catch (error) {
-        console.error("Failed to initialize map:", error);
     }
-    
-    return () => {
-      if (mapInstance.current) {
-        mapInstance.current.remove();
-        mapInstance.current = null;
-      }
-    };
-  }, []); // O array de dependências vazio garante que isso rode apenas uma vez
 
-  // Efeito para atualizar a visualização e as camadas do mapa com base nas props
-  useEffect(() => {
-    if (!isMapReady || !mapInstance.current) {
-      return;
-    }
-    
-    const map = mapInstance.current;
-    
-    // Limpa o estado anterior das camadas de dados
+    // Lógica para alternar entre os modos de mapa (desenho vs. proximidade)
     propertyMarkersRef.current.clearLayers();
     drawnItemsRef.current.clearLayers();
     map.eachLayer((layer: any) => {
-        // Remove o marcador de localização do usuário anterior, se existir
         if (layer.options && layer.options.fillColor === '#4285F4') {
             map.removeLayer(layer);
         }
@@ -128,7 +127,6 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
 
     if (userLocation) {
         // --- Modo de Busca por Proximidade ---
-        // Garante que o controle de desenho seja removido se estiver no mapa
         if (drawControlRef.current && drawControlRef.current._map) {
             map.removeControl(drawControlRef.current);
         }
@@ -159,7 +157,6 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
         }
     } else {
         // --- Modo de Desenhar no Mapa ---
-        // Garante que o controle de desenho seja adicionado apenas se não estiver no mapa
         if (drawControlRef.current && !drawControlRef.current._map) {
             map.addControl(drawControlRef.current);
         }
@@ -168,7 +165,7 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
           drawControlRef.current.getContainer().style.display = 'none';
         }
 
-        map.setView([-12.9777, -38.5016], 13); // Garante a visualização padrão
+        map.setView([-12.9777, -38.5016], 13);
         setPropertiesInZone([]);
         setIsSidebarOpen(false);
     }
@@ -176,20 +173,13 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
   }, [isMapReady, userLocation, t]);
 
   const handleDrawClick = () => {
-    // Limpa a camada de desenho anterior e os marcadores de imóveis.
-    if (drawnItemsRef.current) {
-      drawnItemsRef.current.clearLayers();
-    }
-    if (propertyMarkersRef.current) {
-      propertyMarkersRef.current.clearLayers();
-    }
+    if (drawnItemsRef.current) drawnItemsRef.current.clearLayers();
+    if (propertyMarkersRef.current) propertyMarkersRef.current.clearLayers();
 
-    // Limpa os resultados e fecha o painel lateral.
     setPropertiesInZone([]);
     setIsSidebarOpen(false);
     
-    // Inicia a ferramenta de desenho de círculo.
-    if (mapInstance.current && L && L.Draw && L.Draw.Circle) {
+    if (mapInstance.current && L?.Draw?.Circle) {
         new L.Draw.Circle(mapInstance.current, drawControlRef.current.options.draw.circle).enable();
     }
   };
@@ -241,7 +231,6 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
             </>
           )}
 
-          {/* Botão para controlar o painel de resultados na busca por proximidade */}
           {userLocation && propertiesInZone.length > 0 && (
             <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[1000]">
               <button
@@ -252,11 +241,9 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
               </button>
             </div>
           )}
-
         </>
       )}
 
-      {/* Backdrop for mobile bottom sheet */}
       {isSidebarOpen && (
           <div 
               onClick={() => setIsSidebarOpen(false)}
@@ -264,7 +251,6 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
           />
       )}
 
-      {/* Results Panel: Bottom Sheet on mobile, Sidebar on desktop */}
       <aside className={`
         fixed md:absolute bottom-0 left-0 right-0 md:top-0 md:left-auto
         h-2/3 md:h-full w-full md:max-w-md 
@@ -276,7 +262,6 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
         }`}>
         <div className="h-full flex flex-col">
             <div className="p-4 border-b flex-shrink-0">
-                 {/* Grab handle for mobile */}
                 <div className="md:hidden w-12 h-1.5 bg-gray-300 rounded-full mx-auto mb-2 cursor-grab" />
                 <div className="flex justify-between items-center">
                     <h3 className="text-xl font-bold text-brand-navy">{t('map.resultsPanel.title', { count: propertiesInZone.length })}</h3>
