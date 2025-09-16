@@ -1,12 +1,11 @@
-
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
+// FIX: Removed unused FeatureGroup import.
+import { MapContainer, TileLayer, Marker, Popup, useMap, CircleMarker } from 'react-leaflet';
 import { MOCK_PROPERTIES } from './PropertyListings';
 import type { Property } from '../types';
 import PropertyCard from './PropertyCard';
-import ArrowLeftIcon from './icons/ArrowLeftIcon';
 import { useLanguage } from '../contexts/LanguageContext';
 
-// Declaração para informar ao TypeScript sobre a variável global L do Leaflet
 declare const L: any;
 
 interface MapDrawPageProps {
@@ -14,231 +13,208 @@ interface MapDrawPageProps {
   userLocation?: { lat: number; lng: number } | null;
 }
 
-const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
-  const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstance = useRef<any>(null);
+// Componente para lidar com o controle de desenho do Leaflet Draw
+const DrawControl: React.FC<{ onDraw: (layer: any) => void }> = ({ onDraw }) => {
+  const map = useMap();
+  // FIX: Initialize useRef with null to fix "Expected 1 arguments, but got 0" error.
   const drawControlRef = useRef<any>(null);
-  const drawnItemsRef = useRef<any>(null);
-  const propertyMarkersRef = useRef<any>(null);
-  
-  const [propertiesInZone, setPropertiesInZone] = useState<Property[]>([]);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isMapReady, setIsMapReady] = useState(false);
-  const { t } = useLanguage();
 
-  // Efeito para garantir que as bibliotecas Leaflet estejam carregadas antes da inicialização.
   useEffect(() => {
-    if (mapInstance.current || !mapRef.current) {
-        return; // Previne reinicialização
-    }
+    if (!map) return;
 
-    const initMap = () => {
-      try {
-        const map = L.map(mapRef.current, {
-            zoomControl: false,
-            scrollWheelZoom: true,
-        }).setView([-12.9777, -38.5016], 13);
-        mapInstance.current = map;
+    const drawnItems = new L.FeatureGroup();
+    map.addLayer(drawnItems);
 
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-        }).addTo(map);
-
-        L.control.zoom({ position: 'bottomright' }).addTo(map);
-
-        drawnItemsRef.current = new L.FeatureGroup();
-        map.addLayer(drawnItemsRef.current);
-
-        propertyMarkersRef.current = L.layerGroup();
-        map.addLayer(propertyMarkersRef.current);
-        
-        drawControlRef.current = new L.Control.Draw({
-            position: 'topleft',
-            draw: {
-                polygon: false, marker: false, circlemarker: false, polyline: false, rectangle: false,
-                circle: { shapeOptions: { color: '#D81B2B' } },
-            },
-            edit: { featureGroup: drawnItemsRef.current, remove: false }
-        });
-        
-        map.on(L.Draw.Event.CREATED, (event: any) => {
-            const layer = event.layer;
-            const drawnLatLng = layer.getLatLng();
-            const drawnRadius = layer.getRadius();
-
-            drawnItemsRef.current.clearLayers();
-            drawnItemsRef.current.addLayer(layer);
-            
-            const foundProperties = MOCK_PROPERTIES.filter(prop => {
-                const propLatLng = L.latLng(prop.lat, prop.lng);
-                const distance = drawnLatLng.distanceTo(propLatLng);
-                return distance <= drawnRadius;
-            });
-
-            setPropertiesInZone(foundProperties);
-            setIsSidebarOpen(foundProperties.length > 0);
-
-            propertyMarkersRef.current.clearLayers();
-            foundProperties.forEach(prop => {
-                L.marker([prop.lat, prop.lng])
-                    .addTo(propertyMarkersRef.current)
-                    .bindPopup(`<b>${prop.title}</b><br>${prop.address}`);
-            });
-        });
-
-        map.invalidateSize();
-        setIsMapReady(true); // Mapa está pronto, remove o overlay de carregamento
-
-      } catch (error) {
-          console.error("Falha ao inicializar o mapa:", error);
-      }
-    };
-    
-    // Verifica se as bibliotecas do Leaflet estão prontas, se não, espera.
-    const interval = setInterval(() => {
-      if (typeof L !== 'undefined' && L.Control && L.Draw) {
-        clearInterval(interval);
-        initMap();
-      }
-    }, 100);
-
-    return () => {
-      clearInterval(interval);
-      if (mapInstance.current) {
-        mapInstance.current.remove();
-        mapInstance.current = null;
-      }
-    };
-  }, []); // Array de dependências vazio para rodar apenas uma vez
-
-  // Efeito para ATUALIZAR o estado do mapa (desenho vs. proximidade)
-  useEffect(() => {
-    if (!isMapReady || !mapInstance.current) {
-      return;
-    }
-    
-    const map = mapInstance.current;
-    
-    propertyMarkersRef.current.clearLayers();
-    drawnItemsRef.current.clearLayers();
-    map.eachLayer((layer: any) => {
-        if (layer.options && layer.options.fillColor === '#4285F4') {
-            map.removeLayer(layer);
-        }
+    drawControlRef.current = new L.Control.Draw({
+      position: 'topleft',
+      draw: {
+        polygon: false, marker: false, circlemarker: false, polyline: false, rectangle: false,
+        circle: { shapeOptions: { color: '#D81B2B' } },
+      },
+      edit: { featureGroup: drawnItems, remove: false },
     });
 
-    if (userLocation) {
-        if (drawControlRef.current._map) {
-            map.removeControl(drawControlRef.current);
-        }
+    map.addControl(drawControlRef.current);
+    
+    map.on(L.Draw.Event.CREATED, (event: any) => {
+      drawnItems.clearLayers();
+      const layer = event.layer;
+      drawnItems.addLayer(layer);
+      onDraw(layer);
+    });
 
-        map.setView([userLocation.lat, userLocation.lng], 14);
-        
-        L.circleMarker([userLocation.lat, userLocation.lng], {
-          radius: 8, fillColor: '#4285F4', color: '#fff', weight: 2, opacity: 1, fillOpacity: 0.9
-        }).addTo(map).bindPopup(t('map.userLocationPopup')).openPopup();
-
-        const searchRadius = 5000; // 5km
-        const userLatLng = L.latLng(userLocation.lat, userLocation.lng);
-        const foundProperties = MOCK_PROPERTIES
-          .map(prop => ({ ...prop, distance: userLatLng.distanceTo(L.latLng(prop.lat, prop.lng)) }))
-          .filter(prop => prop.distance <= searchRadius)
-          .sort((a, b) => a.distance - b.distance);
-
-        setPropertiesInZone(foundProperties);
-        setIsSidebarOpen(foundProperties.length > 0);
-        foundProperties.forEach(prop => {
-            L.marker([prop.lat, prop.lng])
-                .addTo(propertyMarkersRef.current)
-                .bindPopup(`<b>${prop.title}</b><br>${prop.address}`);
-        });
-
-    } else {
-        if (!drawControlRef.current._map) {
-            map.addControl(drawControlRef.current);
-        }
-        
-        if(drawControlRef.current.getContainer()) {
-          drawControlRef.current.getContainer().style.display = 'none';
-        }
-
-        map.setView([-12.9777, -38.5016], 13);
-        setPropertiesInZone([]);
-        setIsSidebarOpen(false);
+    // Esconde a toolbar de desenho por padrão, será ativada por botão
+    if (drawControlRef.current.getContainer()) {
+      drawControlRef.current.getContainer().style.display = 'none';
     }
 
-  }, [isMapReady, userLocation, t]);
+    return () => {
+      if (drawControlRef.current && map) {
+        map.removeControl(drawControlRef.current);
+      }
+      map.removeLayer(drawnItems);
+    };
+  }, [map, onDraw]);
+  
+  // Função para ativar o desenho
+  const startDrawing = () => {
+    if (map && L?.Draw?.Circle) {
+        new L.Draw.Circle(map, drawControlRef.current.options.draw.circle).enable();
+    }
+  };
+  
+  (window as any).startDrawing = startDrawing;
+
+  return null;
+};
+
+
+// Componente para atualizar a visão do mapa e limpar camadas
+const MapUpdater: React.FC<{ 
+  userLocation: { lat: number, lng: number } | null, 
+  onPropertiesFound: (props: Property[]) => void 
+}> = ({ userLocation, onPropertiesFound }) => {
+  const map = useMap();
+  const { t } = useLanguage();
+
+  useEffect(() => {
+    map.invalidateSize(); // Garante que o mapa se redimensione corretamente
+
+    if (userLocation) {
+      map.setView([userLocation.lat, userLocation.lng], 14);
+      const searchRadius = 5000; // 5km
+      const userLatLng = L.latLng(userLocation.lat, userLocation.lng);
+      const foundProperties = MOCK_PROPERTIES
+        .map(prop => ({ ...prop, distance: userLatLng.distanceTo(L.latLng(prop.lat, prop.lng)) }))
+        .filter(prop => prop.distance <= searchRadius)
+        .sort((a, b) => a.distance - b.distance);
+      onPropertiesFound(foundProperties);
+    } else {
+      map.setView([-12.9777, -38.5016], 13);
+      onPropertiesFound([]);
+    }
+  }, [userLocation, map, onPropertiesFound, t]);
+
+  return null;
+};
+
+
+const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
+  const [propertiesInZone, setPropertiesInZone] = useState<Property[]>([]);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const { t } = useLanguage();
+
+  const handleDraw = (layer: any) => {
+    const drawnLatLng = layer.getLatLng();
+    const drawnRadius = layer.getRadius();
+
+    const foundProperties = MOCK_PROPERTIES.filter(prop => {
+      const propLatLng = L.latLng(prop.lat, prop.lng);
+      const distance = drawnLatLng.distanceTo(propLatLng);
+      return distance <= drawnRadius;
+    });
+
+    setPropertiesInZone(foundProperties);
+    setIsSidebarOpen(foundProperties.length > 0);
+  };
+  
+  const handlePropertiesFound = (props: Property[]) => {
+      setPropertiesInZone(props);
+      setIsSidebarOpen(props.length > 0);
+  }
 
   const handleDrawClick = () => {
-    if (drawnItemsRef.current) drawnItemsRef.current.clearLayers();
-    if (propertyMarkersRef.current) propertyMarkersRef.current.clearLayers();
-
     setPropertiesInZone([]);
     setIsSidebarOpen(false);
-    
-    if (mapInstance.current && L?.Draw?.Circle) {
-        new L.Draw.Circle(mapInstance.current, drawControlRef.current.options.draw.circle).enable();
+    // Chama a função global para iniciar o desenho
+    if ((window as any).startDrawing) {
+        (window as any).startDrawing();
     }
   };
 
   return (
     <div className="fixed inset-0 bg-white z-[100]">
-      <div ref={mapRef} className="w-full h-full" />
-      
-      {!isMapReady && (
-        <div className="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center z-[1200]">
-          <p className="text-brand-navy text-lg font-semibold animate-pulse">{t('map.loading')}</p>
+      <MapContainer 
+        center={userLocation ? [userLocation.lat, userLocation.lng] : [-12.9777, -38.5016]} 
+        zoom={13} 
+        zoomControl={false}
+        scrollWheelZoom={true}
+        style={{ height: '100%', width: '100%' }}
+      >
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+        />
+        
+        <MapUpdater userLocation={userLocation} onPropertiesFound={handlePropertiesFound} />
+
+        {!userLocation && <DrawControl onDraw={handleDraw} />}
+        
+        {propertiesInZone.map(prop => (
+          <Marker key={prop.id} position={[prop.lat, prop.lng]}>
+            <Popup>
+              <b>{prop.title}</b><br/>{prop.address}
+            </Popup>
+          </Marker>
+        ))}
+
+        {userLocation && (
+            <CircleMarker 
+                center={[userLocation.lat, userLocation.lng]}
+                radius={8}
+                pathOptions={{ fillColor: '#4285F4', color: '#fff', weight: 2, opacity: 1, fillOpacity: 0.9 }}
+            >
+                 <Popup>{t('map.userLocationPopup')}</Popup>
+            </CircleMarker>
+        )}
+        
+      </MapContainer>
+
+      {/* UI Overlay */}
+      <div className="absolute top-0 left-0 w-full p-4 md:p-6 z-[1000] bg-gradient-to-b from-white/80 to-transparent pointer-events-none">
+         <div className="container mx-auto pointer-events-auto">
+            <div className="text-sm mb-4">
+                <span onClick={onBack} className="text-brand-red hover:underline cursor-pointer">{t('map.breadcrumbs.home')}</span>
+                <span className="text-brand-gray mx-2">&gt;</span>
+                <span className="text-brand-dark font-medium">{userLocation ? t('map.breadcrumbs.proximitySearch') : t('map.breadcrumbs.drawOnMap')}</span>
+            </div>
+            <h1 className="text-2xl md:text-4xl font-bold text-brand-navy">
+              {userLocation ? t('map.title.proximity') : t('map.title.draw')}
+            </h1>
         </div>
+      </div>
+      
+      {!userLocation && (
+        <>
+          <div className="absolute top-32 md:top-40 left-1/2 -translate-x-1/2 bg-white/90 p-4 rounded-lg shadow-md w-11/12 max-w-sm text-center z-[1000]">
+            <p className="text-brand-navy">
+              {t('map.drawInstruction')}
+            </p>
+          </div>
+
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[1000]">
+            <button
+              onClick={handleDrawClick}
+              className="bg-brand-red hover:opacity-90 text-white font-bold py-2 px-6 rounded-full shadow-2xl transition duration-300 flex items-center space-x-2"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L16.732 3.732z" />
+              </svg>
+              <span>{t('map.drawButton')}</span>
+            </button>
+          </div>
+        </>
       )}
 
-      {isMapReady && (
-        <>
-          <div className="absolute top-0 left-0 w-full p-4 md:p-6 z-[1000] bg-gradient-to-b from-white/80 to-transparent">
-             <div className="container mx-auto">
-                <div className="text-sm mb-4">
-                    <span onClick={onBack} className="text-brand-red hover:underline cursor-pointer">{t('map.breadcrumbs.home')}</span>
-                    <span className="text-brand-gray mx-2">&gt;</span>
-                    <span className="text-brand-dark font-medium">{userLocation ? t('map.breadcrumbs.proximitySearch') : t('map.breadcrumbs.drawOnMap')}</span>
-                </div>
-                <h1 className="text-2xl md:text-4xl font-bold text-brand-navy">
-                  {userLocation ? t('map.title.proximity') : t('map.title.draw')}
-                </h1>
-            </div>
-          </div>
-          
-          {!userLocation && (
-            <>
-              <div className="absolute top-32 md:top-40 left-1/2 -translate-x-1/2 bg-white/90 p-4 rounded-lg shadow-md w-11/12 max-w-sm text-center z-[1000]">
-                <p className="text-brand-navy">
-                  {t('map.drawInstruction')}
-                </p>
-              </div>
-
-              <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[1000]">
-                <button
-                  onClick={handleDrawClick}
-                  className="bg-brand-red hover:opacity-90 text-white font-bold py-2 px-6 rounded-full shadow-2xl transition duration-300 flex items-center space-x-2"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L16.732 3.732z" />
-                  </svg>
-                  <span>{t('map.drawButton')}</span>
-                </button>
-              </div>
-            </>
-          )}
-
-          {userLocation && propertiesInZone.length > 0 && (
-            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[1000]">
-              <button
-                onClick={() => setIsSidebarOpen(prev => !prev)}
-                className="bg-brand-navy hover:bg-brand-dark text-white font-bold py-3 px-6 rounded-full shadow-2xl transition duration-300"
-              >
-                {isSidebarOpen ? t('map.toggleResults.hide') : t('map.toggleResults.show', { count: propertiesInZone.length })}
-              </button>
-            </div>
-          )}
-        </>
+      {userLocation && propertiesInZone.length > 0 && (
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[1000]">
+          <button
+            onClick={() => setIsSidebarOpen(prev => !prev)}
+            className="bg-brand-navy hover:bg-brand-dark text-white font-bold py-3 px-6 rounded-full shadow-2xl transition duration-300"
+          >
+            {isSidebarOpen ? t('map.toggleResults.hide') : t('map.toggleResults.show', { count: propertiesInZone.length })}
+          </button>
+        </div>
       )}
 
       {isSidebarOpen && (
