@@ -8,6 +8,7 @@ import MapDrawPage from './components/MapDrawPage';
 import PublishAdPage from './components/PublishAdPage';
 import PublishJourneyPage from './components/PublishJourneyPage';
 import LoginModal from './components/LoginModal';
+import GeolocationErrorModal from './components/GeolocationErrorModal';
 import { useLanguage } from './contexts/LanguageContext';
 import type { User } from './types';
 
@@ -35,6 +36,7 @@ function decodeJwt(token: string): any {
 const App: React.FC = () => {
   const [pageState, setPageState] = useState<PageState>({ page: 'home', userLocation: null });
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isGeoErrorModalOpen, setIsGeoErrorModalOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [loginIntent, setLoginIntent] = useState<'default' | 'publish'>('default');
   const { t } = useLanguage();
@@ -50,6 +52,9 @@ const App: React.FC = () => {
   }
   const closeLoginModal = () => setIsLoginModalOpen(false);
   
+  const openGeoErrorModal = () => setIsGeoErrorModalOpen(true);
+  const closeGeoErrorModal = () => setIsGeoErrorModalOpen(false);
+
   const handleLoginSuccess = (credentialResponse: any) => {
     const decoded: { name: string, email: string, picture: string } | null = decodeJwt(credentialResponse.credential);
     if (decoded) {
@@ -105,6 +110,7 @@ const App: React.FC = () => {
               <Hero 
                 onDrawOnMapClick={() => navigateToMap()} 
                 onSearchNearMe={(location) => navigateToMap(location)}
+                onGeolocationError={openGeoErrorModal}
               />
               <InfoSection 
                 onDrawOnMapClick={() => navigateToMap()}
@@ -126,6 +132,7 @@ const App: React.FC = () => {
     <>
       {renderCurrentPage()}
       <LoginModal isOpen={isLoginModalOpen} onClose={closeLoginModal} onLoginSuccess={handleLoginSuccess} />
+      <GeolocationErrorModal isOpen={isGeoErrorModalOpen} onClose={closeGeoErrorModal} />
     </>
   );
 };

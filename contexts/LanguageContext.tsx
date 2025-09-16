@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useContext, ReactNode } from 'react';
 
 // Translations are embedded directly to avoid module resolution issues.
@@ -189,6 +190,11 @@ const ptTranslations = {
       "confirmButton": "Confirmar endereço",
       "backButton": "Voltar a escrever o endereço"
     }
+  },
+  "geolocationErrorModal": {
+    "title": "Erro de Localização",
+    "description": "Não foi possível obter a sua localização. Isto pode acontecer se você negou o pedido de permissão ou se o seu navegador não suporta geolocalização. Por favor, verifique as permissões de site do seu navegador e tente novamente.",
+    "closeButton": "OK"
   },
   "footer": {
     "text": "Quality Home Portal Imobiliário. Todos os direitos reservados."
@@ -383,6 +389,11 @@ const enTranslations = {
       "backButton": "Go back to writing the address"
     }
   },
+  "geolocationErrorModal": {
+    "title": "Location Error",
+    "description": "We could not get your location. This might happen if you denied the permission request or if your browser does not support geolocation. Please check your browser's site permissions and try again.",
+    "closeButton": "OK"
+  },
   "footer": {
     "text": "Quality Home Real Estate Portal. All rights reserved."
   }
@@ -411,7 +422,7 @@ const esTranslations = {
     "propertyTypes": {
       "housesAndApts": "Casas y apartamentos",
       "offices": "Oficinas",
-      "garages": "Garajes"
+      "garajes": "Garajes"
     },
     "locationPlaceholder": "Introduce la ubicación (barrio, ciudad, región)",
     "drawOnMap": "Dibuja tu zona",
@@ -575,6 +586,11 @@ const esTranslations = {
       "confirmButton": "Confirmar dirección",
       "backButton": "Volver a escribir la dirección"
     }
+  },
+  "geolocationErrorModal": {
+    "title": "Error de Ubicación",
+    "description": "No pudimos obtener tu ubicación. Esto puede ocurrir si denegaste la solicitud de permiso o si tu navegador no es compatible con la geolocalización. Por favor, comprueba los permisos del sitio en tu navegador e inténtalo de nuevo.",
+    "closeButton": "OK"
   },
   "footer": {
     "text": "Quality Home Portal Inmobiliario. Todos los derechos reservados."

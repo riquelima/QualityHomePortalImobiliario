@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import SearchIcon from './icons/SearchIcon';
 import ChevronDownIcon from './icons/ChevronDownIcon';
@@ -9,9 +10,10 @@ import { useLanguage } from '../contexts/LanguageContext';
 interface HeroProps {
   onDrawOnMapClick: () => void;
   onSearchNearMe: (location: { lat: number, lng: number }) => void;
+  onGeolocationError: () => void;
 }
 
-const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe }) => {
+const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe, onGeolocationError }) => {
   const [activeTab, setActiveTab] = useState('comprar');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isLoadingGeo, setIsLoadingGeo] = useState(false);
@@ -71,7 +73,7 @@ const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe }) => {
 
   const handleSearchNearMe = () => {
     if (!navigator.geolocation) {
-      alert(t('hero.geolocationNotSupported'));
+      onGeolocationError();
       return;
     }
     setIsLoadingGeo(true);
@@ -84,7 +86,7 @@ const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe }) => {
       },
       () => {
         setIsLoadingGeo(false);
-        alert(t('hero.geolocationError'));
+        onGeolocationError();
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
