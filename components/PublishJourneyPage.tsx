@@ -28,7 +28,24 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
   const [citySuggestions, setCitySuggestions] = useState<any[]>([]);
   const [isCitySuggestionsOpen, setIsCitySuggestionsOpen] = useState(false);
   const citySuggestionsRef = useRef<HTMLDivElement>(null);
+
+  // State for Google Maps services
   const [autocompleteService, setAutocompleteService] = useState<any>(null);
+  const [geocoderService, setGeocoderService] = useState<any>(null);
+
+  // Effect to initialize Google Maps services once the API is loaded
+  useEffect(() => {
+    const initGoogleMapsServices = () => {
+      if (typeof google !== 'undefined' && google.maps && google.maps.places) {
+        setAutocompleteService(new google.maps.places.AutocompleteService());
+        setGeocoderService(new google.maps.Geocoder());
+      } else {
+        // If API is not ready, poll until it is.
+        setTimeout(initGoogleMapsServices, 200);
+      }
+    };
+    initGoogleMapsServices();
+  }, []); // Run only once on component mount
 
   // Efeito para fechar as sugestões ao clicar fora
   useEffect(() => {
@@ -45,35 +62,20 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
 
   // Efeito para buscar sugestões de localidade com debounce
   useEffect(() => {
-    if (address.city.length < 3) {
+    if (address.city.length < 3 || !autocompleteService) {
       setCitySuggestions([]);
       setIsCitySuggestionsOpen(false);
       return;
     }
 
-    // Aguarda a API do Google Maps estar pronta
-    // FIX: Use 'google' directly instead of 'window.google' to avoid TypeScript errors, as it's globally declared.
-    if (typeof google === 'undefined' || !google.maps || !google.maps.places) {
-      console.warn("Google Maps Places API not ready yet.");
-      return;
-    }
-
     const getSuggestions = () => {
-      // Inicialização "preguiçosa" do serviço de autocompletar
-      // FIX: Use 'google' directly instead of 'window.google' to avoid TypeScript errors, as it's globally declared.
-      const service = autocompleteService || new google.maps.places.AutocompleteService();
-      if (!autocompleteService) {
-        setAutocompleteService(service);
-      }
-      
       const request = {
         input: address.city,
         types: ['(cities)'],
         componentRestrictions: { country: 'br' },
       };
 
-      service.getPlacePredictions(request, (predictions: any, status: any) => {
-        // FIX: Use 'google' directly instead of 'window.google' to avoid TypeScript errors, as it's globally declared.
+      autocompleteService.getPlacePredictions(request, (predictions: any, status: any) => {
         if (status === google.maps.places.PlacesServiceStatus.OK && predictions) {
           setCitySuggestions(predictions);
           setIsCitySuggestionsOpen(true);
@@ -104,39 +106,33 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
 
   const handleVerifyAddress = (e: React.FormEvent) => {
     e.preventDefault();
-    // FIX: Use 'google' directly instead of 'window.google' to avoid TypeScript errors, as it's globally declared.
-    if (typeof google === 'undefined' || !google.maps || !google.maps.Geocoder) {
+    if (!geocoderService) {
       alert('O serviço de mapa ainda não está pronto. Por favor, aguarde e tente novamente.');
       return;
     }
     
-    // FIX: Use 'google' directly instead of 'window.google' to avoid TypeScript errors, as it's globally declared.
-    const geocoder = new google.maps.Geocoder();
     const fullAddress = `${address.street}, ${address.number}, ${address.city}`;
     
-    geocoder.geocode({ address: fullAddress, componentRestrictions: { country: 'BR' } }, (results: any, status: any) => {
+    geocoderService.geocode({ address: fullAddress, componentRestrictions: { country: 'BR' } }, (results: any, status: any) => {
       if (status === 'OK' && results && results[0]) {
         const location = results[0].geometry.location;
         setInitialCoords({ lat: location.lat(), lng: location.lng() });
         setIsLocationModalOpen(true);
       } else {
-        console.error(`Geocoding failed with status: ${status}`);
+        console.error(`Geocoding failed with status: ${status} for address: ${fullAddress}`);
         alert('Não foi possível encontrar o endereço. Verifique os dados e tente novamente.');
       }
     });
   };
 
   const handleConfirmLocation = (coords: { lat: number; lng: number }) => {
-    // FIX: Use 'google' directly instead of 'window.google' to avoid TypeScript errors, as it's globally declared.
-    if (typeof google === 'undefined' || !google.maps || !google.maps.Geocoder) {
+    if (!geocoderService) {
       alert('Ocorreu um erro ao processar a localização. Tente novamente.');
       setIsLocationModalOpen(false);
       return;
     }
   
-    // FIX: Use 'google' directly instead of 'window.google' to avoid TypeScript errors, as it's globally declared.
-    const geocoder = new google.maps.Geocoder();
-    geocoder.geocode({ location: coords }, (results: any, status: any) => {
+    geocoderService.geocode({ location: coords }, (results: any, status: any) => {
       if (status === 'OK' && results && results[0]) {
         const addressComponents = results[0].address_components;
         
