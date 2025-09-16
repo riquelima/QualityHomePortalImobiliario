@@ -6,7 +6,7 @@ const Header: React.FC = () => {
       <nav className="container mx-auto px-6 py-4 flex justify-between items-center">
         <a href="#">
           <img 
-            src="https://raw.githubusercontent.com/riquelima/QualityHomePortalImobiliario/main/logo.png" 
+            src="https://i.imgur.com/FuxDdyF.png" 
             alt="Quality Home Logo" 
             className="h-20" 
           />
