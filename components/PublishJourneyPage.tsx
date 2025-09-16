@@ -18,6 +18,8 @@ interface PublishJourneyPageProps {
   onLogout: () => void;
 }
 
+const API_KEY = 'AIzaSyCsX9l10XCu3TtSCU1BSx-qOYrwUKYw2xk';
+
 const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPublishAdClick, onOpenLoginModal, user, onLogout }) => {
   const { t } = useLanguage();
   const [operation, setOperation] = useState('sell');
@@ -25,7 +27,6 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
   const [address, setAddress] = useState({ city: '', street: '', number: '' });
   const [initialCoords, setInitialCoords] = useState<{ lat: number; lng: number } | null>(null);
   
-  // FIX: Replaced google.maps.GeocoderResult with any to fix TypeScript error.
   const [citySuggestions, setCitySuggestions] = useState<any[]>([]);
   const [isCitySuggestionsOpen, setIsCitySuggestionsOpen] = useState(false);
   const citySuggestionsRef = useRef<HTMLDivElement>(null);
@@ -48,28 +49,28 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
   useEffect(() => {
     if (address.city.length < 3) {
       setCitySuggestions([]);
+      setIsCitySuggestionsOpen(false);
       return;
     }
 
-    const handler = setTimeout(() => {
-      if (typeof google === 'undefined' || !google.maps) return;
-
-      const geocoder = new google.maps.Geocoder();
-      geocoder.geocode(
-        { address: address.city, componentRestrictions: { country: 'BR' } },
-        (results, status) => {
-          if (status === 'OK' && results) {
-            const filteredResults = results.filter(
-              r => r.types.includes('locality') || r.types.includes('administrative_area_level_2')
-            );
-            setCitySuggestions(filteredResults);
-            setIsCitySuggestionsOpen(true);
-          } else {
-            setCitySuggestions([]);
-          }
+    const handler = setTimeout(async () => {
+      try {
+        const response = await fetch(`https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(address.city)}&types=(cities)&components=country:BR&key=${API_KEY}`);
+        const data = await response.json();
+        
+        if (data.status === 'OK' && data.predictions) {
+          setCitySuggestions(data.predictions);
+          setIsCitySuggestionsOpen(true);
+        } else {
+          setCitySuggestions([]);
+          setIsCitySuggestionsOpen(false);
         }
-      );
-    }, 500); // 500ms debounce
+      } catch (error) {
+        console.error('Error fetching city suggestions:', error);
+        setCitySuggestions([]);
+        setIsCitySuggestionsOpen(false);
+      }
+    }, 300); // 300ms debounce
 
     return () => {
       clearTimeout(handler);
@@ -81,9 +82,8 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
     setAddress(prev => ({ ...prev, [id]: value }));
   };
   
-  // FIX: Replaced google.maps.GeocoderResult with any to fix TypeScript error.
-  const handleSuggestionClick = (suggestion: any) => {
-    setAddress(prev => ({ ...prev, city: suggestion.formatted_address }));
+  const handleSuggestionClick = (suggestion: { description: string }) => {
+    setAddress(prev => ({ ...prev, city: suggestion.description }));
     setCitySuggestions([]);
     setIsCitySuggestionsOpen(false);
   };
@@ -224,7 +224,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
                               onClick={() => handleSuggestionClick(suggestion)}
                               className="w-full text-left px-4 py-3 text-brand-dark hover:bg-gray-100"
                             >
-                              {suggestion.formatted_address}
+                              {suggestion.description}
                             </button>
                           ))}
                         </div>
