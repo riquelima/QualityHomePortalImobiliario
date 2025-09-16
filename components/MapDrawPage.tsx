@@ -52,7 +52,7 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack }) => {
       mapInstance.current = L.map(mapRef.current, {
         zoomControl: false,
         scrollWheelZoom: true, // Garante que o zoom com scroll do mouse esteja ativo.
-      }).setView([-13.29, -41.71], 7);
+      }).setView([-12.9777, -38.5016], 13);
 
       L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
@@ -152,7 +152,7 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack }) => {
                     <span className="text-brand-gray mx-2">&gt;</span>
                     <span className="text-brand-dark font-medium">Desenhar no mapa</span>
                 </div>
-                <h1 className="text-2xl md:text-4xl font-bold text-brand-navy">Desenhe a sua pesquisa na Bahia</h1>
+                <h1 className="text-2xl md:text-4xl font-bold text-brand-navy">Desenhe a sua pesquisa em Salvador</h1>
             </div>
           </div>
 
