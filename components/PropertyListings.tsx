@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Property, PropertyStatus } from '../types';
 import PropertyCard from './PropertyCard';
@@ -72,10 +71,10 @@ const MOCK_PROPERTIES: Property[] = [
 
 const PropertyListings: React.FC = () => {
   return (
-    <section className="bg-brand-neutral-light py-20">
+    <section className="bg-white py-20">
       <div className="container mx-auto px-6">
-        <h2 className="text-4xl font-bold text-brand-neutral-black text-center mb-4">Imóveis em Destaque</h2>
-        <p className="text-lg text-brand-neutral-dark text-center max-w-2xl mx-auto mb-12">
+        <h2 className="text-4xl font-bold text-brand-dark text-center mb-4">Imóveis em Destaque</h2>
+        <p className="text-lg text-brand-gray text-center max-w-2xl mx-auto mb-12">
           Explore nossa seleção exclusiva de imóveis que combinam luxo, conforto e localização privilegiada.
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

@@ -1,68 +1,62 @@
-import React from 'react';
+import React, { useState } from 'react';
+import SearchIcon from './icons/SearchIcon';
+import ChevronDownIcon from './icons/ChevronDownIcon';
 
 const Hero: React.FC = () => {
-  return (
-    <div className="relative h-screen w-full flex items-center justify-center text-center text-white">
-      <video
-        autoPlay
-        loop
-        muted
-        playsInline
-        className="absolute top-0 left-0 w-full h-full object-cover z-0"
-      >
-        <source src="https://videos.pexels.com/video-files/7646757/7646757-uhd_2560_1440_25fps.mp4" type="video/mp4" />
-        Your browser does not support the video tag.
-      </video>
-      <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-black/60 to-black/40 z-10"></div>
-      
-      <div className="relative z-20 px-4 sm:px-6 lg:px-8 flex flex-col items-center">
-        <h1 className="text-4xl md:text-6xl font-bold mb-4 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-          Encontre o imóvel dos seus sonhos
-        </h1>
-        <p className="text-lg md:text-xl max-w-2xl mb-8 opacity-90 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
-          A plataforma premium para corretores e clientes que buscam excelência.
-        </p>
-        <div className="flex space-x-4 mb-12 animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
-          <button className="bg-brand-blue hover:bg-brand-blue-dark text-white font-medium py-3 px-8 rounded-lg transition duration-300 shadow-lg">
-            Buscar Imóveis
-          </button>
-          <button className="bg-transparent border-2 border-white text-white font-medium py-3 px-8 rounded-lg hover:bg-white hover:text-brand-neutral-black transition duration-300">
-            Aplique agora
-          </button>
-        </div>
+  const [activeTab, setActiveTab] = useState('comprar');
 
-        <div className="w-full max-w-4xl bg-white/20 backdrop-blur-md p-4 rounded-lg shadow-2xl animate-fade-in-up" style={{ animationDelay: '0.8s' }}>
-          <form className="flex flex-col md:flex-row items-center gap-4">
-            <input 
-              type="text" 
-              placeholder="Digite cidade, bairro ou palavra-chave..."
-              className="w-full md:flex-grow px-4 py-3 rounded-md text-brand-neutral-black focus:outline-none focus:ring-2 focus:ring-brand-blue"
-            />
+  return (
+    <div 
+      className="relative h-[550px] w-full flex items-center justify-center text-center bg-cover bg-center"
+      style={{ backgroundImage: "url('https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2')" }}
+    >
+      <div className="relative z-20 p-6 md:p-8 bg-brand-lime rounded-lg shadow-2xl w-11/12 max-w-4xl">
+        <h1 className="text-4xl md:text-5xl font-bold text-brand-dark mb-6">
+          Tudo começa hoje
+        </h1>
+        
+        <div className="bg-white p-2 rounded-lg">
+          <div className="flex border-b mb-4">
+            <button 
+              onClick={() => setActiveTab('comprar')}
+              className={`px-6 py-2 text-lg font-medium transition-colors duration-300 ${activeTab === 'comprar' ? 'border-b-4 border-brand-purple text-brand-dark' : 'text-brand-gray'}`}
+            >
+              Comprar
+            </button>
+            <button 
+              onClick={() => setActiveTab('alugar')}
+              className={`px-6 py-2 text-lg font-medium transition-colors duration-300 ${activeTab === 'alugar' ? 'border-b-4 border-brand-purple text-brand-dark' : 'text-brand-gray'}`}
+            >
+              Alugar
+            </button>
+          </div>
+
+          <form className="flex flex-col md:flex-row items-center gap-2">
+            <div className="relative w-full md:w-auto">
+              <select className="w-full md:w-52 appearance-none bg-white border border-gray-300 rounded-md px-4 py-3 pr-8 focus:outline-none focus:ring-2 focus:ring-brand-purple text-brand-dark">
+                <option>Casas e apartamentos</option>
+                <option>Escritórios</option>
+                <option>Garagens</option>
+              </select>
+              <ChevronDownIcon className="w-5 h-5 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
+            <div className="relative w-full md:flex-grow">
+              <SearchIcon className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2"/>
+              <input 
+                type="text" 
+                placeholder="Digite a localização"
+                className="w-full px-10 py-3 rounded-md text-brand-dark border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-purple"
+              />
+            </div>
             <button 
               type="submit"
-              className="w-full md:w-auto bg-brand-blue hover:bg-brand-blue-dark text-white font-bold py-3 px-8 rounded-md transition duration-300"
+              className="w-full md:w-auto bg-brand-purple hover:opacity-90 text-white font-bold py-3 px-10 rounded-md transition duration-300"
             >
               Buscar
             </button>
           </form>
         </div>
       </div>
-       <style>{`
-          @keyframes fade-in-up {
-            0% {
-              opacity: 0;
-              transform: translateY(20px);
-            }
-            100% {
-              opacity: 1;
-              transform: translateY(0);
-            }
-          }
-          .animate-fade-in-up {
-            animation: fade-in-up 0.8s ease-out forwards;
-            opacity: 0;
-          }
-        `}</style>
     </div>
   );
 };
