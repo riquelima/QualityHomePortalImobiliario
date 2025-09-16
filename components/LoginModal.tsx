@@ -20,7 +20,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLoginSuccess
   useEffect(() => {
     if (isOpen && typeof google !== 'undefined') {
       google.accounts.id.initialize({
-        client_id: 'Cliente ID',
+        client_id: '56933567945-a09i6ua38m4dvr5era3oq3vq1uknnb04.apps.googleusercontent.com',
         callback: onLoginSuccess,
       });
 
