@@ -17,9 +17,10 @@ const languageMap = {
 
 interface HeaderProps {
   onPublishAdClick: () => void;
+  onAccessClick: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ onPublishAdClick }) => {
+const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
   const langDropdownRef = useRef<HTMLDivElement>(null);
@@ -92,10 +93,10 @@ const Header: React.FC<HeaderProps> = ({ onPublishAdClick }) => {
             </div>
             
             {/* User/Login Link */}
-            <a href="#" className="flex items-center space-x-2 hover:text-brand-red transition duration-300">
+            <button onClick={onAccessClick} className="flex items-center space-x-2 hover:text-brand-red transition duration-300">
               <UserIcon className="w-6 h-6" />
               <span className="hidden md:inline">{t('header.access')}</span>
-            </a>
+            </button>
 
             {/* Hamburger Menu Button */}
             <button className="md:hidden" onClick={() => setIsMenuOpen(true)} aria-label={t('header.openMenu')}>

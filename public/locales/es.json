@@ -114,6 +114,15 @@
       "advantage3Content": "Disponemos de una vasta gama de herramientas para mejorar la posición de tu anuncio y ganar visibilidad."
     }
   },
+  "loginModal": {
+    "title": "Inicia sesión o regístrate para publicar tu anuncio",
+    "description": "Publica tu anuncio para que sea visto por millones de personas que buscan su próximo inmueble.",
+    "emailLabel": "Tu correo electrónico",
+    "continueButton": "Continuar",
+    "socialLoginPrompt": "También puedes",
+    "googleButton": "Continuar con Google",
+    "appleButton": "Continuar con Apple"
+  },
   "footer": {
     "text": "Quality Home Portal Inmobiliario. Todos los derechos reservados."
   }

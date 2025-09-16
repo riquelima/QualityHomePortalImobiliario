@@ -114,6 +114,15 @@
       "advantage3Content": "We have a wide range of tools to improve the position of your ad and gain visibility."
     }
   },
+  "loginModal": {
+    "title": "Log in or sign up to publish your ad",
+    "description": "Publish your ad to be seen by millions of people looking for their next property.",
+    "emailLabel": "Your email",
+    "continueButton": "Continue",
+    "socialLoginPrompt": "You can also",
+    "googleButton": "Continue with Google",
+    "appleButton": "Continue with Apple"
+  },
   "footer": {
     "text": "Quality Home Real Estate Portal. All rights reserved."
   }

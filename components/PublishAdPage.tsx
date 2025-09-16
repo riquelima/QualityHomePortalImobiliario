@@ -6,14 +6,16 @@ import CheckIcon from './icons/CheckIcon';
 interface PublishAdPageProps {
   onBack: () => void;
   onPublishAdClick: () => void;
+  onOpenLoginModal: () => void;
 }
 
-const PublishAdPage: React.FC<PublishAdPageProps> = ({ onBack, onPublishAdClick }) => {
+const PublishAdPage: React.FC<PublishAdPageProps> = ({ onBack, onPublishAdClick, onOpenLoginModal }) => {
   const { t } = useLanguage();
 
   return (
     <div className="bg-brand-light-gray min-h-screen">
-       <Header onPublishAdClick={onPublishAdClick} />
+       {/* FIX: Corrected typo from onPublishAdPageClick to onPublishAdClick */}
+       <Header onPublishAdClick={onPublishAdClick} onAccessClick={onOpenLoginModal} />
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumbs */}
         <div className="text-sm mb-6">
@@ -43,7 +45,10 @@ const PublishAdPage: React.FC<PublishAdPageProps> = ({ onBack, onPublishAdClick 
               </li>
             </ul>
             <p className="text-sm text-brand-gray mb-6">{t('publishAdPage.mainCard.agencyInfo')}</p>
-            <button className="bg-brand-red text-white font-bold py-3 px-8 rounded-md hover:opacity-90 transition-opacity duration-200 mb-4">
+            <button 
+              onClick={onOpenLoginModal}
+              className="bg-brand-red text-white font-bold py-3 px-8 rounded-md hover:opacity-90 transition-opacity duration-200 mb-4"
+            >
               {t('publishAdPage.mainCard.publishButton')}
             </button>
             <p className="text-sm text-brand-gray">{t('publishAdPage.mainCard.professionalInfo')}</p>
