@@ -11,6 +11,22 @@ interface MapDrawPageProps {
   onBack: () => void;
 }
 
+// Função auxiliar para carregar scripts dinamicamente e de forma robusta
+const loadScript = (src: string) => {
+  return new Promise<void>((resolve, reject) => {
+    // Evita carregar o mesmo script duas vezes
+    if (document.querySelector(`script[src="${src}"]`)) {
+      return resolve();
+    }
+    const script = document.createElement('script');
+    script.src = src;
+    script.async = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error(`Falha ao carregar o script: ${src}`));
+    document.head.appendChild(script);
+  });
+};
+
 const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<any>(null);
@@ -24,88 +40,86 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack }) => {
 
   useEffect(() => {
     if (!mapRef.current) return;
+    
+    let isMounted = true;
 
-    const intervalId = setInterval(() => {
-      // Verifica se L e L.Control.Draw estão definidos no objeto window
-      if (typeof L !== 'undefined' && L.Control && L.Control.Draw) {
-        clearInterval(intervalId);
-
-        if (mapInstance.current) return; // Evita re-inicialização
-
-        mapInstance.current = L.map(mapRef.current, {
-          zoomControl: false
-        }).setView([-13.29, -41.71], 7);
-
-        // Usando o tile layer da CARTO (Positron) para um visual mais limpo
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-        }).addTo(mapInstance.current);
-        
-        L.control.zoom({ position: 'bottomright' }).addTo(mapInstance.current);
-
-        drawnItemsRef.current = new L.FeatureGroup();
-        mapInstance.current.addLayer(drawnItemsRef.current);
-
-        propertyMarkersRef.current = L.layerGroup();
-        mapInstance.current.addLayer(propertyMarkersRef.current);
-
-        // Escondendo a barra de ferramentas de desenho padrão
-        drawControlRef.current = new L.Control.Draw({
-          position: 'bottomleft',
-          draw: {
-            polygon: false,
-            marker: false,
-            circlemarker: false,
-            polyline: false,
-            rectangle: false,
-            circle: {
-              shapeOptions: {
-                color: '#D81B2B'
-              }
-            },
-          },
-          edit: {
-            featureGroup: drawnItemsRef.current,
-            remove: false // Desabilitar a edição por padrão
-          }
-        });
-        mapInstance.current.addControl(drawControlRef.current);
-        // Oculta o controle de desenho da interface
-        drawControlRef.current.getContainer().style.display = 'none';
-
-        mapInstance.current.on(L.Draw.Event.CREATED, (event: any) => {
-          const layer = event.layer;
-          const drawnLatLng = layer.getLatLng();
-          const drawnRadius = layer.getRadius();
-
-          drawnItemsRef.current.clearLayers();
-          drawnItemsRef.current.addLayer(layer);
-          
-          const foundProperties = MOCK_PROPERTIES.filter(prop => {
-            const propLatLng = L.latLng(prop.lat, prop.lng);
-            const distance = drawnLatLng.distanceTo(propLatLng);
-            return distance <= drawnRadius;
-          });
-
-          setPropertiesInZone(foundProperties);
-          setIsSidebarOpen(foundProperties.length > 0);
-
-          propertyMarkersRef.current.clearLayers();
-          if (foundProperties.length > 0) {
-              foundProperties.forEach(prop => {
-                  L.marker([prop.lat, prop.lng])
-                      .addTo(propertyMarkersRef.current)
-                      .bindPopup(`<b>${prop.title}</b><br>${prop.address}`);
-              });
-          }
-        });
-        
-        setIsMapReady(true);
+    const initializeMap = () => {
+      // Garante que o mapa não seja inicializado múltiplas vezes ou no componente desmontado
+      if (!mapRef.current || !isMounted || mapInstance.current) {
+        return;
       }
-    }, 100); // Verifica a cada 100ms
+      
+      mapInstance.current = L.map(mapRef.current, {
+        zoomControl: false,
+        scrollWheelZoom: true, // Garante que o zoom com scroll do mouse esteja ativo.
+      }).setView([-13.29, -41.71], 7);
+
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+      }).addTo(mapInstance.current);
+      
+      L.control.zoom({ position: 'bottomright' }).addTo(mapInstance.current);
+
+      drawnItemsRef.current = new L.FeatureGroup();
+      mapInstance.current.addLayer(drawnItemsRef.current);
+
+      propertyMarkersRef.current = L.layerGroup();
+      mapInstance.current.addLayer(propertyMarkersRef.current);
+
+      drawControlRef.current = new L.Control.Draw({
+        position: 'bottomleft',
+        draw: {
+          polygon: false, marker: false, circlemarker: false, polyline: false, rectangle: false,
+          circle: { shapeOptions: { color: '#D81B2B' } },
+        },
+        edit: { featureGroup: drawnItemsRef.current, remove: false }
+      });
+      mapInstance.current.addControl(drawControlRef.current);
+      drawControlRef.current.getContainer().style.display = 'none';
+
+      mapInstance.current.on(L.Draw.Event.CREATED, (event: any) => {
+        const layer = event.layer;
+        const drawnLatLng = layer.getLatLng();
+        const drawnRadius = layer.getRadius();
+
+        drawnItemsRef.current.clearLayers();
+        drawnItemsRef.current.addLayer(layer);
+        
+        const foundProperties = MOCK_PROPERTIES.filter(prop => {
+          const propLatLng = L.latLng(prop.lat, prop.lng);
+          const distance = drawnLatLng.distanceTo(propLatLng);
+          return distance <= drawnRadius;
+        });
+
+        setPropertiesInZone(foundProperties);
+        setIsSidebarOpen(foundProperties.length > 0);
+
+        propertyMarkersRef.current.clearLayers();
+        if (foundProperties.length > 0) {
+            foundProperties.forEach(prop => {
+                L.marker([prop.lat, prop.lng])
+                    .addTo(propertyMarkersRef.current)
+                    .bindPopup(`<b>${prop.title}</b><br>${prop.address}`);
+            });
+        }
+      });
+    };
+    
+    // Inicia o carregamento dos scripts do mapa em sequência
+    loadScript('https://unpkg.com/leaflet@1.9.4/dist/leaflet.js')
+      .then(() => loadScript('https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js'))
+      .then(() => {
+        if (isMounted) {
+          initializeMap();
+          setIsMapReady(true);
+        }
+      })
+      .catch((error) => {
+        console.error('Falha ao carregar os scripts do mapa:', error);
+      });
 
     return () => {
-      clearInterval(intervalId);
+      isMounted = false;
       if (mapInstance.current) {
         mapInstance.current.remove();
         mapInstance.current = null;
@@ -124,15 +138,16 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack }) => {
       <div ref={mapRef} className="w-full h-full" />
       
       {!isMapReady && (
-        <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-50">
+        // z-index alto para garantir que a tela de carregamento fique sobre tudo
+        <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-[1200]">
           <p className="text-brand-navy text-lg font-semibold animate-pulse">Carregando mapa...</p>
         </div>
       )}
 
       {isMapReady && (
         <>
-          {/* Header com breadcrumbs e título */}
-          <div className="absolute top-0 left-0 w-full p-6 z-10 bg-gradient-to-b from-white/80 to-transparent">
+          {/* Header com z-index alto para ficar sobre o mapa */}
+          <div className="absolute top-0 left-0 w-full p-6 z-[1000] bg-gradient-to-b from-white/80 to-transparent">
              <div className="container mx-auto">
                 <div className="text-sm mb-4">
                     <span onClick={onBack} className="text-brand-red hover:underline cursor-pointer">Início</span>
@@ -143,30 +158,30 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack }) => {
             </div>
           </div>
 
-          {/* Caixa de instrução */}
-          <div className="absolute top-40 left-1/2 -translate-x-1/2 bg-white/90 p-4 rounded-lg shadow-md max-w-sm text-center z-10">
+          {/* Caixa de instrução com z-index alto */}
+          <div className="absolute top-40 left-1/2 -translate-x-1/2 bg-white/90 p-4 rounded-lg shadow-md max-w-sm text-center z-[1000]">
             <p className="text-brand-navy">
               Move o mapa para localizar a área que te interessa antes de desenhar a zona onde procuras
             </p>
           </div>
 
-          {/* Botão para desenhar */}
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10">
+          {/* Botão para desenhar com z-index alto */}
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[1000]">
             <button
               onClick={handleDrawClick}
-              className="bg-brand-red hover:opacity-90 text-white font-bold py-3 px-8 rounded-full shadow-2xl transition duration-300 flex items-center space-x-2"
+              className="bg-brand-red hover:opacity-90 text-white font-bold py-2 px-6 rounded-full shadow-2xl transition duration-300 flex items-center space-x-2"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L16.732 3.732z" />
               </svg>
-              <span>Desenhar a tua zona</span>
+              <span>Desenhar sua área</span>
             </button>
           </div>
         </>
       )}
 
-      {/* Painel lateral de resultados */}
-      <aside className={`absolute top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl z-20 transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+      {/* Painel lateral de resultados com z-index mais alto para sobrepor outros elementos da UI */}
+      <aside className={`absolute top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl z-[1100] transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : 'translate-x-full'}`}>
         <div className="h-full flex flex-col">
             <div className="p-4 border-b flex justify-between items-center">
                 <h3 className="text-xl font-bold text-brand-navy">{propertiesInZone.length} imóveis encontrados</h3>
