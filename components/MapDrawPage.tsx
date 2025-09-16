@@ -46,12 +46,14 @@ const DrawControl = ({ onCreated, onDeleted }: { onCreated: (e: any) => void, on
   const map = useMap();
   
   useEffect(() => {
+    // A verificação é mantida como uma segurança extra, mas a renderização condicional no pai é a principal proteção.
     if (!map || typeof L.Control.Draw === 'undefined') return;
 
     const drawnItems = new L.FeatureGroup();
     map.addLayer(drawnItems);
 
     const drawControl = new L.Control.Draw({
+      position: 'topleft', // O CSS em index.html irá mover este container para 'bottomcenter'
       edit: {
         featureGroup: drawnItems,
         edit: false,
@@ -88,11 +90,10 @@ const DrawControl = ({ onCreated, onDeleted }: { onCreated: (e: any) => void, on
     return () => {
       map.off(L.Draw.Event.CREATED, handleCreated);
       map.off(L.Draw.Event.DELETED, handleDeleted);
-       // FIX: Property 'hasControl' does not exist on type 'Map'.
-       // The control is removed directly since it's added within this effect.
-       map.removeControl(drawControl);
+      // FIX: Property 'hasControl' does not exist on type 'Map'. It is safe to call removeControl without checking.
+      map.removeControl(drawControl);
       if(map.hasLayer(drawnItems)) {
-          map.removeLayer(drawnItems);
+        map.removeLayer(drawnItems);
       }
     };
   }, [map, onCreated, onDeleted]);
@@ -104,7 +105,40 @@ const DrawControl = ({ onCreated, onDeleted }: { onCreated: (e: any) => void, on
 const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
   const [propertiesInZone, setPropertiesInZone] = useState<Property[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isDrawPluginLoaded, setIsDrawPluginLoaded] = useState(false);
   const { t } = useLanguage();
+
+  useEffect(() => {
+    const checkDrawPlugin = () => 
+        typeof window !== 'undefined' && 
+        window.L && 
+        window.L.Control && 
+        window.L.Control.Draw;
+
+    if (checkDrawPlugin()) {
+      setIsDrawPluginLoaded(true);
+      return;
+    }
+    
+    const interval = setInterval(() => {
+      if (checkDrawPlugin()) {
+        setIsDrawPluginLoaded(true);
+        clearInterval(interval);
+      }
+    }, 100); // Poll every 100ms
+
+    const timeout = setTimeout(() => {
+        clearInterval(interval);
+        if (!checkDrawPlugin()){
+            console.error("Leaflet Draw plugin failed to load after 5 seconds.");
+        }
+    }, 5000);
+
+    return () => {
+        clearInterval(interval);
+        clearTimeout(timeout);
+    };
+  }, []);
 
   const handleDrawCreated = useCallback((e: any) => {
     const layer = e.layer;
@@ -151,7 +185,7 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
         
         <MapUpdater userLocation={userLocation} onPropertiesFound={handlePropertiesFound} />
         
-        {!userLocation && <DrawControl onCreated={handleDrawCreated} onDeleted={handleDrawDeleted} />}
+        {isDrawPluginLoaded && !userLocation && <DrawControl onCreated={handleDrawCreated} onDeleted={handleDrawDeleted} />}
         
         {propertiesInZone.map(prop => (
           <Marker key={prop.id} position={[prop.lat, prop.lng]}>
