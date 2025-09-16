@@ -36,8 +36,9 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack }) => {
           zoomControl: false
         }).setView([-13.29, -41.71], 7);
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        // Usando o tile layer da CARTO (Positron) para um visual mais limpo
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
         }).addTo(mapInstance.current);
         
         L.control.zoom({ position: 'bottomright' }).addTo(mapInstance.current);
@@ -48,6 +49,7 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack }) => {
         propertyMarkersRef.current = L.layerGroup();
         mapInstance.current.addLayer(propertyMarkersRef.current);
 
+        // Escondendo a barra de ferramentas de desenho padrão
         drawControlRef.current = new L.Control.Draw({
           position: 'bottomleft',
           draw: {
@@ -64,10 +66,12 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack }) => {
           },
           edit: {
             featureGroup: drawnItemsRef.current,
-            remove: true
+            remove: false // Desabilitar a edição por padrão
           }
         });
         mapInstance.current.addControl(drawControlRef.current);
+        // Oculta o controle de desenho da interface
+        drawControlRef.current.getContainer().style.display = 'none';
 
         mapInstance.current.on(L.Draw.Event.CREATED, (event: any) => {
           const layer = event.layer;
@@ -96,12 +100,6 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack }) => {
           }
         });
         
-        mapInstance.current.on(L.Draw.Event.DELETED, () => {
-          setPropertiesInZone([]);
-          setIsSidebarOpen(false);
-          propertyMarkersRef.current.clearLayers();
-        });
-
         setIsMapReady(true);
       }
     }, 100); // Verifica a cada 100ms
@@ -131,21 +129,22 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack }) => {
         </div>
       )}
 
-      {/* Header com botão de voltar */}
-      <header className="absolute top-0 left-0 p-4 z-10">
-        <button 
-          onClick={onBack} 
-          className="bg-white p-2 rounded-full shadow-lg hover:bg-gray-100 transition-colors"
-          aria-label="Voltar para a página inicial"
-        >
-          <ArrowLeftIcon className="w-6 h-6 text-brand-dark" />
-        </button>
-      </header>
-
       {isMapReady && (
         <>
+          {/* Header com breadcrumbs e título */}
+          <div className="absolute top-0 left-0 w-full p-6 z-10 bg-gradient-to-b from-white/80 to-transparent">
+             <div className="container mx-auto">
+                <div className="text-sm mb-4">
+                    <span onClick={onBack} className="text-brand-red hover:underline cursor-pointer">Início</span>
+                    <span className="text-brand-gray mx-2">&gt;</span>
+                    <span className="text-brand-dark font-medium">Desenhar no mapa</span>
+                </div>
+                <h1 className="text-4xl font-bold text-brand-navy">Desenhe a sua pesquisa na Bahia</h1>
+            </div>
+          </div>
+
           {/* Caixa de instrução */}
-          <div className="absolute top-6 left-1/2 -translate-x-1/2 bg-white/90 p-4 rounded-lg shadow-md max-w-sm text-center z-10">
+          <div className="absolute top-40 left-1/2 -translate-x-1/2 bg-white/90 p-4 rounded-lg shadow-md max-w-sm text-center z-10">
             <p className="text-brand-navy">
               Move o mapa para localizar a área que te interessa antes de desenhar a zona onde procuras
             </p>
@@ -155,9 +154,12 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack }) => {
           <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10">
             <button
               onClick={handleDrawClick}
-              className="bg-brand-red hover:opacity-90 text-white font-bold py-3 px-8 rounded-full shadow-2xl transition duration-300"
+              className="bg-brand-red hover:opacity-90 text-white font-bold py-3 px-8 rounded-full shadow-2xl transition duration-300 flex items-center space-x-2"
             >
-              Desenhar a tua zona
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L16.732 3.732z" />
+              </svg>
+              <span>Desenhar a tua zona</span>
             </button>
           </div>
         </>
