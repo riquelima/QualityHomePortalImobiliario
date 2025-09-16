@@ -226,6 +226,18 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
             </>
           )}
 
+          {/* Botão para controlar o painel de resultados na busca por proximidade */}
+          {userLocation && propertiesInZone.length > 0 && (
+            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[1000]">
+              <button
+                onClick={() => setIsSidebarOpen(prev => !prev)}
+                className="bg-brand-navy hover:bg-brand-dark text-white font-bold py-3 px-6 rounded-full shadow-2xl transition duration-300"
+              >
+                {isSidebarOpen ? 'Ocultar Resultados' : `Ver ${propertiesInZone.length} Imóveis`}
+              </button>
+            </div>
+          )}
+
         </>
       )}
 
