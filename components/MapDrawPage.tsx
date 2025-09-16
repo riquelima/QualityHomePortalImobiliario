@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useRef } from 'react';
-// FIX: Removed unused FeatureGroup import.
 import { MapContainer, TileLayer, Marker, Popup, useMap, CircleMarker } from 'react-leaflet';
 import { MOCK_PROPERTIES } from './PropertyListings';
 import type { Property } from '../types';
@@ -16,11 +15,10 @@ interface MapDrawPageProps {
 // Componente para lidar com o controle de desenho do Leaflet Draw
 const DrawControl: React.FC<{ onDraw: (layer: any) => void }> = ({ onDraw }) => {
   const map = useMap();
-  // FIX: Initialize useRef with null to fix "Expected 1 arguments, but got 0" error.
   const drawControlRef = useRef<any>(null);
 
   useEffect(() => {
-    if (!map) return;
+    if (!map || !L.Control.Draw) return; // Defensive check
 
     const drawnItems = new L.FeatureGroup();
     map.addLayer(drawnItems);
@@ -52,13 +50,15 @@ const DrawControl: React.FC<{ onDraw: (layer: any) => void }> = ({ onDraw }) => 
       if (drawControlRef.current && map) {
         map.removeControl(drawControlRef.current);
       }
-      map.removeLayer(drawnItems);
+      if (map && drawnItems && map.hasLayer(drawnItems)) {
+        map.removeLayer(drawnItems);
+      }
     };
   }, [map, onDraw]);
   
   // Função para ativar o desenho
   const startDrawing = () => {
-    if (map && L?.Draw?.Circle) {
+    if (map && L?.Draw?.Circle && drawControlRef.current) {
         new L.Draw.Circle(map, drawControlRef.current.options.draw.circle).enable();
     }
   };
@@ -103,6 +103,26 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
   const [propertiesInZone, setPropertiesInZone] = useState<Property[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { t } = useLanguage();
+  const [isDrawReady, setIsDrawReady] = useState(false);
+
+  // Efeito para verificar se a biblioteca Leaflet Draw está pronta
+  useEffect(() => {
+    // Se for busca por proximidade, não precisamos do Draw Control
+    if (userLocation) {
+      setIsDrawReady(true);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      if (typeof L !== 'undefined' && L.Control && L.Control.Draw) {
+        setIsDrawReady(true);
+        clearInterval(interval);
+      }
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, [userLocation]);
+
 
   const handleDraw = (layer: any) => {
     const drawnLatLng = layer.getLatLng();
@@ -132,6 +152,14 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
     }
   };
 
+  if (!isDrawReady) {
+    return (
+      <div className="fixed inset-0 bg-white z-[100] flex items-center justify-center">
+        <p className="text-brand-navy text-lg animate-pulse">{t('map.loading')}</p>
+      </div>
+    );
+  }
+
   return (
     <div className="fixed inset-0 bg-white z-[100]">
       <MapContainer 
@@ -140,6 +168,7 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
         zoomControl={false}
         scrollWheelZoom={true}
         style={{ height: '100%', width: '100%' }}
+        placeholder={<div className="w-full h-full flex items-center justify-center bg-gray-100"><p>{t('map.loading')}</p></div>}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
@@ -148,7 +177,7 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
         
         <MapUpdater userLocation={userLocation} onPropertiesFound={handlePropertiesFound} />
 
-        {!userLocation && <DrawControl onDraw={handleDraw} />}
+        {!userLocation && isDrawReady && <DrawControl onDraw={handleDraw} />}
         
         {propertiesInZone.map(prop => (
           <Marker key={prop.id} position={[prop.lat, prop.lng]}>
