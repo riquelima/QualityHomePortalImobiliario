@@ -3,17 +3,65 @@ import SearchIcon from './icons/SearchIcon';
 import ChevronDownIcon from './icons/ChevronDownIcon';
 import DrawIcon from './icons/DrawIcon';
 import GeoIcon from './icons/GeoIcon';
+import { GoogleGenAI } from '@google/genai';
 
 interface HeroProps {
   onDrawOnMapClick: () => void;
   onSearchNearMe: (location: { lat: number, lng: number }) => void;
 }
 
+const API_KEY = 'AIzaSyCsX9l10XCu3TtSCU1BSx-qOYrwUKYw2xk';
+
 const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe }) => {
   const [activeTab, setActiveTab] = useState('comprar');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isLoadingGeo, setIsLoadingGeo] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
+  
+  const [heroTitle, setHeroTitle] = useState('Tudo começa hoje');
+  const [isLoadingTitle, setIsLoadingTitle] = useState(true);
+
+  // Efeito para gerar título dinâmico com a IA do Gemini
+  useEffect(() => {
+    const generateTitle = async () => {
+      if (!API_KEY) {
+        console.error("API Key for Gemini is not configured.");
+        setIsLoadingTitle(false);
+        setHeroTitle("Encontre o seu lugar no mundo."); // Fallback title
+        return;
+      }
+
+      try {
+        const ai = new GoogleGenAI({ apiKey: API_KEY });
+        const prompt = `Crie uma frase de efeito muito curta para um portal imobiliário, com no máximo 7 palavras. Deve ser convidativa e direta.
+Exemplos de frases que gosto:
+- "Encontre seu imóvel aqui"
+- "Tudo começa hoje"
+- "Bem vindo a Quallity Home Portal Imobiliário"
+- "Que tal uma nova casa?"
+- "Alugue sem burocracia"
+- "Vamos agendar uma visita?"
+Gere uma nova frase nesse estilo. Não use aspas na resposta.`;
+        
+        const response = await ai.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: prompt,
+        });
+
+        const text = response.text.trim();
+        // Remove aspas se o modelo as retornar
+        setHeroTitle(text.replace(/["']/g, ""));
+      } catch (error) {
+        console.error("Erro ao gerar título com a IA:", error);
+        setHeroTitle("O seu próximo capítulo começa aqui."); // Fallback title on error
+      } finally {
+        setIsLoadingTitle(false);
+      }
+    };
+
+    generateTitle();
+  }, []); // Executa apenas uma vez na montagem do componente
+
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -53,8 +101,8 @@ const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe }) => {
       style={{ backgroundImage: "url('https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2')" }}
     >
       <div className="relative z-20 p-6 md:p-8 bg-white/95 backdrop-blur-sm rounded-lg shadow-2xl w-11/12 max-w-4xl">
-        <h1 className="text-4xl md:text-5xl font-bold text-brand-navy mb-6">
-          Tudo começa hoje
+        <h1 className={`text-4xl md:text-5xl font-bold text-brand-navy mb-6 transition-opacity duration-300 ${isLoadingTitle ? 'opacity-50 animate-pulse' : 'opacity-100'}`}>
+          {isLoadingTitle ? 'Carregando inspiração...' : heroTitle}
         </h1>
         
         <div className="bg-white p-2 rounded-lg">
