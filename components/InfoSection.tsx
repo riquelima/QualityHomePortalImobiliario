@@ -1,6 +1,10 @@
 import React from 'react';
 
-const InfoSection: React.FC = () => {
+interface InfoSectionProps {
+  onDrawOnMapClick: () => void;
+}
+
+const InfoSection: React.FC<InfoSectionProps> = ({ onDrawOnMapClick }) => {
   return (
     <section className="bg-brand-light-gray py-16">
       <div className="container mx-auto px-6">
@@ -11,7 +15,12 @@ const InfoSection: React.FC = () => {
             <div>
               <h3 className="text-xl font-bold text-brand-navy mb-2">Desenhe a sua área de busca</h3>
               <p className="text-brand-gray mb-4">Escolha exatamente a área que você procura no mapa.</p>
-              <a href="#" className="text-brand-red hover:underline font-medium">Desenhar sua área de busca</a>
+              <button 
+                onClick={onDrawOnMapClick} 
+                className="text-brand-red hover:underline font-medium text-left"
+              >
+                Desenhar sua área de busca
+              </button>
             </div>
           </div>
 

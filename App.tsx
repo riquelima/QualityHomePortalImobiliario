@@ -28,7 +28,7 @@ const App: React.FC = () => {
           onDrawOnMapClick={() => setPageState({ page: 'map', userLocation: null })} 
           onSearchNearMe={(location) => setPageState({ page: 'map', userLocation: location })}
         />
-        <InfoSection />
+        <InfoSection onDrawOnMapClick={() => setPageState({ page: 'map', userLocation: null })} />
         <PropertyListings />
       </main>
       <footer className="bg-brand-light-gray text-brand-gray py-8 text-center mt-20">
