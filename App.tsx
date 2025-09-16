@@ -6,7 +6,7 @@ import InfoSection from './components/InfoSection';
 import PropertyListings from './components/PropertyListings';
 import MapDrawPage from './components/MapDrawPage';
 import PublishAdPage from './components/PublishAdPage';
-import LoginModal from './components/LoginModal'; // Importar o novo modal
+import LoginModal from './components/LoginModal';
 import { useLanguage } from './contexts/LanguageContext';
 
 interface PageState {
@@ -16,7 +16,7 @@ interface PageState {
 
 const App: React.FC = () => {
   const [pageState, setPageState] = useState<PageState>({ page: 'home', userLocation: null });
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false); // Estado para o modal
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const { t } = useLanguage();
 
   const navigateHome = () => setPageState({ page: 'home', userLocation: null });
@@ -26,38 +26,50 @@ const App: React.FC = () => {
   const openLoginModal = () => setIsLoginModalOpen(true);
   const closeLoginModal = () => setIsLoginModalOpen(false);
 
-  if (pageState.page === 'map') {
-    return <MapDrawPage 
-              onBack={navigateHome} 
-              userLocation={pageState.userLocation} 
-           />;
-  }
-  
-  if (pageState.page === 'publish') {
-    return <PublishAdPage onBack={navigateHome} onPublishAdClick={openLoginModal} onOpenLoginModal={openLoginModal} />;
-  }
+  const renderCurrentPage = () => {
+    switch (pageState.page) {
+      case 'map':
+        return <MapDrawPage 
+                  onBack={navigateHome} 
+                  userLocation={pageState.userLocation} 
+               />;
+      case 'publish':
+        return <PublishAdPage 
+                  onBack={navigateHome} 
+                  onPublishAdClick={navigateToPublish}
+                  onOpenLoginModal={openLoginModal} 
+               />;
+      case 'home':
+      default:
+        return (
+          <div className="bg-white font-sans text-brand-dark">
+            <Header onPublishAdClick={navigateToPublish} onAccessClick={openLoginModal} />
+            <main>
+              <Hero 
+                onDrawOnMapClick={() => navigateToMap()} 
+                onSearchNearMe={(location) => navigateToMap(location)}
+              />
+              <InfoSection 
+                onDrawOnMapClick={() => navigateToMap()}
+                onPublishAdClick={navigateToPublish}
+              />
+              <PropertyListings />
+            </main>
+            <footer className="bg-brand-light-gray text-brand-gray py-8 text-center mt-20">
+              <div className="container mx-auto">
+                <p>&copy; {new Date().getFullYear()} {t('footer.text')}</p>
+              </div>
+            </footer>
+          </div>
+        );
+    }
+  };
 
   return (
-    <div className="bg-white font-sans text-brand-dark">
-      <Header onPublishAdClick={navigateToPublish} onAccessClick={openLoginModal} />
-      <main>
-        <Hero 
-          onDrawOnMapClick={() => navigateToMap()} 
-          onSearchNearMe={(location) => navigateToMap(location)}
-        />
-        <InfoSection 
-          onDrawOnMapClick={() => navigateToMap()}
-          onPublishAdClick={navigateToPublish}
-        />
-        <PropertyListings />
-      </main>
-      <footer className="bg-brand-light-gray text-brand-gray py-8 text-center mt-20">
-        <div className="container mx-auto">
-          <p>&copy; {new Date().getFullYear()} {t('footer.text')}</p>
-        </div>
-      </footer>
+    <>
+      {renderCurrentPage()}
       <LoginModal isOpen={isLoginModalOpen} onClose={closeLoginModal} />
-    </div>
+    </>
   );
 };
 
