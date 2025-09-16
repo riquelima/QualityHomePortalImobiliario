@@ -138,7 +138,6 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack }) => {
       <div ref={mapRef} className="w-full h-full" />
       
       {!isMapReady && (
-        // z-index alto para garantir que a tela de carregamento fique sobre tudo
         <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-[1200]">
           <p className="text-brand-navy text-lg font-semibold animate-pulse">Carregando mapa...</p>
         </div>
@@ -146,26 +145,23 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack }) => {
 
       {isMapReady && (
         <>
-          {/* Header com z-index alto para ficar sobre o mapa */}
-          <div className="absolute top-0 left-0 w-full p-6 z-[1000] bg-gradient-to-b from-white/80 to-transparent">
+          <div className="absolute top-0 left-0 w-full p-4 md:p-6 z-[1000] bg-gradient-to-b from-white/80 to-transparent">
              <div className="container mx-auto">
                 <div className="text-sm mb-4">
                     <span onClick={onBack} className="text-brand-red hover:underline cursor-pointer">Início</span>
                     <span className="text-brand-gray mx-2">&gt;</span>
                     <span className="text-brand-dark font-medium">Desenhar no mapa</span>
                 </div>
-                <h1 className="text-4xl font-bold text-brand-navy">Desenhe a sua pesquisa na Bahia</h1>
+                <h1 className="text-2xl md:text-4xl font-bold text-brand-navy">Desenhe a sua pesquisa na Bahia</h1>
             </div>
           </div>
 
-          {/* Caixa de instrução com z-index alto */}
-          <div className="absolute top-40 left-1/2 -translate-x-1/2 bg-white/90 p-4 rounded-lg shadow-md max-w-sm text-center z-[1000]">
+          <div className="absolute top-32 md:top-40 left-1/2 -translate-x-1/2 bg-white/90 p-4 rounded-lg shadow-md w-11/12 max-w-sm text-center z-[1000]">
             <p className="text-brand-navy">
               Move o mapa para localizar a área que te interessa antes de desenhar a zona onde procuras
             </p>
           </div>
 
-          {/* Botão para desenhar com z-index alto */}
           <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[1000]">
             <button
               onClick={handleDrawClick}
@@ -180,12 +176,32 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack }) => {
         </>
       )}
 
-      {/* Painel lateral de resultados com z-index mais alto para sobrepor outros elementos da UI */}
-      <aside className={`absolute top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl z-[1100] transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+      {/* Backdrop for mobile bottom sheet */}
+      {isSidebarOpen && (
+          <div 
+              onClick={() => setIsSidebarOpen(false)}
+              className="md:hidden fixed inset-0 bg-black/30 z-[1050] transition-opacity duration-300"
+          />
+      )}
+
+      {/* Results Panel: Bottom Sheet on mobile, Sidebar on desktop */}
+      <aside className={`
+        fixed md:absolute bottom-0 left-0 right-0 md:top-0 md:left-auto
+        h-2/3 md:h-full w-full md:max-w-md 
+        bg-white shadow-2xl z-[1100] rounded-t-2xl md:rounded-t-none
+        transform transition-transform duration-300 ease-in-out
+        ${isSidebarOpen 
+          ? 'translate-y-0 md:translate-x-0' 
+          : 'translate-y-full md:translate-y-0 md:translate-x-full'
+        }`}>
         <div className="h-full flex flex-col">
-            <div className="p-4 border-b flex justify-between items-center">
-                <h3 className="text-xl font-bold text-brand-navy">{propertiesInZone.length} imóveis encontrados</h3>
-                <button onClick={() => setIsSidebarOpen(false)} className="text-2xl text-brand-gray hover:text-brand-dark">&times;</button>
+            <div className="p-4 border-b flex-shrink-0">
+                 {/* Grab handle for mobile */}
+                <div className="md:hidden w-12 h-1.5 bg-gray-300 rounded-full mx-auto mb-2 cursor-grab" />
+                <div className="flex justify-between items-center">
+                    <h3 className="text-xl font-bold text-brand-navy">{propertiesInZone.length} imóveis encontrados</h3>
+                    <button onClick={() => setIsSidebarOpen(false)} className="text-2xl text-brand-gray hover:text-brand-dark">&times;</button>
+                </div>
             </div>
             <div className="overflow-y-auto p-4 flex-grow">
                 <div className="space-y-4">
