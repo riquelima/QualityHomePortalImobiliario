@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap, CircleMarker } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap, CircleMarker, FeatureGroup } from 'react-leaflet';
+import { EditControl } from 'react-leaflet-draw';
 import { MOCK_PROPERTIES } from './PropertyListings';
 import type { Property } from '../types';
 import PropertyCard from './PropertyCard';
@@ -11,63 +12,6 @@ interface MapDrawPageProps {
   onBack: () => void;
   userLocation?: { lat: number; lng: number } | null;
 }
-
-// Componente para lidar com o controle de desenho do Leaflet Draw
-const DrawControl: React.FC<{ onDraw: (layer: any) => void }> = ({ onDraw }) => {
-  const map = useMap();
-  const drawControlRef = useRef<any>(null);
-
-  useEffect(() => {
-    if (!map || !L.Control.Draw) return; // Defensive check
-
-    const drawnItems = new L.FeatureGroup();
-    map.addLayer(drawnItems);
-
-    drawControlRef.current = new L.Control.Draw({
-      position: 'topleft',
-      draw: {
-        polygon: false, marker: false, circlemarker: false, polyline: false, rectangle: false,
-        circle: { shapeOptions: { color: '#D81B2B' } },
-      },
-      edit: { featureGroup: drawnItems, remove: false },
-    });
-
-    map.addControl(drawControlRef.current);
-    
-    map.on(L.Draw.Event.CREATED, (event: any) => {
-      drawnItems.clearLayers();
-      const layer = event.layer;
-      drawnItems.addLayer(layer);
-      onDraw(layer);
-    });
-
-    // Esconde a toolbar de desenho por padrão, será ativada por botão
-    if (drawControlRef.current.getContainer()) {
-      drawControlRef.current.getContainer().style.display = 'none';
-    }
-
-    return () => {
-      if (drawControlRef.current && map) {
-        map.removeControl(drawControlRef.current);
-      }
-      if (map && drawnItems && map.hasLayer(drawnItems)) {
-        map.removeLayer(drawnItems);
-      }
-    };
-  }, [map, onDraw]);
-  
-  // Função para ativar o desenho
-  const startDrawing = () => {
-    if (map && L?.Draw?.Circle && drawControlRef.current) {
-        new L.Draw.Circle(map, drawControlRef.current.options.draw.circle).enable();
-    }
-  };
-  
-  (window as any).startDrawing = startDrawing;
-
-  return null;
-};
-
 
 // Componente para atualizar a visão do mapa e limpar camadas
 const MapUpdater: React.FC<{ 
@@ -103,28 +47,16 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
   const [propertiesInZone, setPropertiesInZone] = useState<Property[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { t } = useLanguage();
-  const [isDrawReady, setIsDrawReady] = useState(false);
+  const featureGroupRef = useRef<any>(null);
 
-  // Efeito para verificar se a biblioteca Leaflet Draw está pronta
-  useEffect(() => {
-    // Se for busca por proximidade, não precisamos do Draw Control
-    if (userLocation) {
-      setIsDrawReady(true);
-      return;
+  const onCreated = (e: any) => {
+    const layer = e.layer;
+    if (featureGroupRef.current) {
+        // Limpa desenhos anteriores para permitir apenas uma área de busca por vez
+        featureGroupRef.current.clearLayers();
+        featureGroupRef.current.addLayer(layer);
     }
 
-    const interval = setInterval(() => {
-      if (typeof L !== 'undefined' && L.Control && L.Control.Draw) {
-        setIsDrawReady(true);
-        clearInterval(interval);
-      }
-    }, 100);
-
-    return () => clearInterval(interval);
-  }, [userLocation]);
-
-
-  const handleDraw = (layer: any) => {
     const drawnLatLng = layer.getLatLng();
     const drawnRadius = layer.getRadius();
 
@@ -141,23 +73,6 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
   const handlePropertiesFound = (props: Property[]) => {
       setPropertiesInZone(props);
       setIsSidebarOpen(props.length > 0);
-  }
-
-  const handleDrawClick = () => {
-    setPropertiesInZone([]);
-    setIsSidebarOpen(false);
-    // Chama a função global para iniciar o desenho
-    if ((window as any).startDrawing) {
-        (window as any).startDrawing();
-    }
-  };
-
-  if (!isDrawReady) {
-    return (
-      <div className="fixed inset-0 bg-white z-[100] flex items-center justify-center">
-        <p className="text-brand-navy text-lg animate-pulse">{t('map.loading')}</p>
-      </div>
-    );
   }
 
   return (
@@ -177,7 +92,30 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
         
         <MapUpdater userLocation={userLocation} onPropertiesFound={handlePropertiesFound} />
 
-        {!userLocation && isDrawReady && <DrawControl onDraw={handleDraw} />}
+        <FeatureGroup ref={featureGroupRef}>
+            {!userLocation && (
+                <EditControl
+                    position="topleft"
+                    onCreated={onCreated}
+                    draw={{
+                        rectangle: false,
+                        polygon: false,
+                        circlemarker: false,
+                        marker: false,
+                        polyline: false,
+                        circle: {
+                            shapeOptions: {
+                                color: '#D81B2B'
+                            }
+                        }
+                    }}
+                    edit={{
+                        edit: false,
+                        remove: true
+                    }}
+                />
+            )}
+        </FeatureGroup>
         
         {propertiesInZone.map(prop => (
           <Marker key={prop.id} position={[prop.lat, prop.lng]}>
@@ -214,25 +152,11 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
       </div>
       
       {!userLocation && (
-        <>
-          <div className="absolute top-32 md:top-40 left-1/2 -translate-x-1/2 bg-white/90 p-4 rounded-lg shadow-md w-11/12 max-w-sm text-center z-[1000]">
-            <p className="text-brand-navy">
-              {t('map.drawInstruction')}
-            </p>
-          </div>
-
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[1000]">
-            <button
-              onClick={handleDrawClick}
-              className="bg-brand-red hover:opacity-90 text-white font-bold py-2 px-6 rounded-full shadow-2xl transition duration-300 flex items-center space-x-2"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L16.732 3.732z" />
-              </svg>
-              <span>{t('map.drawButton')}</span>
-            </button>
-          </div>
-        </>
+        <div className="absolute top-32 md:top-40 left-1/2 -translate-x-1/2 bg-white/90 p-4 rounded-lg shadow-md w-11/12 max-w-sm text-center z-[1000] pointer-events-none">
+          <p className="text-brand-navy">
+            {t('map.drawInstructionNew')}
+          </p>
+        </div>
       )}
 
       {userLocation && propertiesInZone.length > 0 && (

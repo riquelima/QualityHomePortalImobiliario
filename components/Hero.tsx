@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import SearchIcon from './icons/SearchIcon';
 import ChevronDownIcon from './icons/ChevronDownIcon';
@@ -86,7 +85,8 @@ const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe }) => {
       () => {
         setIsLoadingGeo(false);
         alert(t('hero.geolocationError'));
-      }
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   };
 
