@@ -14,22 +14,6 @@ interface MapDrawPageProps {
   userLocation?: { lat: number; lng: number } | null;
 }
 
-// Função auxiliar para carregar scripts dinamicamente e de forma robusta
-const loadScript = (src: string) => {
-  return new Promise<void>((resolve, reject) => {
-    // Evita carregar o mesmo script duas vezes
-    if (document.querySelector(`script[src="${src}"]`)) {
-      return resolve();
-    }
-    const script = document.createElement('script');
-    script.src = src;
-    script.async = true;
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error(`Falha ao carregar o script: ${src}`));
-    document.head.appendChild(script);
-  });
-};
-
 const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<any>(null);
@@ -141,19 +125,9 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
       }
     };
     
-    // Inicia o carregamento dos scripts do mapa em sequência
-    loadScript('https://unpkg.com/leaflet@1.9.4/dist/leaflet.js')
-      .then(() => loadScript('https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js'))
-      .then(() => {
-        if (isMounted) {
-          initializeMap();
-          setIsMapReady(true);
-        }
-      })
-      .catch((error) => {
-        console.error('Falha ao carregar os scripts do mapa:', error);
-      });
-
+    initializeMap();
+    setIsMapReady(true);
+    
     return () => {
       isMounted = false;
       if (mapInstance.current) {
