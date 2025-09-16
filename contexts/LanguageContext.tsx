@@ -196,6 +196,15 @@ const ptTranslations = {
     "description": "Não foi possível obter a sua localização. Isto pode acontecer se você negou o pedido de permissão ou se o seu navegador não suporta geolocalização. Por favor, verifique as permissões de site do seu navegador e tente novamente.",
     "closeButton": "OK"
   },
+  "searchResults": {
+    "breadcrumb": "Resultados da busca",
+    "title": "Imóveis para \"{query}\"",
+    "subtitle": "{count} imóveis encontrados",
+    "noResults": {
+      "title": "Nenhum resultado encontrado",
+      "description": "Tente ajustar seus termos de busca ou pesquisar por uma localização diferente."
+    }
+  },
   "footer": {
     "text": "Quality Home Portal Imobiliário. Todos os direitos reservados."
   }
@@ -394,6 +403,15 @@ const enTranslations = {
     "description": "We could not get your location. This might happen if you denied the permission request or if your browser does not support geolocation. Please check your browser's site permissions and try again.",
     "closeButton": "OK"
   },
+  "searchResults": {
+    "breadcrumb": "Search Results",
+    "title": "Properties for \"{query}\"",
+    "subtitle": "{count} properties found",
+    "noResults": {
+      "title": "No results found",
+      "description": "Try adjusting your search terms or searching for a different location."
+    }
+  },
   "footer": {
     "text": "Quality Home Real Estate Portal. All rights reserved."
   }
@@ -591,6 +609,15 @@ const esTranslations = {
     "title": "Error de Ubicación",
     "description": "No pudimos obtener tu ubicación. Esto puede ocurrir si denegaste la solicitud de permiso o si tu navegador no es compatible con la geolocalización. Por favor, comprueba los permisos del sitio en tu navegador e inténtalo de nuevo.",
     "closeButton": "OK"
+  },
+  "searchResults": {
+    "breadcrumb": "Resultados de la búsqueda",
+    "title": "Inmuebles para \"{query}\"",
+    "subtitle": "{count} inmuebles encontrados",
+    "noResults": {
+      "title": "No se encontraron resultados",
+      "description": "Intenta ajustar tus términos de búsqueda o buscar una ubicación diferente."
+    }
   },
   "footer": {
     "text": "Quality Home Portal Inmobiliario. Todos los derechos reservados."

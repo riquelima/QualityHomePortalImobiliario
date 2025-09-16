@@ -3,18 +3,20 @@ import React, { useState } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import InfoSection from './components/InfoSection';
-import PropertyListings from './components/PropertyListings';
+import PropertyListings, { MOCK_PROPERTIES } from './components/PropertyListings';
 import MapDrawPage from './components/MapDrawPage';
 import PublishAdPage from './components/PublishAdPage';
 import PublishJourneyPage from './components/PublishJourneyPage';
 import LoginModal from './components/LoginModal';
 import GeolocationErrorModal from './components/GeolocationErrorModal';
+import SearchResultsPage from './components/SearchResultsPage';
 import { useLanguage } from './contexts/LanguageContext';
 import type { User } from './types';
 
 interface PageState {
-  page: 'home' | 'map' | 'publish' | 'publish-journey';
+  page: 'home' | 'map' | 'publish' | 'publish-journey' | 'searchResults';
   userLocation: { lat: number; lng: number } | null;
+  searchQuery?: string;
 }
 
 // Função para decodificar o JWT do Google de forma segura
@@ -34,17 +36,18 @@ function decodeJwt(token: string): any {
 }
 
 const App: React.FC = () => {
-  const [pageState, setPageState] = useState<PageState>({ page: 'home', userLocation: null });
+  const [pageState, setPageState] = useState<PageState>({ page: 'home', userLocation: null, searchQuery: '' });
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isGeoErrorModalOpen, setIsGeoErrorModalOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [loginIntent, setLoginIntent] = useState<'default' | 'publish'>('default');
   const { t } = useLanguage();
 
-  const navigateHome = () => setPageState({ page: 'home', userLocation: null });
-  const navigateToMap = (location: { lat: number; lng: number } | null = null) => setPageState({ page: 'map', userLocation: location });
-  const navigateToPublish = () => setPageState({ page: 'publish', userLocation: null });
-  const navigateToPublishJourney = () => setPageState({ page: 'publish-journey', userLocation: null });
+  const navigateHome = () => setPageState({ page: 'home', userLocation: null, searchQuery: '' });
+  const navigateToMap = (location: { lat: number; lng: number } | null = null) => setPageState({ page: 'map', userLocation: location, searchQuery: '' });
+  const navigateToPublish = () => setPageState({ page: 'publish', userLocation: null, searchQuery: '' });
+  const navigateToPublishJourney = () => setPageState({ page: 'publish-journey', userLocation: null, searchQuery: '' });
+  const navigateToSearchResults = (query: string) => setPageState({ page: 'searchResults', userLocation: null, searchQuery: query });
   
   const openLoginModal = (intent: 'default' | 'publish' = 'default') => {
     setLoginIntent(intent);
@@ -101,6 +104,22 @@ const App: React.FC = () => {
                   user={user}
                   onLogout={handleLogout}
                 />;
+      case 'searchResults':
+        const query = pageState.searchQuery?.toLowerCase() ?? '';
+        const filteredProperties = query
+          ? MOCK_PROPERTIES.filter(p =>
+            p.title.toLowerCase().includes(query) || p.address.toLowerCase().includes(query)
+          )
+          : [];
+        return <SearchResultsPage
+          onBack={navigateHome}
+          searchQuery={pageState.searchQuery ?? ''}
+          properties={filteredProperties}
+          onPublishAdClick={navigateToPublish}
+          onAccessClick={() => openLoginModal('default')}
+          user={user}
+          onLogout={handleLogout}
+        />;
       case 'home':
       default:
         return (
@@ -111,6 +130,7 @@ const App: React.FC = () => {
                 onDrawOnMapClick={() => navigateToMap()} 
                 onSearchNearMe={(location) => navigateToMap(location)}
                 onGeolocationError={openGeoErrorModal}
+                onSearchSubmit={navigateToSearchResults}
               />
               <InfoSection 
                 onDrawOnMapClick={() => navigateToMap()}

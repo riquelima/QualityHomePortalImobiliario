@@ -11,12 +11,14 @@ interface HeroProps {
   onDrawOnMapClick: () => void;
   onSearchNearMe: (location: { lat: number, lng: number }) => void;
   onGeolocationError: () => void;
+  onSearchSubmit: (query: string) => void;
 }
 
-const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe, onGeolocationError }) => {
+const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe, onGeolocationError, onSearchSubmit }) => {
   const [activeTab, setActiveTab] = useState('comprar');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isLoadingGeo, setIsLoadingGeo] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const { t, language } = useLanguage();
   
@@ -89,8 +91,15 @@ const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe, onGeoloca
         setIsLoadingGeo(false);
         onGeolocationError();
       },
-      { enableHighAccuracy: false, timeout: 10000, maximumAge: 0 }
+      { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
     );
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      onSearchSubmit(searchQuery.trim());
+    }
   };
 
   return (
@@ -125,7 +134,7 @@ const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe, onGeoloca
             </button>
           </div>
 
-          <form className="flex flex-col md:flex-row items-center gap-2">
+          <form className="flex flex-col md:flex-row items-center gap-2" onSubmit={handleSearchSubmit}>
             <div className="relative w-full md:w-auto">
               <select className="w-full md:w-52 appearance-none bg-white border border-gray-300 rounded-md px-4 py-3 pr-8 focus:outline-none focus:ring-2 focus:ring-brand-red text-brand-dark">
                 <option>{t('hero.propertyTypes.housesAndApts')}</option>
@@ -141,6 +150,8 @@ const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe, onGeoloca
                 placeholder={t('hero.locationPlaceholder')}
                 className="w-full px-10 py-3 rounded-md text-brand-dark border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-red"
                 onFocus={() => setIsDropdownOpen(true)}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
               {isDropdownOpen && (
                 <div className="absolute top-full left-0 w-full bg-white border border-gray-200 rounded-b-md shadow-lg z-20 text-left">
