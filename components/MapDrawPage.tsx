@@ -38,7 +38,8 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
         const map = L.map(mapRef.current, {
             zoomControl: false,
             scrollWheelZoom: true,
-        });
+        }).setView([-12.9777, -38.5016], 13); // Define a visualização inicial aqui
+        
         mapInstance.current = map;
 
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
@@ -88,8 +89,13 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
                 });
             }
         });
+        
+        // Garante que o mapa esteja totalmente inicializado antes de remover a tela de carregamento
+        map.whenReady(() => {
+            map.invalidateSize(); // Garante que o tamanho do mapa está correto
+            setIsMapReady(true);
+        });
 
-        setIsMapReady(true);
     } catch (error) {
         console.error("Failed to initialize map:", error);
     }
@@ -162,7 +168,7 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
           drawControlRef.current.getContainer().style.display = 'none';
         }
 
-        map.setView([-12.9777, -38.5016], 13);
+        map.setView([-12.9777, -38.5016], 13); // Garante a visualização padrão
         setPropertiesInZone([]);
         setIsSidebarOpen(false);
     }
