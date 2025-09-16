@@ -26,14 +26,14 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
   const [isMapReady, setIsMapReady] = useState(false);
   const { t } = useLanguage();
 
-  // Efeito para configuração única e inicialização do mapa
+  // Efeito para garantir que as bibliotecas Leaflet estejam carregadas antes da inicialização.
   useEffect(() => {
     if (mapInstance.current || !mapRef.current) {
-        return; // Garante que a inicialização ocorra apenas uma vez
+        return; // Previne reinicialização
     }
 
-    try {
-        // 1. Inicializa o mapa base
+    const initMap = () => {
+      try {
         const map = L.map(mapRef.current, {
             zoomControl: false,
             scrollWheelZoom: true,
@@ -46,16 +46,14 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
 
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        // 2. Configura as camadas de desenho e marcadores
         drawnItemsRef.current = new L.FeatureGroup();
         map.addLayer(drawnItemsRef.current);
 
         propertyMarkersRef.current = L.layerGroup();
         map.addLayer(propertyMarkersRef.current);
         
-        // 3. Configura o controle de desenho
         drawControlRef.current = new L.Control.Draw({
-            position: 'topleft', // Posição não importa, pois será ocultado
+            position: 'topleft',
             draw: {
                 polygon: false, marker: false, circlemarker: false, polyline: false, rectangle: false,
                 circle: { shapeOptions: { color: '#D81B2B' } },
@@ -63,7 +61,6 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
             edit: { featureGroup: drawnItemsRef.current, remove: false }
         });
         
-        // 4. Adiciona o listener para quando uma área é desenhada
         map.on(L.Draw.Event.CREATED, (event: any) => {
             const layer = event.layer;
             const drawnLatLng = layer.getLatLng();
@@ -89,16 +86,24 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
             });
         });
 
-        // 5. Finaliza e marca o mapa como pronto
         map.invalidateSize();
-        setIsMapReady(true);
+        setIsMapReady(true); // Mapa está pronto, remove o overlay de carregamento
 
-    } catch (error) {
-        console.error("Falha ao inicializar o mapa:", error);
-    }
+      } catch (error) {
+          console.error("Falha ao inicializar o mapa:", error);
+      }
+    };
     
-    // Função de limpeza ao desmontar o componente
+    // Verifica se as bibliotecas do Leaflet estão prontas, se não, espera.
+    const interval = setInterval(() => {
+      if (typeof L !== 'undefined' && L.Control && L.Draw) {
+        clearInterval(interval);
+        initMap();
+      }
+    }, 100);
+
     return () => {
+      clearInterval(interval);
       if (mapInstance.current) {
         mapInstance.current.remove();
         mapInstance.current = null;
@@ -114,7 +119,6 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
     
     const map = mapInstance.current;
     
-    // Limpa camadas de estados anteriores
     propertyMarkersRef.current.clearLayers();
     drawnItemsRef.current.clearLayers();
     map.eachLayer((layer: any) => {
@@ -124,7 +128,6 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
     });
 
     if (userLocation) {
-        // --- Modo de Busca por Proximidade ---
         if (drawControlRef.current._map) {
             map.removeControl(drawControlRef.current);
         }
@@ -151,7 +154,6 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
         });
 
     } else {
-        // --- Modo de Desenhar no Mapa ---
         if (!drawControlRef.current._map) {
             map.addControl(drawControlRef.current);
         }
@@ -184,7 +186,7 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
       <div ref={mapRef} className="w-full h-full" />
       
       {!isMapReady && (
-        <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-[1200]">
+        <div className="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center z-[1200]">
           <p className="text-brand-navy text-lg font-semibold animate-pulse">{t('map.loading')}</p>
         </div>
       )}
