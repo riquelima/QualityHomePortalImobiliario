@@ -1,6 +1,5 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap, CircleMarker, FeatureGroup } from 'react-leaflet';
-import { EditControl } from 'react-leaflet-draw';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, useMap, CircleMarker } from 'react-leaflet';
 import { MOCK_PROPERTIES } from './PropertyListings';
 import type { Property } from '../types';
 import PropertyCard from './PropertyCard';
@@ -22,7 +21,7 @@ const MapUpdater: React.FC<{
   const { t } = useLanguage();
 
   useEffect(() => {
-    map.invalidateSize(); // Garante que o mapa se redimensione corretamente
+    map.invalidateSize(); 
 
     if (userLocation) {
       map.setView([userLocation.lat, userLocation.lng], 14);
@@ -42,38 +41,98 @@ const MapUpdater: React.FC<{
   return null;
 };
 
+// Wrapper customizado para o controle de desenho do Leaflet
+const DrawControl = ({ onCreated, onDeleted }: { onCreated: (e: any) => void, onDeleted: () => void }) => {
+  const map = useMap();
+  
+  useEffect(() => {
+    if (!map || typeof L.Control.Draw === 'undefined') return;
+
+    const drawnItems = new L.FeatureGroup();
+    map.addLayer(drawnItems);
+
+    const drawControl = new L.Control.Draw({
+      edit: {
+        featureGroup: drawnItems,
+        edit: false,
+        remove: true,
+      },
+      draw: {
+        rectangle: false,
+        polygon: false,
+        circlemarker: false,
+        marker: false,
+        polyline: false,
+        circle: {
+          shapeOptions: {
+            color: '#D81B2B',
+          },
+        },
+      },
+    });
+    map.addControl(drawControl);
+
+    const handleCreated = (e: any) => {
+      drawnItems.clearLayers();
+      drawnItems.addLayer(e.layer);
+      onCreated(e);
+    };
+
+    const handleDeleted = () => {
+      onDeleted();
+    };
+
+    map.on(L.Draw.Event.CREATED, handleCreated);
+    map.on(L.Draw.Event.DELETED, handleDeleted);
+
+    return () => {
+      map.off(L.Draw.Event.CREATED, handleCreated);
+      map.off(L.Draw.Event.DELETED, handleDeleted);
+       // FIX: Property 'hasControl' does not exist on type 'Map'.
+       // The control is removed directly since it's added within this effect.
+       map.removeControl(drawControl);
+      if(map.hasLayer(drawnItems)) {
+          map.removeLayer(drawnItems);
+      }
+    };
+  }, [map, onCreated, onDeleted]);
+
+  return null;
+};
+
 
 const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
   const [propertiesInZone, setPropertiesInZone] = useState<Property[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { t } = useLanguage();
-  const featureGroupRef = useRef<any>(null);
 
-  const onCreated = (e: any) => {
+  const handleDrawCreated = (e: any) => {
     const layer = e.layer;
-    if (featureGroupRef.current) {
-        // Limpa desenhos anteriores para permitir apenas uma área de busca por vez
-        featureGroupRef.current.clearLayers();
-        featureGroupRef.current.addLayer(layer);
+    
+    if (layer.getLatLng && layer.getRadius) { // Verifica se é um círculo
+        const drawnLatLng = layer.getLatLng();
+        const drawnRadius = layer.getRadius();
+
+        const foundProperties = MOCK_PROPERTIES.filter(prop => {
+        const propLatLng = L.latLng(prop.lat, prop.lng);
+        const distance = drawnLatLng.distanceTo(propLatLng);
+        return distance <= drawnRadius;
+        });
+
+        setPropertiesInZone(foundProperties);
+        setIsSidebarOpen(foundProperties.length > 0);
     }
-
-    const drawnLatLng = layer.getLatLng();
-    const drawnRadius = layer.getRadius();
-
-    const foundProperties = MOCK_PROPERTIES.filter(prop => {
-      const propLatLng = L.latLng(prop.lat, prop.lng);
-      const distance = drawnLatLng.distanceTo(propLatLng);
-      return distance <= drawnRadius;
-    });
-
-    setPropertiesInZone(foundProperties);
-    setIsSidebarOpen(foundProperties.length > 0);
   };
+
+  const handleDrawDeleted = () => {
+      setPropertiesInZone([]);
+      setIsSidebarOpen(false);
+  }
   
-  const handlePropertiesFound = (props: Property[]) => {
+  const handlePropertiesFound = useCallback((props: Property[]) => {
       setPropertiesInZone(props);
       setIsSidebarOpen(props.length > 0);
-  }
+  }, []);
 
   return (
     <div className="fixed inset-0 bg-white z-[100]">
@@ -91,31 +150,8 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
         />
         
         <MapUpdater userLocation={userLocation} onPropertiesFound={handlePropertiesFound} />
-
-        <FeatureGroup ref={featureGroupRef}>
-            {!userLocation && (
-                <EditControl
-                    position="topleft"
-                    onCreated={onCreated}
-                    draw={{
-                        rectangle: false,
-                        polygon: false,
-                        circlemarker: false,
-                        marker: false,
-                        polyline: false,
-                        circle: {
-                            shapeOptions: {
-                                color: '#D81B2B'
-                            }
-                        }
-                    }}
-                    edit={{
-                        edit: false,
-                        remove: true
-                    }}
-                />
-            )}
-        </FeatureGroup>
+        
+        {!userLocation && <DrawControl onCreated={handleDrawCreated} onDeleted={handleDrawDeleted} />}
         
         {propertiesInZone.map(prop => (
           <Marker key={prop.id} position={[prop.lat, prop.lng]}>
