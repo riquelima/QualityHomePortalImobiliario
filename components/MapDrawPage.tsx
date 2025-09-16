@@ -26,42 +26,103 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
   const [isMapReady, setIsMapReady] = useState(false);
   const { t } = useLanguage();
 
+  // Efeito para inicializar a instância do mapa apenas uma vez
   useEffect(() => {
-    if (!mapRef.current) return;
-    
-    let isMounted = true;
+    if (!mapRef.current || mapInstance.current) {
+        return; // Inicializa apenas uma vez
+    }
 
-    const initializeMap = () => {
-      // Garante que o mapa não seja inicializado múltiplas vezes ou no componente desmontado
-      if (!mapRef.current || !isMounted || mapInstance.current) {
-        return;
-      }
-      
-      mapInstance.current = L.map(mapRef.current, {
+    const map = L.map(mapRef.current, {
         zoomControl: false,
-        scrollWheelZoom: true, // Garante que o zoom com scroll do mouse esteja ativo.
-      });
+        scrollWheelZoom: true,
+    });
+    mapInstance.current = map;
 
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-      }).addTo(mapInstance.current);
-      
-      L.control.zoom({ position: 'bottomright' }).addTo(mapInstance.current);
+    }).addTo(map);
+    
+    L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-      drawnItemsRef.current = new L.FeatureGroup();
-      mapInstance.current.addLayer(drawnItemsRef.current);
+    drawnItemsRef.current = new L.FeatureGroup();
+    map.addLayer(drawnItemsRef.current);
 
-      propertyMarkersRef.current = L.layerGroup();
-      mapInstance.current.addLayer(propertyMarkersRef.current);
-      
-      if (userLocation) {
-        // MODO: Busca por Proximidade
-        mapInstance.current.setView([userLocation.lat, userLocation.lng], 14);
+    propertyMarkersRef.current = L.layerGroup();
+    map.addLayer(propertyMarkersRef.current);
+
+    drawControlRef.current = new L.Control.Draw({
+        position: 'bottomleft',
+        draw: {
+            polygon: false, marker: false, circlemarker: false, polyline: false, rectangle: false,
+            circle: { shapeOptions: { color: '#D81B2B' } },
+        },
+        edit: { featureGroup: drawnItemsRef.current, remove: false }
+    });
+
+    map.on(L.Draw.Event.CREATED, (event: any) => {
+        const layer = event.layer;
+        const drawnLatLng = layer.getLatLng();
+        const drawnRadius = layer.getRadius();
+
+        drawnItemsRef.current.clearLayers();
+        drawnItemsRef.current.addLayer(layer);
         
-        // Marcador da localização do usuário
+        const foundProperties = MOCK_PROPERTIES.filter(prop => {
+            const propLatLng = L.latLng(prop.lat, prop.lng);
+            const distance = drawnLatLng.distanceTo(propLatLng);
+            return distance <= drawnRadius;
+        });
+
+        setPropertiesInZone(foundProperties);
+        setIsSidebarOpen(foundProperties.length > 0);
+
+        propertyMarkersRef.current.clearLayers();
+        if (foundProperties.length > 0) {
+            foundProperties.forEach(prop => {
+                L.marker([prop.lat, prop.lng])
+                    .addTo(propertyMarkersRef.current)
+                    .bindPopup(`<b>${prop.title}</b><br>${prop.address}`);
+            });
+        }
+    });
+
+    setIsMapReady(true);
+    
+    return () => {
+      if (mapInstance.current) {
+        mapInstance.current.remove();
+        mapInstance.current = null;
+      }
+    };
+  }, []); // O array de dependências vazio garante que isso rode apenas uma vez
+
+  // Efeito para atualizar a visualização e as camadas do mapa com base nas props
+  useEffect(() => {
+    if (!isMapReady || !mapInstance.current) {
+      return;
+    }
+    
+    const map = mapInstance.current;
+    
+    // Limpa o estado anterior das camadas
+    propertyMarkersRef.current.clearLayers();
+    drawnItemsRef.current.clearLayers();
+    map.eachLayer((layer: any) => {
+        // Remove o marcador de localização do usuário anterior, se existir
+        if (layer.options && layer.options.fillColor === '#4285F4') {
+            map.removeLayer(layer);
+        }
+    });
+
+    if (userLocation) {
+        // --- Modo de Busca por Proximidade ---
+        try { map.removeControl(drawControlRef.current); } catch (e) { /* ignora erro se não estiver presente */ }
+
+        map.setView([userLocation.lat, userLocation.lng], 14);
+        
         L.circleMarker([userLocation.lat, userLocation.lng], {
           radius: 8, fillColor: '#4285F4', color: '#fff', weight: 2, opacity: 1, fillOpacity: 0.9
-        }).addTo(mapInstance.current).bindPopup(t('map.userLocationPopup')).openPopup();
+        }).addTo(map).bindPopup(t('map.userLocationPopup')).openPopup();
 
         const searchRadius = 5000; // 5km
         const userLatLng = L.latLng(userLocation.lat, userLocation.lng);
@@ -81,61 +142,19 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
                     .bindPopup(`<b>${prop.title}</b><br>${prop.address}`);
             });
         }
-      } else {
-        // MODO: Desenhar no Mapa
-        mapInstance.current.setView([-12.9777, -38.5016], 13);
-        
-        drawControlRef.current = new L.Control.Draw({
-          position: 'bottomleft',
-          draw: {
-            polygon: false, marker: false, circlemarker: false, polyline: false, rectangle: false,
-            circle: { shapeOptions: { color: '#D81B2B' } },
-          },
-          edit: { featureGroup: drawnItemsRef.current, remove: false }
-        });
-        mapInstance.current.addControl(drawControlRef.current);
-        drawControlRef.current.getContainer().style.display = 'none';
+    } else {
+        // --- Modo de Desenhar no Mapa ---
+        map.addControl(drawControlRef.current);
+        if(drawControlRef.current.getContainer()) {
+          drawControlRef.current.getContainer().style.display = 'none';
+        }
 
-        mapInstance.current.on(L.Draw.Event.CREATED, (event: any) => {
-          const layer = event.layer;
-          const drawnLatLng = layer.getLatLng();
-          const drawnRadius = layer.getRadius();
+        map.setView([-12.9777, -38.5016], 13);
+        setPropertiesInZone([]);
+        setIsSidebarOpen(false);
+    }
 
-          drawnItemsRef.current.clearLayers();
-          drawnItemsRef.current.addLayer(layer);
-          
-          const foundProperties = MOCK_PROPERTIES.filter(prop => {
-            const propLatLng = L.latLng(prop.lat, prop.lng);
-            const distance = drawnLatLng.distanceTo(propLatLng);
-            return distance <= drawnRadius;
-          });
-
-          setPropertiesInZone(foundProperties);
-          setIsSidebarOpen(foundProperties.length > 0);
-
-          propertyMarkersRef.current.clearLayers();
-          if (foundProperties.length > 0) {
-              foundProperties.forEach(prop => {
-                  L.marker([prop.lat, prop.lng])
-                      .addTo(propertyMarkersRef.current)
-                      .bindPopup(`<b>${prop.title}</b><br>${prop.address}`);
-              });
-          }
-        });
-      }
-    };
-    
-    initializeMap();
-    setIsMapReady(true);
-    
-    return () => {
-      isMounted = false;
-      if (mapInstance.current) {
-        mapInstance.current.remove();
-        mapInstance.current = null;
-      }
-    };
-  }, [userLocation, t]); // Adicionado t como dependência
+  }, [isMapReady, userLocation, t]);
 
   const handleDrawClick = () => {
     // Limpa a camada de desenho anterior e os marcadores de imóveis.
