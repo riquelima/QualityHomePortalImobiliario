@@ -6,11 +6,13 @@ import GeoIcon from './icons/GeoIcon';
 
 interface HeroProps {
   onDrawOnMapClick: () => void;
+  onSearchNearMe: (location: { lat: number, lng: number }) => void;
 }
 
-const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick }) => {
+const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe }) => {
   const [activeTab, setActiveTab] = useState('comprar');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isLoadingGeo, setIsLoadingGeo] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -24,6 +26,26 @@ const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick }) => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+
+  const handleSearchNearMe = () => {
+    if (!navigator.geolocation) {
+      alert('A geolocalização não é suportada por este navegador.');
+      return;
+    }
+    setIsLoadingGeo(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        setIsLoadingGeo(false);
+        setIsDropdownOpen(false);
+        onSearchNearMe({ lat: latitude, lng: longitude });
+      },
+      () => {
+        setIsLoadingGeo(false);
+        alert('Não foi possível obter a sua localização. Por favor, verifique as permissões do seu navegador.');
+      }
+    );
+  };
 
   return (
     <div 
@@ -87,9 +109,14 @@ const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick }) => {
                     <DrawIcon className="w-5 h-5 mr-3 text-brand-gray"/>
                     <span>Desenha a tua zona</span>
                   </button>
-                  <button type="button" className="w-full flex items-center px-4 py-3 text-brand-dark hover:bg-gray-100 transition-colors duration-200">
+                  <button 
+                    type="button"
+                    onClick={handleSearchNearMe}
+                    disabled={isLoadingGeo}
+                    className="w-full flex items-center px-4 py-3 text-brand-dark hover:bg-gray-100 transition-colors duration-200 disabled:opacity-50 disabled:cursor-wait"
+                  >
                     <GeoIcon className="w-5 h-5 mr-3 text-brand-gray"/>
-                    <span>Pesquisar perto de ti</span>
+                    <span>{isLoadingGeo ? 'Obtendo localização...' : 'Pesquisar perto de ti'}</span>
                   </button>
                 </div>
               )}

@@ -5,18 +5,29 @@ import InfoSection from './components/InfoSection';
 import PropertyListings from './components/PropertyListings';
 import MapDrawPage from './components/MapDrawPage';
 
-const App: React.FC = () => {
-  const [page, setPage] = useState<'home' | 'map'>('home');
+interface PageState {
+  page: 'home' | 'map';
+  userLocation: { lat: number; lng: number } | null;
+}
 
-  if (page === 'map') {
-    return <MapDrawPage onBack={() => setPage('home')} />;
+const App: React.FC = () => {
+  const [pageState, setPageState] = useState<PageState>({ page: 'home', userLocation: null });
+
+  if (pageState.page === 'map') {
+    return <MapDrawPage 
+              onBack={() => setPageState({ page: 'home', userLocation: null })} 
+              userLocation={pageState.userLocation} 
+           />;
   }
 
   return (
     <div className="bg-white font-sans text-brand-dark">
       <Header />
       <main>
-        <Hero onDrawOnMapClick={() => setPage('map')} />
+        <Hero 
+          onDrawOnMapClick={() => setPageState({ page: 'map', userLocation: null })} 
+          onSearchNearMe={(location) => setPageState({ page: 'map', userLocation: location })}
+        />
         <InfoSection />
         <PropertyListings />
       </main>

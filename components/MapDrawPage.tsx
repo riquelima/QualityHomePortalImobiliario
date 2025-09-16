@@ -9,6 +9,7 @@ declare const L: any;
 
 interface MapDrawPageProps {
   onBack: () => void;
+  userLocation?: { lat: number; lng: number } | null;
 }
 
 // Função auxiliar para carregar scripts dinamicamente e de forma robusta
@@ -27,7 +28,7 @@ const loadScript = (src: string) => {
   });
 };
 
-const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack }) => {
+const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<any>(null);
   const drawControlRef = useRef<any>(null);
@@ -52,7 +53,7 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack }) => {
       mapInstance.current = L.map(mapRef.current, {
         zoomControl: false,
         scrollWheelZoom: true, // Garante que o zoom com scroll do mouse esteja ativo.
-      }).setView([-12.9777, -38.5016], 13);
+      });
 
       L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
@@ -65,36 +66,27 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack }) => {
 
       propertyMarkersRef.current = L.layerGroup();
       mapInstance.current.addLayer(propertyMarkersRef.current);
-
-      drawControlRef.current = new L.Control.Draw({
-        position: 'bottomleft',
-        draw: {
-          polygon: false, marker: false, circlemarker: false, polyline: false, rectangle: false,
-          circle: { shapeOptions: { color: '#D81B2B' } },
-        },
-        edit: { featureGroup: drawnItemsRef.current, remove: false }
-      });
-      mapInstance.current.addControl(drawControlRef.current);
-      drawControlRef.current.getContainer().style.display = 'none';
-
-      mapInstance.current.on(L.Draw.Event.CREATED, (event: any) => {
-        const layer = event.layer;
-        const drawnLatLng = layer.getLatLng();
-        const drawnRadius = layer.getRadius();
-
-        drawnItemsRef.current.clearLayers();
-        drawnItemsRef.current.addLayer(layer);
+      
+      if (userLocation) {
+        // MODO: Busca por Proximidade
+        mapInstance.current.setView([userLocation.lat, userLocation.lng], 14);
         
-        const foundProperties = MOCK_PROPERTIES.filter(prop => {
-          const propLatLng = L.latLng(prop.lat, prop.lng);
-          const distance = drawnLatLng.distanceTo(propLatLng);
-          return distance <= drawnRadius;
-        });
+        // Marcador da localização do usuário
+        L.circleMarker([userLocation.lat, userLocation.lng], {
+          radius: 8, fillColor: '#4285F4', color: '#fff', weight: 2, opacity: 1, fillOpacity: 0.9
+        }).addTo(mapInstance.current).bindPopup('Sua localização').openPopup();
+
+        const searchRadius = 5000; // 5km
+        const userLatLng = L.latLng(userLocation.lat, userLocation.lng);
+
+        const foundProperties = MOCK_PROPERTIES
+          .map(prop => ({ ...prop, distance: userLatLng.distanceTo(L.latLng(prop.lat, prop.lng)) }))
+          .filter(prop => prop.distance <= searchRadius)
+          .sort((a, b) => a.distance - b.distance);
 
         setPropertiesInZone(foundProperties);
         setIsSidebarOpen(foundProperties.length > 0);
 
-        propertyMarkersRef.current.clearLayers();
         if (foundProperties.length > 0) {
             foundProperties.forEach(prop => {
                 L.marker([prop.lat, prop.lng])
@@ -102,7 +94,48 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack }) => {
                     .bindPopup(`<b>${prop.title}</b><br>${prop.address}`);
             });
         }
-      });
+      } else {
+        // MODO: Desenhar no Mapa
+        mapInstance.current.setView([-12.9777, -38.5016], 13);
+        
+        drawControlRef.current = new L.Control.Draw({
+          position: 'bottomleft',
+          draw: {
+            polygon: false, marker: false, circlemarker: false, polyline: false, rectangle: false,
+            circle: { shapeOptions: { color: '#D81B2B' } },
+          },
+          edit: { featureGroup: drawnItemsRef.current, remove: false }
+        });
+        mapInstance.current.addControl(drawControlRef.current);
+        drawControlRef.current.getContainer().style.display = 'none';
+
+        mapInstance.current.on(L.Draw.Event.CREATED, (event: any) => {
+          const layer = event.layer;
+          const drawnLatLng = layer.getLatLng();
+          const drawnRadius = layer.getRadius();
+
+          drawnItemsRef.current.clearLayers();
+          drawnItemsRef.current.addLayer(layer);
+          
+          const foundProperties = MOCK_PROPERTIES.filter(prop => {
+            const propLatLng = L.latLng(prop.lat, prop.lng);
+            const distance = drawnLatLng.distanceTo(propLatLng);
+            return distance <= drawnRadius;
+          });
+
+          setPropertiesInZone(foundProperties);
+          setIsSidebarOpen(foundProperties.length > 0);
+
+          propertyMarkersRef.current.clearLayers();
+          if (foundProperties.length > 0) {
+              foundProperties.forEach(prop => {
+                  L.marker([prop.lat, prop.lng])
+                      .addTo(propertyMarkersRef.current)
+                      .bindPopup(`<b>${prop.title}</b><br>${prop.address}`);
+              });
+          }
+        });
+      }
     };
     
     // Inicia o carregamento dos scripts do mapa em sequência
@@ -125,7 +158,7 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack }) => {
         mapInstance.current = null;
       }
     };
-  }, []);
+  }, [userLocation]); // Adicionado userLocation como dependência
 
   const handleDrawClick = () => {
     // Limpa a camada de desenho anterior e os marcadores de imóveis.
@@ -163,29 +196,36 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack }) => {
                 <div className="text-sm mb-4">
                     <span onClick={onBack} className="text-brand-red hover:underline cursor-pointer">Início</span>
                     <span className="text-brand-gray mx-2">&gt;</span>
-                    <span className="text-brand-dark font-medium">Desenhar no mapa</span>
+                    <span className="text-brand-dark font-medium">{userLocation ? 'Pesquisa por Proximidade' : 'Desenhar no mapa'}</span>
                 </div>
-                <h1 className="text-2xl md:text-4xl font-bold text-brand-navy">Desenhe a sua pesquisa em Salvador</h1>
+                <h1 className="text-2xl md:text-4xl font-bold text-brand-navy">
+                  {userLocation ? 'Imóveis perto de você' : 'Desenhe a sua pesquisa em Salvador'}
+                </h1>
             </div>
           </div>
+          
+          {!userLocation && (
+            <>
+              <div className="absolute top-32 md:top-40 left-1/2 -translate-x-1/2 bg-white/90 p-4 rounded-lg shadow-md w-11/12 max-w-sm text-center z-[1000]">
+                <p className="text-brand-navy">
+                  Move o mapa para localizar a área que te interessa antes de desenhar a zona onde procuras
+                </p>
+              </div>
 
-          <div className="absolute top-32 md:top-40 left-1/2 -translate-x-1/2 bg-white/90 p-4 rounded-lg shadow-md w-11/12 max-w-sm text-center z-[1000]">
-            <p className="text-brand-navy">
-              Move o mapa para localizar a área que te interessa antes de desenhar a zona onde procuras
-            </p>
-          </div>
+              <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[1000]">
+                <button
+                  onClick={handleDrawClick}
+                  className="bg-brand-red hover:opacity-90 text-white font-bold py-2 px-6 rounded-full shadow-2xl transition duration-300 flex items-center space-x-2"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L16.732 3.732z" />
+                  </svg>
+                  <span>Desenhar sua área</span>
+                </button>
+              </div>
+            </>
+          )}
 
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[1000]">
-            <button
-              onClick={handleDrawClick}
-              className="bg-brand-red hover:opacity-90 text-white font-bold py-2 px-6 rounded-full shadow-2xl transition duration-300 flex items-center space-x-2"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L16.732 3.732z" />
-              </svg>
-              <span>Desenhar sua área</span>
-            </button>
-          </div>
         </>
       )}
 
