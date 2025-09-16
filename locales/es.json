@@ -1,4 +1,3 @@
-
 {
   "header": {
     "nav": {
@@ -99,7 +98,8 @@
       "operation": {
         "label": "Operación",
         "sell": "Vender",
-        "rent": "Alquilar"
+        "rent": "Alquilar",
+        "season": "Temporada"
       },
       "location": {
         "label": "Ubicación del inmueble",
@@ -131,6 +131,13 @@
         "title": "¿Eres profesional inmobiliario?",
         "link": "Conoce las ventajas que ofrecemos para profesionales"
       }
+    },
+    "locationConfirmationModal": {
+      "title": "¿Está en el lugar correcto?",
+      "subtitle": "Si no está bien ubicado, puede arrastrar el marcador a la posición correcta.",
+      "countryInfo": "Brasil",
+      "confirmButton": "Confirmar dirección",
+      "backButton": "Volver a escribir la dirección"
     }
   },
   "footer": {

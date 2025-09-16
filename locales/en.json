@@ -1,4 +1,3 @@
-
 {
   "header": {
     "nav": {
@@ -99,7 +98,8 @@
       "operation": {
         "label": "Operation",
         "sell": "Sell",
-        "rent": "Rent"
+        "rent": "Rent",
+        "season": "Season"
       },
       "location": {
         "label": "Property location",
@@ -131,6 +131,13 @@
         "title": "Are you a real estate professional?",
         "link": "Learn about the advantages we offer for professionals"
       }
+    },
+    "locationConfirmationModal": {
+      "title": "Is this the right place?",
+      "subtitle": "If it's not well-located, you can drag the pin to the correct position.",
+      "countryInfo": "Brazil",
+      "confirmButton": "Confirm address",
+      "backButton": "Go back to writing the address"
     }
   },
   "footer": {

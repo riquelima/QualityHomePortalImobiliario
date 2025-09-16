@@ -1,4 +1,3 @@
-
 {
   "header": {
     "nav": {
@@ -142,7 +141,8 @@
       "operation": {
         "label": "Operação",
         "sell": "Vender",
-        "rent": "Alugar"
+        "rent": "Alugar",
+        "season": "Temporada"
       },
       "location": {
         "label": "Localização do imóvel",
@@ -174,6 +174,13 @@
         "title": "É profissional imobiliário?",
         "link": "Conhece as vantagens que oferecemos para profissionais"
       }
+    },
+    "locationConfirmationModal": {
+      "title": "Está no lugar correto?",
+      "subtitle": "Se não está bem localizado, pode arrastar o pino até à posição correta.",
+      "countryInfo": "Brasil",
+      "confirmButton": "Confirmar endereço",
+      "backButton": "Voltar a escrever o endereço"
     }
   },
   "footer": {
