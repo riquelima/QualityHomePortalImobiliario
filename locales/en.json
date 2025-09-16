@@ -81,6 +81,58 @@
       }
     }
   },
+  "publishJourney": {
+    "stepper": {
+      "step1": "1. Basic data",
+      "step2": "2. Details",
+      "step3": "3. Photos"
+    },
+    "title": "Publish your private ad",
+    "form": {
+      "propertyType": {
+        "label": "Choose the property type",
+        "apartment": "Apartment",
+        "house": "House",
+        "land": "Land",
+        "office": "Office"
+      },
+      "operation": {
+        "label": "Operation",
+        "sell": "Sell",
+        "rent": "Rent"
+      },
+      "location": {
+        "label": "Property location",
+        "city": "City",
+        "street": "Street",
+        "number": "Street number"
+      },
+      "hideAddress": {
+        "label": "Want to hide the street and number? (optional)",
+        "option": "Hide address for R$ 9,90"
+      },
+      "submitButton": "Verify address"
+    },
+    "sidebar": {
+      "title": "Useful information",
+      "p1": "Prepare the photos. If you don't have them yet, you can add them later. You won't get results without photos.",
+      "p2": "We offer you the first two ads for free so you can try our service. You can publish free ads for apartments, houses, land, commercial spaces, etc., until you sell or rent them.",
+      "p3": "Additionally, you can publish up to 5 free rooms in properties for sharing, which do not count towards the number of ads we offer.",
+      "p4": "To ensure the quality of our services, we charge a fee in the following cases:",
+      "case1": "advertisers with more than two properties",
+      "case2": "advertisers with duplicate properties",
+      "case3": "properties for sale for more than 1,000,000 euros",
+      "case4": "properties for rent for more than 2,500 €/month",
+      "quickSell": {
+        "title": "Want to sell your house quickly?",
+        "link": "Find the most suitable real estate agency"
+      },
+      "professional": {
+        "title": "Are you a real estate professional?",
+        "link": "Learn about the advantages we offer for professionals"
+      }
+    }
+  },
   "footer": {
     "text": "Quality Home Real Estate Portal. All rights reserved."
   }

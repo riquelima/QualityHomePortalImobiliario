@@ -124,6 +124,58 @@
     "googleButton": "Continuar con Google",
     "appleButton": "Continuar con Apple"
   },
+  "publishJourney": {
+    "stepper": {
+      "step1": "1. Datos básicos",
+      "step2": "2. Detalles",
+      "step3": "3. Fotos"
+    },
+    "title": "Publicar tu anuncio de particular",
+    "form": {
+      "propertyType": {
+        "label": "Elige el tipo de inmueble",
+        "apartment": "Apartamento",
+        "house": "Casa",
+        "land": "Terreno",
+        "office": "Oficina"
+      },
+      "operation": {
+        "label": "Operación",
+        "sell": "Vender",
+        "rent": "Alquilar"
+      },
+      "location": {
+        "label": "Ubicación del inmueble",
+        "city": "Localidad",
+        "street": "Calle",
+        "number": "Número de la vía"
+      },
+      "hideAddress": {
+        "label": "¿Quieres ocultar la calle y el número? (opcional)",
+        "option": "Ocultar dirección por R$ 9,90"
+      },
+      "submitButton": "Verificar dirección"
+    },
+    "sidebar": {
+      "title": "Información útil",
+      "p1": "Prepara las fotos. Si aún no las tienes, podrás añadirlas más tarde. Sin fotos no obtendrás resultados.",
+      "p2": "Te ofrecemos los dos primeros anuncios gratis para que pruebes nuestro servicio. Puedes publicar anuncios gratis de apartamentos, viviendas, terrenos, locales comerciales, etc. hasta que los vendas o alquiles.",
+      "p3": "Además, puedes publicar hasta 5 habitaciones gratis, en inmuebles para compartir, que no se suman al número de anuncios que te ofrecemos.",
+      "p4": "Para garantizar la calidad de nuestros servicios, cobramos una tasa en los siguientes casos:",
+      "case1": "anunciantes con más de dos inmuebles",
+      "case2": "anunciantes de inmuebles duplicados",
+      "case3": "inmuebles en venta por más de 1.000.000 de euros",
+      "case4": "inmuebles en alquiler por más de 2.500 €/mes",
+      "quickSell": {
+        "title": "¿Quieres vender tu casa rápidamente?",
+        "link": "Encuentra la agencia inmobiliaria más adecuada"
+      },
+      "professional": {
+        "title": "¿Eres profesional inmobiliario?",
+        "link": "Conoce las ventajas que ofrecemos para profesionales"
+      }
+    }
+  },
   "footer": {
     "text": "Quality Home Portal Inmobiliario. Todos los derechos reservados."
   }

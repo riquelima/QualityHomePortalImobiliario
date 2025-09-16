@@ -6,12 +6,13 @@ import InfoSection from './components/InfoSection';
 import PropertyListings from './components/PropertyListings';
 import MapDrawPage from './components/MapDrawPage';
 import PublishAdPage from './components/PublishAdPage';
+import PublishJourneyPage from './components/PublishJourneyPage';
 import LoginModal from './components/LoginModal';
 import { useLanguage } from './contexts/LanguageContext';
 import type { User } from './types';
 
 interface PageState {
-  page: 'home' | 'map' | 'publish';
+  page: 'home' | 'map' | 'publish' | 'publish-journey';
   userLocation: { lat: number; lng: number } | null;
 }
 
@@ -35,13 +36,18 @@ const App: React.FC = () => {
   const [pageState, setPageState] = useState<PageState>({ page: 'home', userLocation: null });
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [loginIntent, setLoginIntent] = useState<'default' | 'publish'>('default');
   const { t } = useLanguage();
 
   const navigateHome = () => setPageState({ page: 'home', userLocation: null });
   const navigateToMap = (location: { lat: number; lng: number } | null = null) => setPageState({ page: 'map', userLocation: location });
   const navigateToPublish = () => setPageState({ page: 'publish', userLocation: null });
+  const navigateToPublishJourney = () => setPageState({ page: 'publish-journey', userLocation: null });
   
-  const openLoginModal = () => setIsLoginModalOpen(true);
+  const openLoginModal = (intent: 'default' | 'publish' = 'default') => {
+    setLoginIntent(intent);
+    setIsLoginModalOpen(true);
+  }
   const closeLoginModal = () => setIsLoginModalOpen(false);
   
   const handleLoginSuccess = (credentialResponse: any) => {
@@ -53,6 +59,10 @@ const App: React.FC = () => {
         picture: decoded.picture,
       });
       closeLoginModal();
+      if (loginIntent === 'publish') {
+        navigateToPublishJourney();
+        setLoginIntent('default'); // Reset intent
+      }
     }
   };
 
@@ -70,19 +80,27 @@ const App: React.FC = () => {
                   userLocation={pageState.userLocation} 
                />;
       case 'publish':
-        // FIX: Pass user and onLogout props to PublishAdPage so it can be passed to the Header component.
         return <PublishAdPage 
                   onBack={navigateHome} 
                   onPublishAdClick={navigateToPublish}
-                  onOpenLoginModal={openLoginModal} 
+                  onOpenLoginModal={() => openLoginModal('publish')} 
+                  onNavigateToJourney={navigateToPublishJourney}
                   user={user}
                   onLogout={handleLogout}
                />;
+      case 'publish-journey':
+        return <PublishJourneyPage
+                  onBack={navigateHome}
+                  onPublishAdClick={navigateToPublish}
+                  onOpenLoginModal={() => openLoginModal('default')}
+                  user={user}
+                  onLogout={handleLogout}
+                />;
       case 'home':
       default:
         return (
           <div className="bg-white font-sans text-brand-dark">
-            <Header onPublishAdClick={navigateToPublish} onAccessClick={openLoginModal} user={user} onLogout={handleLogout} />
+            <Header onPublishAdClick={navigateToPublish} onAccessClick={() => openLoginModal('default')} user={user} onLogout={handleLogout} />
             <main>
               <Hero 
                 onDrawOnMapClick={() => navigateToMap()} 

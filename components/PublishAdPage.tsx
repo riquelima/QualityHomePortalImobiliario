@@ -1,3 +1,4 @@
+
 import React from 'react';
 import Header from './Header';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -8,16 +9,24 @@ interface PublishAdPageProps {
   onBack: () => void;
   onPublishAdClick: () => void;
   onOpenLoginModal: () => void;
+  onNavigateToJourney: () => void;
   user: User | null;
   onLogout: () => void;
 }
 
-const PublishAdPage: React.FC<PublishAdPageProps> = ({ onBack, onPublishAdClick, onOpenLoginModal, user, onLogout }) => {
+const PublishAdPage: React.FC<PublishAdPageProps> = ({ onBack, onPublishAdClick, onOpenLoginModal, onNavigateToJourney, user, onLogout }) => {
   const { t } = useLanguage();
+
+  const handlePublishClick = () => {
+    if (user) {
+      onNavigateToJourney();
+    } else {
+      onOpenLoginModal();
+    }
+  };
 
   return (
     <div className="bg-brand-light-gray min-h-screen">
-       {/* FIX: Pass user and onLogout props to the Header component to fix the missing properties error. These props are passed down from App.tsx. */}
        <Header onPublishAdClick={onPublishAdClick} onAccessClick={onOpenLoginModal} user={user} onLogout={onLogout} />
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumbs */}
@@ -49,7 +58,7 @@ const PublishAdPage: React.FC<PublishAdPageProps> = ({ onBack, onPublishAdClick,
             </ul>
             <p className="text-sm text-brand-gray mb-6">{t('publishAdPage.mainCard.agencyInfo')}</p>
             <button 
-              onClick={onOpenLoginModal}
+              onClick={handlePublishClick}
               className="bg-brand-red text-white font-bold py-3 px-8 rounded-md hover:opacity-90 transition-opacity duration-200 mb-4"
             >
               {t('publishAdPage.mainCard.publishButton')}
