@@ -106,7 +106,7 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { t } = useLanguage();
 
-  const handleDrawCreated = (e: any) => {
+  const handleDrawCreated = useCallback((e: any) => {
     const layer = e.layer;
     
     if (layer.getLatLng && layer.getRadius) { // Verifica se é um círculo
@@ -122,12 +122,12 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
         setPropertiesInZone(foundProperties);
         setIsSidebarOpen(foundProperties.length > 0);
     }
-  };
+  }, []);
 
-  const handleDrawDeleted = () => {
+  const handleDrawDeleted = useCallback(() => {
       setPropertiesInZone([]);
       setIsSidebarOpen(false);
-  }
+  }, []);
   
   const handlePropertiesFound = useCallback((props: Property[]) => {
       setPropertiesInZone(props);
