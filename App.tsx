@@ -10,13 +10,15 @@ import PublishJourneyPage from './components/PublishJourneyPage';
 import LoginModal from './components/LoginModal';
 import GeolocationErrorModal from './components/GeolocationErrorModal';
 import SearchResultsPage from './components/SearchResultsPage';
+import PropertyDetailPage from './components/PropertyDetailPage';
 import { useLanguage } from './contexts/LanguageContext';
 import type { User } from './types';
 
 interface PageState {
-  page: 'home' | 'map' | 'publish' | 'publish-journey' | 'searchResults';
+  page: 'home' | 'map' | 'publish' | 'publish-journey' | 'searchResults' | 'propertyDetail';
   userLocation: { lat: number; lng: number } | null;
   searchQuery?: string;
+  propertyId?: number;
 }
 
 // Função para decodificar o JWT do Google de forma segura
@@ -48,6 +50,7 @@ const App: React.FC = () => {
   const navigateToPublish = () => setPageState({ page: 'publish', userLocation: null, searchQuery: '' });
   const navigateToPublishJourney = () => setPageState({ page: 'publish-journey', userLocation: null, searchQuery: '' });
   const navigateToSearchResults = (query: string) => setPageState({ page: 'searchResults', userLocation: null, searchQuery: query });
+  const navigateToPropertyDetail = (id: number) => setPageState({ page: 'propertyDetail', propertyId: id, userLocation: null, searchQuery: '' });
   
   const openLoginModal = (intent: 'default' | 'publish' = 'default') => {
     setLoginIntent(intent);
@@ -86,6 +89,7 @@ const App: React.FC = () => {
         return <MapDrawPage 
                   onBack={navigateHome} 
                   userLocation={pageState.userLocation} 
+                  onViewDetails={navigateToPropertyDetail}
                />;
       case 'publish':
         return <PublishAdPage 
@@ -119,7 +123,23 @@ const App: React.FC = () => {
           onAccessClick={() => openLoginModal('default')}
           user={user}
           onLogout={handleLogout}
+          onViewDetails={navigateToPropertyDetail}
         />;
+      case 'propertyDetail':
+        const property = MOCK_PROPERTIES.find(p => p.id === pageState.propertyId);
+        if (!property) {
+          // Fallback to home if property is not found
+          navigateHome();
+          return null;
+        }
+        return <PropertyDetailPage 
+                  property={property}
+                  onBack={() => window.history.back()}
+                  onPublishAdClick={navigateToPublish} 
+                  onAccessClick={() => openLoginModal('default')} 
+                  user={user} 
+                  onLogout={handleLogout}
+                />;
       case 'home':
       default:
         return (
@@ -136,7 +156,7 @@ const App: React.FC = () => {
                 onDrawOnMapClick={() => navigateToMap()}
                 onPublishAdClick={navigateToPublish}
               />
-              <PropertyListings />
+              <PropertyListings onViewDetails={navigateToPropertyDetail} />
             </main>
             <footer className="bg-brand-light-gray text-brand-gray py-8 text-center mt-20">
               <div className="container mx-auto">

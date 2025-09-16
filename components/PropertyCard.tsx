@@ -10,6 +10,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 
 interface PropertyCardProps {
   property: Property;
+  onViewDetails: (id: number) => void;
 }
 
 const statusColorMap = {
@@ -23,7 +24,7 @@ const currencyConfig = {
   es: { locale: 'es-ES', currency: 'EUR' },
 };
 
-const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
+const PropertyCard: React.FC<PropertyCardProps> = ({ property, onViewDetails }) => {
   const { language, t } = useLanguage();
   const { locale, currency } = currencyConfig[language as keyof typeof currencyConfig];
 
@@ -37,7 +38,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden transform transition-all duration-300 ease-in-out hover:scale-[1.02] hover:shadow-xl flex flex-col border border-gray-200">
       <div className="relative">
-        <img src={property.image} alt={property.title} className="w-full h-56 object-cover aspect-video" />
+        <img src={property.images[0]} alt={property.title} className="w-full h-56 object-cover aspect-video" />
         {property.status && (
           <span className={`absolute top-3 right-3 text-white text-xs font-bold px-3 py-1 rounded-full ${statusColorMap[property.status]}`}>
             {property.status}
@@ -68,7 +69,10 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
           </div>
         </div>
         <div className="flex space-x-2">
-            <button className="w-full bg-brand-red hover:opacity-90 text-white font-medium py-2 px-4 rounded-md transition duration-300">
+            <button 
+              onClick={() => onViewDetails(property.id)}
+              className="w-full bg-brand-red hover:opacity-90 text-white font-medium py-2 px-4 rounded-md transition duration-300"
+            >
                 {t('propertyCard.details')}
             </button>
             <button className="w-full bg-gray-200 hover:bg-gray-300 text-brand-dark font-medium py-2 px-4 rounded-md transition duration-300">

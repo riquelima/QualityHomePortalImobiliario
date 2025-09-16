@@ -205,6 +205,14 @@ const ptTranslations = {
       "description": "Tente ajustar seus termos de busca ou pesquisar por uma localização diferente."
     }
   },
+  "propertyDetail": {
+    "breadcrumb": "Detalhes do Imóvel",
+    "gallery": "Galeria de Fotos",
+    "description": "Descrição",
+    "details": "Detalhes do Imóvel",
+    "videos": "Galeria de Vídeos",
+    "scheduleVisit": "Agendar Visita"
+  },
   "footer": {
     "text": "Quality Home Portal Imobiliário. Todos os direitos reservados."
   }
@@ -412,6 +420,14 @@ const enTranslations = {
       "description": "Try adjusting your search terms or searching for a different location."
     }
   },
+  "propertyDetail": {
+    "breadcrumb": "Property Details",
+    "gallery": "Photo Gallery",
+    "description": "Description",
+    "details": "Property Details",
+    "videos": "Video Gallery",
+    "scheduleVisit": "Schedule Visit"
+  },
   "footer": {
     "text": "Quality Home Real Estate Portal. All rights reserved."
   }
@@ -440,7 +456,7 @@ const esTranslations = {
     "propertyTypes": {
       "housesAndApts": "Casas y apartamentos",
       "offices": "Oficinas",
-      "garajes": "Garajes"
+      "garages": "Garajes"
     },
     "locationPlaceholder": "Introduce la ubicación (barrio, ciudad, región)",
     "drawOnMap": "Dibuja tu zona",
@@ -477,13 +493,13 @@ const esTranslations = {
     "breadcrumbs": {
       "home": "Inicio",
       "proximitySearch": "Búsqueda por Proximidad",
-      "drawOnMap": "Dibujar en el Mapa"
+      "drawOnMap": "Dibujar en el mapa"
     },
     "title": {
       "proximity": "Inmuebles cerca de ti",
       "draw": "Dibuja tu búsqueda en Salvador"
     },
-    "drawInstruction": "Mueve el mapa para localizar el área que te interesa antes de dibujar la zona donde buscas",
+    "drawInstruction": "Mueve el mapa para localizar el área de interés antes de dibujar la zona que buscas",
     "drawInstructionNew": "Usa las herramientas de dibujo en la esquina superior izquierda para seleccionar tu área.",
     "drawButton": "Dibujar tu área",
     "clearButton": "Limpiar Dibujo",
@@ -510,36 +526,36 @@ const esTranslations = {
       "benefit1": "Tus 2 primeros anuncios son gratis. Si son habitaciones, puedes publicar hasta 5 anuncios gratis.",
       "benefit2": "Tienes acceso a un área privada donde puedes gestionar tu anuncio y los contactos que recibes.",
       "benefit3": "Puedes resolver dudas, intercambiar información y organizar visitas de forma eficiente a través de nuestro chat.",
-      "agencyInfo": "Para vender o alquilar más rápido contacta con una agencia inmobiliaria.",
+      "agencyInfo": "Para vender o alquilar más rápido, contacta con una agencia inmobiliaria.",
       "publishButton": "Publica tu anuncio gratis",
       "professionalInfo": "¿Eres un profesional inmobiliario? Conoce nuestras ventajas para profesionales."
     },
     "steps": {
       "title": "¿Cuáles son los pasos a seguir para publicar tu anuncio como propietario particular?",
       "intro": "Hay 4 puntos esenciales para vender o alquilar tu inmueble lo más rápidamente posible:",
-      "step1Title": "1. Inserta las mejores fotografías que tengas y, a poder ser, un plano que muestre la disposición de las estancias",
-      "step1Content": "• Asegúrate de que tienes fotos de calidad a mano cuando publiques tu anuncio. Si no las tienes, podrás añadirlas más tarde, pero recuerda que sin fotos no tendrás resultados.\n• La foto principal es esencial. Será la portada de tu anuncio, la única que se enviará por email a los interesados y la que aparecerá en el listado de resultados.\n• Ordena tus fotos de forma lógica para crear una historia atractiva y opta por imágenes horizontales que quedan muy bien.\n• Incluir un plano hecho a mano, aunque no esté detallado, ofrece información útil para que los interesados visualicen la distribución de las estancias y cómo sería vivir allí.",
-      "step2Title": "2. Indica la dirección exacta",
+      "step1Title": "1. Insertar las mejores fotografías que tengas y, si es posible, un plano que muestre la distribución de las estancias",
+      "step1Content": "• Asegúrate de tener fotos de calidad a mano cuando publiques tu anuncio. Si no las tienes, podrás añadirlas más tarde, pero recuerda, sin fotos no tendrás resultados.\n• La foto principal es esencial. Será la portada de tu anuncio, la única que se enviará por email a los interesados y la que aparecerá en la lista de resultados.\n• Ordena tus fotos de forma lógica para crear una historia atractiva y opta por imágenes horizontales que quedan muy bien.\n• Incluir un plano hecho a mano, aunque no esté detallado, ofrece información útil para que los interesados visualicen la distribución de las estancias y cómo sería vivir allí.",
+      "step2Title": "2. Indicar la dirección exacta",
       "step2Content": "Para que las personas que buscan en la zona conozcan tu anuncio, es muy importante indicar la dirección correcta del inmueble. Si, por algún motivo, no quieres indicarla, tienes a tu disposición la posibilidad de ocultar la dirección por 9,90 €.",
-      "step3Title": "3. Pon un precio acorde con el valor de mercado",
+      "step3Title": "3. Poner un precio de acuerdo con el valor de mercado",
       "step3Content": "En caso de duda, puedes hacer una valoración gratuita de tu inmueble en nuestra web o verificar el precio medio en esa zona.",
-      "step4Title": "4. Indica las características de tu inmueble y describe tu casa al detalle",
-      "step4Content": "Incluye información sobre tu inmueble, como el número de habitaciones, m2, baños, etc. Refiere también las comodidades adicionales, como la presencia de un ascensor, una terraza, una plaza de garaje, un trastero, etc. Al fin y al cabo, todos estos detalles revalorizan tu inmueble. Destaca las características especiales de tu inmueble, sobre todo las que aparecen en las fotografías. No te olvides de explicar los servicios próximos, los transportes disponibles y los lugares de interés de la zona."
+      "step4Title": "4. Indicar las características de tu inmueble y describir tu casa en detalle",
+      "step4Content": "Incluye información sobre tu inmueble, como el número de habitaciones, m2, baños, etc. Refiere también las comodidades adicionales, como la presencia de un ascensor, una terraza, una plaza de garaje, un trastero, etc. Al fin y al cabo, todos estos detalles valorizan tu inmueble. Destaca las características especiales de tu inmueble, sobre todo las que aparecen en las fotografías. No te olvides de explicar los servicios cercanos, los transportes disponibles y los lugares de interés en la zona."
     },
     "advantages": {
       "title": "Ventajas de publicar en Quallity Home",
       "advantage1Title": "Garantía de visibilidad",
-      "advantage1Content": "Los anuncios publicados en nuestro sitio son visitados por millones de usuarios, lo que te da la oportunidad de vender o alquilar tu inmueble de una forma más rápida y eficaz.",
+      "advantage1Content": "Los anuncios publicados en nuestra web son visitados por millones de usuarios, lo que te da la oportunidad de vender o alquilar tu inmueble de una forma más rápida y eficaz.",
       "advantage2Title": "La mejor experiencia",
       "advantage2Content": "La APP de Quallity Home tiene múltiples funcionalidades que te ayudarán a gestionar tu publicación y para quien busca un inmueble, permite configurar alertas totalmente personalizadas para recibir inmediatamente nuevos inmuebles.",
       "advantage3Title": "Gran variedad de productos para tu anuncio",
-      "advantage3Content": "Disponemos de una vasta gama de herramientas para mejorar la posición de tu anuncio y ganar visibilidad."
+      "advantage3Content": "Disponemos de una amplia gama de herramientas para mejorar la posición de tu anuncio y ganar visibilidad."
     }
   },
   "loginModal": {
     "title": "Inicia sesión o regístrate para publicar tu anuncio",
     "description": "Publica tu anuncio para que sea visto por millones de personas que buscan su próximo inmueble.",
-    "emailLabel": "Tu correo electrónico",
+    "emailLabel": "Tu e-mail",
     "continueButton": "Continuar",
     "socialLoginPrompt": "También puedes",
     "googleButton": "Continuar con Google",
@@ -574,14 +590,14 @@ const esTranslations = {
       },
       "hideAddress": {
         "label": "¿Quieres ocultar la calle y el número? (opcional)",
-        "option": "Ocultar dirección por R$ 9,90"
+        "option": "Ocultar dirección por 9,90 €"
       },
       "submitButton": "Verificar dirección"
     },
     "sidebar": {
       "title": "Información útil",
-      "p1": "Prepara las fotos. Si aún no las tienes, podrás añadirlas más tarde. Sin fotos no obtendrás resultados.",
-      "p2": "Te ofrecemos los dos primeros anuncios gratis para que pruebes nuestro servicio. Puedes publicar anuncios gratis de apartamentos, viviendas, terrenos, locales comerciales, etc. hasta que los vendas o alquiles.",
+      "p1": "Prepara las fotos. Si todavía no las tienes, podrás añadirlas más tarde. Sin fotos no obtendrás resultados.",
+      "p2": "Te ofrecemos los dos primeros anuncios gratis para que pruebes nuestro servicio. Puedes publicar anuncios gratis de apartamentos, chalets, terrenos, locales comerciales, etc. hasta que los vendas o alquiles.",
       "p3": "Además, puedes publicar hasta 5 habitaciones gratis, en inmuebles para compartir, que no se suman al número de anuncios que te ofrecemos.",
       "p4": "Para garantizar la calidad de nuestros servicios, cobramos una tasa en los siguientes casos:",
       "case1": "anunciantes con más de dos inmuebles",
@@ -599,7 +615,7 @@ const esTranslations = {
     },
     "locationConfirmationModal": {
       "title": "¿Está en el lugar correcto?",
-      "subtitle": "Si no está bien ubicado, puede arrastrar el marcador a la posición correcta.",
+      "subtitle": "Si no está bien ubicado, puedes arrastrar el pin hasta la posición correcta.",
       "countryInfo": "Brasil",
       "confirmButton": "Confirmar dirección",
       "backButton": "Volver a escribir la dirección"
@@ -607,25 +623,38 @@ const esTranslations = {
   },
   "geolocationErrorModal": {
     "title": "Error de Ubicación",
-    "description": "No pudimos obtener tu ubicación. Esto puede ocurrir si denegaste la solicitud de permiso o si tu navegador no es compatible con la geolocalización. Por favor, comprueba los permisos del sitio en tu navegador e inténtalo de nuevo.",
+    "description": "No pudimos obtener tu ubicación. Esto puede ocurrir si denegaste la solicitud de permiso o si tu navegador no admite la geolocalización. Por favor, revisa los permisos de sitio de tu navegador e inténtalo de nuevo.",
     "closeButton": "OK"
   },
   "searchResults": {
-    "breadcrumb": "Resultados de la búsqueda",
+    "breadcrumb": "Resultados de búsqueda",
     "title": "Inmuebles para \"{query}\"",
     "subtitle": "{count} inmuebles encontrados",
     "noResults": {
       "title": "No se encontraron resultados",
-      "description": "Intenta ajustar tus términos de búsqueda o buscar una ubicación diferente."
+      "description": "Intenta ajustar tus términos de búsqueda o busca una ubicación diferente."
     }
+  },
+  "propertyDetail": {
+    "breadcrumb": "Detalles del Inmueble",
+    "gallery": "Galería de Fotos",
+    "description": "Descripción",
+    "details": "Detalles del Inmueble",
+    "videos": "Galería de Vídeos",
+    "scheduleVisit": "Agendar Visita"
   },
   "footer": {
     "text": "Quality Home Portal Inmobiliario. Todos los derechos reservados."
   }
 };
 
-
 type Language = 'pt' | 'en' | 'es';
+
+const translations = {
+  pt: ptTranslations,
+  en: enTranslations,
+  es: esTranslations,
+};
 
 interface LanguageContextType {
   language: Language;
@@ -635,18 +664,6 @@ interface LanguageContextType {
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
-const translations = {
-  pt: ptTranslations,
-  en: enTranslations,
-  es: esTranslations,
-};
-
-// Função para obter um valor aninhado de um objeto a partir de uma chave string "a.b.c"
-const getNestedTranslation = (obj: any, key: string): string | undefined => {
-  return key.split('.').reduce((o, i) => (o ? o[i] : undefined), obj);
-};
-
-
 export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [language, setLanguage] = useState<Language>('pt');
 
@@ -654,16 +671,23 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
     setLanguage(lang);
   };
 
-  const t = (key: string, options?: { [key: string]: string | number }): string => {
-    const translation = getNestedTranslation(translations[language], key) || key;
-    
-    if (options) {
-      return Object.entries(options).reduce((str, [key, value]) => {
-        return str.replace(`{${key}}`, String(value));
-      }, translation);
+  const t = (key: string, options?: { [key: string]: string | number }) => {
+    const keys = key.split('.');
+    let result: any = translations[language];
+    for (const k of keys) {
+      result = result?.[k];
+      if (result === undefined) {
+        return key; // Return the key itself if not found
+      }
+    }
+
+    if (typeof result === 'string' && options) {
+      Object.keys(options).forEach(optKey => {
+        result = result.replace(`{${optKey}}`, String(options[optKey]));
+      });
     }
     
-    return translation;
+    return result || key;
   };
 
   return (

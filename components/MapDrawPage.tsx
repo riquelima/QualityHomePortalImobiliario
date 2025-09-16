@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, CircleMarker } from 'react-leaflet';
 import L from 'leaflet';
@@ -12,6 +13,7 @@ import CloseIcon from './icons/CloseIcon';
 interface MapDrawPageProps {
   onBack: () => void;
   userLocation?: { lat: number; lng: number } | null;
+  onViewDetails: (id: number) => void;
 }
 
 // Interface for properties with a calculated distance for sorting
@@ -121,7 +123,7 @@ const DrawingManager: React.FC<{
 };
 
 
-const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
+const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewDetails }) => {
   const [propertiesInZone, setPropertiesInZone] = useState<PropertyWithDistance[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { t } = useLanguage();
@@ -303,7 +305,7 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
                 <div className="space-y-4">
                 {propertiesInZone.length > 0 ? (
                     propertiesInZone.map(prop => (
-                        <PropertyCard key={prop.id} property={prop} />
+                        <PropertyCard key={prop.id} property={prop} onViewDetails={onViewDetails} />
                     ))
                 ) : (
                     <div className="text-center text-brand-gray mt-8">

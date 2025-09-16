@@ -12,7 +12,9 @@ export interface Property {
   bedrooms: number;
   bathrooms: number;
   area: number;
-  image: string;
+  images: string[];
+  description: string;
+  videos?: string[];
   status?: PropertyStatus;
   lat: number;
   lng: number;
