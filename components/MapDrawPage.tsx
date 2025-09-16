@@ -20,31 +20,38 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack }) => {
   
   const [propertiesInZone, setPropertiesInZone] = useState<Property[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
 
   useEffect(() => {
-    if (mapRef.current && !mapInstance.current) {
-      // Inicializa o mapa
-      mapInstance.current = L.map(mapRef.current, {
-        zoomControl: false // Desativa o controle de zoom padrão
-      }).setView([-13.29, -41.71], 7); // Centralizado na Bahia
+    const init = () => {
+      // Espera o Leaflet e o Leaflet Draw serem carregados na window
+      if (typeof L === 'undefined' || !L.Control || !L.Control.Draw) {
+        setTimeout(init, 100);
+        return;
+      }
+      
+      // Evita re-inicialização
+      if (!mapRef.current || mapInstance.current) return;
+      
+      setIsInitializing(false);
 
-      // Adiciona a camada de tiles do OpenStreetMap
+      // --- Início da lógica de inicialização do mapa ---
+      mapInstance.current = L.map(mapRef.current, {
+        zoomControl: false
+      }).setView([-13.29, -41.71], 7);
+
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
       }).addTo(mapInstance.current);
       
-      // Adiciona controle de zoom na posição inferior direita
       L.control.zoom({ position: 'bottomright' }).addTo(mapInstance.current);
 
-      // Camada para os itens desenhados
       drawnItemsRef.current = new L.FeatureGroup();
       mapInstance.current.addLayer(drawnItemsRef.current);
 
-      // Camada para os marcadores de imóveis
       propertyMarkersRef.current = L.layerGroup();
       mapInstance.current.addLayer(propertyMarkersRef.current);
 
-      // Configuração do controle de desenho (desabilitado por padrão)
       drawControlRef.current = new L.Control.Draw({
         position: 'bottomleft',
         draw: {
@@ -66,16 +73,14 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack }) => {
       });
       mapInstance.current.addControl(drawControlRef.current);
 
-      // Evento disparado ao criar um desenho
       mapInstance.current.on(L.Draw.Event.CREATED, (event: any) => {
         const layer = event.layer;
         const drawnLatLng = layer.getLatLng();
         const drawnRadius = layer.getRadius();
 
-        drawnItemsRef.current.clearLayers(); // Limpa desenhos anteriores
+        drawnItemsRef.current.clearLayers();
         drawnItemsRef.current.addLayer(layer);
         
-        // Filtra os imóveis que estão dentro do círculo desenhado
         const foundProperties = MOCK_PROPERTIES.filter(prop => {
           const propLatLng = L.latLng(prop.lat, prop.lng);
           const distance = drawnLatLng.distanceTo(propLatLng);
@@ -85,7 +90,6 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack }) => {
         setPropertiesInZone(foundProperties);
         setIsSidebarOpen(foundProperties.length > 0);
 
-        // Adiciona marcadores para os imóveis encontrados
         propertyMarkersRef.current.clearLayers();
         if (foundProperties.length > 0) {
             foundProperties.forEach(prop => {
@@ -96,32 +100,35 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack }) => {
         }
       });
       
-      // Evento disparado ao remover desenhos
       mapInstance.current.on(L.Draw.Event.DELETED, () => {
         setPropertiesInZone([]);
         setIsSidebarOpen(false);
-        propertyMarkersRef.current.clearLayers(); // Limpa marcadores também
+        propertyMarkersRef.current.clearLayers();
       });
-    }
-
-    // Cleanup
-    return () => {
-      // Comentado para evitar que o mapa seja destruído em re-renders no modo de desenvolvimento do React
-      // if (mapInstance.current) {
-      //   mapInstance.current.remove();
-      //   mapInstance.current = null;
-      // }
     };
+    
+    init();
+
   }, []);
 
   const handleDrawClick = () => {
     // Ativa a ferramenta de desenho de círculo programaticamente
-    new L.Draw.Circle(mapInstance.current, drawControlRef.current.options.draw.circle).enable();
+    if (mapInstance.current && L && L.Draw && L.Draw.Circle) {
+        new L.Draw.Circle(mapInstance.current, drawControlRef.current.options.draw.circle).enable();
+    }
   };
 
   return (
     <div className="fixed inset-0 bg-white z-[100]">
       <div ref={mapRef} className="w-full h-full" />
+      
+      {isInitializing && (
+        <div className="absolute inset-0 bg-white bg-opacity-80 flex items-center justify-center z-30">
+          <div className="text-center p-8 bg-white rounded-lg shadow-xl">
+            <p className="text-lg font-semibold text-brand-navy">Carregando mapa...</p>
+          </div>
+        </div>
+      )}
 
       {/* Header com botão de voltar */}
       <header className="absolute top-0 left-0 p-4 z-10">
@@ -145,7 +152,8 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack }) => {
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10">
         <button
           onClick={handleDrawClick}
-          className="bg-brand-red hover:opacity-90 text-white font-bold py-3 px-8 rounded-full shadow-2xl transition duration-300"
+          className="bg-brand-red hover:opacity-90 text-white font-bold py-3 px-8 rounded-full shadow-2xl transition duration-300 disabled:bg-gray-400"
+          disabled={isInitializing}
         >
           Desenhar a tua zona
         </button>
