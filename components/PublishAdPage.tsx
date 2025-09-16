@@ -49,7 +49,7 @@ const PublishAdPage: React.FC<PublishAdPageProps> = ({ onBack, onPublishAdClick 
             <p className="text-sm text-brand-gray">{t('publishAdPage.mainCard.professionalInfo')}</p>
           </div>
           <div className="md:w-2/5 mt-8 md:mt-0 flex justify-center">
-            <img src="https://i.imgur.com/bE2zHbS.png" alt="Phone showing chat" className="max-w-xs w-full" />
+            <img src="https://i.imgur.com/FuxDdyF.png" alt="Logotipo da Quallity Home" className="max-w-xs w-full" />
           </div>
         </div>
 
