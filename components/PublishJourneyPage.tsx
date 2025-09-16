@@ -35,6 +35,8 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
       autocomplete.addListener('place_changed', () => {
         const place = autocomplete.getPlace();
         if (place && place.formatted_address) {
+          // Nota: Isto atualiza o estado para consistência, mas o input em si não é controlado pelo React.
+          // O widget do Google atualiza o valor do input diretamente no DOM.
           setAddress(prev => ({ ...prev, city: place.formatted_address }));
         }
       });
@@ -54,7 +56,9 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
     }
     
     const geocoder = new google.maps.Geocoder();
-    const fullAddress = `${address.street}, ${address.number}, ${address.city}`;
+    // Lê o valor da cidade diretamente do ref do input para obter o valor mais atualizado
+    const cityValue = cityInputRef.current?.value || '';
+    const fullAddress = `${address.street}, ${address.number}, ${cityValue}`;
     
     geocoder.geocode({ address: fullAddress, componentRestrictions: { country: 'BR' } }, (results: any, status: any) => {
       if (status === 'OK' && results && results[0]) {
@@ -164,8 +168,6 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
                         type="text" 
                         id="city" 
                         ref={cityInputRef} 
-                        value={address.city} 
-                        onChange={handleAddressChange} 
                         className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" 
                         required
                       />
