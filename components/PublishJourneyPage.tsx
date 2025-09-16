@@ -18,8 +18,6 @@ interface PublishJourneyPageProps {
   onLogout: () => void;
 }
 
-const API_KEY = 'AIzaSyCsX9l10XCu3TtSCU1BSx-qOYrwUKYw2xk';
-
 const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPublishAdClick, onOpenLoginModal, user, onLogout }) => {
   const { t } = useLanguage();
   const [operation, setOperation] = useState('sell');
@@ -30,7 +28,14 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
   const [citySuggestions, setCitySuggestions] = useState<any[]>([]);
   const [isCitySuggestionsOpen, setIsCitySuggestionsOpen] = useState(false);
   const citySuggestionsRef = useRef<HTMLDivElement>(null);
+  const [autocompleteService, setAutocompleteService] = useState<any>(null);
 
+  // Efeito para inicializar o serviço de autocompletar
+  useEffect(() => {
+    if (typeof google !== 'undefined' && google.maps && google.maps.places) {
+      setAutocompleteService(new google.maps.places.AutocompleteService());
+    }
+  }, []);
 
   // Efeito para fechar as sugestões ao clicar fora
   useEffect(() => {
@@ -47,35 +52,34 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
 
   // Efeito para buscar sugestões de localidade com debounce
   useEffect(() => {
-    if (address.city.length < 3) {
+    if (!autocompleteService || address.city.length < 3) {
       setCitySuggestions([]);
       setIsCitySuggestionsOpen(false);
       return;
     }
 
-    const handler = setTimeout(async () => {
-      try {
-        const response = await fetch(`https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(address.city)}&types=(cities)&components=country:BR&key=${API_KEY}`);
-        const data = await response.json();
-        
-        if (data.status === 'OK' && data.predictions) {
-          setCitySuggestions(data.predictions);
+    const handler = setTimeout(() => {
+      const request = {
+        input: address.city,
+        types: ['(cities)'],
+        componentRestrictions: { country: 'br' },
+      };
+
+      autocompleteService.getPlacePredictions(request, (predictions: any, status: any) => {
+        if (status === google.maps.places.PlacesServiceStatus.OK && predictions) {
+          setCitySuggestions(predictions);
           setIsCitySuggestionsOpen(true);
         } else {
           setCitySuggestions([]);
           setIsCitySuggestionsOpen(false);
         }
-      } catch (error) {
-        console.error('Error fetching city suggestions:', error);
-        setCitySuggestions([]);
-        setIsCitySuggestionsOpen(false);
-      }
+      });
     }, 300); // 300ms debounce
 
     return () => {
       clearTimeout(handler);
     };
-  }, [address.city]);
+  }, [address.city, autocompleteService]);
 
   const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
@@ -110,9 +114,38 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
   };
 
   const handleConfirmLocation = (coords: { lat: number; lng: number }) => {
-    console.log('Localização confirmada:', coords);
-    // TODO: Salvar as coordenadas finais e avançar para a próxima etapa
-    setIsLocationModalOpen(false);
+    if (typeof google === 'undefined' || !google.maps) {
+      alert('Ocorreu um erro ao processar a localização. Tente novamente.');
+      setIsLocationModalOpen(false);
+      return;
+    }
+  
+    const geocoder = new google.maps.Geocoder();
+    geocoder.geocode({ location: coords }, (results: any, status: any) => {
+      if (status === 'OK' && results && results[0]) {
+        const addressComponents = results[0].address_components;
+        
+        const getAddressComponent = (type: string, nameType: 'long_name' | 'short_name' = 'long_name') => {
+          const component = addressComponents.find((comp: any) => comp.types.includes(type));
+          return component ? component[nameType] : '';
+        };
+  
+        const streetNumber = getAddressComponent('street_number');
+        const streetName = getAddressComponent('route');
+        const city = getAddressComponent('administrative_area_level_2');
+        const state = getAddressComponent('administrative_area_level_1', 'short_name');
+        
+        setAddress({
+          city: `${city}, ${state}`,
+          street: streetName,
+          number: streetNumber,
+        });
+        
+      } else {
+        alert('Não foi possível obter o endereço para a localização selecionada. Tente novamente.');
+      }
+      setIsLocationModalOpen(false);
+    });
   };
 
   return (
