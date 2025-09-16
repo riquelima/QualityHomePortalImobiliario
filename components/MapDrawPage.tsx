@@ -104,7 +104,7 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
     
     const map = mapInstance.current;
     
-    // Limpa o estado anterior das camadas
+    // Limpa o estado anterior das camadas de dados
     propertyMarkersRef.current.clearLayers();
     drawnItemsRef.current.clearLayers();
     map.eachLayer((layer: any) => {
@@ -116,7 +116,10 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
 
     if (userLocation) {
         // --- Modo de Busca por Proximidade ---
-        try { map.removeControl(drawControlRef.current); } catch (e) { /* ignora erro se não estiver presente */ }
+        // Garante que o controle de desenho seja removido se estiver no mapa
+        if (drawControlRef.current && drawControlRef.current._map) {
+            map.removeControl(drawControlRef.current);
+        }
 
         map.setView([userLocation.lat, userLocation.lng], 14);
         
@@ -144,7 +147,11 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
         }
     } else {
         // --- Modo de Desenhar no Mapa ---
-        map.addControl(drawControlRef.current);
+        // Garante que o controle de desenho seja adicionado apenas se não estiver no mapa
+        if (drawControlRef.current && !drawControlRef.current._map) {
+            map.addControl(drawControlRef.current);
+        }
+        
         if(drawControlRef.current.getContainer()) {
           drawControlRef.current.getContainer().style.display = 'none';
         }
