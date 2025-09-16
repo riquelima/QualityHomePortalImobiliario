@@ -1,6 +1,8 @@
+
 import React from 'react';
 import { Property, PropertyStatus } from '../types';
 import PropertyCard from './PropertyCard';
+import { useLanguage } from '../contexts/LanguageContext';
 
 export const MOCK_PROPERTIES: Property[] = [
   {
@@ -82,12 +84,14 @@ export const MOCK_PROPERTIES: Property[] = [
 ];
 
 const PropertyListings: React.FC = () => {
+  const { t } = useLanguage();
+
   return (
     <section className="bg-white py-20">
       <div className="container mx-auto px-6">
-        <h2 className="text-4xl font-bold text-brand-navy text-center mb-4">Imóveis em Destaque</h2>
+        <h2 className="text-4xl font-bold text-brand-navy text-center mb-4">{t('listings.title')}</h2>
         <p className="text-lg text-brand-gray text-center max-w-2xl mx-auto mb-12">
-          Explore nossa seleção exclusiva de imóveis que combinam luxo, conforto e localização privilegiada.
+          {t('listings.description')}
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {MOCK_PROPERTIES.map((property) => (

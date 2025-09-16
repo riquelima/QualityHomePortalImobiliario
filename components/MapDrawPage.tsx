@@ -1,8 +1,10 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import { MOCK_PROPERTIES } from './PropertyListings';
 import type { Property } from '../types';
 import PropertyCard from './PropertyCard';
 import ArrowLeftIcon from './icons/ArrowLeftIcon';
+import { useLanguage } from '../contexts/LanguageContext';
 
 // Declaração para informar ao TypeScript sobre a variável global L do Leaflet
 declare const L: any;
@@ -38,6 +40,7 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
   const [propertiesInZone, setPropertiesInZone] = useState<Property[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMapReady, setIsMapReady] = useState(false);
+  const { t } = useLanguage();
 
   useEffect(() => {
     if (!mapRef.current) return;
@@ -74,7 +77,7 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
         // Marcador da localização do usuário
         L.circleMarker([userLocation.lat, userLocation.lng], {
           radius: 8, fillColor: '#4285F4', color: '#fff', weight: 2, opacity: 1, fillOpacity: 0.9
-        }).addTo(mapInstance.current).bindPopup('Sua localização').openPopup();
+        }).addTo(mapInstance.current).bindPopup(t('map.userLocationPopup')).openPopup();
 
         const searchRadius = 5000; // 5km
         const userLatLng = L.latLng(userLocation.lat, userLocation.lng);
@@ -158,7 +161,7 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
         mapInstance.current = null;
       }
     };
-  }, [userLocation]); // Adicionado userLocation como dependência
+  }, [userLocation, t]); // Adicionado t como dependência
 
   const handleDrawClick = () => {
     // Limpa a camada de desenho anterior e os marcadores de imóveis.
@@ -185,7 +188,7 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
       
       {!isMapReady && (
         <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-[1200]">
-          <p className="text-brand-navy text-lg font-semibold animate-pulse">Carregando mapa...</p>
+          <p className="text-brand-navy text-lg font-semibold animate-pulse">{t('map.loading')}</p>
         </div>
       )}
 
@@ -194,12 +197,12 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
           <div className="absolute top-0 left-0 w-full p-4 md:p-6 z-[1000] bg-gradient-to-b from-white/80 to-transparent">
              <div className="container mx-auto">
                 <div className="text-sm mb-4">
-                    <span onClick={onBack} className="text-brand-red hover:underline cursor-pointer">Início</span>
+                    <span onClick={onBack} className="text-brand-red hover:underline cursor-pointer">{t('map.breadcrumbs.home')}</span>
                     <span className="text-brand-gray mx-2">&gt;</span>
-                    <span className="text-brand-dark font-medium">{userLocation ? 'Pesquisa por Proximidade' : 'Desenhar no mapa'}</span>
+                    <span className="text-brand-dark font-medium">{userLocation ? t('map.breadcrumbs.proximitySearch') : t('map.breadcrumbs.drawOnMap')}</span>
                 </div>
                 <h1 className="text-2xl md:text-4xl font-bold text-brand-navy">
-                  {userLocation ? 'Imóveis perto de você' : 'Desenhe a sua pesquisa em Salvador'}
+                  {userLocation ? t('map.title.proximity') : t('map.title.draw')}
                 </h1>
             </div>
           </div>
@@ -208,7 +211,7 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
             <>
               <div className="absolute top-32 md:top-40 left-1/2 -translate-x-1/2 bg-white/90 p-4 rounded-lg shadow-md w-11/12 max-w-sm text-center z-[1000]">
                 <p className="text-brand-navy">
-                  Move o mapa para localizar a área que te interessa antes de desenhar a zona onde procuras
+                  {t('map.drawInstruction')}
                 </p>
               </div>
 
@@ -220,7 +223,7 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L16.732 3.732z" />
                   </svg>
-                  <span>Desenhar sua área</span>
+                  <span>{t('map.drawButton')}</span>
                 </button>
               </div>
             </>
@@ -233,7 +236,7 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
                 onClick={() => setIsSidebarOpen(prev => !prev)}
                 className="bg-brand-navy hover:bg-brand-dark text-white font-bold py-3 px-6 rounded-full shadow-2xl transition duration-300"
               >
-                {isSidebarOpen ? 'Ocultar Resultados' : `Ver ${propertiesInZone.length} Imóveis`}
+                {isSidebarOpen ? t('map.toggleResults.hide') : t('map.toggleResults.show', { count: propertiesInZone.length })}
               </button>
             </div>
           )}
@@ -264,7 +267,7 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
                  {/* Grab handle for mobile */}
                 <div className="md:hidden w-12 h-1.5 bg-gray-300 rounded-full mx-auto mb-2 cursor-grab" />
                 <div className="flex justify-between items-center">
-                    <h3 className="text-xl font-bold text-brand-navy">{propertiesInZone.length} imóveis encontrados</h3>
+                    <h3 className="text-xl font-bold text-brand-navy">{t('map.resultsPanel.title', { count: propertiesInZone.length })}</h3>
                     <button onClick={() => setIsSidebarOpen(false)} className="text-2xl text-brand-gray hover:text-brand-dark">&times;</button>
                 </div>
             </div>
@@ -276,8 +279,8 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
                     ))
                 ) : (
                     <div className="text-center text-brand-gray mt-8">
-                        <p>Nenhum imóvel encontrado nesta área.</p>
-                        <p>Tente desenhar uma área maior ou em outra localização.</p>
+                        <p>{t('map.resultsPanel.noResults.line1')}</p>
+                        <p>{t('map.resultsPanel.noResults.line2')}</p>
                     </div>
                 )}
                 </div>

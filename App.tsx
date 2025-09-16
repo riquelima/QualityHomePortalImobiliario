@@ -1,9 +1,11 @@
+
 import React, { useState } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import InfoSection from './components/InfoSection';
 import PropertyListings from './components/PropertyListings';
 import MapDrawPage from './components/MapDrawPage';
+import { useLanguage } from './contexts/LanguageContext';
 
 interface PageState {
   page: 'home' | 'map';
@@ -12,6 +14,7 @@ interface PageState {
 
 const App: React.FC = () => {
   const [pageState, setPageState] = useState<PageState>({ page: 'home', userLocation: null });
+  const { t } = useLanguage();
 
   if (pageState.page === 'map') {
     return <MapDrawPage 
@@ -33,7 +36,7 @@ const App: React.FC = () => {
       </main>
       <footer className="bg-brand-light-gray text-brand-gray py-8 text-center mt-20">
         <div className="container mx-auto">
-          <p>&copy; {new Date().getFullYear()} Quality Home Portal Imobiliário. Todos os direitos reservados.</p>
+          <p>&copy; {new Date().getFullYear()} {t('footer.text')}</p>
         </div>
       </footer>
     </div>
