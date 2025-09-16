@@ -4,9 +4,10 @@ import { useLanguage } from '../contexts/LanguageContext';
 
 interface InfoSectionProps {
   onDrawOnMapClick: () => void;
+  onPublishAdClick: () => void;
 }
 
-const InfoSection: React.FC<InfoSectionProps> = ({ onDrawOnMapClick }) => {
+const InfoSection: React.FC<InfoSectionProps> = ({ onDrawOnMapClick, onPublishAdClick }) => {
   const { t } = useLanguage();
   return (
     <section className="bg-brand-light-gray py-16">
@@ -33,7 +34,7 @@ const InfoSection: React.FC<InfoSectionProps> = ({ onDrawOnMapClick }) => {
             <div>
               <h3 className="text-xl font-bold text-brand-navy mb-2">{t('infoSection.publish.title')}</h3>
               <p className="text-brand-gray mb-4">{t('infoSection.publish.description')}</p>
-              <a href="#" className="text-brand-red hover:underline font-medium">{t('infoSection.publish.link')}</a>
+              <button onClick={onPublishAdClick} className="text-brand-red hover:underline font-medium text-left">{t('infoSection.publish.link')}</button>
             </div>
           </div>
         </div>

@@ -1,3 +1,4 @@
+
 {
   "header": {
     "nav": {
@@ -77,6 +78,40 @@
         "line1": "Nenhum imóvel encontrado nesta área.",
         "line2": "Tente desenhar uma área maior ou em outra localização."
       }
+    }
+  },
+  "publishAdPage": {
+    "breadcrumbHome": "Início",
+    "breadcrumbPublish": "Como colocar um anúncio",
+    "mainCard": {
+      "title": "Como colocar um anúncio na Quallity Home",
+      "benefit1": "Os teus 2 primeiros anúncios são grátis. Se forem quartos, podes publicar até 5 anúncios grátis.",
+      "benefit2": "Tens acesso a uma área privada onde podes gerir o teu anúncio e os contactos que recebes.",
+      "benefit3": "Podes resolver questões, trocar informações e organizar visitas de uma forma eficiente através do nosso chat.",
+      "agencyInfo": "Para vender ou arrendar mais rápido contacta uma agência imobiliária.",
+      "publishButton": "Publica o teu anúncio grátis",
+      "professionalInfo": "És um profissional imobiliário? Conhece as nossas vantagens para profissionais."
+    },
+    "steps": {
+      "title": "Quais são os passos a seguir para publicares o teu anúncio como proprietário particular?",
+      "intro": "Há 4 pontos essenciais para venderes ou arrendares o teu imóvel o mais rapidamente possível:",
+      "step1Title": "1. Inserir as melhores fotografias que tiveres e, se possível, uma planta que mostre a disposição das assoalhadas",
+      "step1Content": "• Certifica-te de que tens fotos de qualidade à mão quando publicares o teu anúncio. Se não as tiveres, poderás adicionar mais tarde, mas lembra-te, sem fotos não terás resultados.\n• A foto principal é essencial. Será a capa do teu anúncio, a única que será enviada por email aos interessados e o que vai aparecer na lista de resultados.\n• Ordena as tuas fotos de forma lógica para criar uma história atrativa e opta por imagens horizontais que ficam muito bem.\n• Incluindo uma planta feita à mão, mesmo que não esteja detalhada, oferece informação útil para que os interessados visualizem a distribuição das divisões e como seria viver ali.",
+      "step2Title": "2. Indicar a morada exata",
+      "step2Content": "Para que as pessoas que procuram na zona conheçam o teu anúncio, é muito importante indicar a morada correta do imóvel. Se, por algum motivo, não queres indicá-la, tens a tua disposição a possibilidade de ocultar a morada por 9,90 €",
+      "step3Title": "3. Colocar um preço de acordo com o valor de mercado",
+      "step3Content": "Em caso de dúvida, podes fazer uma avaliação gratuita do teu imóvel no nosso site ou verificar o preço médio nessa zona.",
+      "step4Title": "4. Indicar as características do teu imóvel e descrever a tua casa ao pormenor",
+      "step4Content": "Inclui informações sobre o teu imóvel, como o número de quartos, m2, casas de banho, etc. Refere também as comodidades adicionais, como a presença de um elevador, um terraço, um lugar de estacionamento, uma arrecadação, etc. Afinal, todos estes pormenores valorizam o teu imóvel. Destaca as características especiais do teu imóvel, sobretudo as que aparecem nas fotografias. Não te esqueças de explicar os serviços próximos, os transportes disponíveis e os lugares de interesse na zona."
+    },
+    "advantages": {
+      "title": "Vantagens de publicar na Quallity Home",
+      "advantage1Title": "Garantia de visibilidade",
+      "advantage1Content": "Os anúncios publicados no nosso site são visitados por milhões de utilizadores, o que te dá a oportunidade de vender ou arrendar o teu imóvel de uma forma mais rápida e eficaz.",
+      "advantage2Title": "A melhor experiência",
+      "advantage2Content": "A APP da Quallity Home tem múltiplas funcionalidades que te ajudarão a gerir a tua publicação e para quem procura um imóvel, permite configurar alertas totalmente personalizados para receber imediatamente novos imóveis.",
+      "advantage3Title": "Grande variedade de produtos para o teu anúncio",
+      "advantage3Content": "Dispomos de uma vasta gama de ferramentas para melhorar a posição do teu anúncio e ganhar visibilidade."
     }
   },
   "footer": {

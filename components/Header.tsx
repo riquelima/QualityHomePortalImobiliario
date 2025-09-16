@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import UserIcon from './icons/UserIcon';
 import FlagBRIcon from './icons/FlagBRIcon';
@@ -14,7 +15,11 @@ const languageMap = {
   es: { name: 'Español', Flag: FlagESIcon },
 };
 
-const Header: React.FC = () => {
+interface HeaderProps {
+  onPublishAdClick: () => void;
+}
+
+const Header: React.FC<HeaderProps> = ({ onPublishAdClick }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
   const langDropdownRef = useRef<HTMLDivElement>(null);
@@ -54,7 +59,10 @@ const Header: React.FC = () => {
           {/* Right side actions */}
           <div className="flex items-center space-x-4 text-sm">
             {/* Desktop "Publique" button */}
-            <button className="hidden md:block px-4 py-2 border border-brand-gray rounded-md hover:border-brand-dark transition duration-300">
+            <button 
+              onClick={onPublishAdClick}
+              className="hidden md:block px-4 py-2 border border-brand-gray rounded-md hover:border-brand-dark transition duration-300"
+            >
               {t('header.publishAd')}
             </button>
             
@@ -120,7 +128,10 @@ const Header: React.FC = () => {
           <a href="#" className="text-brand-dark hover:text-brand-red transition duration-300">{t('header.nav.owners')}</a>
           <a href="#" className="text-brand-dark hover:text-brand-red transition duration-300">{t('header.nav.search')}</a>
           <hr className="my-4" />
-          <button className="w-full text-center px-4 py-2 bg-brand-red text-white rounded-md hover:opacity-90 transition duration-300">
+          <button 
+            onClick={onPublishAdClick}
+            className="w-full text-center px-4 py-2 bg-brand-red text-white rounded-md hover:opacity-90 transition duration-300"
+          >
             {t('header.publishAd')}
           </button>
         </nav>

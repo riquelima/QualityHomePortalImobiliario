@@ -1,3 +1,4 @@
+
 {
   "header": {
     "nav": {
@@ -77,6 +78,40 @@
         "line1": "No se encontraron inmuebles en esta área.",
         "line2": "Intenta dibujar un área más grande o en otra ubicación."
       }
+    }
+  },
+  "publishAdPage": {
+    "breadcrumbHome": "Inicio",
+    "breadcrumbPublish": "Cómo poner un anuncio",
+    "mainCard": {
+      "title": "Cómo poner un anuncio en Quallity Home",
+      "benefit1": "Tus 2 primeros anuncios son gratis. Si son habitaciones, puedes publicar hasta 5 anuncios gratis.",
+      "benefit2": "Tienes acceso a un área privada donde puedes gestionar tu anuncio y los contactos que recibes.",
+      "benefit3": "Puedes resolver dudas, intercambiar información y organizar visitas de forma eficiente a través de nuestro chat.",
+      "agencyInfo": "Para vender o alquilar más rápido contacta con una agencia inmobiliaria.",
+      "publishButton": "Publica tu anuncio gratis",
+      "professionalInfo": "¿Eres un profesional inmobiliario? Conoce nuestras ventajas para profesionales."
+    },
+    "steps": {
+      "title": "¿Cuáles son los pasos a seguir para publicar tu anuncio como propietario particular?",
+      "intro": "Hay 4 puntos esenciales para vender o alquilar tu inmueble lo más rápidamente posible:",
+      "step1Title": "1. Inserta las mejores fotografías que tengas y, a poder ser, un plano que muestre la disposición de las estancias",
+      "step1Content": "• Asegúrate de que tienes fotos de calidad a mano cuando publiques tu anuncio. Si no las tienes, podrás añadirlas más tarde, pero recuerda que sin fotos no tendrás resultados.\n• La foto principal es esencial. Será la portada de tu anuncio, la única que se enviará por email a los interesados y la que aparecerá en el listado de resultados.\n• Ordena tus fotos de forma lógica para crear una historia atractiva y opta por imágenes horizontales que quedan muy bien.\n• Incluir un plano hecho a mano, aunque no esté detallado, ofrece información útil para que los interesados visualicen la distribución de las estancias y cómo sería vivir allí.",
+      "step2Title": "2. Indica la dirección exacta",
+      "step2Content": "Para que las personas que buscan en la zona conozcan tu anuncio, es muy importante indicar la dirección correcta del inmueble. Si, por algún motivo, no quieres indicarla, tienes a tu disposición la posibilidad de ocultar la dirección por 9,90 €.",
+      "step3Title": "3. Pon un precio acorde con el valor de mercado",
+      "step3Content": "En caso de duda, puedes hacer una valoración gratuita de tu inmueble en nuestra web o verificar el precio medio en esa zona.",
+      "step4Title": "4. Indica las características de tu inmueble y describe tu casa al detalle",
+      "step4Content": "Incluye información sobre tu inmueble, como el número de habitaciones, m2, baños, etc. Refiere también las comodidades adicionales, como la presencia de un ascensor, una terraza, una plaza de garaje, un trastero, etc. Al fin y al cabo, todos estos detalles revalorizan tu inmueble. Destaca las características especiales de tu inmueble, sobre todo las que aparecen en las fotografías. No te olvides de explicar los servicios próximos, los transportes disponibles y los lugares de interés de la zona."
+    },
+    "advantages": {
+      "title": "Ventajas de publicar en Quallity Home",
+      "advantage1Title": "Garantía de visibilidad",
+      "advantage1Content": "Los anuncios publicados en nuestro sitio son visitados por millones de usuarios, lo que te da la oportunidad de vender o alquilar tu inmueble de una forma más rápida y eficaz.",
+      "advantage2Title": "La mejor experiencia",
+      "advantage2Content": "La APP de Quallity Home tiene múltiples funcionalidades que te ayudarán a gestionar tu publicación y para quien busca un inmueble, permite configurar alertas totalmente personalizadas para recibir inmediatamente nuevos inmuebles.",
+      "advantage3Title": "Gran variedad de productos para tu anuncio",
+      "advantage3Content": "Disponemos de una vasta gama de herramientas para mejorar la posición de tu anuncio y ganar visibilidad."
     }
   },
   "footer": {

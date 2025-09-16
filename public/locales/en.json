@@ -1,3 +1,4 @@
+
 {
   "header": {
     "nav": {
@@ -77,6 +78,40 @@
         "line1": "No properties found in this area.",
         "line2": "Try drawing a larger area or in another location."
       }
+    }
+  },
+  "publishAdPage": {
+    "breadcrumbHome": "Home",
+    "breadcrumbPublish": "How to post an ad",
+    "mainCard": {
+      "title": "How to post an ad on Quallity Home",
+      "benefit1": "Your first 2 ads are free. If they are rooms, you can publish up to 5 free ads.",
+      "benefit2": "You have access to a private area where you can manage your ad and the contacts you receive.",
+      "benefit3": "You can resolve questions, exchange information, and organize visits efficiently through our chat.",
+      "agencyInfo": "To sell or rent faster, contact a real estate agency.",
+      "publishButton": "Publish your ad for free",
+      "professionalInfo": "Are you a real estate professional? Discover our advantages for professionals."
+    },
+    "steps": {
+      "title": "What are the steps to publish your ad as a private owner?",
+      "intro": "There are 4 essential points to sell or rent your property as quickly as possible:",
+      "step1Title": "1. Insert the best photos you have and, if possible, a floor plan showing the layout of the rooms",
+      "step1Content": "• Make sure you have quality photos on hand when you publish your ad. If you don't have them, you can add them later, but remember, you won't get results without photos.\n• The main photo is essential. It will be the cover of your ad, the only one sent by email to interested parties, and what will appear in the results list.\n• Arrange your photos logically to create an attractive story and opt for horizontal images that look great.\n• Including a hand-drawn floor plan, even if not detailed, provides useful information for interested parties to visualize the distribution of rooms and what it would be like to live there.",
+      "step2Title": "2. Indicate the exact address",
+      "step2Content": "For people searching in the area to know your ad, it is very important to indicate the correct address of the property. If, for some reason, you do not want to indicate it, you have the option to hide the address for €9.90.",
+      "step3Title": "3. Set a price according to the market value",
+      "step3Content": "If in doubt, you can get a free valuation of your property on our site or check the average price in that area.",
+      "step4Title": "4. Indicate the characteristics of your property and describe your house in detail",
+      "step4Content": "Include information about your property, such as the number of bedrooms, m2, bathrooms, etc. Also mention additional amenities, such as the presence of an elevator, a terrace, a parking space, a storage room, etc. After all, all these details add value to your property. Highlight the special features of your property, especially those that appear in the photographs. Don't forget to explain nearby services, available transportation, and places of interest in the area."
+    },
+    "advantages": {
+      "title": "Advantages of publishing on Quallity Home",
+      "advantage1Title": "Guaranteed visibility",
+      "advantage1Content": "The ads published on our site are visited by millions of users, which gives you the opportunity to sell or rent your property more quickly and effectively.",
+      "advantage2Title": "The best experience",
+      "advantage2Content": "The Quallity Home APP has multiple functionalities that will help you manage your publication and for those looking for a property, it allows you to configure fully personalized alerts to immediately receive new properties.",
+      "advantage3Title": "Wide variety of products for your ad",
+      "advantage3Content": "We have a wide range of tools to improve the position of your ad and gain visibility."
     }
   },
   "footer": {
