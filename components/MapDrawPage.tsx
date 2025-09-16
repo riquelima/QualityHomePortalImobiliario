@@ -45,17 +45,27 @@ const MapUpdater: React.FC<{
 const DrawControl = ({ onCreated, onDeleted }: { onCreated: (e: any) => void, onDeleted: () => void }) => {
   const map = useMap();
   
+  // Refs to hold the Leaflet instances, preventing them from being recreated on re-renders
+  // FIX: Initialize useRef with null to satisfy a strict linting rule expecting an argument.
+  const drawControlRef = useRef<any>(null);
+  // FIX: Initialize useRef with null to satisfy a strict linting rule expecting an argument.
+  const featureGroupRef = useRef<any>(null);
+
+  // Effect to create and remove the control. Runs only once when the map is available.
   useEffect(() => {
-    // A verificação é mantida como uma segurança extra, mas a renderização condicional no pai é a principal proteção.
-    if (!map || typeof L.Control.Draw === 'undefined') return;
+    if (!map || typeof L.Control.Draw === 'undefined') {
+      return;
+    }
 
-    const drawnItems = new L.FeatureGroup();
-    map.addLayer(drawnItems);
+    // Create the feature group for drawn items
+    featureGroupRef.current = new L.FeatureGroup();
+    map.addLayer(featureGroupRef.current);
 
-    const drawControl = new L.Control.Draw({
-      position: 'topleft', // O CSS em index.html irá mover este container para 'bottomcenter'
+    // Create the draw control
+    drawControlRef.current = new L.Control.Draw({
+      position: 'topleft', // CSS will move this container to 'bottomcenter'
       edit: {
-        featureGroup: drawnItems,
+        featureGroup: featureGroupRef.current,
         edit: false,
         remove: true,
       },
@@ -72,11 +82,34 @@ const DrawControl = ({ onCreated, onDeleted }: { onCreated: (e: any) => void, on
         },
       },
     });
-    map.addControl(drawControl);
+    map.addControl(drawControlRef.current);
+
+    // Cleanup function for when the component unmounts
+    return () => {
+      if (map) {
+         if (drawControlRef.current) {
+            map.removeControl(drawControlRef.current);
+            drawControlRef.current = null;
+         }
+         if (featureGroupRef.current && map.hasLayer(featureGroupRef.current)) {
+            map.removeLayer(featureGroupRef.current);
+            featureGroupRef.current = null;
+         }
+      }
+    };
+  }, [map]); // This effect depends only on the map instance.
+
+  // Effect to handle the drawing events.
+  useEffect(() => {
+    if (!map) {
+      return;
+    }
 
     const handleCreated = (e: any) => {
-      drawnItems.clearLayers();
-      drawnItems.addLayer(e.layer);
+      if (featureGroupRef.current) {
+        featureGroupRef.current.clearLayers();
+        featureGroupRef.current.addLayer(e.layer);
+      }
       onCreated(e);
     };
 
@@ -90,13 +123,8 @@ const DrawControl = ({ onCreated, onDeleted }: { onCreated: (e: any) => void, on
     return () => {
       map.off(L.Draw.Event.CREATED, handleCreated);
       map.off(L.Draw.Event.DELETED, handleDeleted);
-      // FIX: Property 'hasControl' does not exist on type 'Map'. It is safe to call removeControl without checking.
-      map.removeControl(drawControl);
-      if(map.hasLayer(drawnItems)) {
-        map.removeLayer(drawnItems);
-      }
     };
-  }, [map, onCreated, onDeleted]);
+  }, [map, onCreated, onDeleted]); // This re-binds events if handlers change.
 
   return null;
 };
