@@ -1,7 +1,5 @@
-
 import React from 'react';
 import Header from './Header';
-import Footer from './Footer';
 import { useLanguage } from '../contexts/LanguageContext';
 import CheckIcon from './icons/CheckIcon';
 
@@ -80,18 +78,21 @@ const PublishAdPage: React.FC<PublishAdPageProps> = ({ onBack, onPublishAdClick 
         </div>
         
         {/* Advantages Section */}
-        <div className="bg-white p-8 md:p-12 rounded-lg shadow-lg">
+        <div className="p-8 md:p-12">
             <h2 className="text-2xl md:text-3xl font-bold text-brand-navy mb-8 text-center">{t('publishAdPage.advantages.title')}</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center text-brand-dark">
-                <div>
+                {/* Advantage Card 1 */}
+                <div className="bg-white p-8 rounded-lg shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-2 cursor-default">
                     <h3 className="text-xl font-bold text-brand-navy mb-2">{t('publishAdPage.advantages.advantage1Title')}</h3>
                     <p>{t('publishAdPage.advantages.advantage1Content')}</p>
                 </div>
-                <div>
+                {/* Advantage Card 2 */}
+                <div className="bg-white p-8 rounded-lg shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-2 cursor-default">
                     <h3 className="text-xl font-bold text-brand-navy mb-2">{t('publishAdPage.advantages.advantage2Title')}</h3>
                     <p>{t('publishAdPage.advantages.advantage2Content')}</p>
                 </div>
-                <div>
+                {/* Advantage Card 3 */}
+                <div className="bg-white p-8 rounded-lg shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-2 cursor-default">
                     <h3 className="text-xl font-bold text-brand-navy mb-2">{t('publishAdPage.advantages.advantage3Title')}</h3>
                     <p>{t('publishAdPage.advantages.advantage3Content')}</p>
                 </div>
