@@ -14,10 +14,15 @@ interface MapDrawPageProps {
   userLocation?: { lat: number; lng: number } | null;
 }
 
+// Interface for properties with a calculated distance for sorting
+interface PropertyWithDistance extends Property {
+  distance: number;
+}
+
 // Componente para atualizar a visão do mapa e limpar camadas
 const MapUpdater: React.FC<{ 
   userLocation: { lat: number, lng: number } | null, 
-  onPropertiesFound: (props: Property[]) => void 
+  onPropertiesFound: (props: PropertyWithDistance[]) => void 
 }> = ({ userLocation, onPropertiesFound }) => {
   const map = useMap();
   const { t } = useLanguage();
@@ -29,7 +34,7 @@ const MapUpdater: React.FC<{
       map.setView([userLocation.lat, userLocation.lng], 14);
       const searchRadius = 5000; // 5km
       const userLatLng = L.latLng(userLocation.lat, userLocation.lng);
-      const foundProperties = MOCK_PROPERTIES
+      const foundProperties: PropertyWithDistance[] = MOCK_PROPERTIES
         .map(prop => ({ ...prop, distance: userLatLng.distanceTo(L.latLng(prop.lat, prop.lng)) }))
         .filter(prop => prop.distance <= searchRadius)
         .sort((a, b) => a.distance - b.distance);
@@ -117,7 +122,7 @@ const DrawingManager: React.FC<{
 
 
 const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
-  const [propertiesInZone, setPropertiesInZone] = useState<Property[]>([]);
+  const [propertiesInZone, setPropertiesInZone] = useState<PropertyWithDistance[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { t } = useLanguage();
   const [drawingState, setDrawingState] = useState<'idle' | 'drawing' | 'drawn'>('idle');
@@ -139,7 +144,12 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
             return distance <= drawnRadius;
         });
 
-        setPropertiesInZone(foundProperties);
+        const foundPropertiesWithDistance = foundProperties.map(prop => {
+          const propLatLng = L.latLng(prop.lat, prop.lng);
+          return { ...prop, distance: drawnLatLng.distanceTo(propLatLng) };
+        }).sort((a, b) => a.distance - b.distance);
+
+        setPropertiesInZone(foundPropertiesWithDistance);
         setIsSidebarOpen(foundProperties.length > 0);
         setDrawingState('drawn');
     } else {
@@ -156,7 +166,7 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
       setDrawingState('idle');
   }, []);
   
-  const handlePropertiesFound = useCallback((props: Property[]) => {
+  const handlePropertiesFound = useCallback((props: PropertyWithDistance[]) => {
       setPropertiesInZone(props);
       setIsSidebarOpen(props.length > 0);
   }, []);
@@ -280,7 +290,12 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
             <div className="p-4 border-b flex-shrink-0">
                 <div className="md:hidden w-12 h-1.5 bg-gray-300 rounded-full mx-auto mb-2 cursor-grab" />
                 <div className="flex justify-between items-center">
-                    <h3 className="text-xl font-bold text-brand-navy">{t('map.resultsPanel.title', { count: propertiesInZone.length })}</h3>
+                    <h3 className="text-xl font-bold text-brand-navy">
+                        {userLocation 
+                            ? t('map.resultsPanel.proximityTitle', { count: propertiesInZone.length, radius: 5 })
+                            : t('map.resultsPanel.title', { count: propertiesInZone.length })
+                        }
+                    </h3>
                     <button onClick={() => setIsSidebarOpen(false)} className="text-2xl text-brand-gray hover:text-brand-dark">&times;</button>
                 </div>
             </div>

@@ -80,6 +80,7 @@ const ptTranslations = {
     },
     "resultsPanel": {
       "title": "{count} imóveis encontrados",
+      "proximityTitle": "{count} imóveis encontrados num raio de {radius}km",
       "noResults": {
         "line1": "Nenhum imóvel encontrado nesta área.",
         "line2": "Tente desenhar uma área maior ou em outra localização."
@@ -272,6 +273,7 @@ const enTranslations = {
     },
     "resultsPanel": {
       "title": "{count} properties found",
+      "proximityTitle": "{count} properties found within a {radius}km radius",
       "noResults": {
         "line1": "No properties found in this area.",
         "line2": "Try drawing a larger area or in another location."
@@ -464,6 +466,7 @@ const esTranslations = {
     },
     "resultsPanel": {
       "title": "{count} inmuebles encontrados",
+      "proximityTitle": "{count} inmuebles encontrados en un radio de {radius}km",
       "noResults": {
         "line1": "No se encontraron inmuebles en esta área.",
         "line2": "Intenta dibujar un área más grande o en otra ubicación."
