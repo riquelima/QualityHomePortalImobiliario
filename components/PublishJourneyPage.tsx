@@ -5,6 +5,7 @@ import type { User } from '../types';
 import BoltIcon from './icons/BoltIcon';
 import BriefcaseIcon from './icons/BriefcaseIcon';
 import LocationConfirmationModal from './LocationConfirmationModal';
+import InfoIcon from './icons/InfoIcon';
 
 // Declara a variável global 'google' para o TypeScript, para evitar erros de compilação
 declare const google: any;
@@ -23,29 +24,68 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
   const [address, setAddress] = useState({ city: '', street: '', number: '' });
   const [initialCoords, setInitialCoords] = useState<{ lat: number; lng: number } | null>(null);
-  const cityInputRef = useRef<HTMLInputElement>(null);
+  
+  // FIX: Replaced google.maps.GeocoderResult with any to fix TypeScript error.
+  const [citySuggestions, setCitySuggestions] = useState<any[]>([]);
+  const [isCitySuggestionsOpen, setIsCitySuggestionsOpen] = useState(false);
+  const citySuggestionsRef = useRef<HTMLDivElement>(null);
 
+
+  // Efeito para fechar as sugestões ao clicar fora
   useEffect(() => {
-    // Verifica se o script do Google Maps foi carregado antes de inicializar o autocomplete
-    if (typeof google !== 'undefined' && google.maps && cityInputRef.current) {
-      const autocomplete = new google.maps.places.Autocomplete(cityInputRef.current, {
-        types: ['(cities)'],
-        componentRestrictions: { country: 'br' },
-      });
-      autocomplete.addListener('place_changed', () => {
-        const place = autocomplete.getPlace();
-        if (place && place.formatted_address) {
-          // Nota: Isto atualiza o estado para consistência, mas o input em si não é controlado pelo React.
-          // O widget do Google atualiza o valor do input diretamente no DOM.
-          setAddress(prev => ({ ...prev, city: place.formatted_address }));
-        }
-      });
-    }
+    const handleClickOutside = (event: MouseEvent) => {
+      if (citySuggestionsRef.current && !citySuggestionsRef.current.contains(event.target as Node)) {
+        setIsCitySuggestionsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, []);
+
+  // Efeito para buscar sugestões de localidade com debounce
+  useEffect(() => {
+    if (address.city.length < 3) {
+      setCitySuggestions([]);
+      return;
+    }
+
+    const handler = setTimeout(() => {
+      if (typeof google === 'undefined' || !google.maps) return;
+
+      const geocoder = new google.maps.Geocoder();
+      geocoder.geocode(
+        { address: address.city, componentRestrictions: { country: 'BR' } },
+        (results, status) => {
+          if (status === 'OK' && results) {
+            const filteredResults = results.filter(
+              r => r.types.includes('locality') || r.types.includes('administrative_area_level_2')
+            );
+            setCitySuggestions(filteredResults);
+            setIsCitySuggestionsOpen(true);
+          } else {
+            setCitySuggestions([]);
+          }
+        }
+      );
+    }, 500); // 500ms debounce
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [address.city]);
 
   const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
     setAddress(prev => ({ ...prev, [id]: value }));
+  };
+  
+  // FIX: Replaced google.maps.GeocoderResult with any to fix TypeScript error.
+  const handleSuggestionClick = (suggestion: any) => {
+    setAddress(prev => ({ ...prev, city: suggestion.formatted_address }));
+    setCitySuggestions([]);
+    setIsCitySuggestionsOpen(false);
   };
 
   const handleVerifyAddress = (e: React.FormEvent) => {
@@ -56,9 +96,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
     }
     
     const geocoder = new google.maps.Geocoder();
-    // Lê o valor da cidade diretamente do ref do input para obter o valor mais atualizado
-    const cityValue = cityInputRef.current?.value || '';
-    const fullAddress = `${address.street}, ${address.number}, ${cityValue}`;
+    const fullAddress = `${address.street}, ${address.number}, ${address.city}`;
     
     geocoder.geocode({ address: fullAddress, componentRestrictions: { country: 'BR' } }, (results: any, status: any) => {
       if (status === 'OK' && results && results[0]) {
@@ -162,15 +200,35 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
                 <div>
                   <label className="block text-lg font-bold text-brand-navy mb-3">{t('publishJourney.form.location.label')}</label>
                   <div className="space-y-4">
-                    <div>
+                    <div className="relative" ref={citySuggestionsRef}>
                       <label htmlFor="city" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.form.location.city')}</label>
-                      <input 
-                        type="text" 
-                        id="city" 
-                        ref={cityInputRef} 
-                        className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" 
-                        required
-                      />
+                      <div className="relative">
+                        <InfoIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                        <input 
+                          type="text" 
+                          id="city" 
+                          value={address.city}
+                          onChange={handleAddressChange}
+                          onFocus={() => { if (citySuggestions.length > 0) setIsCitySuggestionsOpen(true); }}
+                          className="w-full p-3 pl-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" 
+                          required
+                          autoComplete="off"
+                        />
+                      </div>
+                      {isCitySuggestionsOpen && citySuggestions.length > 0 && (
+                        <div className="absolute top-full left-0 w-full bg-white border border-gray-200 rounded-b-md shadow-lg z-20">
+                          {citySuggestions.map((suggestion) => (
+                            <button
+                              type="button"
+                              key={suggestion.place_id}
+                              onClick={() => handleSuggestionClick(suggestion)}
+                              className="w-full text-left px-4 py-3 text-brand-dark hover:bg-gray-100"
+                            >
+                              {suggestion.formatted_address}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
                     <div>
                       <label htmlFor="street" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.form.location.street')}</label>
