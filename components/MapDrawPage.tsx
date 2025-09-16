@@ -1,5 +1,5 @@
 
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { MOCK_PROPERTIES } from './PropertyListings';
 import type { Property } from '../types';
 import PropertyCard from './PropertyCard';
@@ -26,68 +26,44 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
   const [isMapReady, setIsMapReady] = useState(false);
   const { t } = useLanguage();
 
-  // Fase 1: Inicializa o mapa base e aguarda ele ficar pronto.
-  useLayoutEffect(() => {
-    if (!mapRef.current || mapInstance.current) {
-        return; // Roda apenas uma vez
+  // Efeito para configuração única e inicialização do mapa
+  useEffect(() => {
+    if (mapInstance.current || !mapRef.current) {
+        return; // Garante que a inicialização ocorra apenas uma vez
     }
 
     try {
+        // 1. Inicializa o mapa base
         const map = L.map(mapRef.current, {
             zoomControl: false,
             scrollWheelZoom: true,
         }).setView([-12.9777, -38.5016], 13);
-        
         mapInstance.current = map;
 
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
         }).addTo(map);
-        
+
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        map.whenReady(() => {
-            map.invalidateSize();
-            setIsMapReady(true);
-        });
-
-    } catch (error) {
-        console.error("Failed to initialize map:", error);
-    }
-    
-    return () => {
-      if (mapInstance.current) {
-        mapInstance.current.remove();
-        mapInstance.current = null;
-      }
-    };
-  }, []);
-
-  // Fase 2: Configura camadas, controles e lógica de UI após o mapa estar pronto.
-  useEffect(() => {
-    if (!isMapReady || !mapInstance.current) {
-      return;
-    }
-    
-    const map = mapInstance.current;
-    
-    // Inicializa camadas e controles apenas uma vez, quando o mapa fica pronto.
-    if (!drawnItemsRef.current) {
+        // 2. Configura as camadas de desenho e marcadores
         drawnItemsRef.current = new L.FeatureGroup();
         map.addLayer(drawnItemsRef.current);
 
         propertyMarkersRef.current = L.layerGroup();
         map.addLayer(propertyMarkersRef.current);
-
+        
+        // 3. Configura o controle de desenho
         drawControlRef.current = new L.Control.Draw({
-            position: 'bottomleft',
+            position: 'topleft', // Posição não importa, pois será ocultado
             draw: {
                 polygon: false, marker: false, circlemarker: false, polyline: false, rectangle: false,
                 circle: { shapeOptions: { color: '#D81B2B' } },
             },
             edit: { featureGroup: drawnItemsRef.current, remove: false }
         });
-
+        
+        // 4. Adiciona o listener para quando uma área é desenhada
         map.on(L.Draw.Event.CREATED, (event: any) => {
             const layer = event.layer;
             const drawnLatLng = layer.getLatLng();
@@ -106,17 +82,39 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
             setIsSidebarOpen(foundProperties.length > 0);
 
             propertyMarkersRef.current.clearLayers();
-            if (foundProperties.length > 0) {
-                foundProperties.forEach(prop => {
-                    L.marker([prop.lat, prop.lng])
-                        .addTo(propertyMarkersRef.current)
-                        .bindPopup(`<b>${prop.title}</b><br>${prop.address}`);
-                });
-            }
+            foundProperties.forEach(prop => {
+                L.marker([prop.lat, prop.lng])
+                    .addTo(propertyMarkersRef.current)
+                    .bindPopup(`<b>${prop.title}</b><br>${prop.address}`);
+            });
         });
-    }
 
-    // Lógica para alternar entre os modos de mapa (desenho vs. proximidade)
+        // 5. Finaliza e marca o mapa como pronto
+        map.invalidateSize();
+        setIsMapReady(true);
+
+    } catch (error) {
+        console.error("Falha ao inicializar o mapa:", error);
+    }
+    
+    // Função de limpeza ao desmontar o componente
+    return () => {
+      if (mapInstance.current) {
+        mapInstance.current.remove();
+        mapInstance.current = null;
+      }
+    };
+  }, []); // Array de dependências vazio para rodar apenas uma vez
+
+  // Efeito para ATUALIZAR o estado do mapa (desenho vs. proximidade)
+  useEffect(() => {
+    if (!isMapReady || !mapInstance.current) {
+      return;
+    }
+    
+    const map = mapInstance.current;
+    
+    // Limpa camadas de estados anteriores
     propertyMarkersRef.current.clearLayers();
     drawnItemsRef.current.clearLayers();
     map.eachLayer((layer: any) => {
@@ -127,7 +125,7 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
 
     if (userLocation) {
         // --- Modo de Busca por Proximidade ---
-        if (drawControlRef.current && drawControlRef.current._map) {
+        if (drawControlRef.current._map) {
             map.removeControl(drawControlRef.current);
         }
 
@@ -139,7 +137,6 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
 
         const searchRadius = 5000; // 5km
         const userLatLng = L.latLng(userLocation.lat, userLocation.lng);
-
         const foundProperties = MOCK_PROPERTIES
           .map(prop => ({ ...prop, distance: userLatLng.distanceTo(L.latLng(prop.lat, prop.lng)) }))
           .filter(prop => prop.distance <= searchRadius)
@@ -147,17 +144,15 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
 
         setPropertiesInZone(foundProperties);
         setIsSidebarOpen(foundProperties.length > 0);
+        foundProperties.forEach(prop => {
+            L.marker([prop.lat, prop.lng])
+                .addTo(propertyMarkersRef.current)
+                .bindPopup(`<b>${prop.title}</b><br>${prop.address}`);
+        });
 
-        if (foundProperties.length > 0) {
-            foundProperties.forEach(prop => {
-                L.marker([prop.lat, prop.lng])
-                    .addTo(propertyMarkersRef.current)
-                    .bindPopup(`<b>${prop.title}</b><br>${prop.address}`);
-            });
-        }
     } else {
         // --- Modo de Desenhar no Mapa ---
-        if (drawControlRef.current && !drawControlRef.current._map) {
+        if (!drawControlRef.current._map) {
             map.addControl(drawControlRef.current);
         }
         
