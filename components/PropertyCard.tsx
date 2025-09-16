@@ -35,12 +35,12 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
       </div>
       <div className="p-6 flex flex-col flex-grow">
         <div className="flex-grow">
-          <h3 className="text-xl font-bold text-brand-dark mb-2">{property.title}</h3>
+          <h3 className="text-xl font-bold text-brand-navy mb-2">{property.title}</h3>
           <div className="flex items-center text-brand-gray mb-4">
             <LocationIcon className="w-4 h-4 mr-2" />
             <p className="text-sm">{property.address}</p>
           </div>
-          <p className="text-2xl font-bold text-brand-purple mb-4">{formattedPrice}</p>
+          <p className="text-2xl font-bold text-brand-red mb-4">{formattedPrice}</p>
           <div className="grid grid-cols-3 gap-4 text-center border-t border-b border-gray-200 py-4 mb-4">
             <div className="flex flex-col items-center">
               <BedIcon className="w-5 h-5 mb-1 text-brand-gray" />
@@ -57,7 +57,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
           </div>
         </div>
         <div className="flex space-x-2">
-            <button className="w-full bg-brand-purple hover:opacity-90 text-white font-medium py-2 px-4 rounded-md transition duration-300">
+            <button className="w-full bg-brand-red hover:opacity-90 text-white font-medium py-2 px-4 rounded-md transition duration-300">
                 Detalhes
             </button>
             <button className="w-full bg-gray-200 hover:bg-gray-300 text-brand-dark font-medium py-2 px-4 rounded-md transition duration-300">

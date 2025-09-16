@@ -17,9 +17,9 @@ const Header: React.FC = () => {
         <div className="flex-1">
           {/* Adicionado padding à esquerda para não sobrepor o logo */}
           <div className="hidden md:flex items-center space-x-6 text-sm pl-96">
-            <a href="#" className="text-brand-dark hover:text-brand-purple transition duration-300">Proprietários</a>
-            <a href="#" className="text-brand-dark hover:text-brand-purple transition duration-300">Buscar imóveis</a>
-            <a href="#" className="text-brand-dark hover:text-brand-purple transition duration-300">Crédito imobiliário</a>
+            <a href="#" className="text-brand-dark hover:text-brand-red transition duration-300">Proprietários</a>
+            <a href="#" className="text-brand-dark hover:text-brand-red transition duration-300">Buscar imóveis</a>
+            <a href="#" className="text-brand-dark hover:text-brand-red transition duration-300">Crédito imobiliário</a>
           </div>
         </div>
 
@@ -32,7 +32,7 @@ const Header: React.FC = () => {
             <FlagBRIcon className="w-5 h-5 rounded-sm" />
             <ChevronDownIcon className="w-4 h-4 text-brand-gray" />
           </button>
-          <a href="#" className="flex items-center space-x-2 hover:text-brand-purple transition duration-300">
+          <a href="#" className="flex items-center space-x-2 hover:text-brand-red transition duration-300">
             <UserIcon className="w-5 h-5" />
             <span>Acessar</span>
           </a>

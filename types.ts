@@ -14,4 +14,6 @@ export interface Property {
   area: number;
   image: string;
   status?: PropertyStatus;
+  lat: number;
+  lng: number;
 }

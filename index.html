@@ -5,6 +5,11 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Quality Home Portal Imobiliário</title>
+    
+    <!-- Leaflet and Leaflet Draw CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" integrity="sha512-gc3xjCmIy673V6MyOag1U9mCtdstibZlwNznGOK+/S3afL/eoHnFItHhzyUXItWpuR6bFTGA3AXOB2nk5uppUA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,11 +22,11 @@
               sans: ['Inter', 'sans-serif'],
             },
             colors: {
-              'brand-lime': '#cbe158',
-              'brand-purple': '#9b3388',
-              'brand-dark': '#333333',
-              'brand-gray': '#666666',
-              'brand-light-gray': '#f2f2f2',
+              'brand-red': '#D81B2B',
+              'brand-navy': '#0D284F',
+              'brand-dark': '#041020',
+              'brand-gray': '#5A677D',
+              'brand-light-gray': '#F0F2F5',
               'brand-status': {
                 'green': '#10B981',
                 'orange': '#F59E0B',
@@ -43,6 +48,11 @@
 </head>
   <body>
     <div id="root"></div>
+
+    <!-- Leaflet and Leaflet Draw JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js" integrity="sha512-ozELPBC1bB1i3EGdaulNkdo_iQnZC960iOX3SnP7M9a7jBjIKxOA19i1M9KAxYv04a7p+4lqRQu1i2UeP/wQlw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    
     <script type="module" src="/index.tsx"></script>
   </body>
 </html>
