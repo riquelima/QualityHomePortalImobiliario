@@ -6,6 +6,8 @@ import { MOCK_PROPERTIES } from './PropertyListings';
 import type { Property } from '../types';
 import PropertyCard from './PropertyCard';
 import { useLanguage } from '../contexts/LanguageContext';
+import DrawIcon from './icons/DrawIcon';
+import CloseIcon from './icons/CloseIcon';
 
 interface MapDrawPageProps {
   onBack: () => void;
@@ -41,89 +43,76 @@ const MapUpdater: React.FC<{
   return null;
 };
 
-// Wrapper customizado para o controle de desenho do Leaflet
-const DrawControl = ({ onCreated, onDeleted }: { onCreated: (e: any) => void, onDeleted: () => void }) => {
-  const map = useMap();
-  
-  const drawControlRef = useRef<any>(null);
-  const featureGroupRef = useRef<any>(null);
+// Componente para gerenciar a lógica de desenho do Leaflet
+const DrawingManager: React.FC<{
+    onDrawCreated: (layer: L.Layer) => void;
+    drawingState: 'idle' | 'drawing' | 'drawn';
+    setDrawingState: (state: 'idle' | 'drawing' | 'drawn') => void;
+    featureGroupRef: React.MutableRefObject<L.FeatureGroup | null>;
+}> = ({ onDrawCreated, drawingState, setDrawingState, featureGroupRef }) => {
+    const map = useMap();
+    const drawHandlerRef = useRef<L.Draw.Circle | null>(null);
+    const isDrawingCancelledRef = useRef(true);
 
-  // Effect to create and remove the control. Runs only once when the map is available.
-  useEffect(() => {
-    if (!map || typeof L.Control.Draw === 'undefined') {
-      return;
-    }
+    // Configura o feature group e o listener de criação
+    useEffect(() => {
+        if (!featureGroupRef.current) {
+            featureGroupRef.current = new L.FeatureGroup();
+            map.addLayer(featureGroupRef.current);
+        }
 
-    // Create the feature group for drawn items
-    featureGroupRef.current = new L.FeatureGroup();
-    map.addLayer(featureGroupRef.current);
+        const handleCreated = (e: any) => {
+            isDrawingCancelledRef.current = false;
+            onDrawCreated(e.layer);
+        };
+        
+        map.on(L.Draw.Event.CREATED, handleCreated);
 
-    // Create the draw control
-    drawControlRef.current = new L.Control.Draw({
-      position: 'topleft', // CSS will move this container to 'bottomcenter'
-      edit: {
-        featureGroup: featureGroupRef.current,
-        edit: false,
-        remove: true,
-      },
-      draw: {
-        rectangle: false,
-        polygon: false,
-        circlemarker: false,
-        marker: false,
-        polyline: false,
-        circle: {
-          shapeOptions: {
-            color: '#D81B2B',
-          },
-        },
-      },
-    });
-    map.addControl(drawControlRef.current);
+        return () => {
+            map.off(L.Draw.Event.CREATED, handleCreated);
+        };
+    }, [map, onDrawCreated, featureGroupRef]);
 
-    // Cleanup function for when the component unmounts
-    return () => {
-      if (map) {
-         if (drawControlRef.current) {
-            map.removeControl(drawControlRef.current);
-            drawControlRef.current = null;
-         }
-         if (featureGroupRef.current && map.hasLayer(featureGroupRef.current)) {
-            map.removeLayer(featureGroupRef.current);
-            featureGroupRef.current = null;
-         }
-      }
-    };
-  }, [map]); // This effect depends only on the map instance.
+    // Gerencia o processo de desenho com base no estado
+    useEffect(() => {
+        if (drawingState === 'drawing') {
+            isDrawingCancelledRef.current = true; // Reseta para a nova sessão de desenho
 
-  // Effect to handle the drawing events.
-  useEffect(() => {
-    if (!map) {
-      return;
-    }
+            // FIX: Cast map to 'any' to resolve TypeScript error with leaflet-draw.
+            // The useMap() hook from react-leaflet returns a type that is not fully
+            // compatible with the type expected by leaflet-draw's constructor.
+            const newDrawHandler = new L.Draw.Circle(map as any, {
+                shapeOptions: {
+                    color: '#D81B2B',
+                    fillColor: '#D81B2B',
+                    fillOpacity: 0.2,
+                },
+                showRadius: false,
+                metric: true,
+            });
+            drawHandlerRef.current = newDrawHandler;
+            newDrawHandler.enable();
 
-    const handleCreated = (e: any) => {
-      if (featureGroupRef.current) {
-        featureGroupRef.current.clearLayers();
-        featureGroupRef.current.addLayer(e.layer);
-      }
-      onCreated(e);
-    };
+            const onDrawStop = () => {
+                if (isDrawingCancelledRef.current) {
+                    setDrawingState('idle'); // Foi um cancelamento
+                }
+            };
 
-    const handleDeleted = () => {
-      onDeleted();
-    };
+            map.on('draw:drawstop', onDrawStop);
 
-    map.on(L.Draw.Event.CREATED, handleCreated);
-    map.on(L.Draw.Event.DELETED, handleDeleted);
+            return () => {
+                map.off('draw:drawstop', onDrawStop);
+                if (drawHandlerRef.current && drawHandlerRef.current.enabled()) {
+                    drawHandlerRef.current.disable();
+                }
+            };
+        } else if (drawHandlerRef.current && drawHandlerRef.current.enabled()) {
+            drawHandlerRef.current.disable();
+        }
+    }, [drawingState, map, setDrawingState]);
 
-    return () => {
-      map.off(L.Draw.Event.CREATED, handleCreated);
-      map.off(L.Draw.Event.DELETED, handleDeleted);
-    };
-  }, [map, onCreated, onDeleted]); // This re-binds events if handlers change.
-
-  return null;
+    return null;
 };
 
 
@@ -131,28 +120,40 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
   const [propertiesInZone, setPropertiesInZone] = useState<Property[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { t } = useLanguage();
+  const [drawingState, setDrawingState] = useState<'idle' | 'drawing' | 'drawn'>('idle');
+  const featureGroupRef = useRef<L.FeatureGroup | null>(null);
 
-  const handleDrawCreated = useCallback((e: any) => {
-    const layer = e.layer;
+  const handleDrawCreated = useCallback((layer: L.Layer) => {
+    if (featureGroupRef.current) {
+        featureGroupRef.current.clearLayers();
+        featureGroupRef.current.addLayer(layer);
+    }
     
-    if (layer.getLatLng && layer.getRadius) { // Verifica se é um círculo
+    if (layer instanceof L.Circle) {
         const drawnLatLng = layer.getLatLng();
         const drawnRadius = layer.getRadius();
 
         const foundProperties = MOCK_PROPERTIES.filter(prop => {
-        const propLatLng = L.latLng(prop.lat, prop.lng);
-        const distance = drawnLatLng.distanceTo(propLatLng);
-        return distance <= drawnRadius;
+            const propLatLng = L.latLng(prop.lat, prop.lng);
+            const distance = drawnLatLng.distanceTo(propLatLng);
+            return distance <= drawnRadius;
         });
 
         setPropertiesInZone(foundProperties);
         setIsSidebarOpen(foundProperties.length > 0);
+        setDrawingState('drawn');
+    } else {
+        setDrawingState('idle');
     }
   }, []);
 
-  const handleDrawDeleted = useCallback(() => {
+  const handleClearDrawing = useCallback(() => {
+      if(featureGroupRef.current) {
+        featureGroupRef.current.clearLayers();
+      }
       setPropertiesInZone([]);
       setIsSidebarOpen(false);
+      setDrawingState('idle');
   }, []);
   
   const handlePropertiesFound = useCallback((props: Property[]) => {
@@ -177,7 +178,14 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
         
         <MapUpdater userLocation={userLocation} onPropertiesFound={handlePropertiesFound} />
         
-        {!userLocation && <DrawControl onCreated={handleDrawCreated} onDeleted={handleDrawDeleted} />}
+        {!userLocation && (
+          <DrawingManager
+            onDrawCreated={handleDrawCreated}
+            drawingState={drawingState}
+            setDrawingState={setDrawingState}
+            featureGroupRef={featureGroupRef}
+          />
+        )}
         
         {propertiesInZone.map(prop => (
           <Marker key={prop.id} position={[prop.lat, prop.lng]}>
@@ -212,6 +220,34 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
             </h1>
         </div>
       </div>
+
+      {!userLocation && (
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[1000]">
+            {drawingState === 'idle' && (
+                <button
+                    onClick={() => setDrawingState('drawing')}
+                    className="bg-brand-red hover:opacity-90 text-white font-bold py-3 px-6 rounded-full shadow-2xl transition duration-300 flex items-center space-x-2"
+                >
+                    <DrawIcon className="w-5 h-5" />
+                    <span>{t('map.drawButton')}</span>
+                </button>
+            )}
+            {drawingState === 'drawing' && (
+                <div className="bg-white text-brand-dark font-bold py-3 px-6 rounded-full shadow-2xl animate-pulse">
+                    <span>{t('map.drawingInProgress')}</span>
+                </div>
+            )}
+            {drawingState === 'drawn' && (
+                <button
+                    onClick={handleClearDrawing}
+                    className="bg-brand-dark hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-full shadow-2xl transition duration-300 flex items-center space-x-2"
+                >
+                    <CloseIcon className="w-5 h-5"/>
+                    <span>{t('map.clearButton')}</span>
+                </button>
+            )}
+        </div>
+      )}
       
       {userLocation && propertiesInZone.length > 0 && (
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[1000]">

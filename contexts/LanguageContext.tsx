@@ -71,6 +71,8 @@ const ptTranslations = {
     "drawInstruction": "Mova o mapa para localizar a área de interesse antes de desenhar a zona que procura",
     "drawInstructionNew": "Use as ferramentas de desenho no canto superior esquerdo para selecionar sua área.",
     "drawButton": "Desenhar sua área",
+    "clearButton": "Limpar Desenho",
+    "drawingInProgress": "Desenhando...",
     "userLocationPopup": "Sua localização",
     "toggleResults": {
       "show": "Ver {count} Imóveis",
@@ -261,6 +263,8 @@ const enTranslations = {
     "drawInstruction": "Move the map to locate the area of interest before drawing the zone you're looking for",
     "drawInstructionNew": "Use the drawing tools in the top-left corner to select your area.",
     "drawButton": "Draw your area",
+    "clearButton": "Clear Drawing",
+    "drawingInProgress": "Drawing...",
     "userLocationPopup": "Your location",
     "toggleResults": {
       "show": "View {count} Properties",
@@ -451,6 +455,8 @@ const esTranslations = {
     "drawInstruction": "Mueve el mapa para localizar el área que te interesa antes de dibujar la zona donde buscas",
     "drawInstructionNew": "Usa las herramientas de dibujo en la esquina superior izquierda para seleccionar tu área.",
     "drawButton": "Dibujar tu área",
+    "clearButton": "Limpiar Dibujo",
+    "drawingInProgress": "Dibujando...",
     "userLocationPopup": "Tu ubicación",
     "toggleResults": {
       "show": "Ver {count} Inmuebles",
