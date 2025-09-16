@@ -27,7 +27,7 @@ const Hero: React.FC = () => {
             Buscar Imóveis
           </button>
           <button className="bg-transparent border-2 border-white text-white font-medium py-3 px-8 rounded-lg hover:bg-white hover:text-brand-neutral-black transition duration-300">
-            Anunciar
+            Aplique agora
           </button>
         </div>
 

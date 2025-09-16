@@ -1,12 +1,15 @@
-
 import React from 'react';
 
 const Header: React.FC = () => {
   return (
     <header className="absolute top-0 left-0 right-0 z-30 bg-transparent text-white">
       <nav className="container mx-auto px-6 py-4 flex justify-between items-center">
-        <a href="#" className="text-2xl font-bold">
-          Quality Home
+        <a href="#">
+          <img 
+            src="https://i.imgur.com/FuxDdyF.png" 
+            alt="Quality Home Logo" 
+            className="h-10" 
+          />
         </a>
         <div className="hidden md:flex items-center space-x-8">
           <a href="#" className="hover:text-brand-neutral-medium transition duration-300">Comprar</a>
