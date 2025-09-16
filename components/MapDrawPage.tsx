@@ -1,5 +1,5 @@
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { MOCK_PROPERTIES } from './PropertyListings';
 import type { Property } from '../types';
 import PropertyCard from './PropertyCard';
@@ -26,15 +26,14 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
   const [isMapReady, setIsMapReady] = useState(false);
   const { t } = useLanguage();
 
-  // Efeito para inicializar a instância do mapa apenas uma vez
-  useEffect(() => {
+  // Efeito para inicializar a instância do mapa apenas uma vez, após a renderização do DOM.
+  useLayoutEffect(() => {
     if (!mapRef.current || mapInstance.current) {
         return; // Inicializa apenas uma vez
     }
 
-    // Atraso para garantir que o contêiner do mapa esteja totalmente renderizado antes da inicialização
-    const timer = setTimeout(() => {
-        if (!mapRef.current) return; // Checagem de segurança dentro do timeout
+    try {
+        if (!mapRef.current) return; // Checagem de segurança
 
         const map = L.map(mapRef.current, {
             zoomControl: false,
@@ -91,10 +90,11 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
         });
 
         setIsMapReady(true);
-    }, 100); // Atraso de 100ms para evitar condições de corrida de renderização
+    } catch (error) {
+        console.error("Failed to initialize map:", error);
+    }
     
     return () => {
-      clearTimeout(timer);
       if (mapInstance.current) {
         mapInstance.current.remove();
         mapInstance.current = null;
