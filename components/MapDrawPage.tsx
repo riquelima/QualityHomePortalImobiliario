@@ -187,14 +187,6 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
         </div>
       </div>
       
-      {!userLocation && (
-        <div className="absolute top-32 md:top-40 left-1/2 -translate-x-1/2 bg-white/90 p-4 rounded-lg shadow-md w-11/12 max-w-sm text-center z-[1000] pointer-events-none">
-          <p className="text-brand-navy">
-            {t('map.drawInstructionNew')}
-          </p>
-        </div>
-      )}
-
       {userLocation && propertiesInZone.length > 0 && (
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[1000]">
           <button
