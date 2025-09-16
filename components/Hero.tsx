@@ -18,7 +18,7 @@ const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe }) => {
   const [isLoadingGeo, setIsLoadingGeo] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
   
-  const [heroTitle, setHeroTitle] = useState('Tudo começa hoje');
+  const [heroTitle, setHeroTitle] = useState('Descubra seu novo lar, hoje.');
   const [isLoadingTitle, setIsLoadingTitle] = useState(true);
 
   // Efeito para gerar título dinâmico com a IA do Gemini
@@ -27,8 +27,7 @@ const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe }) => {
       if (!API_KEY) {
         console.error("API Key for Gemini is not configured.");
         setIsLoadingTitle(false);
-        setHeroTitle("Encontre o seu lugar no mundo."); // Fallback title
-        return;
+        return; // Keep default title
       }
 
       try {
@@ -49,11 +48,13 @@ Gere uma nova frase nesse estilo. Não use aspas na resposta.`;
         });
 
         const text = response.text.trim();
-        // Remove aspas se o modelo as retornar
-        setHeroTitle(text.replace(/["']/g, ""));
+        // Update title only if Gemini returns a valid, non-empty text
+        if (text) {
+          setHeroTitle(text.replace(/["']/g, ""));
+        }
       } catch (error) {
         console.error("Erro ao gerar título com a IA:", error);
-        setHeroTitle("O seu próximo capítulo começa aqui."); // Fallback title on error
+        // On error, just log it. The default title will be kept.
       } finally {
         setIsLoadingTitle(false);
       }
@@ -101,8 +102,8 @@ Gere uma nova frase nesse estilo. Não use aspas na resposta.`;
       style={{ backgroundImage: "url('https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2')" }}
     >
       <div className="relative z-20 p-6 md:p-8 bg-white/95 backdrop-blur-sm rounded-lg shadow-2xl w-11/12 max-w-4xl">
-        <h1 className={`text-4xl md:text-5xl font-bold text-brand-navy mb-6 transition-opacity duration-300 ${isLoadingTitle ? 'opacity-50 animate-pulse' : 'opacity-100'}`}>
-          {isLoadingTitle ? 'Carregando inspiração...' : heroTitle}
+        <h1 className={`text-4xl md:text-5xl font-bold text-brand-navy mb-6 transition-opacity duration-300 ${isLoadingTitle ? 'opacity-75 animate-pulse' : 'opacity-100'}`}>
+          {heroTitle}
         </h1>
         
         <div className="bg-white p-2 rounded-lg">
