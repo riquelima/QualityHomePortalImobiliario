@@ -1,0 +1,85 @@
+{
+  "header": {
+    "nav": {
+      "owners": "Owners",
+      "search": "Search properties"
+    },
+    "publishAd": "Publish your ad",
+    "access": "Access",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "menuTitle": "Menu"
+  },
+  "hero": {
+    "defaultTitle": "Discover your new home, today.",
+    "geminiPrompt": "Create a very short tagline for a real estate portal, with a maximum of 7 words. It should be inviting and direct. The response MUST be in English. Examples of phrases I like: 'Find your property here', 'It all starts today', 'Welcome to Quallity Home Real Estate Portal', 'How about a new house?', 'Rent without bureaucracy', 'Shall we schedule a visit?'. Generate a new phrase in this style. Do not use quotes in the response.",
+    "tabs": {
+      "buy": "Buy",
+      "rent": "Rent",
+      "season": "Season"
+    },
+    "propertyTypes": {
+      "housesAndApts": "Houses and apartments",
+      "offices": "Offices",
+      "garages": "Garages"
+    },
+    "locationPlaceholder": "Enter location (neighborhood, city, region)",
+    "drawOnMap": "Draw your zone",
+    "searchNearMe": "Search near you",
+    "loadingLocation": "Getting location...",
+    "searchButton": "Search",
+    "geolocationNotSupported": "Geolocation is not supported by this browser.",
+    "geolocationError": "Could not get your location. Please check your browser permissions."
+  },
+  "listings": {
+    "title": "Featured Properties",
+    "description": "Explore our exclusive selection of properties that combine luxury, comfort, and prime location."
+  },
+  "propertyCard": {
+    "bedrooms": "Beds",
+    "bathrooms": "Baths",
+    "details": "Details",
+    "contact": "Contact"
+  },
+  "infoSection": {
+    "draw": {
+      "title": "Draw your search area",
+      "description": "Choose exactly the area you are looking for on the map.",
+      "link": "Draw your search area"
+    },
+    "publish": {
+      "title": "Publish your property for free",
+      "description": "Your first 2 ads are free. Houses, rooms, offices...",
+      "link": "Publish a free ad"
+    }
+  },
+  "map": {
+    "loading": "Loading map...",
+    "breadcrumbs": {
+      "home": "Home",
+      "proximitySearch": "Proximity Search",
+      "drawOnMap": "Draw on Map"
+    },
+    "title": {
+      "proximity": "Properties near you",
+      "draw": "Draw your search in Salvador"
+    },
+    "drawInstruction": "Move the map to locate the area of interest before drawing the zone you're looking for",
+    "drawButton": "Draw your area",
+    "userLocationPopup": "Your location",
+    "toggleResults": {
+      "show": "View {count} Properties",
+      "hide": "Hide Results"
+    },
+    "resultsPanel": {
+      "title": "{count} properties found",
+      "noResults": {
+        "line1": "No properties found in this area.",
+        "line2": "Try drawing a larger area or in another location."
+      }
+    }
+  },
+  "footer": {
+    "text": "Quality Home Real Estate Portal. All rights reserved."
+  }
+}

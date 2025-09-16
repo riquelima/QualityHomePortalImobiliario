@@ -24,9 +24,9 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
     const fetchTranslations = async () => {
       try {
         const [pt, en, es] = await Promise.all([
-          fetch('./locales/pt.json').then(res => res.json()),
-          fetch('./locales/en.json').then(res => res.json()),
-          fetch('./locales/es.json').then(res => res.json()),
+          fetch('/locales/pt.json').then(res => res.json()),
+          fetch('/locales/en.json').then(res => res.json()),
+          fetch('/locales/es.json').then(res => res.json()),
         ]);
         setTranslations({ pt, en, es });
       } catch (error) {

@@ -1,0 +1,85 @@
+{
+  "header": {
+    "nav": {
+      "owners": "Propietarios",
+      "search": "Buscar inmuebles"
+    },
+    "publishAd": "Publica tu anuncio",
+    "access": "Acceder",
+    "openMenu": "Abrir menú",
+    "closeMenu": "Cerrar menú",
+    "menuTitle": "Menú"
+  },
+  "hero": {
+    "defaultTitle": "Descubre tu nuevo hogar, hoy.",
+    "geminiPrompt": "Crea un eslogan muy corto para un portal inmobiliario, con un máximo de 7 palabras. Debe ser atractivo y directo. La respuesta DEBE ser en español. Ejemplos de frases que me gustan: 'Encuentra tu inmueble aquí', 'Todo empieza hoy', 'Bienvenido al Portal Inmobiliario Quallity Home', '¿Qué tal una casa nueva?', 'Alquila sin burocracia', '¿Agendamos una visita?'. Genera una nueva frase en este estilo. No uses comillas en la respuesta.",
+    "tabs": {
+      "buy": "Comprar",
+      "rent": "Alquilar",
+      "season": "Temporada"
+    },
+    "propertyTypes": {
+      "housesAndApts": "Casas y apartamentos",
+      "offices": "Oficinas",
+      "garages": "Garajes"
+    },
+    "locationPlaceholder": "Introduce la ubicación (barrio, ciudad, región)",
+    "drawOnMap": "Dibuja tu zona",
+    "searchNearMe": "Buscar cerca de ti",
+    "loadingLocation": "Obteniendo ubicación...",
+    "searchButton": "Buscar",
+    "geolocationNotSupported": "La geolocalización no es compatible con este navegador.",
+    "geolocationError": "No se pudo obtener tu ubicación. Por favor, comprueba los permisos de tu navegador."
+  },
+  "listings": {
+    "title": "Inmuebles Destacados",
+    "description": "Explora nuestra selección exclusiva de inmuebles que combinan lujo, confort y una ubicación privilegiada."
+  },
+  "propertyCard": {
+    "bedrooms": "Hab.",
+    "bathrooms": "Baños",
+    "details": "Detalles",
+    "contact": "Contacto"
+  },
+  "infoSection": {
+    "draw": {
+      "title": "Dibuja tu área de búsqueda",
+      "description": "Elige exactamente el área que buscas en el mapa.",
+      "link": "Dibuja tu área de búsqueda"
+    },
+    "publish": {
+      "title": "Publica tu inmueble gratis",
+      "description": "Tus 2 primeros anuncios son gratis. Casas, habitaciones, oficinas...",
+      "link": "Publicar un anuncio gratis"
+    }
+  },
+  "map": {
+    "loading": "Cargando mapa...",
+    "breadcrumbs": {
+      "home": "Inicio",
+      "proximitySearch": "Búsqueda por Proximidad",
+      "drawOnMap": "Dibujar en el Mapa"
+    },
+    "title": {
+      "proximity": "Inmuebles cerca de ti",
+      "draw": "Dibuja tu búsqueda en Salvador"
+    },
+    "drawInstruction": "Mueve el mapa para localizar el área que te interesa antes de dibujar la zona donde buscas",
+    "drawButton": "Dibujar tu área",
+    "userLocationPopup": "Tu ubicación",
+    "toggleResults": {
+      "show": "Ver {count} Inmuebles",
+      "hide": "Ocultar Resultados"
+    },
+    "resultsPanel": {
+      "title": "{count} inmuebles encontrados",
+      "noResults": {
+        "line1": "No se encontraron inmuebles en esta área.",
+        "line2": "Intenta dibujar un área más grande o en otra ubicación."
+      }
+    }
+  },
+  "footer": {
+    "text": "Quality Home Portal Inmobiliario. Todos los derechos reservados."
+  }
+}
