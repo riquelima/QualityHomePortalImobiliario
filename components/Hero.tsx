@@ -49,6 +49,12 @@ const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick }) => {
             >
               Alugar
             </button>
+            <button 
+              onClick={() => setActiveTab('temporada')}
+              className={`px-6 py-2 text-lg font-medium transition-colors duration-300 ${activeTab === 'temporada' ? 'border-b-4 border-brand-red text-brand-dark' : 'text-brand-gray'}`}
+            >
+              Temporada
+            </button>
           </div>
 
           <form className="flex flex-col md:flex-row items-center gap-2">
@@ -64,7 +70,7 @@ const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick }) => {
               <SearchIcon className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 z-10"/>
               <input 
                 type="text" 
-                placeholder="Digite a localização"
+                placeholder="Digite a localização (bairro, cidade, região)"
                 className="w-full px-10 py-3 rounded-md text-brand-dark border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-red"
                 onFocus={() => setIsDropdownOpen(true)}
               />

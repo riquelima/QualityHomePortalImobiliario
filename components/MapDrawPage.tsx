@@ -128,6 +128,19 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack }) => {
   }, []);
 
   const handleDrawClick = () => {
+    // Limpa a camada de desenho anterior e os marcadores de imóveis.
+    if (drawnItemsRef.current) {
+      drawnItemsRef.current.clearLayers();
+    }
+    if (propertyMarkersRef.current) {
+      propertyMarkersRef.current.clearLayers();
+    }
+
+    // Limpa os resultados e fecha o painel lateral.
+    setPropertiesInZone([]);
+    setIsSidebarOpen(false);
+    
+    // Inicia a ferramenta de desenho de círculo.
     if (mapInstance.current && L && L.Draw && L.Draw.Circle) {
         new L.Draw.Circle(mapInstance.current, drawControlRef.current.options.draw.circle).enable();
     }
