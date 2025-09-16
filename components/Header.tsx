@@ -8,6 +8,7 @@ import ChevronDownIcon from './icons/ChevronDownIcon';
 import HamburgerIcon from './icons/HamburgerIcon';
 import CloseIcon from './icons/CloseIcon';
 import { useLanguage } from '../contexts/LanguageContext';
+import type { User } from '../types';
 
 const languageMap = {
   pt: { name: 'Português', Flag: FlagBRIcon },
@@ -18,12 +19,16 @@ const languageMap = {
 interface HeaderProps {
   onPublishAdClick: () => void;
   onAccessClick: () => void;
+  user: User | null;
+  onLogout: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick }) => {
+const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, onLogout }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
+  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const langDropdownRef = useRef<HTMLDivElement>(null);
+  const userDropdownRef = useRef<HTMLDivElement>(null);
   const { language, changeLanguage, t } = useLanguage();
 
   const CurrentFlag = languageMap[language as keyof typeof languageMap].Flag;
@@ -32,6 +37,9 @@ const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick }) => {
     const handleClickOutside = (event: MouseEvent) => {
       if (langDropdownRef.current && !langDropdownRef.current.contains(event.target as Node)) {
         setIsLangDropdownOpen(false);
+      }
+      if (userDropdownRef.current && !userDropdownRef.current.contains(event.target as Node)) {
+        setIsUserDropdownOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -45,7 +53,7 @@ const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick }) => {
       <header className="bg-white shadow-sm sticky top-0 z-40">
         <nav className="container mx-auto px-6 py-4 flex justify-between items-center relative">
           {/* Logo */}
-          <a href="#" className="absolute left-6 top-1/2 -translate-y-1/2 transform transition-transform duration-300 hover:scale-105 z-10">
+          <a href="#" onClick={(e) => { e.preventDefault(); window.location.reload(); }} className="absolute left-6 top-1/2 -translate-y-1/2 transform transition-transform duration-300 hover:scale-105 z-10">
             <img src="https://i.imgur.com/FuxDdyF.png" alt="Quality Home Logo" className="h-20" />
           </a>
 
@@ -93,10 +101,37 @@ const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick }) => {
             </div>
             
             {/* User/Login Link */}
-            <button onClick={onAccessClick} className="flex items-center space-x-2 hover:text-brand-red transition duration-300">
-              <UserIcon className="w-6 h-6" />
-              <span className="hidden md:inline">{t('header.access')}</span>
-            </button>
+            {user ? (
+              <div className="relative" ref={userDropdownRef}>
+                <button onClick={() => setIsUserDropdownOpen(prev => !prev)} className="flex items-center space-x-2">
+                  <img src={user.picture} alt={user.name} className="w-8 h-8 rounded-full" />
+                  <span className="hidden md:inline font-medium">{user.name.split(' ')[0]}</span>
+                  <ChevronDownIcon className="w-4 h-4 text-brand-gray" />
+                </button>
+                {isUserDropdownOpen && (
+                  <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-md shadow-lg border z-20">
+                    <div className="px-4 py-3 border-b">
+                      <p className="text-sm font-semibold text-brand-dark truncate">{user.name}</p>
+                      <p className="text-xs text-brand-gray truncate">{user.email}</p>
+                    </div>
+                    <button 
+                      onClick={() => {
+                        onLogout();
+                        setIsUserDropdownOpen(false);
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm text-brand-red hover:bg-gray-100"
+                    >
+                      {t('header.logout')}
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <button onClick={onAccessClick} className="flex items-center space-x-2 hover:text-brand-red transition duration-300">
+                <UserIcon className="w-6 h-6" />
+                <span className="hidden md:inline">{t('header.access')}</span>
+              </button>
+            )}
 
             {/* Hamburger Menu Button */}
             <button className="md:hidden" onClick={() => setIsMenuOpen(true)} aria-label={t('header.openMenu')}>

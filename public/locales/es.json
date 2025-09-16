@@ -9,7 +9,8 @@
     "access": "Acceder",
     "openMenu": "Abrir menú",
     "closeMenu": "Cerrar menú",
-    "menuTitle": "Menú"
+    "menuTitle": "Menú",
+    "logout": "Cerrar sesión"
   },
   "hero": {
     "defaultTitle": "Descubre tu nuevo hogar, hoy.",

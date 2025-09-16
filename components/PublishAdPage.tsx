@@ -2,20 +2,23 @@ import React from 'react';
 import Header from './Header';
 import { useLanguage } from '../contexts/LanguageContext';
 import CheckIcon from './icons/CheckIcon';
+import type { User } from '../types';
 
 interface PublishAdPageProps {
   onBack: () => void;
   onPublishAdClick: () => void;
   onOpenLoginModal: () => void;
+  user: User | null;
+  onLogout: () => void;
 }
 
-const PublishAdPage: React.FC<PublishAdPageProps> = ({ onBack, onPublishAdClick, onOpenLoginModal }) => {
+const PublishAdPage: React.FC<PublishAdPageProps> = ({ onBack, onPublishAdClick, onOpenLoginModal, user, onLogout }) => {
   const { t } = useLanguage();
 
   return (
     <div className="bg-brand-light-gray min-h-screen">
-       {/* FIX: Corrected typo from onPublishAdPageClick to onPublishAdClick */}
-       <Header onPublishAdClick={onPublishAdClick} onAccessClick={onOpenLoginModal} />
+       {/* FIX: Pass user and onLogout props to the Header component to fix the missing properties error. These props are passed down from App.tsx. */}
+       <Header onPublishAdClick={onPublishAdClick} onAccessClick={onOpenLoginModal} user={user} onLogout={onLogout} />
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumbs */}
         <div className="text-sm mb-6">

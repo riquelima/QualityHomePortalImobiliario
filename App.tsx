@@ -8,15 +8,33 @@ import MapDrawPage from './components/MapDrawPage';
 import PublishAdPage from './components/PublishAdPage';
 import LoginModal from './components/LoginModal';
 import { useLanguage } from './contexts/LanguageContext';
+import type { User } from './types';
 
 interface PageState {
   page: 'home' | 'map' | 'publish';
   userLocation: { lat: number; lng: number } | null;
 }
 
+// Função para decodificar o JWT do Google de forma segura
+function decodeJwt(token: string): any {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+
+    return JSON.parse(jsonPayload);
+  } catch (error) {
+    console.error("Failed to decode JWT:", error);
+    return null;
+  }
+}
+
 const App: React.FC = () => {
   const [pageState, setPageState] = useState<PageState>({ page: 'home', userLocation: null });
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
   const { t } = useLanguage();
 
   const navigateHome = () => setPageState({ page: 'home', userLocation: null });
@@ -25,6 +43,24 @@ const App: React.FC = () => {
   
   const openLoginModal = () => setIsLoginModalOpen(true);
   const closeLoginModal = () => setIsLoginModalOpen(false);
+  
+  const handleLoginSuccess = (credentialResponse: any) => {
+    const decoded: { name: string, email: string, picture: string } | null = decodeJwt(credentialResponse.credential);
+    if (decoded) {
+      setUser({
+        name: decoded.name,
+        email: decoded.email,
+        picture: decoded.picture,
+      });
+      closeLoginModal();
+    }
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    // Opcional: Adicionar lógica para deslogar do Google se necessário
+  };
+
 
   const renderCurrentPage = () => {
     switch (pageState.page) {
@@ -34,16 +70,19 @@ const App: React.FC = () => {
                   userLocation={pageState.userLocation} 
                />;
       case 'publish':
+        // FIX: Pass user and onLogout props to PublishAdPage so it can be passed to the Header component.
         return <PublishAdPage 
                   onBack={navigateHome} 
                   onPublishAdClick={navigateToPublish}
                   onOpenLoginModal={openLoginModal} 
+                  user={user}
+                  onLogout={handleLogout}
                />;
       case 'home':
       default:
         return (
           <div className="bg-white font-sans text-brand-dark">
-            <Header onPublishAdClick={navigateToPublish} onAccessClick={openLoginModal} />
+            <Header onPublishAdClick={navigateToPublish} onAccessClick={openLoginModal} user={user} onLogout={handleLogout} />
             <main>
               <Hero 
                 onDrawOnMapClick={() => navigateToMap()} 
@@ -68,7 +107,7 @@ const App: React.FC = () => {
   return (
     <>
       {renderCurrentPage()}
-      <LoginModal isOpen={isLoginModalOpen} onClose={closeLoginModal} />
+      <LoginModal isOpen={isLoginModalOpen} onClose={closeLoginModal} onLoginSuccess={handleLoginSuccess} />
     </>
   );
 };

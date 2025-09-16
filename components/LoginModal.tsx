@@ -1,17 +1,41 @@
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import CloseIcon from './icons/CloseIcon';
-import GoogleIcon from './icons/GoogleIcon';
 import AppleIcon from './icons/AppleIcon';
+
+// Declara a variável global 'google' para o TypeScript
+declare const google: any;
 
 interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onLoginSuccess: (credentialResponse: any) => void;
 }
 
-const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
+const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLoginSuccess }) => {
   const { t } = useLanguage();
+  const googleButtonDiv = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isOpen && typeof google !== 'undefined') {
+      google.accounts.id.initialize({
+        client_id: 'Cliente ID',
+        callback: onLoginSuccess,
+      });
+
+      if (googleButtonDiv.current) {
+        googleButtonDiv.current.innerHTML = ''; // Limpa o botão antigo para evitar duplicatas
+        google.accounts.id.renderButton(
+          googleButtonDiv.current,
+          { theme: "outline", size: "large", type: "standard", text: "continue_with", width: "300" } 
+        );
+      }
+      
+      // Opcional: Ativar o prompt "One Tap" para usuários que retornam
+      // google.accounts.id.prompt();
+    }
+  }, [isOpen, onLoginSuccess]);
 
   if (!isOpen) {
     return null;
@@ -44,7 +68,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
           {t('loginModal.description')}
         </p>
 
-        <form>
+        <form onSubmit={(e) => e.preventDefault()}>
           <div className="mb-4">
             <label htmlFor="email" className="block text-sm font-medium text-brand-dark mb-1">
               {t('loginModal.emailLabel')}
@@ -74,11 +98,8 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
         </div>
         
         <div className="space-y-3">
-          <button className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md text-brand-dark hover:bg-gray-50">
-            <GoogleIcon className="w-5 h-5 mr-3" />
-            <span>{t('loginModal.googleButton')}</span>
-          </button>
-          <button className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md text-brand-dark hover:bg-gray-50">
+           <div ref={googleButtonDiv} className="flex justify-center"></div>
+          <button className="w-full max-w-[300px] mx-auto flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md text-brand-dark hover:bg-gray-50">
             <AppleIcon className="w-5 h-5 mr-3" />
             <span>{t('loginModal.appleButton')}</span>
           </button>

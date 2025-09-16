@@ -1,3 +1,4 @@
+
 {
   "header": {
     "nav": {
@@ -8,7 +9,8 @@
     "access": "Access",
     "openMenu": "Open menu",
     "closeMenu": "Close menu",
-    "menuTitle": "Menu"
+    "menuTitle": "Menu",
+    "logout": "Logout"
   },
   "hero": {
     "defaultTitle": "Discover your new home, today.",

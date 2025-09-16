@@ -17,3 +17,9 @@ export interface Property {
   lat: number;
   lng: number;
 }
+
+export interface User {
+  name: string;
+  email: string;
+  picture: string;
+}
