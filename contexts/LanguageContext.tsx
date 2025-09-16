@@ -140,17 +140,10 @@ const ptTranslations = {
     "title": "Publicar o seu anúncio de particular",
     "form": {
       "propertyType": {
-        "label": "Escolha o tipo de imóvel",
-        "apartment": "Apartamento",
-        "house": "Casa",
-        "land": "Terreno",
-        "office": "Escritório"
+        "label": "Escolha o tipo de imóvel"
       },
       "operation": {
-        "label": "Operação",
-        "sell": "Vender",
-        "rent": "Alugar",
-        "season": "Temporada"
+        "label": "Operação"
       },
       "location": {
         "label": "Localização do imóvel",
@@ -163,6 +156,29 @@ const ptTranslations = {
         "option": "Ocultar endereço por R$ 9,90"
       },
       "submitButton": "Verificar endereço"
+    },
+    "verifiedAddress": {
+      "label": "Localização do imóvel",
+      "edit": "Editar"
+    },
+    "contactDetails": {
+      "title": "Os teus dados de contacto",
+      "emailLabel": "O teu email",
+      "emailDescription": "Nunca será visto no anúncio, apenas nas alertas e notificações.",
+      "changeAccount": "Entrar com outra conta",
+      "phoneLabel": "O teu telefone",
+      "phonePlaceholder": "Seu número com DDD",
+      "addPhone": "Acrescentar telefone adicional",
+      "nameLabel": "O teu nome",
+      "nameDescription": "Será visível no anúncio e quando escrevas a outros utilizadores.",
+      "preferenceLabel": "Como preferes ser contactado?",
+      "prefChatAndPhone": "Telefone e mensagens no nosso chat (recomendado)",
+      "prefChatAndPhoneDesc": "Irás receber um aviso das mensagens por e-mail e notificações na nossa app",
+      "prefChatOnly": "Só por mensagens de chat",
+      "prefChatOnlyDesc": "Irás receber um aviso das mensagens por e-mail e notificações na nossa app",
+      "prefPhoneOnly": "Só por telefone",
+      "continueButton": "Continuar para detalhes do imóvel",
+      "nextStepInfo": "No próximo passo poderás inserir as características e o preço."
     },
     "sidebar": {
       "title": "Informação útil",
@@ -355,17 +371,10 @@ const enTranslations = {
     "title": "Publish your private ad",
     "form": {
       "propertyType": {
-        "label": "Choose the property type",
-        "apartment": "Apartment",
-        "house": "House",
-        "land": "Land",
-        "office": "Office"
+        "label": "Choose the property type"
       },
       "operation": {
-        "label": "Operation",
-        "sell": "Sell",
-        "rent": "Rent",
-        "season": "Season"
+        "label": "Operation"
       },
       "location": {
         "label": "Property location",
@@ -378,6 +387,29 @@ const enTranslations = {
         "option": "Hide address for R$ 9,90"
       },
       "submitButton": "Verify address"
+    },
+    "verifiedAddress": {
+      "label": "Property location",
+      "edit": "Edit"
+    },
+    "contactDetails": {
+      "title": "Your contact details",
+      "emailLabel": "Your email",
+      "emailDescription": "It will never be visible in the ad, only in alerts and notifications.",
+      "changeAccount": "Sign in with another account",
+      "phoneLabel": "Your phone",
+      "phonePlaceholder": "Your number with area code",
+      "addPhone": "Add additional phone",
+      "nameLabel": "Your name",
+      "nameDescription": "It will be visible in the ad and when you write to other users.",
+      "preferenceLabel": "How do you prefer to be contacted?",
+      "prefChatAndPhone": "Phone and messages in our chat (recommended)",
+      "prefChatAndPhoneDesc": "You will receive a notification of messages by e-mail and in our app",
+      "prefChatOnly": "Only by chat messages",
+      "prefChatOnlyDesc": "You will receive a notification of messages by e-mail and in our app",
+      "prefPhoneOnly": "Only by phone",
+      "continueButton": "Continue to property details",
+      "nextStepInfo": "In the next step you can enter the characteristics and the price."
     },
     "sidebar": {
       "title": "Useful information",
@@ -570,17 +602,10 @@ const esTranslations = {
     "title": "Publicar tu anuncio de particular",
     "form": {
       "propertyType": {
-        "label": "Elige el tipo de inmueble",
-        "apartment": "Apartamento",
-        "house": "Casa",
-        "land": "Terreno",
-        "office": "Oficina"
+        "label": "Elige el tipo de inmueble"
       },
       "operation": {
-        "label": "Operación",
-        "sell": "Vender",
-        "rent": "Alquilar",
-        "season": "Temporada"
+        "label": "Operación"
       },
       "location": {
         "label": "Ubicación del inmueble",
@@ -593,6 +618,29 @@ const esTranslations = {
         "option": "Ocultar dirección por 9,90 €"
       },
       "submitButton": "Verificar dirección"
+    },
+    "verifiedAddress": {
+      "label": "Ubicación del inmueble",
+      "edit": "Editar"
+    },
+    "contactDetails": {
+      "title": "Tus datos de contacto",
+      "emailLabel": "Tu email",
+      "emailDescription": "Nunca será visible en el anuncio, solo en las alertas y notificaciones.",
+      "changeAccount": "Iniciar sesión con otra cuenta",
+      "phoneLabel": "Tu teléfono",
+      "phonePlaceholder": "Tu número con prefijo",
+      "addPhone": "Añadir teléfono adicional",
+      "nameLabel": "Tu nombre",
+      "nameDescription": "Será visible en el anuncio y cuando escribas a otros usuarios.",
+      "preferenceLabel": "¿Cómo prefieres que te contacten?",
+      "prefChatAndPhone": "Teléfono y mensajes en nuestro chat (recomendado)",
+      "prefChatAndPhoneDesc": "Recibirás un aviso de los mensajes por e-mail y notificaciones en nuestra app",
+      "prefChatOnly": "Solo por mensajes de chat",
+      "prefChatOnlyDesc": "Recibirás un aviso de los mensajes por e-mail y notificaciones en nuestra app",
+      "prefPhoneOnly": "Solo por teléfono",
+      "continueButton": "Continuar a detalles del inmueble",
+      "nextStepInfo": "En el próximo paso podrás introducir las características y el precio."
     },
     "sidebar": {
       "title": "Información útil",
