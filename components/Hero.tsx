@@ -84,11 +84,12 @@ const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe, onGeoloca
         setIsDropdownOpen(false);
         onSearchNearMe({ lat: latitude, lng: longitude });
       },
-      () => {
+      (error) => {
+        console.error("Geolocation error:", error);
         setIsLoadingGeo(false);
         onGeolocationError();
       },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      { enableHighAccuracy: false, timeout: 10000, maximumAge: 0 }
     );
   };
 
