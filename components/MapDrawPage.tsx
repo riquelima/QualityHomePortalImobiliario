@@ -1,11 +1,11 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, CircleMarker } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet-draw';
 import { MOCK_PROPERTIES } from './PropertyListings';
 import type { Property } from '../types';
 import PropertyCard from './PropertyCard';
 import { useLanguage } from '../contexts/LanguageContext';
-
-declare const L: any;
 
 interface MapDrawPageProps {
   onBack: () => void;
@@ -45,10 +45,7 @@ const MapUpdater: React.FC<{
 const DrawControl = ({ onCreated, onDeleted }: { onCreated: (e: any) => void, onDeleted: () => void }) => {
   const map = useMap();
   
-  // Refs to hold the Leaflet instances, preventing them from being recreated on re-renders
-  // FIX: Initialize useRef with null to satisfy a strict linting rule expecting an argument.
   const drawControlRef = useRef<any>(null);
-  // FIX: Initialize useRef with null to satisfy a strict linting rule expecting an argument.
   const featureGroupRef = useRef<any>(null);
 
   // Effect to create and remove the control. Runs only once when the map is available.
@@ -133,40 +130,7 @@ const DrawControl = ({ onCreated, onDeleted }: { onCreated: (e: any) => void, on
 const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
   const [propertiesInZone, setPropertiesInZone] = useState<Property[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isDrawPluginLoaded, setIsDrawPluginLoaded] = useState(false);
   const { t } = useLanguage();
-
-  useEffect(() => {
-    const checkDrawPlugin = () => 
-        typeof window !== 'undefined' && 
-        window.L && 
-        window.L.Control && 
-        window.L.Control.Draw;
-
-    if (checkDrawPlugin()) {
-      setIsDrawPluginLoaded(true);
-      return;
-    }
-    
-    const interval = setInterval(() => {
-      if (checkDrawPlugin()) {
-        setIsDrawPluginLoaded(true);
-        clearInterval(interval);
-      }
-    }, 100); // Poll every 100ms
-
-    const timeout = setTimeout(() => {
-        clearInterval(interval);
-        if (!checkDrawPlugin()){
-            console.error("Leaflet Draw plugin failed to load after 5 seconds.");
-        }
-    }, 5000);
-
-    return () => {
-        clearInterval(interval);
-        clearTimeout(timeout);
-    };
-  }, []);
 
   const handleDrawCreated = useCallback((e: any) => {
     const layer = e.layer;
@@ -213,7 +177,7 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation }) => {
         
         <MapUpdater userLocation={userLocation} onPropertiesFound={handlePropertiesFound} />
         
-        {isDrawPluginLoaded && !userLocation && <DrawControl onCreated={handleDrawCreated} onDeleted={handleDrawDeleted} />}
+        {!userLocation && <DrawControl onCreated={handleDrawCreated} onDeleted={handleDrawDeleted} />}
         
         {propertiesInZone.map(prop => (
           <Marker key={prop.id} position={[prop.lat, prop.lng]}>

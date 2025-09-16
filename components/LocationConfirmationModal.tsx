@@ -1,10 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
+import L from 'leaflet';
 import { useLanguage } from '../contexts/LanguageContext';
 import CloseIcon from './icons/CloseIcon';
 import InfoIcon from './icons/InfoIcon';
 import FullScreenIcon from './icons/FullScreenIcon';
-
-declare const L: any;
 
 interface LocationConfirmationModalProps {
   isOpen: boolean;
