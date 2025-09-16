@@ -133,8 +133,18 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
     setAddress(prev => ({ ...prev, [e.target.id]: e.target.value }));
   };
   
-  const handleSuggestionClick = (suggestion: { display_name: string }) => {
-    setAddress(prev => ({ ...prev, city: suggestion.display_name }));
+  const handleSuggestionClick = (suggestion: any) => {
+    const { address: suggestionAddress } = suggestion;
+    // Nominatim may return city, town, or village for the main locality. Prioritize them.
+    const city = suggestionAddress.city || suggestionAddress.town || suggestionAddress.village || '';
+    const state = suggestionAddress.state || '';
+
+    // Create a clean "City, State" string, avoiding duplicates.
+    const parts = [city, state].filter(Boolean); // Filter out empty strings
+    const uniqueParts = [...new Set(parts)]; // Remove duplicates (e.g., if city and state are the same)
+    const formattedLocation = uniqueParts.join(', ');
+
+    setAddress(prev => ({ ...prev, city: formattedLocation }));
     setIsCitySuggestionsOpen(false);
   };
 
