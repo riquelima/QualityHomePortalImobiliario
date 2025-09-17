@@ -63,15 +63,15 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onViewDetails, is
           )}
         </button>
       </div>
-      <div className="p-6 flex flex-col flex-grow">
+      <div className="p-4 sm:p-6 flex flex-col flex-grow">
         <div className="flex-grow">
-          <h3 className="text-xl font-bold text-brand-navy mb-2">{property.title}</h3>
+          <h3 className="text-lg sm:text-xl font-bold text-brand-navy mb-2 leading-tight">{property.title}</h3>
           <div className="flex items-center text-brand-gray mb-4">
-            <LocationIcon className="w-4 h-4 mr-2" />
+            <LocationIcon className="w-4 h-4 mr-2 flex-shrink-0" />
             <p className="text-sm">{property.address}</p>
           </div>
-          <p className="text-2xl font-bold text-brand-red mb-4">{formattedPrice}</p>
-          <div className="grid grid-cols-3 gap-4 text-center border-t border-b border-gray-200 py-4 mb-4">
+          <p className="text-xl sm:text-2xl font-bold text-brand-red mb-4">{formattedPrice}</p>
+          <div className="grid grid-cols-3 gap-2 sm:gap-4 text-center border-t border-b border-gray-200 py-4 mb-4">
             <div className="flex flex-col items-center">
               <BedIcon className="w-5 h-5 mb-1 text-brand-gray" />
               <span className="text-sm text-brand-dark">{property.bedrooms} {t('propertyCard.bedrooms')}</span>
@@ -86,7 +86,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onViewDetails, is
             </div>
           </div>
         </div>
-        <div className="flex space-x-2">
+        <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
             <button 
               onClick={() => onViewDetails(property.id)}
               className="w-full bg-brand-red hover:opacity-90 text-white font-medium py-2 px-4 rounded-md transition duration-300"

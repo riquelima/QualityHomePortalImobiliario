@@ -94,7 +94,7 @@ const Step1Form: React.FC<Step1FormProps> = ({
     return (
         <form className="space-y-8" onSubmit={!isAddressVerified ? handleVerifyAddress : handleContinueToDetails}>
             <div>
-                <label className="block text-lg font-bold text-brand-navy mb-3">{t('publishJourney.form.propertyType.label')}</label>
+                <label className="block text-base sm:text-lg font-bold text-brand-navy mb-3">{t('publishJourney.form.propertyType.label')}</label>
                 <select className="w-full md:w-1/2 p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red">
                 <option>Apartamento</option>
                 <option>Casa</option>
@@ -103,7 +103,7 @@ const Step1Form: React.FC<Step1FormProps> = ({
                 </select>
             </div>
             <div>
-                <label className="block text-lg font-bold text-brand-navy mb-3">{t('publishJourney.form.operation.label')}</label>
+                <label className="block text-base sm:text-lg font-bold text-brand-navy mb-3">{t('publishJourney.form.operation.label')}</label>
                 <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
                 <label className="flex items-center space-x-2 cursor-pointer">
                     <input type="radio" name="operation" value="sell" checked={operation === 'sell'} onChange={() => setOperation('sell')} className="h-5 w-5 text-brand-red focus:ring-brand-red border-gray-300" />
@@ -121,7 +121,7 @@ const Step1Form: React.FC<Step1FormProps> = ({
             </div>
             {isAddressVerified ? (
                 <div>
-                <label className="block text-lg font-bold text-brand-navy mb-3">{t('publishJourney.verifiedAddress.label')}</label>
+                <label className="block text-base sm:text-lg font-bold text-brand-navy mb-3">{t('publishJourney.verifiedAddress.label')}</label>
                 <div className="bg-green-50 p-4 border border-green-200 rounded-md flex justify-between items-center">
                     <div className="flex items-center">
                     <VerifiedIcon className="w-6 h-6 text-green-600 mr-3 flex-shrink-0" />
@@ -132,7 +132,7 @@ const Step1Form: React.FC<Step1FormProps> = ({
                 </div>
             ) : (
                 <div>
-                <label className="block text-lg font-bold text-brand-navy mb-3">{t('publishJourney.form.location.label')}</label>
+                <label className="block text-base sm:text-lg font-bold text-brand-navy mb-3">{t('publishJourney.form.location.label')}</label>
                 <div className="space-y-4">
                     <div className="relative" ref={citySuggestionsRef}>
                     <label htmlFor="city" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.form.location.city')}</label>
@@ -260,17 +260,17 @@ const Step2Details: React.FC<Step2DetailsProps> = ({
 }) => {
     const { t } = useLanguage();
     return (
-        <div className="bg-white p-6 md:p-8 rounded-md border border-gray-200">
-            <h2 className="text-lg font-bold text-brand-navy mb-4">{t('publishJourney.detailsForm.title')}</h2>
+        <div className="bg-white p-4 sm:p-6 md:p-8 rounded-md border border-gray-200">
+            <h2 className="text-base sm:text-lg font-bold text-brand-navy mb-4">{t('publishJourney.detailsForm.title')}</h2>
             
             <form className="space-y-8" onSubmit={handleContinueToPhotos}>
                 {/* Características do apartamento */}
                 <div className="space-y-6 border-b pb-8">
-                    <h3 className="text-xl font-bold text-brand-dark">{t('publishJourney.detailsForm.apartmentCharacteristics')}</h3>
+                    <h3 className="text-lg sm:text-xl font-bold text-brand-dark">{t('publishJourney.detailsForm.apartmentCharacteristics')}</h3>
                     
                     {/* Tipo de Apartamento */}
                     <div>
-                        <label className="block text-md font-semibold text-brand-navy mb-3">{t('publishJourney.detailsForm.propertyType')}</label>
+                        <label className="block text-base sm:text-md font-semibold text-brand-navy mb-3">{t('publishJourney.detailsForm.propertyType')}</label>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             {['apartment', 'penthouse', 'duplex', 'studio'].map(type => (
                                 <label key={type} className="flex items-center space-x-2 cursor-pointer">
@@ -283,7 +283,7 @@ const Step2Details: React.FC<Step2DetailsProps> = ({
 
                     {/* Estado */}
                     <div>
-                        <label className="block text-md font-semibold text-brand-navy mb-3">{t('publishJourney.detailsForm.condition')}</label>
+                        <label className="block text-base sm:text-md font-semibold text-brand-navy mb-3">{t('publishJourney.detailsForm.condition')}</label>
                         <div className="flex items-center space-x-6">
                             <label className="flex items-center space-x-2 cursor-pointer">
                                 <input type="radio" name="condition" value="for_renovation" checked={details.condition === 'for_renovation'} onChange={handleDetailsChange} className="h-5 w-5 text-brand-red focus:ring-brand-red border-gray-300" />
@@ -299,14 +299,14 @@ const Step2Details: React.FC<Step2DetailsProps> = ({
                     {/* Área */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label htmlFor="grossArea" className="block text-md font-semibold text-brand-navy mb-2">{t('publishJourney.detailsForm.grossArea')}</label>
+                            <label htmlFor="grossArea" className="block text-base sm:text-md font-semibold text-brand-navy mb-2">{t('publishJourney.detailsForm.grossArea')}</label>
                             <div className="relative">
                                 <input type="number" id="grossArea" name="grossArea" value={details.grossArea} onChange={handleDetailsChange} className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" />
                                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray">m²</span>
                             </div>
                         </div>
                         <div>
-                            <label htmlFor="netArea" className="block text-md font-semibold text-brand-navy mb-2">{t('publishJourney.detailsForm.netArea')}</label>
+                            <label htmlFor="netArea" className="block text-base sm:text-md font-semibold text-brand-navy mb-2">{t('publishJourney.detailsForm.netArea')}</label>
                             <div className="relative">
                                 <input type="number" id="netArea" name="netArea" value={details.netArea} onChange={handleDetailsChange} className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" />
                                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray">m²</span>
@@ -317,7 +317,7 @@ const Step2Details: React.FC<Step2DetailsProps> = ({
                     {/* Quartos e Banheiros */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label className="block text-md font-semibold text-brand-navy mb-2">{t('publishJourney.detailsForm.bedrooms')}</label>
+                            <label className="block text-base sm:text-md font-semibold text-brand-navy mb-2">{t('publishJourney.detailsForm.bedrooms')}</label>
                             <div className="flex items-center space-x-3">
                                 <button type="button" onClick={() => handleCounterChange('bedrooms', -1)} className="p-2 border rounded-md hover:bg-gray-100"><MinusIcon className="w-5 h-5"/></button>
                                 <span className="text-lg font-bold w-12 text-center">{details.bedrooms}</span>
@@ -325,7 +325,7 @@ const Step2Details: React.FC<Step2DetailsProps> = ({
                             </div>
                         </div>
                         <div>
-                            <label className="block text-md font-semibold text-brand-navy mb-2">{t('publishJourney.detailsForm.bathrooms')}</label>
+                            <label className="block text-base sm:text-md font-semibold text-brand-navy mb-2">{t('publishJourney.detailsForm.bathrooms')}</label>
                             <div className="flex items-center space-x-3">
                                 <button type="button" onClick={() => handleCounterChange('bathrooms', -1)} className="p-2 border rounded-md hover:bg-gray-100"><MinusIcon className="w-5 h-5"/></button>
                                 <span className="text-lg font-bold w-12 text-center">{details.bathrooms}</span>
@@ -336,7 +336,7 @@ const Step2Details: React.FC<Step2DetailsProps> = ({
 
                     {/* Elevador */}
                     <div>
-                        <label className="block text-md font-semibold text-brand-navy mb-3">{t('publishJourney.detailsForm.hasElevator')}</label>
+                        <label className="block text-base sm:text-md font-semibold text-brand-navy mb-3">{t('publishJourney.detailsForm.hasElevator')}</label>
                         <div className="flex items-center space-x-6">
                             <label className="flex items-center space-x-2 cursor-pointer">
                                 <input type="radio" name="hasElevator" value="yes" checked={details.hasElevator === true} onChange={() => setDetails(p => ({...p, hasElevator: true}))} className="h-5 w-5 text-brand-red focus:ring-brand-red border-gray-300" />
@@ -353,7 +353,7 @@ const Step2Details: React.FC<Step2DetailsProps> = ({
                 {/* Certificado e Orientação */}
                 <div className="space-y-6 border-b pb-8">
                     <div>
-                        <label htmlFor="energyCertificate" className="block text-md font-semibold text-brand-navy mb-2">{t('publishJourney.detailsForm.energyCertificate')}</label>
+                        <label htmlFor="energyCertificate" className="block text-base sm:text-md font-semibold text-brand-navy mb-2">{t('publishJourney.detailsForm.energyCertificate')}</label>
                         <p className="text-sm text-brand-gray mb-2">Que informações deves preencher?</p>
                         <select id="energyCertificate" name="energyCertificate" value={details.energyCertificate} onChange={handleDetailsChange} className="w-full md:w-1/2 p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red">
                             <option value="">{t('publishJourney.detailsForm.select')}</option>
@@ -361,7 +361,7 @@ const Step2Details: React.FC<Step2DetailsProps> = ({
                         </select>
                     </div>
                     <div>
-                        <label className="block text-md font-semibold text-brand-navy mb-3">{t('publishJourney.detailsForm.orientation')}</label>
+                        <label className="block text-base sm:text-md font-semibold text-brand-navy mb-3">{t('publishJourney.detailsForm.orientation')}</label>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             {['north', 'south', 'east', 'west'].map(o => (
                                 <label key={o} className="flex items-center space-x-2 cursor-pointer">
@@ -376,7 +376,7 @@ const Step2Details: React.FC<Step2DetailsProps> = ({
                 {/* Outras Características */}
                 <div className="space-y-6 border-b pb-8">
                     <div>
-                        <label className="block text-md font-semibold text-brand-navy mb-3">{t('publishJourney.detailsForm.otherHomeFeatures')}</label>
+                        <label className="block text-base sm:text-md font-semibold text-brand-navy mb-3">{t('publishJourney.detailsForm.otherHomeFeatures')}</label>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                             {['builtInWardrobes', 'airConditioning', 'terrace', 'balcony', 'storageRoom', 'garage'].map(f => (
                                 <label key={f} className="flex items-center space-x-2 cursor-pointer">
@@ -387,7 +387,7 @@ const Step2Details: React.FC<Step2DetailsProps> = ({
                         </div>
                     </div>
                     <div>
-                        <label className="block text-md font-semibold text-brand-navy mb-3">{t('publishJourney.detailsForm.otherBuildingFeatures')}</label>
+                        <label className="block text-base sm:text-md font-semibold text-brand-navy mb-3">{t('publishJourney.detailsForm.otherBuildingFeatures')}</label>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                             {['pool', 'greenArea'].map(f => (
                                 <label key={f} className="flex items-center space-x-2 cursor-pointer">
@@ -402,17 +402,17 @@ const Step2Details: React.FC<Step2DetailsProps> = ({
                 
                 {/* Preço */}
                 <div className="space-y-6 border-b pb-8">
-                    <h3 className="text-xl font-bold text-brand-dark">{t('publishJourney.detailsForm.propertyPrice')}</h3>
+                    <h3 className="text-lg sm:text-xl font-bold text-brand-dark">{t('publishJourney.detailsForm.propertyPrice')}</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label htmlFor="price" className="block text-md font-semibold text-brand-navy mb-2">{t('publishJourney.detailsForm.price')}</label>
+                            <label htmlFor="price" className="block text-base sm:text-md font-semibold text-brand-navy mb-2">{t('publishJourney.detailsForm.price')}</label>
                             <div className="relative">
                                 <input type="number" id="price" name="price" value={details.price} onChange={handleDetailsChange} className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" />
                                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray">euros</span>
                             </div>
                         </div>
                         <div>
-                            <label htmlFor="condoFee" className="block text-md font-semibold text-brand-navy mb-2">{t('publishJourney.detailsForm.condoFee')}</label>
+                            <label htmlFor="condoFee" className="block text-base sm:text-md font-semibold text-brand-navy mb-2">{t('publishJourney.detailsForm.condoFee')}</label>
                             <div className="relative">
                                 <input type="number" id="condoFee" name="condoFee" value={details.condoFee} onChange={handleDetailsChange} className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" />
                                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray">euros/mês</span>
@@ -424,7 +424,7 @@ const Step2Details: React.FC<Step2DetailsProps> = ({
                 {/* Situação e Descrição */}
                 <div className="space-y-6">
                     <div>
-                        <label className="block text-md font-semibold text-brand-navy mb-3">{t('publishJourney.detailsForm.saleSituation')}</label>
+                        <label className="block text-base sm:text-md font-semibold text-brand-navy mb-3">{t('publishJourney.detailsForm.saleSituation')}</label>
                         <div className="flex items-center space-x-6">
                             <label className="flex items-center space-x-2 cursor-pointer">
                                 <input type="radio" name="saleSituation" value="rented" checked={details.saleSituation === 'rented'} onChange={handleDetailsChange} className="h-5 w-5 text-brand-red focus:ring-brand-red border-gray-300" />
@@ -437,7 +437,7 @@ const Step2Details: React.FC<Step2DetailsProps> = ({
                         </div>
                     </div>
                     <div>
-                        <label htmlFor="description" className="block text-md font-semibold text-brand-navy mb-2">{t('publishJourney.detailsForm.adDescription')}</label>
+                        <label htmlFor="description" className="block text-base sm:text-md font-semibold text-brand-navy mb-2">{t('publishJourney.detailsForm.adDescription')}</label>
                         <textarea id="description" name="description" rows={5} value={details.description} onChange={handleDetailsChange} className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" placeholder={t('publishJourney.detailsForm.descriptionPlaceholder')}></textarea>
                     </div>
                 </div>
@@ -462,22 +462,22 @@ const Step3Photos: React.FC<Step3PhotosProps> = ({ onBack, onFinish }) => {
     const { t } = useLanguage();
 
     return (
-        <div className="bg-white p-6 md:p-8 rounded-md border border-gray-200">
-            <h2 className="text-xl font-bold text-brand-dark mb-4">{t('publishJourney.photosForm.title')}</h2>
+        <div className="bg-white p-4 sm:p-6 md:p-8 rounded-md border border-gray-200">
+            <h2 className="text-lg sm:text-xl font-bold text-brand-dark mb-4">{t('publishJourney.photosForm.title')}</h2>
 
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center mb-6">
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 sm:p-8 text-center mb-6">
                 <div className="flex justify-center items-center space-x-2 mb-4">
                     <div className="relative transform -rotate-12">
-                        <PhotoIcon className="w-20 h-20 text-gray-400" />
+                        <PhotoIcon className="w-16 h-16 sm:w-20 sm:h-20 text-gray-400" />
                     </div>
                     <div className="relative">
-                        <PlanIcon className="w-24 h-24 text-gray-400" />
+                        <PlanIcon className="w-20 h-20 sm:w-24 sm:h-24 text-gray-400" />
                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
                             <PlusIcon className="w-8 h-8 text-gray-500 bg-white rounded-full p-1" />
                         </div>
                     </div>
                     <div className="relative transform rotate-12">
-                        <VideoIcon className="w-20 h-20 text-gray-400" />
+                        <VideoIcon className="w-16 h-16 sm:w-20 sm:h-20 text-gray-400" />
                     </div>
                 </div>
                 <p className="text-brand-gray mb-4">{t('publishJourney.photosForm.dragAndDrop')}</p>
@@ -492,8 +492,8 @@ const Step3Photos: React.FC<Step3PhotosProps> = ({ onBack, onFinish }) => {
             </div>
 
             <div className="space-y-4">
-                <h3 className="text-lg font-bold text-brand-navy">{t('publishJourney.photosForm.rememberTitle')}</h3>
-                <ul className="space-y-3 text-brand-dark list-disc list-inside">
+                <h3 className="text-base sm:text-lg font-bold text-brand-navy">{t('publishJourney.photosForm.rememberTitle')}</h3>
+                <ul className="space-y-3 text-brand-dark list-disc list-inside text-sm">
                     <li>{t('publishJourney.photosForm.tip1')}</li>
                     <li>{t('publishJourney.photosForm.tip2')}</li>
                     <li>{t('publishJourney.photosForm.tip3')}</li>
@@ -718,28 +718,28 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
         <Header onPublishAdClick={onPublishAdClick} onAccessClick={onOpenLoginModal} user={user} onLogout={onLogout} onNavigateToFavorites={onNavigateToFavorites} />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-10">
           <div className="max-w-4xl mx-auto mb-8">
-              <div className="flex items-center text-sm sm:text-base">
-                  <div className={`relative flex-1 h-12 flex items-center justify-center font-bold tracking-wide z-10 ${getStepClass(1)}`}>
-                      {currentStep > 1 && <CheckIcon className="w-5 h-5 mr-2" />}
+              <div className="flex items-center text-xs sm:text-sm md:text-base">
+                  <div className={`relative flex-1 h-10 sm:h-12 flex items-center justify-center font-bold tracking-tight sm:tracking-wide z-10 ${getStepClass(1)}`}>
+                      {currentStep > 1 && <CheckIcon className="w-5 h-5 mr-1 sm:mr-2" />}
                       <span>{t('publishJourney.stepper.step1')}</span>
-                      <div className={`absolute top-0 -right-6 h-full w-12 ${getStepClass(1)} transform -skew-x-12 z-0`} style={{ clipPath: 'polygon(0 0, 100% 0, 75% 50%, 100% 100%, 0 100%)' }} />
+                      <div className={`absolute top-0 -right-5 sm:-right-6 h-full w-10 sm:w-12 ${getStepClass(1)} transform -skew-x-12 z-0`} style={{ clipPath: 'polygon(0 0, 100% 0, 75% 50%, 100% 100%, 0 100%)' }} />
                   </div>
-                  <div className={`relative flex-1 h-12 flex items-center justify-center font-bold tracking-wide pl-6 ${getStepClass(2)}`}>
-                      {currentStep > 2 && <CheckIcon className="w-5 h-5 mr-2" />}
+                  <div className={`relative flex-1 h-10 sm:h-12 flex items-center justify-center font-bold tracking-tight sm:tracking-wide pl-5 sm:pl-6 ${getStepClass(2)}`}>
+                      {currentStep > 2 && <CheckIcon className="w-5 h-5 mr-1 sm:mr-2" />}
                       <span>{t('publishJourney.stepper.step2')}</span>
-                      <div className="absolute top-0 -left-6 h-full w-12 bg-inherit transform -skew-x-12 z-0" style={{ clipPath: 'polygon(25% 0, 100% 0, 100% 100%, 25% 100%, 0 50%)' }} />
-                      <div className={`absolute top-0 -right-6 h-full w-12 ${getStepClass(2)} transform -skew-x-12 z-0`} style={{ clipPath: 'polygon(0 0, 100% 0, 75% 50%, 100% 100%, 0 100%)' }} />
+                      <div className="absolute top-0 -left-5 sm:-left-6 h-full w-10 sm:w-12 bg-inherit transform -skew-x-12 z-0" style={{ clipPath: 'polygon(25% 0, 100% 0, 100% 100%, 25% 100%, 0 50%)' }} />
+                      <div className={`absolute top-0 -right-5 sm:-right-6 h-full w-10 sm:w-12 ${getStepClass(2)} transform -skew-x-12 z-0`} style={{ clipPath: 'polygon(0 0, 100% 0, 75% 50%, 100% 100%, 0 100%)' }} />
                   </div>
-                  <div className={`relative flex-1 h-12 flex items-center justify-center font-bold tracking-wide pl-6 ${getStepClass(3)}`}>
-                      {currentStep > 3 && <CheckIcon className="w-5 h-5 mr-2" />}
+                  <div className={`relative flex-1 h-10 sm:h-12 flex items-center justify-center font-bold tracking-tight sm:tracking-wide pl-5 sm:pl-6 ${getStepClass(3)}`}>
+                      {currentStep > 3 && <CheckIcon className="w-5 h-5 mr-1 sm:mr-2" />}
                       {t('publishJourney.stepper.step3')}
-                      <div className="absolute top-0 -left-6 h-full w-12 bg-inherit transform -skew-x-12 z-0" style={{ clipPath: 'polygon(25% 0, 100% 0, 100% 100%, 25% 100%, 0 50%)' }} />
+                      <div className="absolute top-0 -left-5 sm:-left-6 h-full w-10 sm:w-12 bg-inherit transform -skew-x-12 z-0" style={{ clipPath: 'polygon(25% 0, 100% 0, 100% 100%, 25% 100%, 0 50%)' }} />
                   </div>
               </div>
           </div>
           <div className="flex flex-col lg:flex-row gap-8 max-w-6xl mx-auto">
             <div className="w-full lg:w-2/3">
-              {currentStep === 1 && <h1 className="text-2xl font-bold text-brand-navy mb-8">{t('publishJourney.title')}</h1>}
+              {currentStep === 1 && <h1 className="text-xl sm:text-2xl font-bold text-brand-navy mb-8">{t('publishJourney.title')}</h1>}
               {currentStep === 1 && 
                 <Step1Form 
                     isAddressVerified={isAddressVerified}
@@ -782,7 +782,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
             </div>
             <aside className="w-full lg:w-1/3">
               <div className="bg-white p-6 border border-gray-200 rounded-lg space-y-4 text-sm">
-                  <h2 className="text-lg font-bold text-brand-navy">{t('publishJourney.sidebar.title')}</h2>
+                  <h2 className="text-base sm:text-lg font-bold text-brand-navy">{t('publishJourney.sidebar.title')}</h2>
                   <p>{t('publishJourney.sidebar.p1')}</p>
                   <p>{t('publishJourney.sidebar.p2')}</p>
                   <p>{t('publishJourney.sidebar.p3')}</p>

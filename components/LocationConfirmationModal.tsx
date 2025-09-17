@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -91,12 +92,12 @@ const LocationConfirmationModal: React.FC<LocationConfirmationModalProps> = ({ i
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60" role="dialog" aria-modal="true">
       <div ref={modalContentRef} className="bg-white rounded-lg shadow-xl w-11/12 max-w-3xl h-[90vh] max-h-[700px] flex flex-col p-4 sm:p-6">
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex justify-between items-start mb-4">
           <div>
             <h2 className="text-xl sm:text-2xl font-bold text-brand-navy">{t('publishJourney.locationConfirmationModal.title')}</h2>
             <p className="text-sm text-brand-gray">{t('publishJourney.locationConfirmationModal.subtitle')}</p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 flex-shrink-0 ml-4">
             <CloseIcon className="w-6 h-6" />
           </button>
         </div>

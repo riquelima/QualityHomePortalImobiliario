@@ -63,22 +63,22 @@ const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, 
   return (
     <>
       <header className="bg-white shadow-sm sticky top-0 z-40">
-        <nav className="container mx-auto px-6 py-4 flex justify-between items-center relative">
+        <nav className="container mx-auto px-4 sm:px-6 py-3 flex justify-between items-center relative">
           {/* Logo */}
-          <a href="#" onClick={(e) => { e.preventDefault(); window.location.reload(); }} className="absolute left-6 top-1/2 -translate-y-1/2 transform transition-transform duration-300 hover:scale-105 z-10">
-            <img src="https://i.imgur.com/FuxDdyF.png" alt="Quality Home Logo" className="h-20" />
+          <a href="#" onClick={(e) => { e.preventDefault(); window.location.reload(); }} className="absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 transform transition-transform duration-300 hover:scale-105 z-10">
+            <img src="https://i.imgur.com/FuxDdyF.png" alt="Quality Home Logo" className="h-16 sm:h-20" />
           </a>
 
           {/* Desktop Navigation Links */}
           <div className="flex-1">
-            <div className="hidden md:flex items-center space-x-6 text-sm pl-96">
+            <div className="hidden md:flex items-center space-x-6 text-sm pl-80 lg:pl-96">
               <a href="#" className="text-brand-dark hover:text-brand-red transition duration-300">{t('header.nav.owners')}</a>
               <a href="#" className="text-brand-dark hover:text-brand-red transition duration-300">{t('header.nav.search')}</a>
             </div>
           </div>
 
           {/* Right side actions */}
-          <div className="flex items-center space-x-4 text-sm">
+          <div className="flex items-center space-x-2 sm:space-x-4 text-sm">
             {/* Desktop "Publique" button */}
             <button 
               onClick={onPublishAdClick}
@@ -127,7 +127,7 @@ const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, 
                   <ChevronDownIcon className="w-4 h-4 text-brand-gray" />
                 </button>
                 {isUserDropdownOpen && (
-                  <div className="absolute top-full right-0 mt-2 w-64 bg-white rounded-md shadow-lg border z-20">
+                  <div className="absolute top-full right-0 mt-2 w-64 sm:w-72 bg-white rounded-md shadow-lg border z-20">
                     <div className="px-4 py-4 border-b flex items-center space-x-3">
                       {user.picture ? (
                           <img src={user.picture} alt={user.name} className="w-10 h-10 rounded-full" />

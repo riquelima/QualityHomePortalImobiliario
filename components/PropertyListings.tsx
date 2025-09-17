@@ -151,13 +151,13 @@ const PropertyListings: React.FC<PropertyListingsProps> = ({ onViewDetails, favo
   const { t } = useLanguage();
 
   return (
-    <section className="bg-white py-20">
-      <div className="container mx-auto px-6">
-        <h2 className="text-4xl font-bold text-brand-navy text-center mb-4">{t('listings.title')}</h2>
-        <p className="text-lg text-brand-gray text-center max-w-2xl mx-auto mb-12">
+    <section className="bg-white py-16 sm:py-20">
+      <div className="container mx-auto px-4 sm:px-6">
+        <h2 className="text-3xl sm:text-4xl font-bold text-brand-navy text-center mb-4">{t('listings.title')}</h2>
+        <p className="text-base sm:text-lg text-brand-gray text-center max-w-2xl mx-auto mb-12">
           {t('listings.description')}
         </p>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
           {MOCK_PROPERTIES.map((property) => (
             <PropertyCard 
               key={property.id} 

@@ -40,9 +40,9 @@ const PublishAdPage: React.FC<PublishAdPageProps> = ({ onBack, onPublishAdClick,
         </div>
 
         {/* Main Card */}
-        <div className="bg-white p-8 md:p-12 rounded-lg shadow-lg mb-12 flex flex-col md:flex-row items-center">
+        <div className="bg-white p-6 sm:p-8 md:p-12 rounded-lg shadow-lg mb-12 flex flex-col md:flex-row items-center">
           <div className="md:w-3/5">
-            <h1 className="text-3xl md:text-4xl font-bold text-brand-navy mb-6">{t('publishAdPage.mainCard.title')}</h1>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-brand-navy mb-6">{t('publishAdPage.mainCard.title')}</h1>
             <ul className="space-y-4 mb-6 text-brand-dark">
               <li className="flex items-start">
                 <CheckIcon className="w-6 h-6 text-green-500 mr-3 mt-1 flex-shrink-0" />
@@ -72,47 +72,47 @@ const PublishAdPage: React.FC<PublishAdPageProps> = ({ onBack, onPublishAdClick,
         </div>
 
         {/* Steps Section */}
-        <div className="bg-white p-8 md:p-12 rounded-lg shadow-lg mb-12">
-            <h2 className="text-2xl md:text-3xl font-bold text-brand-navy mb-4">{t('publishAdPage.steps.title')}</h2>
+        <div className="bg-white p-6 sm:p-8 md:p-12 rounded-lg shadow-lg mb-12">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-brand-navy mb-4">{t('publishAdPage.steps.title')}</h2>
             <p className="text-brand-gray mb-8">{t('publishAdPage.steps.intro')}</p>
             <div className="space-y-6 text-brand-dark leading-relaxed">
                 <div>
-                    <h3 className="text-xl font-bold text-brand-navy mb-2">{t('publishAdPage.steps.step1Title')}</h3>
-                    <p className="whitespace-pre-line">{t('publishAdPage.steps.step1Content')}</p>
+                    <h3 className="text-lg sm:text-xl font-bold text-brand-navy mb-2">{t('publishAdPage.steps.step1Title')}</h3>
+                    <p className="whitespace-pre-line text-sm sm:text-base">{t('publishAdPage.steps.step1Content')}</p>
                 </div>
                  <div>
-                    <h3 className="text-xl font-bold text-brand-navy mb-2">{t('publishAdPage.steps.step2Title')}</h3>
-                    <p>{t('publishAdPage.steps.step2Content')}</p>
+                    <h3 className="text-lg sm:text-xl font-bold text-brand-navy mb-2">{t('publishAdPage.steps.step2Title')}</h3>
+                    <p className="text-sm sm:text-base">{t('publishAdPage.steps.step2Content')}</p>
                 </div>
                  <div>
-                    <h3 className="text-xl font-bold text-brand-navy mb-2">{t('publishAdPage.steps.step3Title')}</h3>
-                    <p>{t('publishAdPage.steps.step3Content')}</p>
+                    <h3 className="text-lg sm:text-xl font-bold text-brand-navy mb-2">{t('publishAdPage.steps.step3Title')}</h3>
+                    <p className="text-sm sm:text-base">{t('publishAdPage.steps.step3Content')}</p>
                 </div>
                  <div>
-                    <h3 className="text-xl font-bold text-brand-navy mb-2">{t('publishAdPage.steps.step4Title')}</h3>
-                    <p>{t('publishAdPage.steps.step4Content')}</p>
+                    <h3 className="text-lg sm:text-xl font-bold text-brand-navy mb-2">{t('publishAdPage.steps.step4Title')}</h3>
+                    <p className="text-sm sm:text-base">{t('publishAdPage.steps.step4Content')}</p>
                 </div>
             </div>
         </div>
         
         {/* Advantages Section */}
-        <div className="p-8 md:p-12">
-            <h2 className="text-2xl md:text-3xl font-bold text-brand-navy mb-8 text-center">{t('publishAdPage.advantages.title')}</h2>
+        <div className="p-6 sm:p-8 md:p-12">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-brand-navy mb-8 text-center">{t('publishAdPage.advantages.title')}</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center text-brand-dark">
                 {/* Advantage Card 1 */}
                 <div className="bg-white p-8 rounded-lg shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-2 cursor-default">
-                    <h3 className="text-xl font-bold text-brand-navy mb-2">{t('publishAdPage.advantages.advantage1Title')}</h3>
-                    <p>{t('publishAdPage.advantages.advantage1Content')}</p>
+                    <h3 className="text-lg sm:text-xl font-bold text-brand-navy mb-2">{t('publishAdPage.advantages.advantage1Title')}</h3>
+                    <p className="text-sm sm:text-base">{t('publishAdPage.advantages.advantage1Content')}</p>
                 </div>
                 {/* Advantage Card 2 */}
                 <div className="bg-white p-8 rounded-lg shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-2 cursor-default">
-                    <h3 className="text-xl font-bold text-brand-navy mb-2">{t('publishAdPage.advantages.advantage2Title')}</h3>
-                    <p>{t('publishAdPage.advantages.advantage2Content')}</p>
+                    <h3 className="text-lg sm:text-xl font-bold text-brand-navy mb-2">{t('publishAdPage.advantages.advantage2Title')}</h3>
+                    <p className="text-sm sm:text-base">{t('publishAdPage.advantages.advantage2Content')}</p>
                 </div>
                 {/* Advantage Card 3 */}
                 <div className="bg-white p-8 rounded-lg shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-2 cursor-default">
-                    <h3 className="text-xl font-bold text-brand-navy mb-2">{t('publishAdPage.advantages.advantage3Title')}</h3>
-                    <p>{t('publishAdPage.advantages.advantage3Content')}</p>
+                    <h3 className="text-lg sm:text-xl font-bold text-brand-navy mb-2">{t('publishAdPage.advantages.advantage3Title')}</h3>
+                    <p className="text-sm sm:text-base">{t('publishAdPage.advantages.advantage3Content')}</p>
                 </div>
             </div>
         </div>

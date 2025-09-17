@@ -56,7 +56,7 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({
         onLogout={onLogout}
         onNavigateToFavorites={onBack} // Placeholder
       />
-      <main className="container mx-auto px-6 py-8">
+      <main className="container mx-auto px-4 sm:px-6 py-8">
         {/* Breadcrumbs */}
         <div className="text-sm mb-6">
           <button onClick={onBack} className="text-brand-red hover:underline cursor-pointer">
@@ -69,10 +69,10 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main content */}
           <div className="lg:col-span-2">
-            <div className="bg-white p-6 rounded-lg shadow-md">
+            <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md">
               {/* Photo Gallery */}
               <section className="mb-8">
-                <h2 className="text-2xl font-bold text-brand-navy mb-4">{t('propertyDetail.gallery')}</h2>
+                <h2 className="text-xl sm:text-2xl font-bold text-brand-navy mb-4">{t('propertyDetail.gallery')}</h2>
                 <div className="mb-4">
                   <img src={selectedImage} alt="Main property view" className="w-full h-auto max-h-[500px] object-cover rounded-lg shadow-lg" />
                 </div>
@@ -82,7 +82,7 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({
                       <img
                         src={image}
                         alt={`Thumbnail ${index + 1}`}
-                        className={`w-full h-24 object-cover rounded-md cursor-pointer transition-all duration-200 ${selectedImage === image ? 'ring-4 ring-brand-red' : 'opacity-70 hover:opacity-100'}`}
+                        className={`w-full h-16 sm:h-24 object-cover rounded-md cursor-pointer transition-all duration-200 ${selectedImage === image ? 'ring-2 sm:ring-4 ring-brand-red' : 'opacity-70 hover:opacity-100'}`}
                       />
                     </button>
                   ))}
@@ -91,14 +91,14 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({
 
               {/* Description */}
               <section className="mb-8">
-                <h2 className="text-2xl font-bold text-brand-navy mb-4">{t('propertyDetail.description')}</h2>
+                <h2 className="text-xl sm:text-2xl font-bold text-brand-navy mb-4">{t('propertyDetail.description')}</h2>
                 <p className="text-brand-gray leading-relaxed whitespace-pre-line">{property.description}</p>
               </section>
 
               {/* Video Gallery */}
               {property.videos && property.videos.length > 0 && (
                 <section>
-                  <h2 className="text-2xl font-bold text-brand-navy mb-4">{t('propertyDetail.videos')}</h2>
+                  <h2 className="text-xl sm:text-2xl font-bold text-brand-navy mb-4">{t('propertyDetail.videos')}</h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {property.videos.map((videoUrl, index) => (
                       <div key={index} className="aspect-w-16 aspect-h-9">
@@ -122,15 +122,15 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({
           <aside className="lg:col-span-1">
             <div className="sticky top-24">
               <div className="bg-white p-6 rounded-lg shadow-md">
-                <h1 className="text-3xl font-bold text-brand-navy mb-2">{property.title}</h1>
+                <h1 className="text-2xl sm:text-3xl font-bold text-brand-navy mb-2 leading-tight">{property.title}</h1>
                 <div className="flex items-center text-brand-gray mb-4">
                   <LocationIcon className="w-5 h-5 mr-2 flex-shrink-0" />
                   <p className="text-sm">{property.address}</p>
                 </div>
                 
-                <p className="text-4xl font-bold text-brand-red mb-6">{formattedPrice}</p>
+                <p className="text-3xl sm:text-4xl font-bold text-brand-red mb-6">{formattedPrice}</p>
                 
-                <h2 className="text-xl font-bold text-brand-navy mb-4 border-t pt-4">{t('propertyDetail.details')}</h2>
+                <h2 className="text-lg sm:text-xl font-bold text-brand-navy mb-4 border-t pt-4">{t('propertyDetail.details')}</h2>
                 <div className="grid grid-cols-3 gap-4 text-center mb-6">
                     <div className="flex flex-col items-center p-2 bg-brand-light-gray rounded-lg">
                         <BedIcon className="w-6 h-6 mb-1 text-brand-gray" />

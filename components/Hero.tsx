@@ -124,7 +124,7 @@ const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe, onGeoloca
       style={{ backgroundImage: "url('https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2')" }}
     >
       <div className="relative z-20 p-6 md:p-8 bg-white/95 backdrop-blur-sm rounded-lg shadow-2xl w-11/12 max-w-4xl">
-        <h1 className={`text-4xl md:text-5xl font-bold text-brand-navy mb-6 transition-opacity duration-300 ${isLoadingTitle ? 'opacity-75 animate-pulse' : 'opacity-100'}`}>
+        <h1 className={`text-3xl sm:text-4xl lg:text-5xl font-bold text-brand-navy mb-6 transition-opacity duration-300 ${isLoadingTitle ? 'opacity-75 animate-pulse' : 'opacity-100'}`}>
           {heroTitle}
         </h1>
         
@@ -132,19 +132,19 @@ const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe, onGeoloca
           <div className="flex border-b mb-4">
             <button 
               onClick={() => setActiveTab('comprar')}
-              className={`px-6 py-2 text-lg font-medium transition-colors duration-300 ${activeTab === 'comprar' ? 'border-b-4 border-brand-red text-brand-dark' : 'text-brand-gray'}`}
+              className={`px-4 sm:px-6 py-2 text-base sm:text-lg font-medium transition-colors duration-300 ${activeTab === 'comprar' ? 'border-b-4 border-brand-red text-brand-dark' : 'text-brand-gray'}`}
             >
               {t('hero.tabs.buy')}
             </button>
             <button 
               onClick={() => setActiveTab('alugar')}
-              className={`px-6 py-2 text-lg font-medium transition-colors duration-300 ${activeTab === 'alugar' ? 'border-b-4 border-brand-red text-brand-dark' : 'text-brand-gray'}`}
+              className={`px-4 sm:px-6 py-2 text-base sm:text-lg font-medium transition-colors duration-300 ${activeTab === 'alugar' ? 'border-b-4 border-brand-red text-brand-dark' : 'text-brand-gray'}`}
             >
               {t('hero.tabs.rent')}
             </button>
             <button 
               onClick={() => setActiveTab('temporada')}
-              className={`px-6 py-2 text-lg font-medium transition-colors duration-300 ${activeTab === 'temporada' ? 'border-b-4 border-brand-red text-brand-dark' : 'text-brand-gray'}`}
+              className={`px-4 sm:px-6 py-2 text-base sm:text-lg font-medium transition-colors duration-300 ${activeTab === 'temporada' ? 'border-b-4 border-brand-red text-brand-dark' : 'text-brand-gray'}`}
             >
               {t('hero.tabs.season')}
             </button>

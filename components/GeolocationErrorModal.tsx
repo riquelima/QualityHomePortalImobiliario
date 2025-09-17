@@ -27,7 +27,7 @@ const GeolocationErrorModal: React.FC<GeolocationErrorModalProps> = ({ isOpen, o
       <div className="absolute inset-0" onClick={onClose} aria-hidden="true"></div>
 
       {/* Modal Content */}
-      <div className="relative bg-white rounded-lg shadow-xl w-11/12 max-w-md p-8 m-4 transform transition-all text-center">
+      <div className="relative bg-white rounded-lg shadow-xl w-11/12 max-w-md p-6 sm:p-8 m-4 transform transition-all text-center">
         <button 
           onClick={onClose} 
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
@@ -40,7 +40,7 @@ const GeolocationErrorModal: React.FC<GeolocationErrorModalProps> = ({ isOpen, o
           <LocationErrorIcon className="h-6 w-6 text-brand-red" />
         </div>
 
-        <h2 id="geo-error-modal-title" className="text-2xl font-bold text-brand-navy mb-2">
+        <h2 id="geo-error-modal-title" className="text-xl sm:text-2xl font-bold text-brand-navy mb-2">
           {t('geolocationErrorModal.title')}
         </h2>
         <p className="text-brand-gray mb-6">

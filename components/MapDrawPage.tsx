@@ -229,7 +229,7 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewD
                 <span className="text-brand-gray mx-2">&gt;</span>
                 <span className="text-brand-dark font-medium">{userLocation ? t('map.breadcrumbs.proximitySearch') : t('map.breadcrumbs.drawOnMap')}</span>
             </div>
-            <h1 className="text-2xl md:text-4xl font-bold text-brand-navy">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-brand-navy">
               {userLocation ? t('map.title.proximity') : t('map.title.draw')}
             </h1>
         </div>
@@ -294,7 +294,7 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewD
             <div className="p-4 border-b flex-shrink-0">
                 <div className="md:hidden w-12 h-1.5 bg-gray-300 rounded-full mx-auto mb-2 cursor-grab" />
                 <div className="flex justify-between items-center">
-                    <h3 className="text-xl font-bold text-brand-navy">
+                    <h3 className="text-lg sm:text-xl font-bold text-brand-navy">
                         {userLocation 
                             ? t('map.resultsPanel.proximityTitle', { count: propertiesInZone.length, radius: 5 })
                             : t('map.resultsPanel.title', { count: propertiesInZone.length })

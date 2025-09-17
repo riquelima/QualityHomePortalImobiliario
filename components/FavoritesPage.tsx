@@ -43,7 +43,7 @@ const FavoritesPage: React.FC<FavoritesPageProps> = ({
         onNavigateToFavorites={onNavigateToFavorites}
       />
       <main className="flex-grow">
-        <div className="container mx-auto px-6 py-8">
+        <div className="container mx-auto px-4 sm:px-6 py-8">
           {/* Breadcrumbs */}
           <div className="text-sm mb-6">
             <span onClick={onBack} className="text-brand-red hover:underline cursor-pointer">
@@ -53,12 +53,12 @@ const FavoritesPage: React.FC<FavoritesPageProps> = ({
             <span className="text-brand-dark font-medium">{t('favoritesPage.breadcrumb')}</span>
           </div>
 
-          <h1 className="text-3xl md:text-4xl font-bold text-brand-navy mb-8">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-brand-navy mb-8">
             {t('favoritesPage.title')}
           </h1>
 
           {properties.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
               {properties.map((property) => (
                 <PropertyCard
                   key={property.id}
@@ -70,9 +70,9 @@ const FavoritesPage: React.FC<FavoritesPageProps> = ({
               ))}
             </div>
           ) : (
-            <div className="text-center py-20 bg-white rounded-lg shadow-md">
-              <HeartIcon className="w-16 h-16 text-brand-gray mx-auto mb-4" />
-              <h2 className="text-2xl font-bold text-brand-navy mb-2">{t('favoritesPage.noFavorites.title')}</h2>
+            <div className="text-center py-16 sm:py-20 bg-white rounded-lg shadow-md">
+              <HeartIcon className="w-12 h-12 sm:w-16 sm:h-16 text-brand-gray mx-auto mb-4" />
+              <h2 className="text-xl sm:text-2xl font-bold text-brand-navy mb-2">{t('favoritesPage.noFavorites.title')}</h2>
               <p className="text-brand-gray max-w-md mx-auto">{t('favoritesPage.noFavorites.description')}</p>
             </div>
           )}
