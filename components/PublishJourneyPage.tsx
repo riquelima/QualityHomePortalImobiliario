@@ -825,7 +825,6 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
     const CLOUDINARY_UPLOAD_PRESET = "quallityhome"; 
 
     try {
-        // FIX: Ensure user profile exists before attempting to insert a property.
         console.log("Passo 0: Verificando/Criando perfil do usuário...");
         const { data: userProfile, error: profileError } = await supabase
             .from('perfis')
@@ -833,7 +832,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
             .eq('id', user.id)
             .single();
 
-        if (profileError && profileError.code !== 'PGRST116') { // PGRST116 means no rows found, which is fine
+        if (profileError && profileError.code !== 'PGRST116') {
             throw new Error(`Erro no Passo 0 (Verificar Perfil): ${profileError.message}`);
         }
 
@@ -936,6 +935,11 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
 
         const finalPropertyData = { ...insertedProperty, midias_imovel: uploadedMedia };
         
+        const imageURLs = uploadedMedia.filter(m => m.tipo === 'imagem').map(m => m.url);
+        if (imageURLs.length === 0) {
+            imageURLs.push('https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1');
+        }
+
         const frontendProperty: Property = {
             id: finalPropertyData.id,
             title: finalPropertyData.titulo,
@@ -947,7 +951,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
             area: finalPropertyData.area_bruta,
             lat: finalPropertyData.latitude,
             lng: finalPropertyData.longitude,
-            images: uploadedMedia.filter(m => m.tipo === 'imagem').map(m => m.url),
+            images: imageURLs,
             videos: uploadedMedia.filter(m => m.tipo === 'video').map(m => m.url),
             owner: finalPropertyData.owner,
             anunciante_id: finalPropertyData.anunciante_id,
