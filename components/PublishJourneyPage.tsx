@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Header from './Header';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -821,9 +820,9 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
     }
 
     setIsPublishing(true);
-    console.log("Iniciando publicação...");
 
     try {
+        console.log("Iniciando publicação...");
         const newPropertyData = {
             anunciante_id: user.id,
             titulo: details.title,
@@ -844,41 +843,46 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
             taxa_condominio: parseInt(details.condoFee, 10) || 0,
         };
         
-        console.log("1. Inserindo dados do imóvel no DB...", newPropertyData);
+        console.log("Passo 1: Inserindo dados do imóvel...", newPropertyData);
         const { data: insertedProperty, error: propertyError } = await supabase
             .from('imoveis')
             .insert([newPropertyData])
             .select('*, owner:anunciante_id(*)')
             .single();
 
-        if (propertyError) throw propertyError;
-        if (!insertedProperty) throw new Error("Falha ao criar o imóvel no banco de dados, nenhum dado retornado.");
-        
-        console.log("2. Imóvel inserido com sucesso, ID:", insertedProperty.id);
+        if (propertyError) throw new Error(`Erro no Passo 1 (Inserir Imóvel): ${propertyError.message}`);
+        if (!insertedProperty) throw new Error("Falha ao criar o imóvel no banco de dados.");
+        console.log("Passo 1 concluído. ID do imóvel:", insertedProperty.id);
+
 
         let uploadedMedia: { url: string; tipo: 'imagem' | 'video' }[] = [];
         if (files.length > 0) {
-            console.log(`3. Iniciando upload de ${files.length} mídias...`);
+            console.log(`Passo 2: Iniciando upload de ${files.length} mídias...`);
             
             const uploadPromises = files.map(async (file) => {
                 const fileExt = file.name.split('.').pop();
-                // CORREÇÃO: Usar um nome de arquivo mais robusto e um caminho simplificado
                 const fileName = `${crypto.randomUUID()}.${fileExt}`;
-                const filePath = `${fileName}`; // Upload para a raiz do bucket
+                // Simplificando o caminho para a raiz do bucket para evitar problemas com policies complexas
+                const filePath = `${fileName}`;
 
                 console.log(`- Fazendo upload de ${filePath} para o bucket 'midia'`);
                 const { error: uploadError } = await supabase.storage
                     .from('midia')
                     .upload(filePath, file);
 
-                if (uploadError) throw uploadError;
+                if (uploadError) throw new Error(`Erro no Passo 2 (Upload do arquivo ${file.name}): ${uploadError.message}`);
 
                 const { data: { publicUrl } } = supabase.storage.from('midia').getPublicUrl(filePath);
-                return { url: publicUrl, tipo: file.type.startsWith('video') ? 'video' : 'imagem' };
+                // FIX: Explicitly type the returned object to prevent type widening of 'tipo' to string.
+                const mediaObject: { url: string; tipo: 'imagem' | 'video' } = {
+                    url: publicUrl,
+                    tipo: file.type.startsWith('video') ? 'video' : 'imagem',
+                };
+                return mediaObject;
             });
 
             uploadedMedia = await Promise.all(uploadPromises);
-            console.log("4. Upload de todas as mídias concluído.");
+            console.log("Passo 2 concluído. Mídias enviadas:", uploadedMedia);
 
             if (uploadedMedia.length > 0) {
                 const mediaToInsert = uploadedMedia.map(media => ({
@@ -886,20 +890,19 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
                     url: media.url,
                     tipo: media.tipo,
                 }));
-                console.log("5. Inserindo metadados das mídias no DB...");
+                console.log("Passo 3: Inserindo metadados das mídias no DB...", mediaToInsert);
                 const { error: mediaError } = await supabase.from('midias_imovel').insert(mediaToInsert);
                 if (mediaError) {
-                   // Lançar o erro interrompe o processo e informa o usuário
-                   throw mediaError;
+                   throw new Error(`Erro no Passo 3 (Inserir Mídia): ${mediaError.message}`);
                 }
-                console.log("6. Metadados das mídias inseridos com sucesso.");
+                console.log("Passo 3 concluído.");
             }
         }
 
         const finalPropertyData = { ...insertedProperty, midias_imovel: uploadedMedia };
+        
         // FIX: The `frontendProperty` object was constructed using `finalPropertyData.midias_imovel`,
         // which caused a type error. Using the correctly typed `uploadedMedia` variable directly resolves this.
-        // Optional chaining is also removed as `uploadedMedia` is initialized to an empty array.
         const frontendProperty: Property = {
             id: finalPropertyData.id,
             title: finalPropertyData.titulo,
@@ -924,14 +927,14 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
             quartos: finalPropertyData.quartos,
             banheiros: finalPropertyData.banheiros,
             area_bruta: finalPropertyData.area_bruta,
-            midias_imovel: uploadedMedia,
+            midias_imovel: uploadedMedia
         };
-        console.log("7. Processo concluído! Adicionando propriedade ao estado da aplicação.");
+        console.log("Publicação finalizada com sucesso!");
         onAddProperty(frontendProperty);
 
     } catch (error: any) {
         console.error("ERRO DETALHADO NA PUBLICAÇÃO:", error);
-        alert(`Falha na publicação: ${error.message}\n\nVerifique o console do navegador para mais detalhes.`);
+        alert(`Falha na publicação: ${error.message}\n\nVerifique as permissões (RLS) das tabelas 'imoveis' e 'midias_imovel' e as policies do bucket 'midia' no Supabase.`);
     } finally {
         setIsPublishing(false);
     }
