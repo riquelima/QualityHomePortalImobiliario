@@ -1,9 +1,11 @@
 
+
 import React from 'react';
 import Header from './Header';
 import { useLanguage } from '../contexts/LanguageContext';
 import CheckIcon from './icons/CheckIcon';
-import type { User } from '../types';
+// FIX: Import Profile type.
+import type { User, Profile } from '../types';
 
 interface PublishAdPageProps {
   onBack: () => void;
@@ -11,12 +13,14 @@ interface PublishAdPageProps {
   onOpenLoginModal: () => void;
   onNavigateToJourney: () => void;
   user: User | null;
+  // FIX: Added profile prop to be passed to Header.
+  profile: Profile | null;
   onLogout: () => void;
   onNavigateToFavorites: () => void;
   onNavigateToChatList: () => void;
 }
 
-const PublishAdPage: React.FC<PublishAdPageProps> = ({ onBack, onPublishAdClick, onOpenLoginModal, onNavigateToJourney, user, onLogout, onNavigateToFavorites, onNavigateToChatList }) => {
+const PublishAdPage: React.FC<PublishAdPageProps> = ({ onBack, onPublishAdClick, onOpenLoginModal, onNavigateToJourney, user, profile, onLogout, onNavigateToFavorites, onNavigateToChatList }) => {
   const { t } = useLanguage();
 
   const handlePublishClick = () => {
@@ -29,7 +33,8 @@ const PublishAdPage: React.FC<PublishAdPageProps> = ({ onBack, onPublishAdClick,
 
   return (
     <div className="bg-brand-light-gray min-h-screen">
-       <Header onPublishAdClick={onPublishAdClick} onAccessClick={onOpenLoginModal} user={user} onLogout={onLogout} onNavigateToFavorites={onNavigateToFavorites} onNavigateToChatList={onNavigateToChatList} />
+       {/* FIX: Pass profile prop to Header. */}
+       <Header onPublishAdClick={onPublishAdClick} onAccessClick={onOpenLoginModal} user={user} profile={profile} onLogout={onLogout} onNavigateToFavorites={onNavigateToFavorites} onNavigateToChatList={onNavigateToChatList} />
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumbs */}
         <div className="text-sm mb-6">

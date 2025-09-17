@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import InfoSection from './components/InfoSection';
@@ -16,8 +16,8 @@ import FavoritesPage from './components/FavoritesPage';
 import ChatListPage from './components/ChatListPage';
 import ChatPage from './components/ChatPage';
 import { useLanguage } from './contexts/LanguageContext';
-import type { User, Property, ChatSession, Message } from './types';
-import { PropertyStatus } from './types';
+import { supabase } from './supabaseClient';
+import type { User, Property, ChatSession, Message, Profile } from './types';
 
 interface PageState {
   page: 'home' | 'map' | 'publish' | 'publish-journey' | 'searchResults' | 'propertyDetail' | 'favorites' | 'chatList' | 'chat';
@@ -27,55 +27,189 @@ interface PageState {
   chatSessionId?: string;
 }
 
-// Função para decodificar o JWT do Google de forma segura
-function decodeJwt(token: string): any {
-  try {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-    }).join(''));
-
-    return JSON.parse(jsonPayload);
-  } catch (error) {
-    console.error("Failed to decode JWT:", error);
-    return null;
-  }
-}
-
 const App: React.FC = () => {
   const [pageState, setPageState] = useState<PageState>({ page: 'home', userLocation: null });
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isGeoErrorModalOpen, setIsGeoErrorModalOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [loginIntent, setLoginIntent] = useState<'default' | 'publish'>('default');
   const [favorites, setFavorites] = useState<number[]>([]);
   const { t } = useLanguage();
   const [properties, setProperties] = useState<Property[]>(MOCK_PROPERTIES);
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
 
-  // Carregar sessão do usuário ao iniciar o app
-  useEffect(() => {
-    const savedSession = localStorage.getItem('userSession');
-    if (savedSession) {
-      try {
-        const { user: savedUser, timestamp } = JSON.parse(savedSession);
-        const sessionAge = Date.now() - timestamp;
-        const oneHour = 60 * 60 * 1000;
+  // Adapt Supabase property data to legacy frontend Property type
+  const adaptSupabaseProperty = (dbProperty: any): Property => {
+    return {
+      ...dbProperty,
+      title: dbProperty.titulo,
+      address: dbProperty.endereco_completo,
+      bedrooms: dbProperty.quartos,
+      bathrooms: dbProperty.banheiros,
+      area: dbProperty.area_bruta,
+      lat: dbProperty.latitude,
+      lng: dbProperty.longitude,
+      // FIX: Map database fields `preco` and `descricao` to frontend fields `price` and `description`.
+      price: dbProperty.preco,
+      description: dbProperty.descricao,
+      images: dbProperty.midias_imovel?.filter((m: any) => m.tipo === 'imagem').map((m: any) => m.url) || ['https://picsum.photos/seed/' + dbProperty.id + '/800/600'],
+      videos: dbProperty.midias_imovel?.filter((m: any) => m.tipo === 'video').map((m: any) => m.url),
+      owner: dbProperty.owner ? {
+          ...dbProperty.owner,
+          phone: dbProperty.owner.telefone,
+          email: 'user-not-exposed-for-privacy@email.com', // Don't expose owner email directly
+      } : undefined
+    };
+  };
+  
+  const fetchAllData = useCallback(async (currentUser: User | null) => {
+    // Fetch Properties
+    const { data: propertiesData, error: propertiesError } = await supabase
+      .from('imoveis')
+      .select('*, owner:anunciante_id(*), midias_imovel(*)')
+      .eq('status', 'ativo');
+      
+    if (propertiesError) console.error('Error fetching properties:', propertiesError);
+    else {
+      const adaptedProperties = propertiesData.map(adaptSupabaseProperty);
+      setProperties([...MOCK_PROPERTIES, ...adaptedProperties]);
+    }
 
-        if (sessionAge < oneHour) {
-          setUser(savedUser);
-          // Opcional: futuramente, poderíamos salvar e restaurar favoritos/chats aqui também
-        } else {
-          // A sessão expirou
-          localStorage.removeItem('userSession');
-        }
-      } catch (error) {
-        console.error("Failed to parse user session:", error);
-        localStorage.removeItem('userSession');
+    if(currentUser) {
+      // Fetch Favorites
+      const { data: favoritesData, error: favoritesError } = await supabase
+        .from('favoritos_usuario')
+        .select('imovel_id')
+        .eq('usuario_id', currentUser.id);
+      
+      if(favoritesError) console.error('Error fetching favorites:', favoritesError);
+      else setFavorites(favoritesData.map(f => f.imovel_id));
+
+      // Fetch Chat Sessions
+      const { data: chatData, error: chatError } = await supabase
+        .rpc('get_user_chat_sessions', { user_id_param: currentUser.id });
+
+      if (chatError) console.error('Error fetching chat sessions:', chatError);
+      else if (chatData) {
+        // Adapt data from RPC to frontend ChatSession type
+        const adaptedSessions = chatData.map((s: any) => ({
+            id: s.session_id,
+            sessionId: s.session_id,
+            propertyId: s.imovel_id,
+            imovel_id: s.imovel_id,
+            participants: s.participants.reduce((acc: any, p: any) => {
+                acc[p.id] = { id: p.id, nome_completo: p.nome_completo };
+                return acc;
+            }, {}),
+            messages: s.messages.map((m: any): Message => ({
+                id: m.id,
+                senderId: m.remetente_id,
+                text: m.conteudo,
+                timestamp: new Date(m.data_envio),
+                remetente_id: m.remetente_id,
+                conteudo: m.conteudo,
+                data_envio: m.data_envio,
+            })),
+            mensagens: s.messages, // Keep original for consistency
+            participantes: s.participants.reduce((acc: any, p: any) => {
+                acc[p.id] = { id: p.id, nome_completo: p.nome_completo };
+                return acc;
+            }, {}),
+        }));
+        setChatSessions(adaptedSessions);
       }
+    } else {
+      setFavorites([]);
+      setChatSessions([]);
     }
   }, []);
+
+  useEffect(() => {
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+
+      if (event === 'SIGNED_IN' && currentUser) {
+        const { data: userProfile, error } = await supabase
+          .from('perfis')
+          .select('*')
+          .eq('id', currentUser.id)
+          .single();
+
+        if (error && error.code === 'PGRST116') { // "Not a single row" - profile doesn't exist
+          const { data: newProfile, error: insertError } = await supabase
+            .from('perfis')
+            .insert({
+              id: currentUser.id,
+              nome_completo: currentUser.user_metadata.full_name || currentUser.email,
+              url_foto_perfil: currentUser.user_metadata.avatar_url,
+            })
+            .select()
+            .single();
+          if(insertError) console.error("Error creating profile:", insertError);
+          else setProfile(newProfile);
+        } else if (userProfile) {
+          setProfile(userProfile);
+        }
+        fetchAllData(currentUser);
+
+        if (loginIntent === 'publish') {
+          navigateToPublishJourney();
+          setLoginIntent('default');
+        }
+      } else if (event === 'SIGNED_OUT') {
+        setProfile(null);
+        fetchAllData(null);
+      }
+    });
+
+    // Fetch initial data for non-logged-in users
+    fetchAllData(null);
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, [loginIntent, fetchAllData]);
+  
+  // Supabase Realtime for Chat
+  useEffect(() => {
+    const channel = supabase
+      .channel('public:mensagens_chat')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'mensagens_chat' }, (payload) => {
+        const newMessage = payload.new as any;
+        setChatSessions(prevSessions => {
+            const sessionExists = prevSessions.some(s => s.id === newMessage.sessao_id);
+            if (!sessionExists) return prevSessions;
+
+            return prevSessions.map(session => {
+                if(session.id === newMessage.sessao_id) {
+                    const messageExists = session.mensagens.some(m => m.id === newMessage.id);
+                    if(messageExists) return session;
+
+                    const adaptedMessage: Message = {
+                        id: newMessage.id,
+                        senderId: newMessage.remetente_id,
+                        text: newMessage.conteudo,
+                        timestamp: new Date(newMessage.data_envio),
+                        remetente_id: newMessage.remetente_id,
+                        conteudo: newMessage.conteudo,
+                        data_envio: newMessage.data_envio,
+                    };
+
+                    return { ...session, messages: [...session.messages, adaptedMessage], mensagens: [...session.mensagens, adaptedMessage] };
+                }
+                return session;
+            });
+        });
+      })
+      .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      }
+  }, [user]);
+
 
   const navigateHome = () => setPageState({ page: 'home', userLocation: null });
   const navigateToMap = (location: { lat: number; lng: number } | null = null) => setPageState({ page: 'map', userLocation: location });
@@ -96,107 +230,82 @@ const App: React.FC = () => {
   const openGeoErrorModal = () => setIsGeoErrorModalOpen(true);
   const closeGeoErrorModal = () => setIsGeoErrorModalOpen(false);
 
-  const handleLoginSuccess = (credentialResponse: any) => {
-    const decoded: { name: string, email: string, picture: string } | null = decodeJwt(credentialResponse.credential);
-    if (decoded) {
-      const userData = {
-        name: decoded.name,
-        email: decoded.email,
-        picture: decoded.picture,
-      };
-      setUser(userData);
-      
-      // Salvar sessão no localStorage
-      const sessionData = {
-        user: userData,
-        timestamp: Date.now(),
-      };
-      localStorage.setItem('userSession', JSON.stringify(sessionData));
-
-      closeLoginModal();
-      if (loginIntent === 'publish') {
-        navigateToPublishJourney();
-        setLoginIntent('default'); // Reset intent
-      }
-    }
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
   };
 
-  const handleLogout = () => {
-    setUser(null);
-    setFavorites([]); // Limpa os favoritos ao deslogar
-    setChatSessions([]); // Limpa os chats ao deslogar
-    localStorage.removeItem('userSession'); // Remove a sessão salva
-  };
-
-  const toggleFavorite = (propertyId: number) => {
+  const toggleFavorite = async (propertyId: number) => {
     if (!user) {
       openLoginModal();
       return;
     }
-    setFavorites(prevFavorites =>
-      prevFavorites.includes(propertyId)
-        ? prevFavorites.filter(id => id !== propertyId)
-        : [...prevFavorites, propertyId]
-    );
+    const isCurrentlyFavorite = favorites.includes(propertyId);
+    if (isCurrentlyFavorite) {
+      const { error } = await supabase.from('favoritos_usuario').delete().match({ usuario_id: user.id, imovel_id: propertyId });
+      if (!error) setFavorites(prev => prev.filter(id => id !== propertyId));
+      else console.error("Error removing favorite:", error);
+    } else {
+      const { error } = await supabase.from('favoritos_usuario').insert({ usuario_id: user.id, imovel_id: propertyId });
+      if (!error) setFavorites(prev => [...prev, propertyId]);
+      else console.error("Error adding favorite:", error);
+    }
   };
 
-  const handleAddProperty = (newPropertyData: Omit<Property, 'id' | 'images' | 'status'>) => {
-    const newProperty: Property = {
-      ...newPropertyData,
-      id: properties.length + 1, // Simple ID generation
-      images: ['https://picsum.photos/seed/newprop' + (properties.length + 1) + '/800/600', 'https://picsum.photos/seed/newprop' + (properties.length + 2) + '/800/600'], // Placeholder image
-      status: PropertyStatus.New,
-    };
+  const handleAddProperty = (newProperty: Property) => {
     setProperties(prev => [newProperty, ...prev]);
     alert(t('publishJourney.adPublishedSuccess'));
     navigateHome();
   };
   
-  const handleStartChat = (property: Property) => {
-    if (!user || !property.owner) {
+  const handleStartChat = async (property: Property) => {
+    if (!user || !property.anunciante_id) {
       openLoginModal();
       return;
     }
-    const participants = [user.email, property.owner.email].sort();
-    const sessionId = `${property.id}-${participants[0]}-${participants[1]}`;
-    const existingSession = chatSessions.find(s => s.sessionId === sessionId);
+    
+    // Find existing chat session
+    const { data: existing, error: findError } = await supabase.rpc('find_chat_session', {
+      p_imovel_id: property.id,
+      user1_id: user.id,
+      user2_id: property.anunciante_id
+    });
 
-    if (existingSession) {
-      navigateToChat(sessionId);
+    if (findError) {
+      console.error("Error finding chat session:", findError);
+      return;
+    }
+
+    if (existing) {
+        navigateToChat(existing);
     } else {
-      const newSession: ChatSession = {
-        sessionId,
-        propertyId: property.id,
-        participants: {
-          [user.email]: user.name,
-          [property.owner.email]: property.owner.name,
-        },
-        messages: [],
-      };
-      setChatSessions(prev => [...prev, newSession]);
-      navigateToChat(sessionId);
+        // Create new session
+        const { data: newSession, error: createError } = await supabase.rpc('create_chat_session', {
+            p_imovel_id: property.id,
+            user1_id: user.id,
+            user2_id: property.anunciante_id
+        });
+        if (createError) {
+            console.error("Error creating chat session:", createError);
+        } else if (newSession) {
+            // Refetch sessions to get the new one correctly formatted
+            fetchAllData(user);
+            navigateToChat(newSession);
+        }
     }
   };
 
-  const handleSendMessage = (sessionId: string, text: string) => {
+  const handleSendMessage = async (sessionId: string, text: string) => {
     if (!user || !text.trim()) return;
 
-    const newMessage: Message = {
-      id: `${Date.now()}-${Math.random()}`,
-      senderId: user.email,
-      text: text.trim(),
-      timestamp: new Date(),
+    const newMessage = {
+      sessao_id: sessionId,
+      remetente_id: user.id,
+      conteudo: text.trim(),
     };
 
-    setChatSessions(prevSessions =>
-      prevSessions.map(session =>
-        session.sessionId === sessionId
-          ? { ...session, messages: [...session.messages, newMessage] }
-          : session
-      )
-    );
+    const { error } = await supabase.from('mensagens_chat').insert(newMessage);
+    if(error) console.error("Error sending message:", error);
   };
-
 
   const renderCurrentPage = () => {
     switch (pageState.page) {
@@ -216,6 +325,7 @@ const App: React.FC = () => {
                   onOpenLoginModal={() => openLoginModal('publish')} 
                   onNavigateToJourney={navigateToPublishJourney}
                   user={user}
+                  profile={profile}
                   onLogout={handleLogout}
                   onNavigateToFavorites={navigateToFavorites}
                   onNavigateToChatList={navigateToChatList}
@@ -226,6 +336,7 @@ const App: React.FC = () => {
                   onPublishAdClick={navigateToPublish}
                   onOpenLoginModal={() => openLoginModal('default')}
                   user={user}
+                  profile={profile}
                   onLogout={handleLogout}
                   onNavigateToFavorites={navigateToFavorites}
                   onAddProperty={handleAddProperty}
@@ -245,6 +356,7 @@ const App: React.FC = () => {
           onPublishAdClick={navigateToPublish}
           onAccessClick={() => openLoginModal('default')}
           user={user}
+          profile={profile}
           onLogout={handleLogout}
           onViewDetails={navigateToPropertyDetail}
           favorites={favorites}
@@ -264,6 +376,7 @@ const App: React.FC = () => {
                   onPublishAdClick={navigateToPublish} 
                   onAccessClick={() => openLoginModal('default')} 
                   user={user} 
+                  profile={profile}
                   onLogout={handleLogout}
                   isFavorite={favorites.includes(property.id)}
                   onToggleFavorite={toggleFavorite}
@@ -279,6 +392,7 @@ const App: React.FC = () => {
             onPublishAdClick={navigateToPublish}
             onAccessClick={() => openLoginModal('default')}
             user={user}
+            profile={profile}
             onLogout={handleLogout}
             onViewDetails={navigateToPropertyDetail}
             favorites={favorites}
@@ -294,18 +408,19 @@ const App: React.FC = () => {
         return <ChatListPage
                   onBack={navigateHome}
                   user={user}
+                  profile={profile}
                   onLogout={handleLogout}
                   onPublishAdClick={navigateToPublish}
                   onAccessClick={() => openLoginModal('default')}
                   onNavigateToFavorites={navigateToFavorites}
                   onNavigateToChatList={navigateToChatList}
-                  chatSessions={chatSessions.filter(s => Object.keys(s.participants).includes(user.email))}
+                  chatSessions={chatSessions.filter(s => s.participantes[user.id])}
                   properties={properties}
                   onNavigateToChat={navigateToChat}
                />;
       case 'chat':
-        const session = chatSessions.find(s => s.sessionId === pageState.chatSessionId);
-        const propertyForChat = properties.find(p => p.id === session?.propertyId);
+        const session = chatSessions.find(s => s.id === pageState.chatSessionId);
+        const propertyForChat = properties.find(p => p.id === session?.imovel_id);
         if (!session || !user || !propertyForChat) {
           navigateHome();
           return null;
@@ -321,7 +436,7 @@ const App: React.FC = () => {
       default:
         return (
           <div className="bg-white font-sans text-brand-dark">
-            <Header onPublishAdClick={navigateToPublish} onAccessClick={() => openLoginModal('default')} user={user} onLogout={handleLogout} onNavigateToFavorites={navigateToFavorites} onNavigateToChatList={navigateToChatList} />
+            <Header onPublishAdClick={navigateToPublish} onAccessClick={() => openLoginModal('default')} user={user} profile={profile} onLogout={handleLogout} onNavigateToFavorites={navigateToFavorites} onNavigateToChatList={navigateToChatList} />
             <main>
               <Hero 
                 onDrawOnMapClick={() => navigateToMap()} 
@@ -353,7 +468,7 @@ const App: React.FC = () => {
   return (
     <>
       {renderCurrentPage()}
-      <LoginModal isOpen={isLoginModalOpen} onClose={closeLoginModal} onLoginSuccess={handleLoginSuccess} />
+      <LoginModal isOpen={isLoginModalOpen} onClose={closeLoginModal} />
       <GeolocationErrorModal isOpen={isGeoErrorModalOpen} onClose={closeGeoErrorModal} />
     </>
   );

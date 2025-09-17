@@ -1,4 +1,5 @@
 
+
 import React, { useState, useRef, useEffect } from 'react';
 import type { User, Property, ChatSession } from '../types';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -18,7 +19,12 @@ const ChatPage: React.FC<ChatPageProps> = ({ onBack, user, session, property, on
   const [newMessage, setNewMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
-  const otherParticipantName = Object.values(session.participants)[Object.keys(session.participants).findIndex(email => email !== user.email)] || 'Anunciante';
+  // FIX: Correctly find the other participant's name.
+  // The key in `participantes` is the user ID. We find the participant whose ID is not the current user's.
+  const otherParticipantId = Object.keys(session.participantes).find(id => id !== user.id);
+  const otherParticipant = otherParticipantId ? session.participantes[otherParticipantId] : null;
+  const otherParticipantName = otherParticipant ? otherParticipant.nome_completo : 'Anunciante';
+
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -39,6 +45,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ onBack, user, session, property, on
             <ArrowLeftIcon className="w-6 h-6" />
           </button>
           <div>
+            {/* FIX: `otherParticipantName` is now a string and can be rendered. */}
             <h1 className="text-lg font-bold text-brand-navy truncate">{otherParticipantName}</h1>
             <p className="text-sm text-brand-gray truncate">{t('chatPage.title', { title: property.title })}</p>
           </div>
@@ -49,7 +56,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ onBack, user, session, property, on
       <div className="flex-grow overflow-y-auto p-4 sm:p-6 bg-brand-light-gray">
         <div className="max-w-4xl mx-auto space-y-4">
           {session.messages.map((message) => {
-            const isSentByUser = message.senderId === user.email;
+            const isSentByUser = message.senderId === user.id;
             return (
               <div key={message.id} className={`flex items-end gap-2 ${isSentByUser ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-xs md:max-w-md p-3 rounded-2xl ${isSentByUser ? 'bg-brand-navy text-white rounded-br-lg' : 'bg-white text-brand-dark border rounded-bl-lg'}`}>

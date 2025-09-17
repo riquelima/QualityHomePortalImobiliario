@@ -1,42 +1,27 @@
-
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import CloseIcon from './icons/CloseIcon';
 import AppleIcon from './icons/AppleIcon';
-
-// Declara a variável global 'google' para o TypeScript
-declare const google: any;
+import GoogleIcon from './icons/GoogleIcon';
+import { supabase } from '../supabaseClient';
 
 interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onLoginSuccess: (credentialResponse: any) => void;
 }
 
-const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLoginSuccess }) => {
+const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
   const { t } = useLanguage();
-  const googleButtonDiv = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (isOpen && typeof google !== 'undefined') {
-      google.accounts.id.initialize({
-        client_id: '56933567945-a09i6ua38m4dvr5era3oq3vq1uknnb04.apps.googleusercontent.com',
-        callback: onLoginSuccess,
-      });
-
-      if (googleButtonDiv.current) {
-        googleButtonDiv.current.innerHTML = ''; // Limpa o botão antigo para evitar duplicatas
-        google.accounts.id.renderButton(
-          googleButtonDiv.current,
-          { theme: "outline", size: "large", type: "standard", text: "continue_with", width: "300" } 
-        );
-      }
-      
-      // Opcional: Ativar o prompt "One Tap" para usuários que retornam
-      // google.accounts.id.prompt();
+  const handleGoogleLogin = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+    });
+    if (error) {
+      console.error('Error logging in with Google:', error.message);
     }
-  }, [isOpen, onLoginSuccess]);
-
+  };
+  
   if (!isOpen) {
     return null;
   }
@@ -52,7 +37,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLoginSuccess
       <div className="absolute inset-0" onClick={onClose} aria-hidden="true"></div>
 
       {/* Modal Content */}
-      <div className="relative bg-white rounded-lg shadow-xl w-11/12 max-w-md p-6 sm:p-8 m-4 transform transition-all">
+      <div className="relative bg-white rounded-lg shadow-xl w-11/2 max-w-md p-6 sm:p-8 m-4 transform transition-all">
         <button 
           onClick={onClose} 
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
@@ -98,7 +83,13 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLoginSuccess
         </div>
         
         <div className="space-y-3">
-           <div ref={googleButtonDiv} className="flex justify-center"></div>
+           <button 
+             onClick={handleGoogleLogin}
+             className="w-full max-w-[300px] mx-auto flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md text-brand-dark hover:bg-gray-50"
+           >
+             <GoogleIcon className="w-5 h-5 mr-3" />
+             <span>{t('loginModal.googleButton')}</span>
+           </button>
           <button className="w-full max-w-[300px] mx-auto flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md text-brand-dark hover:bg-gray-50">
             <AppleIcon className="w-5 h-5 mr-3" />
             <span>{t('loginModal.appleButton')}</span>

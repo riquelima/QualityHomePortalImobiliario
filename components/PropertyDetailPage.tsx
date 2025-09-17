@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
 import Header from './Header';
-import type { Property, User } from '../types';
+import type { Property, User, Profile } from '../types';
 import { useLanguage } from '../contexts/LanguageContext';
 import LocationIcon from './icons/LocationIcon';
 import BedIcon from './icons/BedIcon';
@@ -18,6 +17,7 @@ interface PropertyDetailPageProps {
   onPublishAdClick: () => void;
   onAccessClick: () => void;
   user: User | null;
+  profile: Profile | null;
   onLogout: () => void;
   isFavorite: boolean;
   onToggleFavorite: (id: number) => void;
@@ -38,6 +38,7 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({
   onPublishAdClick,
   onAccessClick,
   user,
+  profile,
   onLogout,
   isFavorite,
   onToggleFavorite,
@@ -62,6 +63,7 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({
         onPublishAdClick={onPublishAdClick}
         onAccessClick={onAccessClick}
         user={user}
+        profile={profile}
         onLogout={onLogout}
         onNavigateToFavorites={onNavigateToFavorites}
         onNavigateToChatList={onNavigateToChatList}

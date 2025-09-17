@@ -1,13 +1,17 @@
 
+
 import React from 'react';
 import Header from './Header';
-import type { User, Property, ChatSession } from '../types';
+// FIX: Import Profile type.
+import type { User, Property, ChatSession, Profile } from '../types';
 import { useLanguage } from '../contexts/LanguageContext';
 import ChatIcon from './icons/ChatIcon';
 
 interface ChatListPageProps {
   onBack: () => void;
   user: User | null;
+  // FIX: Added profile prop to be passed to Header.
+  profile: Profile | null;
   onLogout: () => void;
   onPublishAdClick: () => void;
   onAccessClick: () => void;
@@ -19,13 +23,14 @@ interface ChatListPageProps {
 }
 
 const ChatListPage: React.FC<ChatListPageProps> = ({
-  onBack, user, onLogout, onPublishAdClick, onAccessClick, onNavigateToFavorites, onNavigateToChatList, chatSessions, properties, onNavigateToChat
+  onBack, user, profile, onLogout, onPublishAdClick, onAccessClick, onNavigateToFavorites, onNavigateToChatList, chatSessions, properties, onNavigateToChat
 }) => {
   const { t } = useLanguage();
 
   const getOtherParticipantName = (session: ChatSession) => {
-    const otherEmail = Object.keys(session.participants).find(email => email !== user?.email);
-    return otherEmail ? session.participants[otherEmail] : 'Anunciante';
+    // FIX: Use `participantes` and get the name from the participant object.
+    const otherParticipantId = Object.keys(session.participantes).find(id => id !== user?.id);
+    return otherParticipantId ? session.participantes[otherParticipantId].nome_completo : 'Anunciante';
   };
   
   const getPropertyTitle = (propertyId: number) => {
@@ -34,10 +39,12 @@ const ChatListPage: React.FC<ChatListPageProps> = ({
 
   return (
     <div className="bg-brand-light-gray min-h-screen flex flex-col">
+      {/* FIX: Pass profile prop to Header. */}
       <Header
         onPublishAdClick={onPublishAdClick}
         onAccessClick={onAccessClick}
         user={user}
+        profile={profile}
         onLogout={onLogout}
         onNavigateToFavorites={onNavigateToFavorites}
         onNavigateToChatList={onNavigateToChatList}

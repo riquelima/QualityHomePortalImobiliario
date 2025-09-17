@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Header from './Header';
 import { useLanguage } from '../contexts/LanguageContext';
-import type { User, Property } from '../types';
+import type { User, Property, Profile } from '../types';
 import BoltIcon from './icons/BoltIcon';
 import BriefcaseIcon from './icons/BriefcaseIcon';
 import LocationConfirmationModal from './LocationConfirmationModal';
@@ -14,6 +14,7 @@ import CheckIcon from './icons/CheckIcon';
 import PhotoIcon from './icons/PhotoIcon';
 import PlanIcon from './icons/PlanIcon';
 import VideoIcon from './icons/VideoIcon';
+import { supabase } from '../supabaseClient';
 
 
 interface PublishJourneyPageProps {
@@ -21,9 +22,10 @@ interface PublishJourneyPageProps {
   onPublishAdClick: () => void;
   onOpenLoginModal: () => void;
   user: User | null;
+  profile: Profile | null;
   onLogout: () => void;
   onNavigateToFavorites: () => void;
-  onAddProperty: (propertyData: Omit<Property, 'id' | 'images' | 'status'>) => void;
+  onAddProperty: (propertyData: Property) => void;
   onNavigateToChatList: () => void;
 }
 
@@ -66,6 +68,7 @@ interface Step1FormProps {
   verifiedAddress: string;
   handleEditAddress: () => void;
   user: User | null;
+  profile: Profile | null;
   onLogout: () => void;
   contactInfo: ContactInfoState;
   handleContactChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -88,12 +91,15 @@ const Step1Form: React.FC<Step1FormProps> = ({
     verifiedAddress,
     handleEditAddress,
     user,
+    profile,
     onLogout,
     contactInfo,
     handleContactChange,
     handlePreferenceChange
 }) => {
     const { t } = useLanguage();
+    const userName = profile?.nome_completo || user?.email || 'Usuário';
+
     return (
         <form className="space-y-8" onSubmit={!isAddressVerified ? handleVerifyAddress : handleContinueToDetails}>
             <div>
@@ -109,15 +115,15 @@ const Step1Form: React.FC<Step1FormProps> = ({
                 <label className="block text-base sm:text-lg font-bold text-brand-navy mb-3">{t('publishJourney.form.operation.label')}</label>
                 <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
                 <label className="flex items-center space-x-2 cursor-pointer">
-                    <input type="radio" name="operation" value="sell" checked={operation === 'sell'} onChange={() => setOperation('sell')} className="h-5 w-5 text-brand-red focus:ring-brand-red border-gray-300" />
+                    <input type="radio" name="operation" value="venda" checked={operation === 'venda'} onChange={() => setOperation('venda')} className="h-5 w-5 text-brand-red focus:ring-brand-red border-gray-300" />
                     <span>Vender</span>
                 </label>
                 <label className="flex items-center space-x-2 cursor-pointer">
-                    <input type="radio" name="operation" value="rent" checked={operation === 'rent'} onChange={() => setOperation('rent')} className="h-5 w-5 text-brand-red focus:ring-brand-red border-gray-300" />
+                    <input type="radio" name="operation" value="aluguel" checked={operation === 'aluguel'} onChange={() => setOperation('aluguel')} className="h-5 w-5 text-brand-red focus:ring-brand-red border-gray-300" />
                     <span>Alugar</span>
                 </label>
                 <label className="flex items-center space-x-2 cursor-pointer">
-                    <input type="radio" name="operation" value="season" checked={operation === 'season'} onChange={() => setOperation('season')} className="h-5 w-5 text-brand-red focus:ring-brand-red border-gray-300" />
+                    <input type="radio" name="operation" value="temporada" checked={operation === 'temporada'} onChange={() => setOperation('temporada')} className="h-5 w-5 text-brand-red focus:ring-brand-red border-gray-300" />
                     <span>Temporada</span>
                 </label>
                 </div>
@@ -182,7 +188,7 @@ const Step1Form: React.FC<Step1FormProps> = ({
                     </div>
                     <div>
                     <label className="block text-sm font-medium text-brand-dark">{t('publishJourney.contactDetails.nameLabel')}</label>
-                    <div className="mt-1 p-3 bg-gray-100 border border-gray-300 rounded-md text-brand-gray">{user.name}</div>
+                    <div className="mt-1 p-3 bg-gray-100 border border-gray-300 rounded-md text-brand-gray">{userName}</div>
                     <p className="text-xs text-brand-gray mt-1">{t('publishJourney.contactDetails.nameDescription')}</p>
                     </div>
                     <div>
@@ -536,14 +542,15 @@ const Step3Photos: React.FC<Step3PhotosProps> = ({ onBack, onFinish }) => {
 };
 
 
-const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPublishAdClick, onOpenLoginModal, user, onLogout, onNavigateToFavorites, onAddProperty, onNavigateToChatList }) => {
+const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPublishAdClick, onOpenLoginModal, user, profile, onLogout, onNavigateToFavorites, onAddProperty, onNavigateToChatList }) => {
   const { t } = useLanguage();
   const [currentStep, setCurrentStep] = useState(1);
 
   // Step 1 State
-  const [operation, setOperation] = useState('sell');
+  const [operation, setOperation] = useState('venda');
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
   const [address, setAddress] = useState<AddressState>({ city: '', street: '', number: '' });
+  // FIX: Corrected useState syntax
   const [initialCoords, setInitialCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [citySuggestions, setCitySuggestions] = useState<any[]>([]);
   const [isCitySuggestionsOpen, setIsCitySuggestionsOpen] = useState(false);
@@ -730,25 +737,76 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
     setCurrentStep(3);
   }
 
-  const handleFinish = () => {
+  const handleFinish = async () => {
+    if (!user) {
+        alert("Você precisa estar logado para publicar um anúncio.");
+        onOpenLoginModal();
+        return;
+    }
     if (!details.title.trim()) {
       alert("Erro: O título do anúncio é obrigatório.");
       setCurrentStep(2);
       return;
     }
      const newPropertyData = {
-        title: details.title,
-        address: verifiedAddress,
-        price: parseInt(details.price, 10) || 0,
-        bedrooms: details.bedrooms,
-        bathrooms: details.bathrooms,
-        area: parseInt(details.grossArea, 10) || 0,
-        description: details.description,
-        videos: [], // Placeholder for now
-        lat: initialCoords?.lat ?? 0,
-        lng: initialCoords?.lng ?? 0,
+        anunciante_id: user.id,
+        titulo: details.title,
+        descricao: details.description,
+        endereco_completo: verifiedAddress,
+        cidade: address.city,
+        rua: address.street,
+        numero: address.number,
+        latitude: initialCoords?.lat ?? 0,
+        longitude: initialCoords?.lng ?? 0,
+        preco: parseInt(details.price, 10) || 0,
+        tipo_operacao: operation,
+        tipo_imovel: details.propertyType.join(', '),
+        quartos: details.bedrooms,
+        banheiros: details.bathrooms,
+        area_bruta: parseInt(details.grossArea, 10) || 0,
+        possui_elevador: details.hasElevator,
+        taxa_condominio: parseInt(details.condoFee, 10) || 0,
      };
-     onAddProperty(newPropertyData);
+     
+     const { data, error } = await supabase
+        .from('imoveis')
+        .insert([newPropertyData])
+        .select('*, owner:anunciante_id(*)')
+        .single();
+    
+     if (error) {
+        console.error("Error inserting property:", error);
+        alert("Ocorreu um erro ao publicar seu anúncio. Tente novamente.");
+     } else if (data) {
+        // A conversão do tipo retornado pelo Supabase para o tipo do frontend é necessária
+        const frontendProperty: Property = {
+          id: data.id,
+          title: data.titulo,
+          address: data.endereco_completo,
+          // FIX: Map preco and descricao to price and description for frontend consistency
+          price: data.preco,
+          description: data.descricao || '',
+          bedrooms: data.quartos,
+          bathrooms: data.banheiros,
+          area: data.area_bruta,
+          lat: data.latitude,
+          lng: data.longitude,
+          images: ['https://picsum.photos/seed/newprop' + data.id + '/800/600'], // Imagem placeholder
+          owner: data.owner,
+          // Mapeamento reverso para manter a consistência
+          anunciante_id: data.anunciante_id,
+          titulo: data.titulo,
+          descricao: data.descricao,
+          endereco_completo: data.endereco_completo,
+          latitude: data.latitude,
+          longitude: data.longitude,
+          preco: data.preco,
+          quartos: data.quartos,
+          banheiros: data.banheiros,
+          area_bruta: data.area_bruta,
+        };
+        onAddProperty(frontendProperty);
+     }
   }
 
   const getStepClass = (stepNumber: number) => {
@@ -760,7 +818,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
   return (
     <>
       <div className="bg-brand-light-gray min-h-screen">
-        <Header onPublishAdClick={onPublishAdClick} onAccessClick={onOpenLoginModal} user={user} onLogout={onLogout} onNavigateToFavorites={onNavigateToFavorites} onNavigateToChatList={onNavigateToChatList} />
+        <Header onPublishAdClick={onPublishAdClick} onAccessClick={onOpenLoginModal} user={user} profile={profile} onLogout={onLogout} onNavigateToFavorites={onNavigateToFavorites} onNavigateToChatList={onNavigateToChatList} />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-10">
           <div className="max-w-4xl mx-auto mb-8">
               <div className="flex items-center text-xs sm:text-sm md:text-base">
@@ -802,6 +860,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
                     verifiedAddress={verifiedAddress}
                     handleEditAddress={handleEditAddress}
                     user={user}
+                    profile={profile}
                     onLogout={onLogout}
                     contactInfo={contactInfo}
                     handleContactChange={handleContactChange}

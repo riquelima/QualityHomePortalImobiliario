@@ -1,8 +1,10 @@
 
+
 import React from 'react';
 import Header from './Header';
 import PropertyCard from './PropertyCard';
-import type { Property, User } from '../types';
+// FIX: Import Profile type.
+import type { Property, User, Profile } from '../types';
 import { useLanguage } from '../contexts/LanguageContext';
 import SearchIcon from './icons/SearchIcon';
 
@@ -13,6 +15,8 @@ interface SearchResultsPageProps {
   onPublishAdClick: () => void;
   onAccessClick: () => void;
   user: User | null;
+  // FIX: Added profile prop to be passed to Header.
+  profile: Profile | null;
   onLogout: () => void;
   onViewDetails: (id: number) => void;
   favorites: number[];
@@ -27,7 +31,8 @@ const SearchResultsPage: React.FC<SearchResultsPageProps> = ({
   properties, 
   onPublishAdClick, 
   onAccessClick, 
-  user, 
+  user,
+  profile,
   onLogout,
   onViewDetails,
   favorites,
@@ -39,10 +44,12 @@ const SearchResultsPage: React.FC<SearchResultsPageProps> = ({
 
   return (
     <div className="bg-brand-light-gray min-h-screen flex flex-col">
+      {/* FIX: Pass profile prop to Header. */}
       <Header 
         onPublishAdClick={onPublishAdClick} 
         onAccessClick={onAccessClick} 
         user={user} 
+        profile={profile}
         onLogout={onLogout} 
         onNavigateToFavorites={onNavigateToFavorites}
         onNavigateToChatList={onNavigateToChatList}

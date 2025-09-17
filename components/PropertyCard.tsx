@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import type { Property } from '../types';
 import { PropertyStatus } from '../types';
@@ -37,6 +38,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onViewDetails, is
     currency: currency,
     minimumFractionDigits: 0,
     maximumFractionDigits: 0
+    // FIX: Use `price` which is now consistently available on the Property type.
   }).format(property.price);
 
   return (

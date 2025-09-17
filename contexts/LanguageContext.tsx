@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, ReactNode } from 'react';
 
 // Translations are embedded directly to avoid module resolution issues.
@@ -18,7 +17,28 @@ const ptTranslations = {
     "ads": "Anúncios",
     "savedSearches": "Pesquisas guardadas",
     "favorites": "Favoritos",
-    "chat": "Chat"
+    "chat": "Chat",
+    "ownersDropdown": {
+      "sell": {
+        "title": "Vender",
+        "publish": "Publica o teu anúncio",
+        "evaluate": "Avaliar a tua casa",
+        "guide": "Guia para vender",
+        "documents": "Documentos necessários para a venda",
+        "findAgencies": "Procurar agências para vender"
+      },
+      "rent": {
+        "title": "Colocar para arrendamento",
+        "publish": "Publica o teu anúncio",
+        "findAgencies": "Procurar agências para arrendar"
+      },
+      "forYourHome": {
+        "title": "Para a tua habitação",
+        "ownerArea": "Área do proprietário",
+        "transferCredit": "Transferir o teu crédito habitação para outro banco",
+        "calculateRemodel": "Calcular o preço de uma remodelação"
+      }
+    }
   },
   "hero": {
     "defaultTitle": "Descubra seu novo lar, hoje.",

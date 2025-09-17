@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import CloseIcon from './icons/CloseIcon';
@@ -8,7 +9,8 @@ import ChatIcon from './icons/ChatIcon';
 interface ContactModalProps {
   isOpen: boolean;
   onClose: () => void;
-  owner?: { name: string; phone: string };
+  // FIX: Changed owner.name to owner.nome_completo and made phone optional to align with Profile type.
+  owner?: { nome_completo: string; phone?: string };
   propertyTitle: string;
   onStartChat: () => void;
 }
@@ -48,7 +50,8 @@ const ContactModal: React.FC<ContactModalProps> = ({ isOpen, onClose, owner, pro
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-brand-gray">{t('contactModal.contactPerson')}</label>
-            <p className="text-lg text-brand-dark font-semibold">{owner.name}</p>
+            {/* FIX: Use nome_completo instead of name. */}
+            <p className="text-lg text-brand-dark font-semibold">{owner.nome_completo}</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-brand-gray">{t('contactModal.phone')}</label>

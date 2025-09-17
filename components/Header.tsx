@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import UserIcon from './icons/UserIcon';
 import FlagBRIcon from './icons/FlagBRIcon';
@@ -13,7 +12,7 @@ import HeartIcon from './icons/HeartIcon';
 import ChatIcon from './icons/ChatIcon';
 import LogoutIcon from './icons/LogoutIcon';
 import { useLanguage } from '../contexts/LanguageContext';
-import type { User } from '../types';
+import type { User, Profile } from '../types';
 
 const languageMap = {
   pt: { name: 'Português', Flag: FlagBRIcon },
@@ -25,6 +24,7 @@ interface HeaderProps {
   onPublishAdClick: () => void;
   onAccessClick: () => void;
   user: User | null;
+  profile: Profile | null;
   onLogout: () => void;
   onNavigateToFavorites: () => void;
   onNavigateToChatList: () => void;
@@ -36,15 +36,20 @@ const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
 }
 
-const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, onLogout, onNavigateToFavorites, onNavigateToChatList }) => {
+const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, profile, onLogout, onNavigateToFavorites, onNavigateToChatList }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
+  const [isOwnersDropdownOpen, setIsOwnersDropdownOpen] = useState(false);
   const langDropdownRef = useRef<HTMLDivElement>(null);
   const userDropdownRef = useRef<HTMLDivElement>(null);
   const { language, changeLanguage, t } = useLanguage();
 
   const CurrentFlag = languageMap[language as keyof typeof languageMap].Flag;
+  
+  const userName = profile?.nome_completo || user?.email || 'Usuário';
+  const userPicture = profile?.url_foto_perfil || user?.user_metadata?.picture;
+  const userInitials = getInitials(userName);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -73,7 +78,47 @@ const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, 
           {/* Desktop Navigation Links */}
           <div className="flex-1">
             <div className="hidden md:flex items-center space-x-6 text-sm pl-80 lg:pl-96">
-              <a href="#" className="text-brand-dark hover:text-brand-red transition duration-300">{t('header.nav.owners')}</a>
+               <div 
+                className="relative"
+                onMouseEnter={() => setIsOwnersDropdownOpen(true)}
+                onMouseLeave={() => setIsOwnersDropdownOpen(false)}
+              >
+                <a href="#" className="text-brand-dark hover:text-brand-red transition duration-300 py-4">{t('header.nav.owners')}</a>
+                {isOwnersDropdownOpen && (
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-0 w-max bg-white rounded-b-lg shadow-2xl border-t-4 border-brand-red z-30 p-8">
+                    <div className="grid grid-cols-3 gap-x-16 gap-y-8 text-left">
+                      {/* Vender */}
+                      <div className="space-y-4">
+                        <h3 className="font-bold text-brand-dark text-base">{t('header.ownersDropdown.sell.title')}</h3>
+                        <ul className="space-y-3 text-sm">
+                          <li><a href="#" className="text-brand-gray hover:text-brand-red">{t('header.ownersDropdown.sell.publish')}</a></li>
+                          <li><a href="#" className="text-brand-gray hover:text-brand-red">{t('header.ownersDropdown.sell.evaluate')}</a></li>
+                          <li><a href="#" className="text-brand-gray hover:text-brand-red">{t('header.ownersDropdown.sell.guide')}</a></li>
+                          <li><a href="#" className="text-brand-gray hover:text-brand-red">{t('header.ownersDropdown.sell.documents')}</a></li>
+                          <li><a href="#" className="text-brand-gray hover:text-brand-red">{t('header.ownersDropdown.sell.findAgencies')}</a></li>
+                        </ul>
+                      </div>
+                      {/* Colocar para arrendamento */}
+                      <div className="space-y-4">
+                        <h3 className="font-bold text-brand-dark text-base">{t('header.ownersDropdown.rent.title')}</h3>
+                        <ul className="space-y-3 text-sm">
+                          <li><a href="#" className="text-brand-gray hover:text-brand-red">{t('header.ownersDropdown.rent.publish')}</a></li>
+                          <li><a href="#" className="text-brand-gray hover:text-brand-red">{t('header.ownersDropdown.rent.findAgencies')}</a></li>
+                        </ul>
+                      </div>
+                      {/* Para a tua habitação */}
+                      <div className="space-y-4">
+                        <h3 className="font-bold text-brand-dark text-base">{t('header.ownersDropdown.forYourHome.title')}</h3>
+                        <ul className="space-y-3 text-sm">
+                          <li><a href="#" className="text-brand-gray hover:text-brand-red">{t('header.ownersDropdown.forYourHome.ownerArea')}</a></li>
+                          <li><a href="#" className="text-brand-gray hover:text-brand-red">{t('header.ownersDropdown.forYourHome.transferCredit')}</a></li>
+                          <li><a href="#" className="text-brand-gray hover:text-brand-red">{t('header.ownersDropdown.forYourHome.calculateRemodel')}</a></li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
               <a href="#" className="text-brand-dark hover:text-brand-red transition duration-300">{t('header.nav.search')}</a>
             </div>
           </div>
@@ -117,28 +162,28 @@ const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, 
             {user ? (
               <div className="relative" ref={userDropdownRef}>
                 <button onClick={() => setIsUserDropdownOpen(prev => !prev)} className="flex items-center space-x-2">
-                  {user.picture ? (
-                      <img src={user.picture} alt={user.name} className="w-8 h-8 rounded-full" />
+                  {userPicture ? (
+                      <img src={userPicture} alt={userName} className="w-8 h-8 rounded-full" />
                   ) : (
                       <span className="flex items-center justify-center w-8 h-8 rounded-full bg-brand-gray text-white font-bold text-sm">
-                          {getInitials(user.name)}
+                          {userInitials}
                       </span>
                   )}
-                  <span className="hidden md:inline font-medium">{user.name.split(' ')[0]}</span>
+                  <span className="hidden md:inline font-medium">{userName.split(' ')[0]}</span>
                   <ChevronDownIcon className="w-4 h-4 text-brand-gray" />
                 </button>
                 {isUserDropdownOpen && (
                   <div className="absolute top-full right-0 mt-2 w-64 sm:w-72 bg-white rounded-md shadow-lg border z-20">
                     <div className="px-4 py-4 border-b flex items-center space-x-3">
-                      {user.picture ? (
-                          <img src={user.picture} alt={user.name} className="w-10 h-10 rounded-full" />
+                      {userPicture ? (
+                          <img src={userPicture} alt={userName} className="w-10 h-10 rounded-full" />
                       ) : (
                           <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-brand-gray text-white font-bold">
-                              {getInitials(user.name)}
+                              {userInitials}
                           </div>
                       )}
                       <div>
-                        <p className="text-sm font-bold text-brand-dark truncate">{user.name}</p>
+                        <p className="text-sm font-bold text-brand-dark truncate">{userName}</p>
                         <a href="#" className="text-xs text-brand-red hover:underline">{t('header.myAccount')}</a>
                       </div>
                     </div>
