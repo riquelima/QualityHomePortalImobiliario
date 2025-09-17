@@ -814,11 +814,13 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
         onOpenLoginModal();
         return;
     }
-    
+
     setIsPublishing(true);
-    
+    console.log("Iniciando publicação...");
+
     try {
         // Step 1: Ensure user profile exists
+        console.log("Passo 1: Verificando perfil do usuário...");
         const { data: userProfile, error: profileError } = await supabase
             .from('perfis')
             .select('id')
@@ -829,6 +831,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
              throw new Error(`Erro ao verificar perfil: ${profileError.message}`);
         }
         if (!userProfile) {
+            console.log("Perfil não encontrado, criando novo...");
             const { error: insertError } = await supabase.from('perfis').insert({
                 id: user.id,
                 nome_completo: user.user_metadata.full_name || user.email,
@@ -837,10 +840,12 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
             });
             if (insertError) throw new Error(`Erro ao criar perfil: ${insertError.message}`);
         }
-
+        console.log("Perfil verificado com sucesso.");
+        
         // Step 2: Upload media to Cloudinary if any
-        let uploadedMediaData: { url: string; tipo: 'imagem' | 'video' }[] = [];
+        let uploadedMedia: { url: string; tipo: 'imagem' | 'video' }[] = [];
         if (files.length > 0) {
+            console.log(`Passo 2: Fazendo upload de ${files.length} arquivos para o Cloudinary...`);
             const CLOUDINARY_CLOUD_NAME = "dpmviwctq"; 
             const CLOUDINARY_UPLOAD_PRESET = "quallityhome"; 
             
@@ -859,10 +864,14 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
                 const data = await response.json();
                 return { url: data.secure_url, tipo: resourceType as 'imagem' | 'video' };
             });
-            uploadedMediaData = await Promise.all(uploadPromises);
+            uploadedMedia = await Promise.all(uploadPromises);
+            console.log("Upload para o Cloudinary concluído.");
+        } else {
+             console.log("Passo 2: Nenhum arquivo para upload.");
         }
 
         // Step 3: Insert property data into Supabase
+        console.log("Passo 3: Inserindo dados do imóvel no Supabase...");
         const newPropertyData = {
             anunciante_id: user.id,
             titulo: details.title,
@@ -889,11 +898,37 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
             .select('*, owner:anunciante_id(*)')
             .single();
         
-        if (propertyError) throw new Error(`Erro ao inserir imóvel: ${propertyError.message}`);
-        if (!insertedProperty) throw new Error("Falha ao recuperar os dados do imóvel recém-criado.");
+        if (propertyError) throw new Error(`Erro ao Inserir Imóvel: ${propertyError.message}`);
+        if (!insertedProperty) throw new Error("Falha ao criar o imóvel.");
+        console.log("Imóvel inserido com sucesso, ID:", insertedProperty.id);
+
+        // Step 4: Insert media URLs into Supabase `midias_imovel` table
+        if (uploadedMedia.length > 0) {
+            console.log("Passo 4: Inserindo URLs da mídia no Supabase...");
+            const mediaToInsert = uploadedMedia.map(media => ({
+                imovel_id: insertedProperty.id,
+                url: media.url,
+                tipo: media.tipo,
+            }));
+
+            const { error: mediaError } = await supabase.from('midias_imovel').insert(mediaToInsert);
+            if (mediaError) throw new Error(`Erro ao Salvar Mídias: ${mediaError.message}`);
+            console.log("Mídias salvas com sucesso.");
+        }
         
-        // Final Step: Construct property object for UI update (without media URLs as requested)
-        const finalPropertyData = { ...insertedProperty, midias_imovel: [] }; // No media URLs
+        // Final Step: Construct final property object for UI update
+        console.log("Passo Final: Preparando dados para a UI...");
+        const imagesForUI = uploadedMedia.filter(m => m.tipo === 'imagem').map(m => m.url);
+        
+        // **SAFEGUARD**: If no images were uploaded, add a placeholder to prevent rendering crashes.
+        if (imagesForUI.length === 0) {
+            imagesForUI.push('https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1');
+        }
+
+        const finalPropertyData = { 
+            ...insertedProperty, 
+            midias_imovel: uploadedMedia 
+        };
 
         const frontendProperty: Property = {
             id: finalPropertyData.id,
@@ -906,8 +941,8 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
             area: finalPropertyData.area_bruta,
             lat: finalPropertyData.latitude,
             lng: finalPropertyData.longitude,
-            images: [], // Start with an empty array
-            videos: [],
+            images: imagesForUI,
+            videos: uploadedMedia.filter(m => m.tipo === 'video').map(m => m.url),
             owner: finalPropertyData.owner,
             anunciante_id: finalPropertyData.anunciante_id,
             titulo: finalPropertyData.titulo,
@@ -919,7 +954,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
             quartos: finalPropertyData.quartos,
             banheiros: finalPropertyData.banheiros,
             area_bruta: finalPropertyData.area_bruta,
-            midias_imovel: []
+            midias_imovel: finalPropertyData.midias_imovel
         };
         
         onAddProperty(frontendProperty);
@@ -928,6 +963,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
         console.error("ERRO COMPLETO NA PUBLICAÇÃO:", error);
         alert(`Falha na publicação: ${error.message}`);
     } finally {
+        console.log("Finalizando processo de publicação.");
         setIsPublishing(false);
     }
 }, [user, details, verifiedAddress, address, initialCoords, operation, files, onAddProperty, onOpenLoginModal, contactInfo.phone]);
