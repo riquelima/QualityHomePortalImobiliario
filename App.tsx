@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import InfoSection from './components/InfoSection';
@@ -54,6 +54,29 @@ const App: React.FC = () => {
   const [properties, setProperties] = useState<Property[]>(MOCK_PROPERTIES);
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
 
+  // Carregar sessão do usuário ao iniciar o app
+  useEffect(() => {
+    const savedSession = localStorage.getItem('userSession');
+    if (savedSession) {
+      try {
+        const { user: savedUser, timestamp } = JSON.parse(savedSession);
+        const sessionAge = Date.now() - timestamp;
+        const oneHour = 60 * 60 * 1000;
+
+        if (sessionAge < oneHour) {
+          setUser(savedUser);
+          // Opcional: futuramente, poderíamos salvar e restaurar favoritos/chats aqui também
+        } else {
+          // A sessão expirou
+          localStorage.removeItem('userSession');
+        }
+      } catch (error) {
+        console.error("Failed to parse user session:", error);
+        localStorage.removeItem('userSession');
+      }
+    }
+  }, []);
+
   const navigateHome = () => setPageState({ page: 'home', userLocation: null });
   const navigateToMap = (location: { lat: number; lng: number } | null = null) => setPageState({ page: 'map', userLocation: location });
   const navigateToPublish = () => setPageState({ page: 'publish', userLocation: null });
@@ -76,11 +99,20 @@ const App: React.FC = () => {
   const handleLoginSuccess = (credentialResponse: any) => {
     const decoded: { name: string, email: string, picture: string } | null = decodeJwt(credentialResponse.credential);
     if (decoded) {
-      setUser({
+      const userData = {
         name: decoded.name,
         email: decoded.email,
         picture: decoded.picture,
-      });
+      };
+      setUser(userData);
+      
+      // Salvar sessão no localStorage
+      const sessionData = {
+        user: userData,
+        timestamp: Date.now(),
+      };
+      localStorage.setItem('userSession', JSON.stringify(sessionData));
+
       closeLoginModal();
       if (loginIntent === 'publish') {
         navigateToPublishJourney();
@@ -93,6 +125,7 @@ const App: React.FC = () => {
     setUser(null);
     setFavorites([]); // Limpa os favoritos ao deslogar
     setChatSessions([]); // Limpa os chats ao deslogar
+    localStorage.removeItem('userSession'); // Remove a sessão salva
   };
 
   const toggleFavorite = (propertyId: number) => {
