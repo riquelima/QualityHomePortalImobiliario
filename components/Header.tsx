@@ -41,6 +41,7 @@ const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, 
   const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const [isOwnersDropdownOpen, setIsOwnersDropdownOpen] = useState(false);
+  const [isMobileOwnersMenuOpen, setIsMobileOwnersMenuOpen] = useState(false); // State for mobile owners submenu
   const langDropdownRef = useRef<HTMLDivElement>(null);
   const userDropdownRef = useRef<HTMLDivElement>(null);
   const { language, changeLanguage, t } = useLanguage();
@@ -255,7 +256,47 @@ const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, 
           </button>
         </div>
         <nav className="flex flex-col p-4 space-y-4 text-lg">
-          <a href="#" className="text-brand-dark hover:text-brand-red transition duration-300">{t('header.nav.owners')}</a>
+          <div>
+              <button
+                  onClick={() => setIsMobileOwnersMenuOpen(prev => !prev)}
+                  className="w-full flex justify-between items-center text-brand-dark hover:text-brand-red transition duration-300"
+              >
+                  <span>{t('header.nav.owners')}</span>
+                  <ChevronDownIcon className={`w-5 h-5 transition-transform duration-300 ${isMobileOwnersMenuOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {isMobileOwnersMenuOpen && (
+                  <div className="pl-4 mt-3 space-y-4 text-base">
+                      {/* Vender */}
+                      <div className="space-y-2">
+                          <h3 className="font-bold text-brand-dark">{t('header.ownersDropdown.sell.title')}</h3>
+                          <ul className="space-y-2 pl-2">
+                              <li><a href="#" className="text-brand-gray hover:text-brand-red">{t('header.ownersDropdown.sell.publish')}</a></li>
+                              <li><a href="#" className="text-brand-gray hover:text-brand-red">{t('header.ownersDropdown.sell.evaluate')}</a></li>
+                              <li><a href="#" className="text-brand-gray hover:text-brand-red">{t('header.ownersDropdown.sell.guide')}</a></li>
+                              <li><a href="#" className="text-brand-gray hover:text-brand-red">{t('header.ownersDropdown.sell.documents')}</a></li>
+                              <li><a href="#" className="text-brand-gray hover:text-brand-red">{t('header.ownersDropdown.sell.findAgencies')}</a></li>
+                          </ul>
+                      </div>
+                      {/* Colocar para arrendamento */}
+                      <div className="space-y-2">
+                          <h3 className="font-bold text-brand-dark">{t('header.ownersDropdown.rent.title')}</h3>
+                          <ul className="space-y-2 pl-2">
+                              <li><a href="#" className="text-brand-gray hover:text-brand-red">{t('header.ownersDropdown.rent.publish')}</a></li>
+                              <li><a href="#" className="text-brand-gray hover:text-brand-red">{t('header.ownersDropdown.rent.findAgencies')}</a></li>
+                          </ul>
+                      </div>
+                      {/* Para a tua habitação */}
+                      <div className="space-y-2">
+                          <h3 className="font-bold text-brand-dark">{t('header.ownersDropdown.forYourHome.title')}</h3>
+                          <ul className="space-y-2 pl-2">
+                              <li><a href="#" className="text-brand-gray hover:text-brand-red">{t('header.ownersDropdown.forYourHome.ownerArea')}</a></li>
+                              <li><a href="#" className="text-brand-gray hover:text-brand-red">{t('header.ownersDropdown.forYourHome.transferCredit')}</a></li>
+                              <li><a href="#" className="text-brand-gray hover:text-brand-red">{t('header.ownersDropdown.forYourHome.calculateRemodel')}</a></li>
+                          </ul>
+                      </div>
+                  </div>
+              )}
+          </div>
           <a href="#" className="text-brand-dark hover:text-brand-red transition duration-300">{t('header.nav.search')}</a>
           <hr className="my-4" />
           <button 
