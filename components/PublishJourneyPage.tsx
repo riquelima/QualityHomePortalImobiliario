@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Header from './Header';
 import { useLanguage } from '../contexts/LanguageContext';
 import type { User, Property, Profile } from '../types';
@@ -15,6 +15,7 @@ import PhotoIcon from './icons/PhotoIcon';
 import PlanIcon from './icons/PlanIcon';
 import VideoIcon from './icons/VideoIcon';
 import { supabase } from '../supabaseClient';
+import CloseIcon from './icons/CloseIcon';
 
 
 interface PublishJourneyPageProps {
@@ -484,36 +485,103 @@ const Step2Details: React.FC<Step2DetailsProps> = ({
 
 interface Step3PhotosProps {
   onBack: () => void;
-  onFinish: () => void;
+  onFinish: () => Promise<void>;
+  files: File[];
+  setFiles: React.Dispatch<React.SetStateAction<File[]>>;
+  isPublishing: boolean;
 }
 
-const Step3Photos: React.FC<Step3PhotosProps> = ({ onBack, onFinish }) => {
+const Step3Photos: React.FC<Step3PhotosProps> = ({ onBack, onFinish, files, setFiles, isPublishing }) => {
     const { t } = useLanguage();
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [previews, setPreviews] = useState<string[]>([]);
+    
+    useEffect(() => {
+        const newPreviews = files.map(file => URL.createObjectURL(file));
+        setPreviews(newPreviews);
+
+        return () => {
+            newPreviews.forEach(url => URL.revokeObjectURL(url));
+        };
+    }, [files]);
+
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        if (event.target.files) {
+            setFiles(prev => [...prev, ...Array.from(event.target.files!)]);
+        }
+    };
+
+    const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+        event.preventDefault();
+    };
+
+    const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+        event.preventDefault();
+        if (event.dataTransfer.files) {
+            setFiles(prev => [...prev, ...Array.from(event.dataTransfer.files)]);
+        }
+    };
+    
+    const handleRemoveFile = (indexToRemove: number) => {
+        setFiles(prev => prev.filter((_, index) => index !== indexToRemove));
+    };
+
+    const hasFiles = files.length > 0;
 
     return (
         <div className="bg-white p-4 sm:p-6 md:p-8 rounded-md border border-gray-200">
             <h2 className="text-lg sm:text-xl font-bold text-brand-dark mb-4">{t('publishJourney.photosForm.title')}</h2>
 
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 sm:p-8 text-center mb-6">
-                <div className="flex justify-center items-center space-x-2 mb-4">
-                    <div className="relative transform -rotate-12">
-                        <PhotoIcon className="w-16 h-16 sm:w-20 sm:h-20 text-gray-400" />
-                    </div>
-                    <div className="relative">
-                        <PlanIcon className="w-20 h-20 sm:w-24 sm:h-24 text-gray-400" />
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                            <PlusIcon className="w-8 h-8 text-gray-500 bg-white rounded-full p-1" />
-                        </div>
-                    </div>
-                    <div className="relative transform rotate-12">
-                        <VideoIcon className="w-16 h-16 sm:w-20 sm:h-20 text-gray-400" />
-                    </div>
+            <div 
+                className="border-2 border-dashed border-gray-300 rounded-lg p-6 sm:p-8 text-center mb-6 cursor-pointer hover:border-brand-red transition-colors"
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+                onClick={() => fileInputRef.current?.click()}
+            >
+                <input
+                    type="file"
+                    multiple
+                    accept="image/*,video/*"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    className="hidden"
+                />
+                <div className="flex justify-center items-center space-x-2 mb-4 pointer-events-none">
+                     <div className="relative transform -rotate-12"><PhotoIcon className="w-16 h-16 sm:w-20 sm:h-20 text-gray-400" /></div>
+                    <div className="relative"><PlanIcon className="w-20 h-20 sm:w-24 sm:h-24 text-gray-400" /><div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"><PlusIcon className="w-8 h-8 text-gray-500 bg-white rounded-full p-1" /></div></div>
+                    <div className="relative transform rotate-12"><VideoIcon className="w-16 h-16 sm:w-20 sm:h-20 text-gray-400" /></div>
                 </div>
-                <p className="text-brand-gray mb-4">{t('publishJourney.photosForm.dragAndDrop')}</p>
-                <button type="button" className="px-6 py-3 bg-[#93005a] text-white font-bold rounded-md hover:opacity-90 transition-opacity">
+                <p className="text-brand-gray mb-4 pointer-events-none">{t('publishJourney.photosForm.dragAndDrop')}</p>
+                <button type="button" className="px-6 py-3 bg-[#93005a] text-white font-bold rounded-md hover:opacity-90 transition-opacity pointer-events-none">
                     {t('publishJourney.photosForm.addButton')}
                 </button>
             </div>
+            
+            {hasFiles && (
+                <div className="mb-6">
+                    <h3 className="text-base font-semibold text-brand-navy mb-3">Pré-visualização:</h3>
+                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
+                        {previews.map((src, index) => (
+                            <div key={index} className="relative aspect-square group">
+                                {files[index].type.startsWith('video') ? (
+                                    <video src={src} className="w-full h-full object-cover rounded-md bg-black" />
+                                ) : (
+                                    <img src={src} alt={`Preview ${index}`} className="w-full h-full object-cover rounded-md" />
+                                )}
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                    <button
+                                        onClick={() => handleRemoveFile(index)}
+                                        className="text-white bg-brand-red/80 rounded-full p-1.5 hover:bg-brand-red"
+                                        title={t('publishJourney.photosForm.removeFile')}
+                                    >
+                                        <CloseIcon className="w-5 h-5" />
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
             
             <div className="bg-blue-50 border border-blue-200 text-blue-800 p-4 rounded-md text-sm mb-8 flex items-start space-x-3">
                 <InfoIcon className="w-5 h-5 flex-shrink-0 mt-0.5" />
@@ -530,11 +598,11 @@ const Step3Photos: React.FC<Step3PhotosProps> = ({ onBack, onFinish }) => {
             </div>
 
             <div className="flex flex-col-reverse sm:flex-row justify-between items-center mt-10 pt-6 border-t">
-                <button onClick={onBack} type="button" className="text-brand-dark font-medium hover:underline mt-4 sm:mt-0">
+                <button onClick={onBack} type="button" className="text-brand-dark font-medium hover:underline mt-4 sm:mt-0" disabled={isPublishing}>
                     {t('publishJourney.photosForm.backButton')}
                 </button>
-                <button onClick={onFinish} type="button" className="px-6 py-3 bg-gray-200 text-brand-dark font-bold rounded-md hover:bg-gray-300 transition-colors">
-                    {t('publishJourney.photosForm.continueButton')}
+                <button onClick={onFinish} type="button" className="px-6 py-3 bg-gray-200 text-brand-dark font-bold rounded-md hover:bg-gray-300 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed" disabled={isPublishing}>
+                    {isPublishing ? t('publishJourney.photosForm.publishingButton') : (hasFiles ? t('publishJourney.photosForm.publishButton') : t('publishJourney.photosForm.continueButton'))}
                 </button>
             </div>
         </div>
@@ -550,7 +618,6 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
   const [operation, setOperation] = useState('venda');
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
   const [address, setAddress] = useState<AddressState>({ city: '', street: '', number: '' });
-  // FIX: Corrected useState syntax
   const [initialCoords, setInitialCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [citySuggestions, setCitySuggestions] = useState<any[]>([]);
   const [isCitySuggestionsOpen, setIsCitySuggestionsOpen] = useState(false);
@@ -578,6 +645,10 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
     saleSituation: '',
     description: ''
   });
+
+  // Step 3 State
+  const [files, setFiles] = useState<File[]>([]);
+  const [isPublishing, setIsPublishing] = useState(false);
 
   const handleDetailsChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -737,77 +808,126 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
     setCurrentStep(3);
   }
 
-  const handleFinish = async () => {
+  const handleFinish = useCallback(async () => {
     if (!user) {
-        alert("Você precisa estar logado para publicar um anúncio.");
-        onOpenLoginModal();
-        return;
+      alert("Você precisa estar logado para publicar um anúncio.");
+      onOpenLoginModal();
+      return;
     }
     if (!details.title.trim()) {
       alert("Erro: O título do anúncio é obrigatório.");
       setCurrentStep(2);
       return;
     }
-     const newPropertyData = {
-        anunciante_id: user.id,
-        titulo: details.title,
-        descricao: details.description,
-        endereco_completo: verifiedAddress,
-        cidade: address.city,
-        rua: address.street,
-        numero: address.number,
-        latitude: initialCoords?.lat ?? 0,
-        longitude: initialCoords?.lng ?? 0,
-        preco: parseInt(details.price, 10) || 0,
-        tipo_operacao: operation,
-        tipo_imovel: details.propertyType.join(', '),
-        quartos: details.bedrooms,
-        banheiros: details.bathrooms,
-        area_bruta: parseInt(details.grossArea, 10) || 0,
-        possui_elevador: details.hasElevator,
-        taxa_condominio: parseInt(details.condoFee, 10) || 0,
-     };
-     
-     const { data, error } = await supabase
-        .from('imoveis')
-        .insert([newPropertyData])
-        .select('*, owner:anunciante_id(*)')
-        .single();
     
-     if (error) {
-        console.error("Error inserting property:", error);
-        alert("Ocorreu um erro ao publicar seu anúncio. Tente novamente.");
-     } else if (data) {
-        // A conversão do tipo retornado pelo Supabase para o tipo do frontend é necessária
-        const frontendProperty: Property = {
-          id: data.id,
-          title: data.titulo,
-          address: data.endereco_completo,
-          // FIX: Map preco and descricao to price and description for frontend consistency
-          price: data.preco,
-          description: data.descricao || '',
-          bedrooms: data.quartos,
-          bathrooms: data.banheiros,
-          area: data.area_bruta,
-          lat: data.latitude,
-          lng: data.longitude,
-          images: ['https://picsum.photos/seed/newprop' + data.id + '/800/600'], // Imagem placeholder
-          owner: data.owner,
-          // Mapeamento reverso para manter a consistência
-          anunciante_id: data.anunciante_id,
-          titulo: data.titulo,
-          descricao: data.descricao,
-          endereco_completo: data.endereco_completo,
-          latitude: data.latitude,
-          longitude: data.longitude,
-          preco: data.preco,
-          quartos: data.quartos,
-          banheiros: data.banheiros,
-          area_bruta: data.area_bruta,
-        };
-        onAddProperty(frontendProperty);
-     }
-  }
+    setIsPublishing(true);
+
+    const newPropertyData = {
+      anunciante_id: user.id,
+      titulo: details.title,
+      descricao: details.description,
+      endereco_completo: verifiedAddress,
+      cidade: address.city,
+      rua: address.street,
+      numero: address.number,
+      latitude: initialCoords?.lat ?? 0,
+      longitude: initialCoords?.lng ?? 0,
+      preco: parseInt(details.price, 10) || 0,
+      tipo_operacao: operation,
+      tipo_imovel: details.propertyType.join(', '),
+      quartos: details.bedrooms,
+      banheiros: details.bathrooms,
+      area_bruta: parseInt(details.grossArea, 10) || 0,
+      possui_elevador: details.hasElevator,
+      taxa_condominio: parseInt(details.condoFee, 10) || 0,
+    };
+    
+    // 1. Insert property data
+    const { data: insertedProperty, error: propertyError } = await supabase
+      .from('imoveis')
+      .insert([newPropertyData])
+      .select('*, owner:anunciante_id(*)')
+      .single();
+  
+    if (propertyError) {
+      console.error("Error inserting property:", propertyError);
+      alert("Ocorreu um erro ao publicar seu anúncio. Tente novamente.");
+      setIsPublishing(false);
+      return;
+    }
+
+    // 2. Upload files if any
+    let uploadedMedia: { url: string; tipo: 'imagem' | 'video' }[] = [];
+    if (files.length > 0) {
+      const uploadPromises = files.map(async (file) => {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}.${fileExt}`;
+        const filePath = `public/${user.id}/${insertedProperty.id}/${fileName}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('midia')
+          .upload(filePath, file);
+
+        if (uploadError) {
+          console.error('Error uploading file:', uploadError);
+          return null; // Handle individual file upload error
+        }
+
+        const { data: { publicUrl } } = supabase.storage.from('midia').getPublicUrl(filePath);
+        return { url: publicUrl, tipo: file.type.startsWith('video') ? 'video' : 'imagem' };
+      });
+      
+      const results = await Promise.all(uploadPromises);
+      uploadedMedia = results.filter((result): result is { url: string; tipo: 'imagem' | 'video' } => result !== null);
+
+      if (uploadedMedia.length > 0) {
+          const mediaToInsert = uploadedMedia.map(media => ({
+              imovel_id: insertedProperty.id,
+              url: media.url,
+              tipo: media.tipo,
+          }));
+          const { error: mediaError } = await supabase.from('midias_imovel').insert(mediaToInsert);
+          if(mediaError) {
+              console.error("Error inserting media records:", mediaError);
+              // Decide how to handle this - maybe delete the property or alert the user
+          }
+      }
+    }
+    
+    // 3. Adapt data and update UI
+    const finalPropertyData = { ...insertedProperty, midias_imovel: uploadedMedia };
+
+    const frontendProperty: Property = {
+      id: finalPropertyData.id,
+      title: finalPropertyData.titulo,
+      address: finalPropertyData.endereco_completo,
+      price: finalPropertyData.preco,
+      description: finalPropertyData.descricao || '',
+      bedrooms: finalPropertyData.quartos,
+      bathrooms: finalPropertyData.banheiros,
+      area: finalPropertyData.area_bruta,
+      lat: finalPropertyData.latitude,
+      lng: finalPropertyData.longitude,
+      images: finalPropertyData.midias_imovel?.filter(m => m.tipo === 'imagem').map(m => m.url) || [],
+      videos: finalPropertyData.midias_imovel?.filter(m => m.tipo === 'video').map(m => m.url) || [],
+      owner: finalPropertyData.owner,
+      anunciante_id: finalPropertyData.anunciante_id,
+      titulo: finalPropertyData.titulo,
+      descricao: finalPropertyData.descricao,
+      endereco_completo: finalPropertyData.endereco_completo,
+      latitude: finalPropertyData.latitude,
+      longitude: finalPropertyData.longitude,
+      preco: finalPropertyData.preco,
+      quartos: finalPropertyData.quartos,
+      banheiros: finalPropertyData.banheiros,
+      area_bruta: finalPropertyData.area_bruta,
+      midias_imovel: finalPropertyData.midias_imovel,
+    };
+    onAddProperty(frontendProperty);
+    setIsPublishing(false);
+
+  }, [user, details, verifiedAddress, address, initialCoords, operation, files, onAddProperty, onOpenLoginModal]);
+
 
   const getStepClass = (stepNumber: number) => {
     if (currentStep === stepNumber) return 'bg-brand-dark text-white';
@@ -881,6 +1001,9 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
                 <Step3Photos
                     onBack={() => setCurrentStep(2)}
                     onFinish={handleFinish}
+                    files={files}
+                    setFiles={setFiles}
+                    isPublishing={isPublishing}
                 />
               }
             </div>

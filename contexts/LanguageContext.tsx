@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useContext, ReactNode } from 'react';
 
 // Translations are embedded directly to avoid module resolution issues.
@@ -280,7 +281,10 @@ const ptTranslations = {
       "tip2": "Se tiveres uma planta do imóvel, podes tirar uma foto da mesma ou desenhá-la à mão e tirar uma fotografia do desenho",
       "tip3": "Quando tirares as tuas fotografias, certifica-te de que cada divisão está arrumada, limpa e bem iluminada",
       "backButton": "Voltar",
-      "continueButton": "Continuar sem fotos"
+      "continueButton": "Continuar sem fotos",
+      "publishButton": "Publicar Anúncio",
+      "publishingButton": "Publicando...",
+      "removeFile": "Remover arquivo"
     },
     "sidebar": {
       "title": "Informação útil",
@@ -645,7 +649,10 @@ const enTranslations = {
       "tip2": "If you have a floor plan of the property, you can take a photo of it or draw it by hand and take a photograph of the drawing",
       "tip3": "When you take your photographs, make sure that each room is tidy, clean, and well-lit",
       "backButton": "Back",
-      "continueButton": "Continue without photos"
+      "continueButton": "Continue without photos",
+      "publishButton": "Publish Ad",
+      "publishingButton": "Publishing...",
+      "removeFile": "Remove file"
     },
     "sidebar": {
       "title": "Useful information",
@@ -1010,7 +1017,10 @@ const esTranslations = {
         "tip2": "Si tienes un plano del inmueble, puedes hacerle una foto o dibujarlo a mano y hacer una fotografía del dibujo",
         "tip3": "Cuando hagas tus fotografías, asegúrate de que cada estancia está ordenada, limpia y bien iluminada",
         "backButton": "Volver",
-        "continueButton": "Continuar sin fotos"
+        "continueButton": "Continuar sin fotos",
+        "publishButton": "Publicar Anuncio",
+        "publishingButton": "Publicando...",
+        "removeFile": "Quitar archivo"
     },
     "sidebar": {
       "title": "Información útil",

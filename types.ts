@@ -50,6 +50,7 @@ export interface Property {
   videos?: string[];
   status?: PropertyStatus;
   owner?: Profile & { email?: string, phone?: string }; // Merged Profile with legacy owner fields for compatibility
+  midias_imovel?: { url: string, tipo: 'imagem' | 'video' }[];
 }
 
 export interface Message {
