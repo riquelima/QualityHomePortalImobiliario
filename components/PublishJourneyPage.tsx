@@ -810,123 +810,127 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
 
   const handleFinish = useCallback(async () => {
     if (!user) {
-      alert("Você precisa estar logado para publicar um anúncio.");
-      onOpenLoginModal();
-      return;
+        alert("Você precisa estar logado para publicar um anúncio.");
+        onOpenLoginModal();
+        return;
     }
     if (!details.title.trim()) {
-      alert("Erro: O título do anúncio é obrigatório.");
-      setCurrentStep(2);
-      return;
+        alert("Erro: O título do anúncio é obrigatório.");
+        setCurrentStep(2);
+        return;
     }
-    
+
     setIsPublishing(true);
 
-    const newPropertyData = {
-      anunciante_id: user.id,
-      titulo: details.title,
-      descricao: details.description,
-      endereco_completo: verifiedAddress,
-      cidade: address.city,
-      rua: address.street,
-      numero: address.number,
-      latitude: initialCoords?.lat ?? 0,
-      longitude: initialCoords?.lng ?? 0,
-      preco: parseInt(details.price, 10) || 0,
-      tipo_operacao: operation,
-      tipo_imovel: details.propertyType.join(', '),
-      quartos: details.bedrooms,
-      banheiros: details.bathrooms,
-      area_bruta: parseInt(details.grossArea, 10) || 0,
-      possui_elevador: details.hasElevator,
-      taxa_condominio: parseInt(details.condoFee, 10) || 0,
-    };
-    
-    // 1. Insert property data
-    const { data: insertedProperty, error: propertyError } = await supabase
-      .from('imoveis')
-      .insert([newPropertyData])
-      .select('*, owner:anunciante_id(*)')
-      .single();
-  
-    if (propertyError) {
-      console.error("Error inserting property:", propertyError);
-      alert("Ocorreu um erro ao publicar seu anúncio. Tente novamente.");
-      setIsPublishing(false);
-      return;
-    }
+    try {
+        const newPropertyData = {
+            anunciante_id: user.id,
+            titulo: details.title,
+            descricao: details.description,
+            endereco_completo: verifiedAddress,
+            cidade: address.city,
+            rua: address.street,
+            numero: address.number,
+            latitude: initialCoords?.lat ?? 0,
+            longitude: initialCoords?.lng ?? 0,
+            preco: parseInt(details.price, 10) || 0,
+            tipo_operacao: operation,
+            tipo_imovel: details.propertyType.join(', '),
+            quartos: details.bedrooms,
+            banheiros: details.bathrooms,
+            area_bruta: parseInt(details.grossArea, 10) || 0,
+            possui_elevador: details.hasElevator,
+            taxa_condominio: parseInt(details.condoFee, 10) || 0,
+        };
 
-    // 2. Upload files if any
-    let uploadedMedia: { url: string; tipo: 'imagem' | 'video' }[] = [];
-    if (files.length > 0) {
-      const uploadPromises = files.map(async (file) => {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Date.now()}.${fileExt}`;
-        const filePath = `public/${user.id}/${insertedProperty.id}/${fileName}`;
-        
-        const { error: uploadError } = await supabase.storage
-          .from('midia')
-          .upload(filePath, file);
+        // 1. Insert property data
+        const { data: insertedProperty, error: propertyError } = await supabase
+            .from('imoveis')
+            .insert([newPropertyData])
+            .select('*, owner:anunciante_id(*)')
+            .single();
 
-        if (uploadError) {
-          console.error('Error uploading file:', uploadError);
-          return null; // Handle individual file upload error
+        if (propertyError || !insertedProperty) {
+            console.error("Error inserting property:", propertyError);
+            alert("Ocorreu um erro ao publicar seu anúncio. Tente novamente.");
+            return;
         }
 
-        const { data: { publicUrl } } = supabase.storage.from('midia').getPublicUrl(filePath);
-        return { url: publicUrl, tipo: file.type.startsWith('video') ? 'video' : 'imagem' };
-      });
-      
-      const results = await Promise.all(uploadPromises);
-      uploadedMedia = results.filter((result): result is { url: string; tipo: 'imagem' | 'video' } => result !== null);
+        // 2. Upload files if any
+        let uploadedMedia: { url: string; tipo: 'imagem' | 'video' }[] = [];
+        if (files.length > 0) {
+            const uploadPromises = files.map(async (file) => {
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
+                const filePath = `public/${user.id}/${insertedProperty.id}/${fileName}`;
 
-      if (uploadedMedia.length > 0) {
-          const mediaToInsert = uploadedMedia.map(media => ({
-              imovel_id: insertedProperty.id,
-              url: media.url,
-              tipo: media.tipo,
-          }));
-          const { error: mediaError } = await supabase.from('midias_imovel').insert(mediaToInsert);
-          if(mediaError) {
-              console.error("Error inserting media records:", mediaError);
-              // Decide how to handle this - maybe delete the property or alert the user
-          }
-      }
+                const { error: uploadError } = await supabase.storage
+                    .from('midia')
+                    .upload(filePath, file);
+
+                if (uploadError) {
+                    console.error('Error uploading file:', uploadError);
+                    return null;
+                }
+
+                const { data: { publicUrl } } = supabase.storage.from('midia').getPublicUrl(filePath);
+                return { url: publicUrl, tipo: file.type.startsWith('video') ? 'video' : 'imagem' };
+            });
+
+            const results = await Promise.all(uploadPromises);
+            uploadedMedia = results.filter((result): result is { url: string; tipo: 'imagem' | 'video' } => result !== null);
+
+            if (uploadedMedia.length > 0) {
+                const mediaToInsert = uploadedMedia.map(media => ({
+                    imovel_id: insertedProperty.id,
+                    url: media.url,
+                    tipo: media.tipo,
+                }));
+                const { error: mediaError } = await supabase.from('midias_imovel').insert(mediaToInsert);
+                if (mediaError) {
+                    console.error("Error inserting media records:", mediaError);
+                    alert("Seu anúncio foi publicado, mas houve um erro ao salvar as mídias. Você pode editá-lo mais tarde.");
+                }
+            }
+        }
+
+        // 3. Adapt data and update UI
+        const finalPropertyData = { ...insertedProperty, midias_imovel: uploadedMedia };
+        const frontendProperty: Property = {
+            id: finalPropertyData.id,
+            title: finalPropertyData.titulo,
+            address: finalPropertyData.endereco_completo,
+            price: finalPropertyData.preco,
+            description: finalPropertyData.descricao || '',
+            bedrooms: finalPropertyData.quartos,
+            bathrooms: finalPropertyData.banheiros,
+            area: finalPropertyData.area_bruta,
+            lat: finalPropertyData.latitude,
+            lng: finalPropertyData.longitude,
+            images: finalPropertyData.midias_imovel?.filter(m => m.tipo === 'imagem').map(m => m.url) || [],
+            videos: finalPropertyData.midias_imovel?.filter(m => m.tipo === 'video').map(m => m.url) || [],
+            owner: finalPropertyData.owner,
+            anunciante_id: finalPropertyData.anunciante_id,
+            titulo: finalPropertyData.titulo,
+            descricao: finalPropertyData.descricao,
+            endereco_completo: finalPropertyData.endereco_completo,
+            latitude: finalPropertyData.latitude,
+            longitude: finalPropertyData.longitude,
+            preco: finalPropertyData.preco,
+            quartos: finalPropertyData.quartos,
+            banheiros: finalPropertyData.banheiros,
+            area_bruta: finalPropertyData.area_bruta,
+            midias_imovel: finalPropertyData.midias_imovel,
+        };
+        onAddProperty(frontendProperty);
+
+    } catch (error) {
+        console.error("An unexpected error occurred during publishing:", error);
+        alert("Ocorreu um erro inesperado. Por favor, tente novamente.");
+    } finally {
+        setIsPublishing(false);
     }
-    
-    // 3. Adapt data and update UI
-    const finalPropertyData = { ...insertedProperty, midias_imovel: uploadedMedia };
-
-    const frontendProperty: Property = {
-      id: finalPropertyData.id,
-      title: finalPropertyData.titulo,
-      address: finalPropertyData.endereco_completo,
-      price: finalPropertyData.preco,
-      description: finalPropertyData.descricao || '',
-      bedrooms: finalPropertyData.quartos,
-      bathrooms: finalPropertyData.banheiros,
-      area: finalPropertyData.area_bruta,
-      lat: finalPropertyData.latitude,
-      lng: finalPropertyData.longitude,
-      images: finalPropertyData.midias_imovel?.filter(m => m.tipo === 'imagem').map(m => m.url) || [],
-      videos: finalPropertyData.midias_imovel?.filter(m => m.tipo === 'video').map(m => m.url) || [],
-      owner: finalPropertyData.owner,
-      anunciante_id: finalPropertyData.anunciante_id,
-      titulo: finalPropertyData.titulo,
-      descricao: finalPropertyData.descricao,
-      endereco_completo: finalPropertyData.endereco_completo,
-      latitude: finalPropertyData.latitude,
-      longitude: finalPropertyData.longitude,
-      preco: finalPropertyData.preco,
-      quartos: finalPropertyData.quartos,
-      banheiros: finalPropertyData.banheiros,
-      area_bruta: finalPropertyData.area_bruta,
-      midias_imovel: finalPropertyData.midias_imovel,
-    };
-    onAddProperty(frontendProperty);
-    setIsPublishing(false);
-
-  }, [user, details, verifiedAddress, address, initialCoords, operation, files, onAddProperty, onOpenLoginModal]);
+}, [user, details, verifiedAddress, address, initialCoords, operation, files, onAddProperty, onOpenLoginModal]);
 
 
   const getStepClass = (stepNumber: number) => {
