@@ -162,6 +162,7 @@ const App: React.FC = () => {
           onViewDetails={navigateToPropertyDetail}
           favorites={favorites}
           onToggleFavorite={toggleFavorite}
+          onNavigateToFavorites={navigateToFavorites}
         />;
       case 'propertyDetail':
         const property = properties.find(p => p.id === pageState.propertyId);
@@ -178,6 +179,7 @@ const App: React.FC = () => {
                   onLogout={handleLogout}
                   isFavorite={favorites.includes(property.id)}
                   onToggleFavorite={toggleFavorite}
+                  onNavigateToFavorites={navigateToFavorites}
                 />;
       case 'favorites':
           const favoriteProperties = properties.filter(p => favorites.includes(p.id));

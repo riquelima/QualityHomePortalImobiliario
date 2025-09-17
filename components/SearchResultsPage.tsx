@@ -17,6 +17,7 @@ interface SearchResultsPageProps {
   onViewDetails: (id: number) => void;
   favorites: number[];
   onToggleFavorite: (id: number) => void;
+  onNavigateToFavorites: () => void;
 }
 
 const SearchResultsPage: React.FC<SearchResultsPageProps> = ({ 
@@ -29,7 +30,8 @@ const SearchResultsPage: React.FC<SearchResultsPageProps> = ({
   onLogout,
   onViewDetails,
   favorites,
-  onToggleFavorite
+  onToggleFavorite,
+  onNavigateToFavorites
 }) => {
   const { t } = useLanguage();
 
@@ -40,7 +42,7 @@ const SearchResultsPage: React.FC<SearchResultsPageProps> = ({
         onAccessClick={onAccessClick} 
         user={user} 
         onLogout={onLogout} 
-        onNavigateToFavorites={onBack} // Temporarily point to onBack to avoid error
+        onNavigateToFavorites={onNavigateToFavorites}
       />
       <main className="flex-grow">
         <div className="container mx-auto px-4 sm:px-6 py-8">

@@ -308,6 +308,13 @@ const ptTranslations = {
       "description": "Clique no coração nos anúncios para salvar os imóveis que você mais gosta aqui."
     }
   },
+  "contactModal": {
+    "title": "Contato do Anunciante",
+    "contactPerson": "Falar com",
+    "phone": "Telefone",
+    "whatsappButton": "Conversar no WhatsApp",
+    "whatsappMessage": "Olá, vi este imóvel no Quality Home Portal e gostaria de mais informações. Título do anúncio: {title}"
+  },
   "footer": {
     "text": "Quality Home Portal Imobiliário. Todos os direitos reservados."
   }
@@ -618,6 +625,13 @@ const enTranslations = {
       "description": "Click the heart on the listings to save the properties you like best here."
     }
   },
+  "contactModal": {
+    "title": "Advertiser Contact",
+    "contactPerson": "Contact",
+    "phone": "Phone",
+    "whatsappButton": "Chat on WhatsApp",
+    "whatsappMessage": "Hello, I saw this property on the Quality Home Portal and would like more information. Ad title: {title}"
+  },
   "footer": {
     "text": "Quality Home Real Estate Portal. All rights reserved."
   }
@@ -927,6 +941,13 @@ const esTranslations = {
       "title": "Aún no tienes inmuebles favoritos",
       "description": "Haz clic en el corazón en los anuncios para guardar los inmuebles que más te gusten aquí."
     }
+  },
+  "contactModal": {
+    "title": "Contacto del Anunciante",
+    "contactPerson": "Hablar con",
+    "phone": "Teléfono",
+    "whatsappButton": "Chatear por WhatsApp",
+    "whatsappMessage": "Hola, vi este inmueble en el Portal Quality Home y me gustaría más información. Título del anuncio: {title}"
   },
   "footer": {
     "text": "Quality Home Portal Inmobiliario. Todos los derechos reservados."

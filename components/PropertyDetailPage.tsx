@@ -9,6 +9,7 @@ import BathIcon from './icons/BathIcon';
 import AreaIcon from './icons/AreaIcon';
 import HeartIcon from './icons/HeartIcon';
 import HeartFilledIcon from './icons/HeartFilledIcon';
+import ContactModal from './ContactModal';
 
 
 interface PropertyDetailPageProps {
@@ -20,6 +21,7 @@ interface PropertyDetailPageProps {
   onLogout: () => void;
   isFavorite: boolean;
   onToggleFavorite: (id: number) => void;
+  onNavigateToFavorites: () => void;
 }
 
 const currencyConfig = {
@@ -37,9 +39,11 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({
   onLogout,
   isFavorite,
   onToggleFavorite,
+  onNavigateToFavorites
 }) => {
   const { t, language } = useLanguage();
   const [selectedImage, setSelectedImage] = useState(property.images[0]);
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
 
   const { locale, currency } = currencyConfig[language as keyof typeof currencyConfig];
   const formattedPrice = new Intl.NumberFormat(locale, {
@@ -48,13 +52,14 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({
   }).format(property.price);
 
   return (
+    <>
     <div className="bg-brand-light-gray min-h-screen">
       <Header
         onPublishAdClick={onPublishAdClick}
         onAccessClick={onAccessClick}
         user={user}
         onLogout={onLogout}
-        onNavigateToFavorites={onBack} // Placeholder
+        onNavigateToFavorites={onNavigateToFavorites}
       />
       <main className="container mx-auto px-4 sm:px-6 py-8">
         {/* Breadcrumbs */}
@@ -149,14 +154,18 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({
                 </div>
 
                 <div className="flex flex-col space-y-3">
-                    <button className="w-full bg-brand-red hover:opacity-90 text-white font-bold py-3 px-4 rounded-md transition duration-300">
-                        {t('propertyCard.contact')}
-                    </button>
+                    {property.owner && (
+                      <button 
+                        onClick={() => setIsContactModalOpen(true)}
+                        className="w-full bg-brand-red hover:opacity-90 text-white font-bold py-3 px-4 rounded-md transition duration-300">
+                          {t('propertyCard.contact')}
+                      </button>
+                    )}
                     <button 
                       onClick={() => onToggleFavorite(property.id)}
                       className="w-full bg-gray-200 hover:bg-gray-300 text-brand-dark font-medium py-3 px-4 rounded-md transition duration-300 flex items-center justify-center space-x-2"
                     >
-                        {isFavorite ? <HeartFilledIcon className="w-5 h-5 text-brand-red" /> : <HeartIcon className="w-5 h-5" />}
+                        {isFavorite ? <HeartFilledIcon className="w-5 h-5 text-brand-red" /> : <HeartIcon className="w-5 h-f" />}
                         <span>{isFavorite ? t('propertyDetail.removeFromFavorites') : t('propertyDetail.addToFavorites')}</span>
                     </button>
                 </div>
@@ -172,6 +181,13 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({
         </div>
       </footer>
     </div>
+    <ContactModal 
+      isOpen={isContactModalOpen} 
+      onClose={() => setIsContactModalOpen(false)}
+      owner={property.owner}
+      propertyTitle={property.title}
+    />
+    </>
   );
 };
 

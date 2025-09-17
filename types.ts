@@ -18,6 +18,10 @@ export interface Property {
   status?: PropertyStatus;
   lat: number;
   lng: number;
+  owner?: {
+    name: string;
+    phone: string; // e.g., '5571999998888' for WhatsApp link
+  };
 }
 
 export interface User {
