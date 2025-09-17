@@ -821,6 +821,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
     }
 
     setIsPublishing(true);
+    console.log("Iniciando publicação...");
 
     try {
         const newPropertyData = {
@@ -842,7 +843,8 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
             possui_elevador: details.hasElevator,
             taxa_condominio: parseInt(details.condoFee, 10) || 0,
         };
-
+        
+        console.log("1. Inserindo dados do imóvel no DB...", newPropertyData);
         const { data: insertedProperty, error: propertyError } = await supabase
             .from('imoveis')
             .insert([newPropertyData])
@@ -850,16 +852,21 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
             .single();
 
         if (propertyError) throw propertyError;
-        if (!insertedProperty) throw new Error("Falha ao criar o imóvel no banco de dados.");
+        if (!insertedProperty) throw new Error("Falha ao criar o imóvel no banco de dados, nenhum dado retornado.");
+        
+        console.log("2. Imóvel inserido com sucesso, ID:", insertedProperty.id);
 
         let uploadedMedia: { url: string; tipo: 'imagem' | 'video' }[] = [];
         if (files.length > 0) {
+            console.log(`3. Iniciando upload de ${files.length} mídias...`);
+            
             const uploadPromises = files.map(async (file) => {
                 const fileExt = file.name.split('.').pop();
+                // CORREÇÃO: Usar um nome de arquivo mais robusto e um caminho simplificado
                 const fileName = `${crypto.randomUUID()}.${fileExt}`;
-                // CORREÇÃO: Simplificado o caminho do arquivo para facilitar as políticas RLS do Storage.
-                const filePath = `public/${fileName}`;
+                const filePath = `${fileName}`; // Upload para a raiz do bucket
 
+                console.log(`- Fazendo upload de ${filePath} para o bucket 'midia'`);
                 const { error: uploadError } = await supabase.storage
                     .from('midia')
                     .upload(filePath, file);
@@ -870,8 +877,8 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
                 return { url: publicUrl, tipo: file.type.startsWith('video') ? 'video' : 'imagem' };
             });
 
-            const results = await Promise.all(uploadPromises);
-            uploadedMedia = results.filter((result): result is { url: string; tipo: 'imagem' | 'video' } => !!result);
+            uploadedMedia = await Promise.all(uploadPromises);
+            console.log("4. Upload de todas as mídias concluído.");
 
             if (uploadedMedia.length > 0) {
                 const mediaToInsert = uploadedMedia.map(media => ({
@@ -879,14 +886,20 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
                     url: media.url,
                     tipo: media.tipo,
                 }));
+                console.log("5. Inserindo metadados das mídias no DB...");
                 const { error: mediaError } = await supabase.from('midias_imovel').insert(mediaToInsert);
                 if (mediaError) {
-                    console.warn("Anúncio publicado, mas erro ao salvar mídias:", mediaError);
+                   // Lançar o erro interrompe o processo e informa o usuário
+                   throw mediaError;
                 }
+                console.log("6. Metadados das mídias inseridos com sucesso.");
             }
         }
 
         const finalPropertyData = { ...insertedProperty, midias_imovel: uploadedMedia };
+        // FIX: The `frontendProperty` object was constructed using `finalPropertyData.midias_imovel`,
+        // which caused a type error. Using the correctly typed `uploadedMedia` variable directly resolves this.
+        // Optional chaining is also removed as `uploadedMedia` is initialized to an empty array.
         const frontendProperty: Property = {
             id: finalPropertyData.id,
             title: finalPropertyData.titulo,
@@ -898,8 +911,8 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
             area: finalPropertyData.area_bruta,
             lat: finalPropertyData.latitude,
             lng: finalPropertyData.longitude,
-            images: finalPropertyData.midias_imovel?.filter(m => m.tipo === 'imagem').map(m => m.url) || [],
-            videos: finalPropertyData.midias_imovel?.filter(m => m.tipo === 'video').map(m => m.url) || [],
+            images: uploadedMedia.filter(m => m.tipo === 'imagem').map(m => m.url),
+            videos: uploadedMedia.filter(m => m.tipo === 'video').map(m => m.url),
             owner: finalPropertyData.owner,
             anunciante_id: finalPropertyData.anunciante_id,
             titulo: finalPropertyData.titulo,
@@ -911,13 +924,14 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
             quartos: finalPropertyData.quartos,
             banheiros: finalPropertyData.banheiros,
             area_bruta: finalPropertyData.area_bruta,
-            midias_imovel: finalPropertyData.midias_imovel,
+            midias_imovel: uploadedMedia,
         };
+        console.log("7. Processo concluído! Adicionando propriedade ao estado da aplicação.");
         onAddProperty(frontendProperty);
 
     } catch (error: any) {
-        console.error("Erro detalhado na publicação:", error);
-        alert(`Falha na publicação: ${error.message}`);
+        console.error("ERRO DETALHADO NA PUBLICAÇÃO:", error);
+        alert(`Falha na publicação: ${error.message}\n\nVerifique o console do navegador para mais detalhes.`);
     } finally {
         setIsPublishing(false);
     }
