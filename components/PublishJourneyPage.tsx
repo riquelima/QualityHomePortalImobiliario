@@ -821,8 +821,48 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
 
     setIsPublishing(true);
 
+    const CLOUDINARY_CLOUD_NAME = "dpmviwctq"; 
+    const CLOUDINARY_UPLOAD_PRESET = "quallityhome"; 
+
     try {
         console.log("Iniciando publicação...");
+
+        let uploadedMedia: { url: string; tipo: 'imagem' | 'video' }[] = [];
+        if (files.length > 0) {
+            console.log(`Passo 1: Iniciando upload de ${files.length} mídias para o Cloudinary...`);
+            
+            const uploadPromises = files.map(async (file) => {
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+                const resourceType = file.type.startsWith('video') ? 'video' : 'image';
+                const url = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`;
+                
+                console.log(`- Fazendo upload de ${file.name} para o Cloudinary...`);
+                const response = await fetch(url, {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error("Erro na resposta do Cloudinary:", errorData);
+                    throw new Error(`Erro no upload do arquivo ${file.name}: ${errorData.error.message}`);
+                }
+
+                const data = await response.json();
+                const mediaObject: { url: string; tipo: 'imagem' | 'video' } = {
+                    url: data.secure_url,
+                    tipo: resourceType === 'video' ? 'video' : 'imagem',
+                };
+                return mediaObject;
+            });
+
+            uploadedMedia = await Promise.all(uploadPromises);
+            console.log("Passo 1 concluído. Mídias enviadas:", uploadedMedia);
+        }
+
         const newPropertyData = {
             anunciante_id: user.id,
             titulo: details.title,
@@ -843,66 +883,35 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
             taxa_condominio: parseInt(details.condoFee, 10) || 0,
         };
         
-        console.log("Passo 1: Inserindo dados do imóvel...", newPropertyData);
+        console.log("Passo 2: Inserindo dados do imóvel no Supabase...", newPropertyData);
         const { data: insertedProperty, error: propertyError } = await supabase
             .from('imoveis')
             .insert([newPropertyData])
             .select('*, owner:anunciante_id(*)')
             .single();
 
-        if (propertyError) throw new Error(`Erro no Passo 1 (Inserir Imóvel): ${propertyError.message}`);
+        if (propertyError) throw new Error(`Erro no Passo 2 (Inserir Imóvel): ${propertyError.message}`);
         if (!insertedProperty) throw new Error("Falha ao criar o imóvel no banco de dados.");
-        console.log("Passo 1 concluído. ID do imóvel:", insertedProperty.id);
+        console.log("Passo 2 concluído. ID do imóvel:", insertedProperty.id);
 
-
-        let uploadedMedia: { url: string; tipo: 'imagem' | 'video' }[] = [];
-        if (files.length > 0) {
-            console.log(`Passo 2: Iniciando upload de ${files.length} mídias...`);
-            
-            const uploadPromises = files.map(async (file) => {
-                const fileExt = file.name.split('.').pop();
-                const fileName = `${crypto.randomUUID()}.${fileExt}`;
-                // Simplificando o caminho para a raiz do bucket para evitar problemas com policies complexas
-                const filePath = `${fileName}`;
-
-                console.log(`- Fazendo upload de ${filePath} para o bucket 'midia'`);
-                const { error: uploadError } = await supabase.storage
-                    .from('midia')
-                    .upload(filePath, file);
-
-                if (uploadError) throw new Error(`Erro no Passo 2 (Upload do arquivo ${file.name}): ${uploadError.message}`);
-
-                const { data: { publicUrl } } = supabase.storage.from('midia').getPublicUrl(filePath);
-                // FIX: Explicitly type the returned object to prevent type widening of 'tipo' to string.
-                const mediaObject: { url: string; tipo: 'imagem' | 'video' } = {
-                    url: publicUrl,
-                    tipo: file.type.startsWith('video') ? 'video' : 'imagem',
-                };
-                return mediaObject;
-            });
-
-            uploadedMedia = await Promise.all(uploadPromises);
-            console.log("Passo 2 concluído. Mídias enviadas:", uploadedMedia);
-
-            if (uploadedMedia.length > 0) {
-                const mediaToInsert = uploadedMedia.map(media => ({
-                    imovel_id: insertedProperty.id,
-                    url: media.url,
-                    tipo: media.tipo,
-                }));
-                console.log("Passo 3: Inserindo metadados das mídias no DB...", mediaToInsert);
-                const { error: mediaError } = await supabase.from('midias_imovel').insert(mediaToInsert);
-                if (mediaError) {
-                   throw new Error(`Erro no Passo 3 (Inserir Mídia): ${mediaError.message}`);
-                }
-                console.log("Passo 3 concluído.");
+        if (uploadedMedia.length > 0) {
+            const mediaToInsert = uploadedMedia.map(media => ({
+                imovel_id: insertedProperty.id,
+                url: media.url,
+                tipo: media.tipo,
+            }));
+            console.log("Passo 3: Inserindo URLs das mídias no DB...", mediaToInsert);
+            const { error: mediaError } = await supabase.from('midias_imovel').insert(mediaToInsert);
+            if (mediaError) {
+                // Tenta apagar o imóvel criado se a inserção de mídias falhar para não deixar dados órfãos.
+                await supabase.from('imoveis').delete().eq('id', insertedProperty.id);
+                throw new Error(`Erro no Passo 3 (Inserir Mídia): ${mediaError.message}`);
             }
+            console.log("Passo 3 concluído.");
         }
 
         const finalPropertyData = { ...insertedProperty, midias_imovel: uploadedMedia };
         
-        // FIX: The `frontendProperty` object was constructed using `finalPropertyData.midias_imovel`,
-        // which caused a type error. Using the correctly typed `uploadedMedia` variable directly resolves this.
         const frontendProperty: Property = {
             id: finalPropertyData.id,
             title: finalPropertyData.titulo,
@@ -929,12 +938,12 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
             area_bruta: finalPropertyData.area_bruta,
             midias_imovel: uploadedMedia
         };
-        console.log("Publicação finalizada com sucesso!");
+        
         onAddProperty(frontendProperty);
 
     } catch (error: any) {
         console.error("ERRO DETALHADO NA PUBLICAÇÃO:", error);
-        alert(`Falha na publicação: ${error.message}\n\nVerifique as permissões (RLS) das tabelas 'imoveis' e 'midias_imovel' e as policies do bucket 'midia' no Supabase.`);
+        alert(`Falha na publicação: ${error.message}`);
     } finally {
         setIsPublishing(false);
     }
