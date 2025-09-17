@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Header from './Header';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -813,82 +814,62 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
         onOpenLoginModal();
         return;
     }
-    if (!details.title.trim()) {
-        alert("Erro: O título do anúncio é obrigatório.");
-        setCurrentStep(2);
-        return;
-    }
-
+    
     setIsPublishing(true);
-
-    const CLOUDINARY_CLOUD_NAME = "dpmviwctq"; 
-    const CLOUDINARY_UPLOAD_PRESET = "quallityhome"; 
+    console.log("Iniciando publicação...");
 
     try {
-        console.log("Passo 0: Verificando/Criando perfil do usuário...");
+        // ETAPA 1: Garantir que o perfil do usuário existe
+        console.log("Etapa 1: Verificando perfil do usuário...");
         const { data: userProfile, error: profileError } = await supabase
             .from('perfis')
             .select('id')
             .eq('id', user.id)
             .single();
 
-        if (profileError && profileError.code !== 'PGRST116') { // PGRST116 means no rows found, which is fine
-            throw new Error(`Erro no Passo 0 (Verificar Perfil): ${profileError.message}`);
+        if (profileError && profileError.code !== 'PGRST116') {
+             throw new Error(`Erro ao verificar perfil: ${profileError.message}`);
         }
-
         if (!userProfile) {
-            console.log("Perfil não encontrado, criando um novo...");
+            console.log("Perfil não encontrado, criando...");
             const { error: insertError } = await supabase.from('perfis').insert({
                 id: user.id,
                 nome_completo: user.user_metadata.full_name || user.email,
                 url_foto_perfil: user.user_metadata.avatar_url,
                 telefone: contactInfo.phone,
             });
-            if (insertError) {
-                throw new Error(`Erro no Passo 0 (Criar Perfil): ${insertError.message}`);
-            }
-            console.log("Perfil criado com sucesso.");
-        } else {
-             console.log("Perfil já existe.");
+            if (insertError) throw new Error(`Erro ao criar perfil: ${insertError.message}`);
         }
+         console.log("Etapa 1 concluída.");
 
-        let uploadedMedia: { url: string; tipo: 'imagem' | 'video' }[] = [];
-        
+        // ETAPA 2: Upload de mídias para o Cloudinary (se houver)
+        let uploadedMediaData: { url: string; tipo: 'imagem' | 'video' }[] = [];
         if (files.length > 0) {
-            console.log(`Passo 1: Iniciando upload de ${files.length} mídias para o Cloudinary...`);
+            console.log(`Etapa 2: Fazendo upload de ${files.length} mídias para o Cloudinary...`);
+            const CLOUDINARY_CLOUD_NAME = "dpmviwctq"; 
+            const CLOUDINARY_UPLOAD_PRESET = "quallityhome"; 
             
-            const uploadPromises = files.map(async (file) => {
+            const uploadPromises = files.map(async file => {
                 const formData = new FormData();
                 formData.append('file', file);
                 formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-
                 const resourceType = file.type.startsWith('video') ? 'video' : 'image';
                 const url = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`;
                 
-                console.log(`- Fazendo upload de ${file.name} para o Cloudinary...`);
-                const response = await fetch(url, {
-                    method: 'POST',
-                    body: formData,
-                });
-
+                const response = await fetch(url, { method: 'POST', body: formData });
                 if (!response.ok) {
                     const errorData = await response.json();
-                    console.error("Erro na resposta do Cloudinary:", errorData);
-                    throw new Error(`Erro no upload do arquivo ${file.name}: ${errorData.error.message}`);
+                    throw new Error(`Erro no upload do Cloudinary: ${errorData.error.message}`);
                 }
-
                 const data = await response.json();
-                const mediaObject: { url: string; tipo: 'imagem' | 'video' } = {
-                    url: data.secure_url,
-                    tipo: resourceType === 'video' ? 'video' : 'imagem',
-                };
-                return mediaObject;
+                return { url: data.secure_url, tipo: resourceType as 'imagem' | 'video' };
             });
-
-            uploadedMedia = await Promise.all(uploadPromises);
-            console.log("Passo 1 concluído. Mídias enviadas:", uploadedMedia);
+            uploadedMediaData = await Promise.all(uploadPromises);
+            console.log("Etapa 2 concluída. Mídias enviadas.");
         }
 
+        // ETAPA 3: Inserir dados do imóvel no Supabase
+        console.log("Etapa 3: Inserindo dados do imóvel no Supabase...");
         const newPropertyData = {
             anunciante_id: user.id,
             titulo: details.title,
@@ -908,65 +889,73 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
             possui_elevador: details.hasElevator,
             taxa_condominio: parseInt(details.condoFee, 10) || 0,
         };
-        
-        console.log("Passo 2: Inserindo dados do imóvel no Supabase...", newPropertyData);
+
         const { data: insertedProperty, error: propertyError } = await supabase
             .from('imoveis')
             .insert([newPropertyData])
             .select('*, owner:anunciante_id(*)')
             .single();
+        
+        if (propertyError) throw new Error(`Erro ao inserir imóvel: ${propertyError.message}`);
+        if (!insertedProperty) throw new Error("Falha ao recuperar os dados do imóvel recém-criado.");
+        console.log("Etapa 3 concluída. Imóvel criado com ID:", insertedProperty.id);
 
-        if (propertyError) throw new Error(`Erro no Passo 2 (Inserir Imóvel): ${propertyError.message}`);
-        if (!insertedProperty) throw new Error("Falha ao criar o imóvel no banco de dados.");
-        console.log("Passo 2 concluído. ID do imóvel:", insertedProperty.id);
-
-        if (uploadedMedia.length > 0) {
-            const mediaToInsert = uploadedMedia.map(media => ({
+        // ETAPA 4: Inserir URLs das mídias na tabela `midias_imovel` (se houver)
+        if (uploadedMediaData.length > 0) {
+            console.log("Etapa 4: Associando mídias ao imóvel...");
+            const mediaToInsert = uploadedMediaData.map(media => ({
                 imovel_id: insertedProperty.id,
                 url: media.url,
                 tipo: media.tipo,
             }));
-            console.log("Passo 3: Inserindo URLs das mídias no DB...", mediaToInsert);
             const { error: mediaError } = await supabase.from('midias_imovel').insert(mediaToInsert);
             if (mediaError) {
-                console.error("Erro ao inserir mídia, tentando reverter a criação do imóvel...");
+                console.error("Erro ao inserir mídias, revertendo...", mediaError);
                 await supabase.from('imoveis').delete().eq('id', insertedProperty.id);
-                throw new Error(`Erro no Passo 3 (Inserir Mídia): ${mediaError.message}`);
+                throw new Error(`Erro ao associar mídias: ${mediaError.message}`);
             }
-            console.log("Passo 3 concluído.");
+             console.log("Etapa 4 concluída.");
         }
         
+        // ETAPA FINAL: Adicionar o novo imóvel à interface
+        const finalPropertyData = { ...insertedProperty, midias_imovel: uploadedMediaData };
+        
+        // FIX: If no images were uploaded, add a placeholder to prevent rendering errors.
+        if (finalPropertyData.midias_imovel.length === 0) {
+            finalPropertyData.midias_imovel.push({ url: 'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', tipo: 'imagem' });
+        }
+
         const frontendProperty: Property = {
-            id: insertedProperty.id,
-            title: insertedProperty.titulo,
-            address: insertedProperty.endereco_completo,
-            price: insertedProperty.preco,
-            description: insertedProperty.descricao || '',
-            bedrooms: insertedProperty.quartos,
-            bathrooms: insertedProperty.banheiros,
-            area: insertedProperty.area_bruta,
-            lat: insertedProperty.latitude,
-            lng: insertedProperty.longitude,
-            images: uploadedMedia.filter(m => m.tipo === 'imagem').map(m => m.url),
-            videos: uploadedMedia.filter(m => m.tipo === 'video').map(m => m.url),
-            owner: insertedProperty.owner,
-            anunciante_id: insertedProperty.anunciante_id,
-            titulo: insertedProperty.titulo,
-            descricao: insertedProperty.descricao,
-            endereco_completo: insertedProperty.endereco_completo,
-            latitude: insertedProperty.latitude,
-            longitude: insertedProperty.longitude,
-            preco: insertedProperty.preco,
-            quartos: insertedProperty.quartos,
-            banheiros: insertedProperty.banheiros,
-            area_bruta: insertedProperty.area_bruta,
-            midias_imovel: uploadedMedia
+            id: finalPropertyData.id,
+            title: finalPropertyData.titulo,
+            address: finalPropertyData.endereco_completo,
+            price: finalPropertyData.preco,
+            description: finalPropertyData.descricao || '',
+            bedrooms: finalPropertyData.quartos,
+            bathrooms: finalPropertyData.banheiros,
+            area: finalPropertyData.area_bruta,
+            lat: finalPropertyData.latitude,
+            lng: finalPropertyData.longitude,
+            images: finalPropertyData.midias_imovel.filter(m => m.tipo === 'imagem').map(m => m.url),
+            videos: finalPropertyData.midias_imovel.filter(m => m.tipo === 'video').map(m => m.url),
+            owner: finalPropertyData.owner,
+            anunciante_id: finalPropertyData.anunciante_id,
+            titulo: finalPropertyData.titulo,
+            descricao: finalPropertyData.descricao,
+            endereco_completo: finalPropertyData.endereco_completo,
+            latitude: finalPropertyData.latitude,
+            longitude: finalPropertyData.longitude,
+            preco: finalPropertyData.preco,
+            quartos: finalPropertyData.quartos,
+            banheiros: finalPropertyData.banheiros,
+            area_bruta: finalPropertyData.area_bruta,
+            midias_imovel: finalPropertyData.midias_imovel
         };
         
         onAddProperty(frontendProperty);
 
     } catch (error: any) {
-        console.error("ERRO DETALHADO NA PUBLICAÇÃO:", error);
+        console.error("ERRO COMPLETO NA PUBLICAÇÃO:", error);
         alert(`Falha na publicação: ${error.message}`);
     } finally {
         setIsPublishing(false);

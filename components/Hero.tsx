@@ -28,14 +28,14 @@ const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe, onGeoloca
   // Efeito para gerar título dinâmico com a IA do Gemini
   useEffect(() => {
     let isCancelled = false;
-    const apiKey = "AIzaSyCsX9l10XCu3TtSCU1BSx-qOYrwUKYw2xk"; // Chave da API fornecida pelo usuário para corrigir o deploy
 
     // Redefine o estado para cada execução do efeito
     setHeroTitle(t('hero.defaultTitle'));
     setIsLoadingTitle(true);
 
     const generateTitle = async () => {
-      if (!apiKey) {
+      // FIX: Use environment variable for API key as per guidelines.
+      if (!process.env.API_KEY) {
         console.error("API Key for Gemini is not configured.");
         if (!isCancelled) {
           setIsLoadingTitle(false);
@@ -44,7 +44,8 @@ const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe, onGeoloca
       }
 
       try {
-        const ai = new GoogleGenAI({ apiKey: apiKey });
+        // FIX: Initialize GoogleGenAI with the API key from environment variables.
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const prompt = t('hero.geminiPrompt');
         
         const response = await ai.models.generateContent({
