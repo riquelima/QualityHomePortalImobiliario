@@ -313,6 +313,7 @@ const ptTranslations = {
     "contactPerson": "Falar com",
     "phone": "Telefone",
     "whatsappButton": "Conversar no WhatsApp",
+    "chatButton": "Conversar pelo chat",
     "whatsappMessage": "Olá, vi este imóvel no Quality Home Portal e gostaria de mais informações. Título do anúncio: {title}"
   },
   "footer": {
@@ -630,6 +631,7 @@ const enTranslations = {
     "contactPerson": "Contact",
     "phone": "Phone",
     "whatsappButton": "Chat on WhatsApp",
+    "chatButton": "Chat via app",
     "whatsappMessage": "Hello, I saw this property on the Quality Home Portal and would like more information. Ad title: {title}"
   },
   "footer": {
@@ -947,6 +949,7 @@ const esTranslations = {
     "contactPerson": "Hablar con",
     "phone": "Teléfono",
     "whatsappButton": "Chatear por WhatsApp",
+    "chatButton": "Chatear por el chat",
     "whatsappMessage": "Hola, vi este inmueble en el Portal Quality Home y me gustaría más información. Título del anuncio: {title}"
   },
   "footer": {

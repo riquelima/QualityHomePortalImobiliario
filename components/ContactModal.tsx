@@ -3,6 +3,7 @@ import React from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import CloseIcon from './icons/CloseIcon';
 import WhatsappIcon from './icons/WhatsappIcon';
+import ChatIcon from './icons/ChatIcon';
 
 interface ContactModalProps {
   isOpen: boolean;
@@ -54,7 +55,7 @@ const ContactModal: React.FC<ContactModalProps> = ({ isOpen, onClose, owner, pro
           </div>
         </div>
 
-        <div className="mt-8">
+        <div className="mt-8 space-y-3">
           <a
             href={whatsappLink}
             target="_blank"
@@ -64,6 +65,13 @@ const ContactModal: React.FC<ContactModalProps> = ({ isOpen, onClose, owner, pro
             <WhatsappIcon className="w-6 h-6 mr-3" />
             <span>{t('contactModal.whatsappButton')}</span>
           </a>
+          <button
+            onClick={() => alert('Funcionalidade de chat em desenvolvimento.')}
+            className="w-full flex items-center justify-center bg-gray-200 text-brand-dark font-bold py-3 px-4 rounded-md hover:bg-gray-300 transition-colors duration-300"
+          >
+            <ChatIcon className="w-6 h-6 mr-3" />
+            <span>{t('contactModal.chatButton')}</span>
+          </button>
         </div>
       </div>
     </div>
