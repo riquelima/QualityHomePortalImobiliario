@@ -38,13 +38,16 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onViewDetails, is
     currency: currency,
     minimumFractionDigits: 0,
     maximumFractionDigits: 0
-    // FIX: Use `price` which is now consistently available on the Property type.
   }).format(property.price);
+
+  const imageSrc = property.images && property.images.length > 0
+    ? property.images[0]
+    : 'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1';
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden transform transition-all duration-300 ease-in-out hover:scale-[1.02] hover:shadow-xl flex flex-col border border-gray-200">
       <div className="relative">
-        <img src={property.images[0]} alt={property.title} className="w-full h-56 object-cover aspect-video" />
+        <img src={imageSrc} alt={property.title} className="w-full h-56 object-cover aspect-video" />
         {property.status && (
           <span className={`absolute top-3 left-3 text-white text-xs font-bold px-3 py-1 rounded-full ${statusColorMap[property.status]}`}>
             {property.status}

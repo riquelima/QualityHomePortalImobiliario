@@ -832,7 +832,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
             .eq('id', user.id)
             .single();
 
-        if (profileError && profileError.code !== 'PGRST116') {
+        if (profileError && profileError.code !== 'PGRST116') { // PGRST116 means no rows found, which is fine
             throw new Error(`Erro no Passo 0 (Verificar Perfil): ${profileError.message}`);
         }
 
@@ -842,6 +842,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
                 id: user.id,
                 nome_completo: user.user_metadata.full_name || user.email,
                 url_foto_perfil: user.user_metadata.avatar_url,
+                telefone: contactInfo.phone,
             });
             if (insertError) {
                 throw new Error(`Erro no Passo 0 (Criar Perfil): ${insertError.message}`);
@@ -852,6 +853,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
         }
 
         let uploadedMedia: { url: string; tipo: 'imagem' | 'video' }[] = [];
+        
         if (files.length > 0) {
             console.log(`Passo 1: Iniciando upload de ${files.length} mídias para o Cloudinary...`);
             
@@ -927,43 +929,37 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
             console.log("Passo 3: Inserindo URLs das mídias no DB...", mediaToInsert);
             const { error: mediaError } = await supabase.from('midias_imovel').insert(mediaToInsert);
             if (mediaError) {
+                console.error("Erro ao inserir mídia, tentando reverter a criação do imóvel...");
                 await supabase.from('imoveis').delete().eq('id', insertedProperty.id);
                 throw new Error(`Erro no Passo 3 (Inserir Mídia): ${mediaError.message}`);
             }
             console.log("Passo 3 concluído.");
         }
-
-        const finalPropertyData = { ...insertedProperty, midias_imovel: uploadedMedia };
         
-        const imageURLs = uploadedMedia.filter(m => m.tipo === 'imagem').map(m => m.url);
-        if (imageURLs.length === 0) {
-            imageURLs.push('https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1');
-        }
-
         const frontendProperty: Property = {
-            id: finalPropertyData.id,
-            title: finalPropertyData.titulo,
-            address: finalPropertyData.endereco_completo,
-            price: finalPropertyData.preco,
-            description: finalPropertyData.descricao || '',
-            bedrooms: finalPropertyData.quartos,
-            bathrooms: finalPropertyData.banheiros,
-            area: finalPropertyData.area_bruta,
-            lat: finalPropertyData.latitude,
-            lng: finalPropertyData.longitude,
-            images: imageURLs,
+            id: insertedProperty.id,
+            title: insertedProperty.titulo,
+            address: insertedProperty.endereco_completo,
+            price: insertedProperty.preco,
+            description: insertedProperty.descricao || '',
+            bedrooms: insertedProperty.quartos,
+            bathrooms: insertedProperty.banheiros,
+            area: insertedProperty.area_bruta,
+            lat: insertedProperty.latitude,
+            lng: insertedProperty.longitude,
+            images: uploadedMedia.filter(m => m.tipo === 'imagem').map(m => m.url),
             videos: uploadedMedia.filter(m => m.tipo === 'video').map(m => m.url),
-            owner: finalPropertyData.owner,
-            anunciante_id: finalPropertyData.anunciante_id,
-            titulo: finalPropertyData.titulo,
-            descricao: finalPropertyData.descricao,
-            endereco_completo: finalPropertyData.endereco_completo,
-            latitude: finalPropertyData.latitude,
-            longitude: finalPropertyData.longitude,
-            preco: finalPropertyData.preco,
-            quartos: finalPropertyData.quartos,
-            banheiros: finalPropertyData.banheiros,
-            area_bruta: finalPropertyData.area_bruta,
+            owner: insertedProperty.owner,
+            anunciante_id: insertedProperty.anunciante_id,
+            titulo: insertedProperty.titulo,
+            descricao: insertedProperty.descricao,
+            endereco_completo: insertedProperty.endereco_completo,
+            latitude: insertedProperty.latitude,
+            longitude: insertedProperty.longitude,
+            preco: insertedProperty.preco,
+            quartos: insertedProperty.quartos,
+            banheiros: insertedProperty.banheiros,
+            area_bruta: insertedProperty.area_bruta,
             midias_imovel: uploadedMedia
         };
         
@@ -975,7 +971,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
     } finally {
         setIsPublishing(false);
     }
-}, [user, details, verifiedAddress, address, initialCoords, operation, files, onAddProperty, onOpenLoginModal]);
+}, [user, details, verifiedAddress, address, initialCoords, operation, files, onAddProperty, onOpenLoginModal, contactInfo.phone]);
 
 
   const getStepClass = (stepNumber: number) => {

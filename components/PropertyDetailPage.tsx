@@ -47,7 +47,11 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({
   onNavigateToChatList
 }) => {
   const { t, language } = useLanguage();
-  const [selectedImage, setSelectedImage] = useState(property.images[0]);
+  
+  const placeholderImage = 'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1';
+  const displayImages = property.images && property.images.length > 0 ? property.images : [placeholderImage];
+
+  const [selectedImage, setSelectedImage] = useState(displayImages[0]);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
 
   const { locale, currency } = currencyConfig[language as keyof typeof currencyConfig];
@@ -89,7 +93,7 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({
                   <img src={selectedImage} alt="Main property view" className="w-full h-auto max-h-[500px] object-cover rounded-lg shadow-lg" />
                 </div>
                 <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2">
-                  {property.images.map((image, index) => (
+                  {displayImages.map((image, index) => (
                     <button key={index} onClick={() => setSelectedImage(image)}>
                       <img
                         src={image}
