@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import Header from './Header';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -10,6 +11,9 @@ import VerifiedIcon from './icons/VerifiedIcon';
 import PlusIcon from './icons/PlusIcon';
 import MinusIcon from './icons/MinusIcon';
 import CheckIcon from './icons/CheckIcon';
+import PhotoIcon from './icons/PhotoIcon';
+import PlanIcon from './icons/PlanIcon';
+import VideoIcon from './icons/VideoIcon';
 
 
 interface PublishJourneyPageProps {
@@ -18,6 +22,7 @@ interface PublishJourneyPageProps {
   onOpenLoginModal: () => void;
   user: User | null;
   onLogout: () => void;
+  onNavigateToFavorites: () => void;
 }
 
 // Define state shapes for props
@@ -242,7 +247,6 @@ interface Step2DetailsProps {
     handleCheckboxChange: (e: React.ChangeEvent<HTMLInputElement>, field: keyof DetailsState) => void;
     handleCounterChange: (field: 'bedrooms' | 'bathrooms', amount: number) => void;
     handleContinueToPhotos: (e: React.FormEvent) => void;
-    // FIX: Add setDetails to props to fix errors on lines 335 and 339
     setDetails: React.Dispatch<React.SetStateAction<DetailsState>>;
 }
 
@@ -449,8 +453,67 @@ const Step2Details: React.FC<Step2DetailsProps> = ({
     );
 };
 
+interface Step3PhotosProps {
+  onBack: () => void;
+  onFinish: () => void;
+}
 
-const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPublishAdClick, onOpenLoginModal, user, onLogout }) => {
+const Step3Photos: React.FC<Step3PhotosProps> = ({ onBack, onFinish }) => {
+    const { t } = useLanguage();
+
+    return (
+        <div className="bg-white p-6 md:p-8 rounded-md border border-gray-200">
+            <h2 className="text-xl font-bold text-brand-dark mb-4">{t('publishJourney.photosForm.title')}</h2>
+
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center mb-6">
+                <div className="flex justify-center items-center space-x-2 mb-4">
+                    <div className="relative transform -rotate-12">
+                        <PhotoIcon className="w-20 h-20 text-gray-400" />
+                    </div>
+                    <div className="relative">
+                        <PlanIcon className="w-24 h-24 text-gray-400" />
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                            <PlusIcon className="w-8 h-8 text-gray-500 bg-white rounded-full p-1" />
+                        </div>
+                    </div>
+                    <div className="relative transform rotate-12">
+                        <VideoIcon className="w-20 h-20 text-gray-400" />
+                    </div>
+                </div>
+                <p className="text-brand-gray mb-4">{t('publishJourney.photosForm.dragAndDrop')}</p>
+                <button type="button" className="px-6 py-3 bg-[#93005a] text-white font-bold rounded-md hover:opacity-90 transition-opacity">
+                    {t('publishJourney.photosForm.addButton')}
+                </button>
+            </div>
+            
+            <div className="bg-blue-50 border border-blue-200 text-blue-800 p-4 rounded-md text-sm mb-8 flex items-start space-x-3">
+                <InfoIcon className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                <p>{t('publishJourney.photosForm.limitsInfo')}</p>
+            </div>
+
+            <div className="space-y-4">
+                <h3 className="text-lg font-bold text-brand-navy">{t('publishJourney.photosForm.rememberTitle')}</h3>
+                <ul className="space-y-3 text-brand-dark list-disc list-inside">
+                    <li>{t('publishJourney.photosForm.tip1')}</li>
+                    <li>{t('publishJourney.photosForm.tip2')}</li>
+                    <li>{t('publishJourney.photosForm.tip3')}</li>
+                </ul>
+            </div>
+
+            <div className="flex flex-col-reverse sm:flex-row justify-between items-center mt-10 pt-6 border-t">
+                <button onClick={onBack} type="button" className="text-brand-dark font-medium hover:underline mt-4 sm:mt-0">
+                    {t('publishJourney.photosForm.backButton')}
+                </button>
+                <button onClick={onFinish} type="button" className="px-6 py-3 bg-gray-200 text-brand-dark font-bold rounded-md hover:bg-gray-300 transition-colors">
+                    {t('publishJourney.photosForm.continueButton')}
+                </button>
+            </div>
+        </div>
+    );
+};
+
+
+const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPublishAdClick, onOpenLoginModal, user, onLogout, onNavigateToFavorites }) => {
   const { t } = useLanguage();
   const [currentStep, setCurrentStep] = useState(1);
 
@@ -635,28 +698,40 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
   
   const handleContinueToPhotos = (e: React.FormEvent) => {
     e.preventDefault();
-    alert('Continuando para a etapa de Fotos...');
-    // Futuramente: setCurrentStep(3);
+    setCurrentStep(3);
+  }
+
+  const handleFinish = () => {
+    alert("Anúncio publicado com sucesso!");
+    onBack();
+  }
+
+  const getStepClass = (stepNumber: number) => {
+    if (currentStep === stepNumber) return 'bg-brand-dark text-white';
+    if (currentStep > stepNumber) return 'bg-green-600 text-white';
+    return 'bg-gray-200 text-brand-gray';
   }
 
   return (
     <>
       <div className="bg-brand-light-gray min-h-screen">
-        <Header onPublishAdClick={onPublishAdClick} onAccessClick={onOpenLoginModal} user={user} onLogout={onLogout} />
+        <Header onPublishAdClick={onPublishAdClick} onAccessClick={onOpenLoginModal} user={user} onLogout={onLogout} onNavigateToFavorites={onNavigateToFavorites} />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-10">
           <div className="max-w-4xl mx-auto mb-8">
               <div className="flex items-center text-sm sm:text-base">
-                  <div className={`relative flex-1 h-12 flex items-center justify-center font-bold tracking-wide z-10 ${currentStep === 1 ? 'bg-brand-dark text-white' : 'bg-green-600 text-white'}`}>
+                  <div className={`relative flex-1 h-12 flex items-center justify-center font-bold tracking-wide z-10 ${getStepClass(1)}`}>
                       {currentStep > 1 && <CheckIcon className="w-5 h-5 mr-2" />}
                       <span>{t('publishJourney.stepper.step1')}</span>
-                      <div className={`absolute top-0 -right-6 h-full w-12 ${currentStep === 1 ? 'bg-brand-dark' : 'bg-green-600'} transform -skew-x-12 z-0`} style={{ clipPath: 'polygon(0 0, 100% 0, 75% 50%, 100% 100%, 0 100%)' }} />
+                      <div className={`absolute top-0 -right-6 h-full w-12 ${getStepClass(1)} transform -skew-x-12 z-0`} style={{ clipPath: 'polygon(0 0, 100% 0, 75% 50%, 100% 100%, 0 100%)' }} />
                   </div>
-                  <div className={`relative flex-1 h-12 flex items-center justify-center font-bold tracking-wide pl-6 ${currentStep === 2 ? 'bg-brand-dark text-white' : 'bg-gray-200 text-brand-gray'}`}>
+                  <div className={`relative flex-1 h-12 flex items-center justify-center font-bold tracking-wide pl-6 ${getStepClass(2)}`}>
+                      {currentStep > 2 && <CheckIcon className="w-5 h-5 mr-2" />}
                       <span>{t('publishJourney.stepper.step2')}</span>
                       <div className="absolute top-0 -left-6 h-full w-12 bg-inherit transform -skew-x-12 z-0" style={{ clipPath: 'polygon(25% 0, 100% 0, 100% 100%, 25% 100%, 0 50%)' }} />
-                      <div className={`absolute top-0 -right-6 h-full w-12 ${currentStep === 2 ? 'bg-brand-dark' : 'bg-gray-200'} transform -skew-x-12 z-0`} style={{ clipPath: 'polygon(0 0, 100% 0, 75% 50%, 100% 100%, 0 100%)' }} />
+                      <div className={`absolute top-0 -right-6 h-full w-12 ${getStepClass(2)} transform -skew-x-12 z-0`} style={{ clipPath: 'polygon(0 0, 100% 0, 75% 50%, 100% 100%, 0 100%)' }} />
                   </div>
-                  <div className={`relative flex-1 h-12 flex items-center justify-center font-bold tracking-wide pl-6 ${currentStep === 3 ? 'bg-brand-dark text-white' : 'bg-gray-200 text-brand-gray'}`}>
+                  <div className={`relative flex-1 h-12 flex items-center justify-center font-bold tracking-wide pl-6 ${getStepClass(3)}`}>
+                      {currentStep > 3 && <CheckIcon className="w-5 h-5 mr-2" />}
                       {t('publishJourney.stepper.step3')}
                       <div className="absolute top-0 -left-6 h-full w-12 bg-inherit transform -skew-x-12 z-0" style={{ clipPath: 'polygon(25% 0, 100% 0, 100% 100%, 25% 100%, 0 50%)' }} />
                   </div>
@@ -696,6 +771,12 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
                     handleCounterChange={handleCounterChange}
                     handleContinueToPhotos={handleContinueToPhotos}
                     setDetails={setDetails}
+                />
+              }
+              {currentStep === 3 &&
+                <Step3Photos
+                    onBack={() => setCurrentStep(2)}
+                    onFinish={handleFinish}
                 />
               }
             </div>

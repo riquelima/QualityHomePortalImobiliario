@@ -6,11 +6,15 @@ import LocationIcon from './icons/LocationIcon';
 import BedIcon from './icons/BedIcon';
 import BathIcon from './icons/BathIcon';
 import AreaIcon from './icons/AreaIcon';
+import HeartIcon from './icons/HeartIcon';
+import HeartFilledIcon from './icons/HeartFilledIcon';
 import { useLanguage } from '../contexts/LanguageContext';
 
 interface PropertyCardProps {
   property: Property;
   onViewDetails: (id: number) => void;
+  isFavorite: boolean;
+  onToggleFavorite: (id: number) => void;
 }
 
 const statusColorMap = {
@@ -24,7 +28,7 @@ const currencyConfig = {
   es: { locale: 'es-ES', currency: 'EUR' },
 };
 
-const PropertyCard: React.FC<PropertyCardProps> = ({ property, onViewDetails }) => {
+const PropertyCard: React.FC<PropertyCardProps> = ({ property, onViewDetails, isFavorite, onToggleFavorite }) => {
   const { language, t } = useLanguage();
   const { locale, currency } = currencyConfig[language as keyof typeof currencyConfig];
 
@@ -40,10 +44,24 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onViewDetails }) 
       <div className="relative">
         <img src={property.images[0]} alt={property.title} className="w-full h-56 object-cover aspect-video" />
         {property.status && (
-          <span className={`absolute top-3 right-3 text-white text-xs font-bold px-3 py-1 rounded-full ${statusColorMap[property.status]}`}>
+          <span className={`absolute top-3 left-3 text-white text-xs font-bold px-3 py-1 rounded-full ${statusColorMap[property.status]}`}>
             {property.status}
           </span>
         )}
+        <button
+          onClick={(e) => {
+            e.stopPropagation(); // Impede que o clique no botão acione o clique no card
+            onToggleFavorite(property.id);
+          }}
+          className="absolute top-3 right-3 bg-white/70 backdrop-blur-sm p-2 rounded-full text-brand-red hover:bg-white transition-colors duration-200 z-10"
+          aria-label={isFavorite ? t('propertyCard.removeFromFavorites') : t('propertyCard.addToFavorites')}
+        >
+          {isFavorite ? (
+            <HeartFilledIcon className="w-6 h-6" />
+          ) : (
+            <HeartIcon className="w-6 h-6" />
+          )}
+        </button>
       </div>
       <div className="p-6 flex flex-col flex-grow">
         <div className="flex-grow">

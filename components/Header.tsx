@@ -7,6 +7,11 @@ import FlagESIcon from './icons/FlagESIcon';
 import ChevronDownIcon from './icons/ChevronDownIcon';
 import HamburgerIcon from './icons/HamburgerIcon';
 import CloseIcon from './icons/CloseIcon';
+import AdsIcon from './icons/AdsIcon';
+import BellIcon from './icons/BellIcon';
+import HeartIcon from './icons/HeartIcon';
+import ChatIcon from './icons/ChatIcon';
+import LogoutIcon from './icons/LogoutIcon';
 import { useLanguage } from '../contexts/LanguageContext';
 import type { User } from '../types';
 
@@ -21,9 +26,16 @@ interface HeaderProps {
   onAccessClick: () => void;
   user: User | null;
   onLogout: () => void;
+  onNavigateToFavorites: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, onLogout }) => {
+// Helper function outside the component
+const getInitials = (name: string) => {
+    if (!name) return '';
+    return name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
+}
+
+const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, onLogout, onNavigateToFavorites }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
@@ -104,25 +116,61 @@ const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, 
             {user ? (
               <div className="relative" ref={userDropdownRef}>
                 <button onClick={() => setIsUserDropdownOpen(prev => !prev)} className="flex items-center space-x-2">
-                  <img src={user.picture} alt={user.name} className="w-8 h-8 rounded-full" />
+                  {user.picture ? (
+                      <img src={user.picture} alt={user.name} className="w-8 h-8 rounded-full" />
+                  ) : (
+                      <span className="flex items-center justify-center w-8 h-8 rounded-full bg-brand-gray text-white font-bold text-sm">
+                          {getInitials(user.name)}
+                      </span>
+                  )}
                   <span className="hidden md:inline font-medium">{user.name.split(' ')[0]}</span>
                   <ChevronDownIcon className="w-4 h-4 text-brand-gray" />
                 </button>
                 {isUserDropdownOpen && (
-                  <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-md shadow-lg border z-20">
-                    <div className="px-4 py-3 border-b">
-                      <p className="text-sm font-semibold text-brand-dark truncate">{user.name}</p>
-                      <p className="text-xs text-brand-gray truncate">{user.email}</p>
+                  <div className="absolute top-full right-0 mt-2 w-64 bg-white rounded-md shadow-lg border z-20">
+                    <div className="px-4 py-4 border-b flex items-center space-x-3">
+                      {user.picture ? (
+                          <img src={user.picture} alt={user.name} className="w-10 h-10 rounded-full" />
+                      ) : (
+                          <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-brand-gray text-white font-bold">
+                              {getInitials(user.name)}
+                          </div>
+                      )}
+                      <div>
+                        <p className="text-sm font-bold text-brand-dark truncate">{user.name}</p>
+                        <a href="#" className="text-xs text-brand-red hover:underline">{t('header.myAccount')}</a>
+                      </div>
                     </div>
-                    <button 
-                      onClick={() => {
-                        onLogout();
-                        setIsUserDropdownOpen(false);
-                      }}
-                      className="w-full text-left px-4 py-2 text-sm text-brand-red hover:bg-gray-100"
-                    >
-                      {t('header.logout')}
-                    </button>
+                    <nav className="py-2">
+                      <a href="#" className="flex items-center px-4 py-2 text-sm text-brand-dark hover:bg-gray-100">
+                          <AdsIcon className="w-5 h-5 mr-3 text-brand-gray" />
+                          <span>{t('header.ads')}</span>
+                      </a>
+                      <a href="#" className="flex items-center px-4 py-2 text-sm text-brand-dark hover:bg-gray-100">
+                          <BellIcon className="w-5 h-5 mr-3 text-brand-gray" />
+                          <span>{t('header.savedSearches')}</span>
+                      </a>
+                      <a href="#" onClick={(e) => { e.preventDefault(); onNavigateToFavorites(); setIsUserDropdownOpen(false); }} className="flex items-center px-4 py-2 text-sm text-brand-dark hover:bg-gray-100">
+                          <HeartIcon className="w-5 h-5 mr-3 text-brand-gray" />
+                          <span>{t('header.favorites')}</span>
+                      </a>
+                      <a href="#" className="flex items-center px-4 py-2 text-sm text-brand-dark hover:bg-gray-100">
+                          <ChatIcon className="w-5 h-5 mr-3 text-brand-gray" />
+                          <span>{t('header.chat')}</span>
+                      </a>
+                    </nav>
+                    <div className="border-t">
+                      <button 
+                        onClick={() => {
+                          onLogout();
+                          setIsUserDropdownOpen(false);
+                        }}
+                        className="w-full flex items-center px-4 py-3 text-sm text-brand-dark hover:bg-gray-100"
+                      >
+                        <LogoutIcon className="w-5 h-5 mr-3 text-brand-gray" />
+                        <span>{t('header.logout')}</span>
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>

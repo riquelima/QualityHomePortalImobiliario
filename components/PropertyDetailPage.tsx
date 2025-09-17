@@ -7,6 +7,9 @@ import LocationIcon from './icons/LocationIcon';
 import BedIcon from './icons/BedIcon';
 import BathIcon from './icons/BathIcon';
 import AreaIcon from './icons/AreaIcon';
+import HeartIcon from './icons/HeartIcon';
+import HeartFilledIcon from './icons/HeartFilledIcon';
+
 
 interface PropertyDetailPageProps {
   property: Property;
@@ -15,6 +18,8 @@ interface PropertyDetailPageProps {
   onAccessClick: () => void;
   user: User | null;
   onLogout: () => void;
+  isFavorite: boolean;
+  onToggleFavorite: (id: number) => void;
 }
 
 const currencyConfig = {
@@ -30,6 +35,8 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({
   onAccessClick,
   user,
   onLogout,
+  isFavorite,
+  onToggleFavorite,
 }) => {
   const { t, language } = useLanguage();
   const [selectedImage, setSelectedImage] = useState(property.images[0]);
@@ -47,6 +54,7 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({
         onAccessClick={onAccessClick}
         user={user}
         onLogout={onLogout}
+        onNavigateToFavorites={onBack} // Placeholder
       />
       <main className="container mx-auto px-6 py-8">
         {/* Breadcrumbs */}
@@ -144,8 +152,12 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({
                     <button className="w-full bg-brand-red hover:opacity-90 text-white font-bold py-3 px-4 rounded-md transition duration-300">
                         {t('propertyCard.contact')}
                     </button>
-                    <button className="w-full bg-gray-200 hover:bg-gray-300 text-brand-dark font-medium py-3 px-4 rounded-md transition duration-300">
-                        {t('propertyDetail.scheduleVisit')}
+                    <button 
+                      onClick={() => onToggleFavorite(property.id)}
+                      className="w-full bg-gray-200 hover:bg-gray-300 text-brand-dark font-medium py-3 px-4 rounded-md transition duration-300 flex items-center justify-center space-x-2"
+                    >
+                        {isFavorite ? <HeartFilledIcon className="w-5 h-5 text-brand-red" /> : <HeartIcon className="w-5 h-5" />}
+                        <span>{isFavorite ? t('propertyDetail.removeFromFavorites') : t('propertyDetail.addToFavorites')}</span>
                     </button>
                 </div>
 

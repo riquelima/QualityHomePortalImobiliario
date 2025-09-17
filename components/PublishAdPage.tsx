@@ -12,9 +12,10 @@ interface PublishAdPageProps {
   onNavigateToJourney: () => void;
   user: User | null;
   onLogout: () => void;
+  onNavigateToFavorites: () => void;
 }
 
-const PublishAdPage: React.FC<PublishAdPageProps> = ({ onBack, onPublishAdClick, onOpenLoginModal, onNavigateToJourney, user, onLogout }) => {
+const PublishAdPage: React.FC<PublishAdPageProps> = ({ onBack, onPublishAdClick, onOpenLoginModal, onNavigateToJourney, user, onLogout, onNavigateToFavorites }) => {
   const { t } = useLanguage();
 
   const handlePublishClick = () => {
@@ -27,7 +28,7 @@ const PublishAdPage: React.FC<PublishAdPageProps> = ({ onBack, onPublishAdClick,
 
   return (
     <div className="bg-brand-light-gray min-h-screen">
-       <Header onPublishAdClick={onPublishAdClick} onAccessClick={onOpenLoginModal} user={user} onLogout={onLogout} />
+       <Header onPublishAdClick={onPublishAdClick} onAccessClick={onOpenLoginModal} user={user} onLogout={onLogout} onNavigateToFavorites={onNavigateToFavorites} />
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumbs */}
         <div className="text-sm mb-6">

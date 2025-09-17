@@ -14,6 +14,8 @@ interface MapDrawPageProps {
   onBack: () => void;
   userLocation?: { lat: number; lng: number } | null;
   onViewDetails: (id: number) => void;
+  favorites: number[];
+  onToggleFavorite: (id: number) => void;
 }
 
 // Interface for properties with a calculated distance for sorting
@@ -123,7 +125,7 @@ const DrawingManager: React.FC<{
 };
 
 
-const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewDetails }) => {
+const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewDetails, favorites, onToggleFavorite }) => {
   const [propertiesInZone, setPropertiesInZone] = useState<PropertyWithDistance[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { t } = useLanguage();
@@ -305,7 +307,13 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewD
                 <div className="space-y-4">
                 {propertiesInZone.length > 0 ? (
                     propertiesInZone.map(prop => (
-                        <PropertyCard key={prop.id} property={prop} onViewDetails={onViewDetails} />
+                        <PropertyCard 
+                            key={prop.id} 
+                            property={prop} 
+                            onViewDetails={onViewDetails}
+                            isFavorite={favorites.includes(prop.id)}
+                            onToggleFavorite={onToggleFavorite}
+                        />
                     ))
                 ) : (
                     <div className="text-center text-brand-gray mt-8">

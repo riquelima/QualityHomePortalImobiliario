@@ -11,11 +11,12 @@ import LoginModal from './components/LoginModal';
 import GeolocationErrorModal from './components/GeolocationErrorModal';
 import SearchResultsPage from './components/SearchResultsPage';
 import PropertyDetailPage from './components/PropertyDetailPage';
+import FavoritesPage from './components/FavoritesPage';
 import { useLanguage } from './contexts/LanguageContext';
 import type { User } from './types';
 
 interface PageState {
-  page: 'home' | 'map' | 'publish' | 'publish-journey' | 'searchResults' | 'propertyDetail';
+  page: 'home' | 'map' | 'publish' | 'publish-journey' | 'searchResults' | 'propertyDetail' | 'favorites';
   userLocation: { lat: number; lng: number } | null;
   searchQuery?: string;
   propertyId?: number;
@@ -43,6 +44,7 @@ const App: React.FC = () => {
   const [isGeoErrorModalOpen, setIsGeoErrorModalOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [loginIntent, setLoginIntent] = useState<'default' | 'publish'>('default');
+  const [favorites, setFavorites] = useState<number[]>([]);
   const { t } = useLanguage();
 
   const navigateHome = () => setPageState({ page: 'home', userLocation: null, searchQuery: '' });
@@ -51,6 +53,7 @@ const App: React.FC = () => {
   const navigateToPublishJourney = () => setPageState({ page: 'publish-journey', userLocation: null, searchQuery: '' });
   const navigateToSearchResults = (query: string) => setPageState({ page: 'searchResults', userLocation: null, searchQuery: query });
   const navigateToPropertyDetail = (id: number) => setPageState({ page: 'propertyDetail', propertyId: id, userLocation: null, searchQuery: '' });
+  const navigateToFavorites = () => setPageState({ page: 'favorites', userLocation: null, searchQuery: '' });
   
   const openLoginModal = (intent: 'default' | 'publish' = 'default') => {
     setLoginIntent(intent);
@@ -79,7 +82,19 @@ const App: React.FC = () => {
 
   const handleLogout = () => {
     setUser(null);
-    // Opcional: Adicionar lógica para deslogar do Google se necessário
+    setFavorites([]); // Limpa os favoritos ao deslogar
+  };
+
+  const toggleFavorite = (propertyId: number) => {
+    if (!user) {
+      openLoginModal();
+      return;
+    }
+    setFavorites(prevFavorites =>
+      prevFavorites.includes(propertyId)
+        ? prevFavorites.filter(id => id !== propertyId)
+        : [...prevFavorites, propertyId]
+    );
   };
 
 
@@ -90,6 +105,8 @@ const App: React.FC = () => {
                   onBack={navigateHome} 
                   userLocation={pageState.userLocation} 
                   onViewDetails={navigateToPropertyDetail}
+                  favorites={favorites}
+                  onToggleFavorite={toggleFavorite}
                />;
       case 'publish':
         return <PublishAdPage 
@@ -99,6 +116,7 @@ const App: React.FC = () => {
                   onNavigateToJourney={navigateToPublishJourney}
                   user={user}
                   onLogout={handleLogout}
+                  onNavigateToFavorites={navigateToFavorites}
                />;
       case 'publish-journey':
         return <PublishJourneyPage
@@ -107,6 +125,7 @@ const App: React.FC = () => {
                   onOpenLoginModal={() => openLoginModal('default')}
                   user={user}
                   onLogout={handleLogout}
+                  onNavigateToFavorites={navigateToFavorites}
                 />;
       case 'searchResults':
         const query = pageState.searchQuery?.toLowerCase() ?? '';
@@ -124,11 +143,12 @@ const App: React.FC = () => {
           user={user}
           onLogout={handleLogout}
           onViewDetails={navigateToPropertyDetail}
+          favorites={favorites}
+          onToggleFavorite={toggleFavorite}
         />;
       case 'propertyDetail':
         const property = MOCK_PROPERTIES.find(p => p.id === pageState.propertyId);
         if (!property) {
-          // Fallback to home if property is not found
           navigateHome();
           return null;
         }
@@ -139,12 +159,28 @@ const App: React.FC = () => {
                   onAccessClick={() => openLoginModal('default')} 
                   user={user} 
                   onLogout={handleLogout}
+                  isFavorite={favorites.includes(property.id)}
+                  onToggleFavorite={toggleFavorite}
                 />;
+      case 'favorites':
+          const favoriteProperties = MOCK_PROPERTIES.filter(p => favorites.includes(p.id));
+          return <FavoritesPage
+            onBack={navigateHome}
+            properties={favoriteProperties}
+            onPublishAdClick={navigateToPublish}
+            onAccessClick={() => openLoginModal('default')}
+            user={user}
+            onLogout={handleLogout}
+            onViewDetails={navigateToPropertyDetail}
+            favorites={favorites}
+            onToggleFavorite={toggleFavorite}
+            onNavigateToFavorites={navigateToFavorites}
+          />;
       case 'home':
       default:
         return (
           <div className="bg-white font-sans text-brand-dark">
-            <Header onPublishAdClick={navigateToPublish} onAccessClick={() => openLoginModal('default')} user={user} onLogout={handleLogout} />
+            <Header onPublishAdClick={navigateToPublish} onAccessClick={() => openLoginModal('default')} user={user} onLogout={handleLogout} onNavigateToFavorites={navigateToFavorites} />
             <main>
               <Hero 
                 onDrawOnMapClick={() => navigateToMap()} 
@@ -156,7 +192,11 @@ const App: React.FC = () => {
                 onDrawOnMapClick={() => navigateToMap()}
                 onPublishAdClick={navigateToPublish}
               />
-              <PropertyListings onViewDetails={navigateToPropertyDetail} />
+              <PropertyListings 
+                onViewDetails={navigateToPropertyDetail} 
+                favorites={favorites}
+                onToggleFavorite={toggleFavorite}
+              />
             </main>
             <footer className="bg-brand-light-gray text-brand-gray py-8 text-center mt-20">
               <div className="container mx-auto">

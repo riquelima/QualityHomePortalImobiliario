@@ -13,7 +13,12 @@ const ptTranslations = {
     "openMenu": "Abrir menu",
     "closeMenu": "Fechar menu",
     "menuTitle": "Menu",
-    "logout": "Sair"
+    "logout": "Terminar sessão",
+    "myAccount": "Ir para a tua conta",
+    "ads": "Anúncios",
+    "savedSearches": "Pesquisas guardadas",
+    "favorites": "Favoritos",
+    "chat": "Chat"
   },
   "hero": {
     "defaultTitle": "Descubra seu novo lar, hoje.",
@@ -44,7 +49,9 @@ const ptTranslations = {
     "bedrooms": "Quartos",
     "bathrooms": "Ban.",
     "details": "Detalhes",
-    "contact": "Contato"
+    "contact": "Contato",
+    "addToFavorites": "Adicionar aos favoritos",
+    "removeFromFavorites": "Remover dos favoritos"
   },
   "infoSection": {
     "draw": {
@@ -227,6 +234,18 @@ const ptTranslations = {
       "descriptionPlaceholder": "Escreve aqui a descrição em português. Mais tarde, poderás adicionar outras línguas.",
       "continueToPhotosButton": "Continuar e importar fotos"
     },
+    "photosForm": {
+      "title": "Adicionar fotos, plantas e vídeos ao teu anúncio",
+      "dragAndDrop": "Arrasta e solta as tuas fotos aqui ou seleciona-as a partir do teu dispositivo",
+      "addButton": "Adicionar fotos e vídeos",
+      "limitsInfo": "Seleciona até 40 fotos e 10 plantas (máx. 32 MB cada) e 6 vídeos (máx. 600 MB cada) da tua galeria.",
+      "rememberTitle": "Lembra-te que...",
+      "tip1": "Fotos, plantas e vídeos: atraem mais pessoas para o teu anúncio",
+      "tip2": "Se tiveres uma planta do imóvel, podes tirar uma foto da mesma ou desenhá-la à mão e tirar uma fotografia do desenho",
+      "tip3": "Quando tirares as tuas fotografias, certifica-te de que cada divisão está arrumada, limpa e bem iluminada",
+      "backButton": "Voltar",
+      "continueButton": "Continuar sem fotos"
+    },
     "sidebar": {
       "title": "Informação útil",
       "p1": "Prepare as fotos. Se ainda não as tem, poderá adicioná-las mais tarde. Sem fotos não obterá resultados.",
@@ -274,7 +293,17 @@ const ptTranslations = {
     "description": "Descrição",
     "details": "Detalhes do Imóvel",
     "videos": "Galeria de Vídeos",
-    "scheduleVisit": "Agendar Visita"
+    "scheduleVisit": "Agendar Visita",
+    "addToFavorites": "Adicionar aos Favoritos",
+    "removeFromFavorites": "Remover dos Favoritos"
+  },
+  "favoritesPage": {
+    "title": "Meus Imóveis Favoritos",
+    "breadcrumb": "Favoritos",
+    "noFavorites": {
+      "title": "Você ainda não tem imóveis favoritos",
+      "description": "Clique no coração nos anúncios para salvar os imóveis que você mais gosta aqui."
+    }
   },
   "footer": {
     "text": "Quality Home Portal Imobiliário. Todos os direitos reservados."
@@ -291,7 +320,12 @@ const enTranslations = {
     "openMenu": "Open menu",
     "closeMenu": "Close menu",
     "menuTitle": "Menu",
-    "logout": "Logout"
+    "logout": "Log out",
+    "myAccount": "Go to your account",
+    "ads": "Ads",
+    "savedSearches": "Saved searches",
+    "favorites": "Favorites",
+    "chat": "Chat"
   },
   "hero": {
     "defaultTitle": "Discover your new home, today.",
@@ -322,7 +356,9 @@ const enTranslations = {
     "bedrooms": "Beds",
     "bathrooms": "Baths",
     "details": "Details",
-    "contact": "Contact"
+    "contact": "Contact",
+    "addToFavorites": "Add to favorites",
+    "removeFromFavorites": "Remove from favorites"
   },
   "infoSection": {
     "draw": {
@@ -505,6 +541,18 @@ const enTranslations = {
       "descriptionPlaceholder": "Write the description in English here. Later, you can add other languages.",
       "continueToPhotosButton": "Continue and import photos"
     },
+    "photosForm": {
+      "title": "Add photos, floor plans, and videos to your ad",
+      "dragAndDrop": "Drag and drop your photos here or select them from your device",
+      "addButton": "Add photos and videos",
+      "limitsInfo": "Select up to 40 photos and 10 floor plans (max. 32 MB each) and 6 videos (max. 600 MB each) from your gallery.",
+      "rememberTitle": "Remember that...",
+      "tip1": "Photos, floor plans, and videos: attract more people to your ad",
+      "tip2": "If you have a floor plan of the property, you can take a photo of it or draw it by hand and take a photograph of the drawing",
+      "tip3": "When you take your photographs, make sure that each room is tidy, clean, and well-lit",
+      "backButton": "Back",
+      "continueButton": "Continue without photos"
+    },
     "sidebar": {
       "title": "Useful information",
       "p1": "Prepare the photos. If you don't have them yet, you can add them later. You won't get results without photos.",
@@ -552,7 +600,17 @@ const enTranslations = {
     "description": "Description",
     "details": "Property Details",
     "videos": "Video Gallery",
-    "scheduleVisit": "Schedule Visit"
+    "scheduleVisit": "Schedule Visit",
+    "addToFavorites": "Add to Favorites",
+    "removeFromFavorites": "Remove from Favorites"
+  },
+  "favoritesPage": {
+    "title": "My Favorite Properties",
+    "breadcrumb": "Favorites",
+    "noFavorites": {
+      "title": "You have no favorite properties yet",
+      "description": "Click the heart on the listings to save the properties you like best here."
+    }
   },
   "footer": {
     "text": "Quality Home Real Estate Portal. All rights reserved."
@@ -569,7 +627,12 @@ const esTranslations = {
     "openMenu": "Abrir menú",
     "closeMenu": "Cerrar menú",
     "menuTitle": "Menú",
-    "logout": "Cerrar sesión"
+    "logout": "Cerrar sesión",
+    "myAccount": "Ir a tu cuenta",
+    "ads": "Anuncios",
+    "savedSearches": "Búsquedas guardadas",
+    "favorites": "Favoritos",
+    "chat": "Chat"
   },
   "hero": {
     "defaultTitle": "Descubre tu nuevo hogar, hoy.",
@@ -600,7 +663,9 @@ const esTranslations = {
     "bedrooms": "Hab.",
     "bathrooms": "Baños",
     "details": "Detalles",
-    "contact": "Contacto"
+    "contact": "Contacto",
+    "addToFavorites": "Añadir a favoritos",
+    "removeFromFavorites": "Quitar de favoritos"
   },
   "infoSection": {
     "draw": {
@@ -783,6 +848,18 @@ const esTranslations = {
       "descriptionPlaceholder": "Escribe aquí la descripción en español. Más tarde, podrás añadir otros idiomas.",
       "continueToPhotosButton": "Continuar e importar fotos"
     },
+    "photosForm": {
+        "title": "Añadir fotos, planos y vídeos a tu anuncio",
+        "dragAndDrop": "Arrastra y suelta tus fotos aquí o selecciónalas desde tu dispositivo",
+        "addButton": "Añadir fotos y vídeos",
+        "limitsInfo": "Selecciona hasta 40 fotos y 10 planos (máx. 32 MB cada uno) y 6 vídeos (máx. 600 MB cada uno) de tu galería.",
+        "rememberTitle": "Recuerda que...",
+        "tip1": "Fotos, planos y vídeos: atraen a más personas a tu anuncio",
+        "tip2": "Si tienes un plano del inmueble, puedes hacerle una foto o dibujarlo a mano y hacer una fotografía del dibujo",
+        "tip3": "Cuando hagas tus fotografías, asegúrate de que cada estancia está ordenada, limpia y bien iluminada",
+        "backButton": "Volver",
+        "continueButton": "Continuar sin fotos"
+    },
     "sidebar": {
       "title": "Información útil",
       "p1": "Prepara las fotos. Si todavía no las tienes, podrás añadirlas más tarde. Sin fotos no obtendrás resultados.",
@@ -830,7 +907,17 @@ const esTranslations = {
     "description": "Descripción",
     "details": "Detalles del Inmueble",
     "videos": "Galería de Vídeos",
-    "scheduleVisit": "Agendar Visita"
+    "scheduleVisit": "Agendar Visita",
+    "addToFavorites": "Añadir a Favoritos",
+    "removeFromFavorites": "Quitar de Favoritos"
+  },
+  "favoritesPage": {
+    "title": "Mis Inmuebles Favoritos",
+    "breadcrumb": "Favoritos",
+    "noFavorites": {
+      "title": "Aún no tienes inmuebles favoritos",
+      "description": "Haz clic en el corazón en los anuncios para guardar los inmuebles que más te gusten aquí."
+    }
   },
   "footer": {
     "text": "Quality Home Portal Inmobiliario. Todos los derechos reservados."
