@@ -28,15 +28,28 @@ const ptTranslations = {
         "findAgencies": "Procurar agências para vender"
       },
       "rent": {
-        "title": "Colocar para arrendamento",
+        "title": "Colocar para alugar",
         "publish": "Publica o teu anúncio",
-        "findAgencies": "Procurar agências para arrendar"
+        "findAgencies": "Procurar agências para alugar"
       },
       "forYourHome": {
         "title": "Para a tua habitação",
         "ownerArea": "Área do proprietário",
         "transferCredit": "Transferir o teu crédito habitação para outro banco",
         "calculateRemodel": "Calcular o preço de uma remodelação"
+      }
+    },
+    "searchDropdown": {
+      "buy": {
+        "title": "Procurar para comprar",
+        "whatToBuy": "Que casa você pode comprar?",
+        "credit": "O seu crédito habitação passo a passo",
+        "explore": "Explorar bairros e preços",
+        "evaluate": "Avaliar uma casa"
+      },
+      "rent": {
+        "title": "Procurar para alugar",
+        "explore": "Explorar bairros e preços"
       }
     }
   },
@@ -369,7 +382,41 @@ const enTranslations = {
     "ads": "Ads",
     "savedSearches": "Saved searches",
     "favorites": "Favorites",
-    "chat": "Chat"
+    "chat": "Chat",
+    "ownersDropdown": {
+      "sell": {
+        "title": "Sell",
+        "publish": "Publish your ad",
+        "evaluate": "Value your home",
+        "guide": "Guide to selling",
+        "documents": "Documents needed for sale",
+        "findAgencies": "Find agencies to sell"
+      },
+      "rent": {
+        "title": "Rent out",
+        "publish": "Publish your ad",
+        "findAgencies": "Find agencies to rent"
+      },
+      "forYourHome": {
+        "title": "For your home",
+        "ownerArea": "Owner's area",
+        "transferCredit": "Transfer your mortgage to another bank",
+        "calculateRemodel": "Calculate the price of a remodel"
+      }
+    },
+    "searchDropdown": {
+      "buy": {
+        "title": "Looking to buy",
+        "whatToBuy": "What house can you buy?",
+        "credit": "Your mortgage step by step",
+        "explore": "Explore neighborhoods and prices",
+        "evaluate": "Value a house"
+      },
+      "rent": {
+        "title": "Looking to rent",
+        "explore": "Explore neighborhoods and prices"
+      }
+    }
   },
   "hero": {
     "defaultTitle": "Discover your new home, today.",
@@ -700,7 +747,41 @@ const esTranslations = {
     "ads": "Anuncios",
     "savedSearches": "Búsquedas guardadas",
     "favorites": "Favoritos",
-    "chat": "Chat"
+    "chat": "Chat",
+    "ownersDropdown": {
+      "sell": {
+        "title": "Vender",
+        "publish": "Publica tu anuncio",
+        "evaluate": "Valorar tu casa",
+        "guide": "Guía para vender",
+        "documents": "Documentos necesarios para la venta",
+        "findAgencies": "Buscar agencias para vender"
+      },
+      "rent": {
+        "title": "Poner en alquiler",
+        "publish": "Publica tu anuncio",
+        "findAgencies": "Buscar agencias para alquilar"
+      },
+      "forYourHome": {
+        "title": "Para tu vivienda",
+        "ownerArea": "Área de propietario",
+        "transferCredit": "Transferir tu hipoteca a otro banco",
+        "calculateRemodel": "Calcular el precio de una reforma"
+      }
+    },
+    "searchDropdown": {
+      "buy": {
+        "title": "Buscar para comprar",
+        "whatToBuy": "¿Qué casa puedes comprar?",
+        "credit": "Tu hipoteca paso a paso",
+        "explore": "Explorar barrios y precios",
+        "evaluate": "Valorar una casa"
+      },
+      "rent": {
+        "title": "Buscar para alquilar",
+        "explore": "Explorar barrios y precios"
+      }
+    }
   },
   "hero": {
     "defaultTitle": "Descubre tu nuevo hogar, hoy.",

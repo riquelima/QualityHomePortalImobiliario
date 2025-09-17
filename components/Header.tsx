@@ -41,7 +41,9 @@ const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, 
   const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const [isOwnersDropdownOpen, setIsOwnersDropdownOpen] = useState(false);
-  const [isMobileOwnersMenuOpen, setIsMobileOwnersMenuOpen] = useState(false); // State for mobile owners submenu
+  const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false); // State for search submenu
+  const [isMobileOwnersMenuOpen, setIsMobileOwnersMenuOpen] = useState(false);
+  const [isMobileSearchMenuOpen, setIsMobileSearchMenuOpen] = useState(false); // State for mobile search submenu
   const langDropdownRef = useRef<HTMLDivElement>(null);
   const userDropdownRef = useRef<HTMLDivElement>(null);
   const { language, changeLanguage, t } = useLanguage();
@@ -120,7 +122,36 @@ const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, 
                   </div>
                 )}
               </div>
-              <a href="#" className="text-brand-dark hover:text-brand-red transition duration-300">{t('header.nav.search')}</a>
+              <div 
+                className="relative"
+                onMouseEnter={() => setIsSearchDropdownOpen(true)}
+                onMouseLeave={() => setIsSearchDropdownOpen(false)}
+              >
+                <a href="#" className="text-brand-dark hover:text-brand-red transition duration-300 py-4 border-b-2 border-transparent hover:border-brand-red">{t('header.nav.search')}</a>
+                {isSearchDropdownOpen && (
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-0 w-max bg-white rounded-b-lg shadow-2xl border-t-4 border-brand-red z-30 p-8">
+                    <div className="grid grid-cols-2 gap-x-16 gap-y-8 text-left">
+                      {/* Procurar para comprar */}
+                      <div className="space-y-4">
+                        <h3 className="font-bold text-brand-dark text-base">{t('header.searchDropdown.buy.title')}</h3>
+                        <ul className="space-y-3 text-sm">
+                          <li><a href="#" className="text-brand-gray hover:text-brand-red">{t('header.searchDropdown.buy.whatToBuy')}</a></li>
+                          <li><a href="#" className="text-brand-gray hover:text-brand-red">{t('header.searchDropdown.buy.credit')}</a></li>
+                          <li><a href="#" className="text-brand-gray hover:text-brand-red">{t('header.searchDropdown.buy.explore')}</a></li>
+                          <li><a href="#" className="text-brand-gray hover:text-brand-red">{t('header.searchDropdown.buy.evaluate')}</a></li>
+                        </ul>
+                      </div>
+                      {/* Procurar para arrendar */}
+                      <div className="space-y-4">
+                        <h3 className="font-bold text-brand-dark text-base">{t('header.searchDropdown.rent.title')}</h3>
+                        <ul className="space-y-3 text-sm">
+                          <li><a href="#" className="text-brand-gray hover:text-brand-red">{t('header.searchDropdown.rent.explore')}</a></li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -297,7 +328,36 @@ const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, 
                   </div>
               )}
           </div>
-          <a href="#" className="text-brand-dark hover:text-brand-red transition duration-300">{t('header.nav.search')}</a>
+          <div>
+              <button
+                  onClick={() => setIsMobileSearchMenuOpen(prev => !prev)}
+                  className="w-full flex justify-between items-center text-brand-dark hover:text-brand-red transition duration-300"
+              >
+                  <span>{t('header.nav.search')}</span>
+                  <ChevronDownIcon className={`w-5 h-5 transition-transform duration-300 ${isMobileSearchMenuOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {isMobileSearchMenuOpen && (
+                  <div className="pl-4 mt-3 space-y-4 text-base">
+                      {/* Procurar para comprar */}
+                      <div className="space-y-2">
+                          <h3 className="font-bold text-brand-dark">{t('header.searchDropdown.buy.title')}</h3>
+                          <ul className="space-y-2 pl-2">
+                              <li><a href="#" className="text-brand-gray hover:text-brand-red">{t('header.searchDropdown.buy.whatToBuy')}</a></li>
+                              <li><a href="#" className="text-brand-gray hover:text-brand-red">{t('header.searchDropdown.buy.credit')}</a></li>
+                              <li><a href="#" className="text-brand-gray hover:text-brand-red">{t('header.searchDropdown.buy.explore')}</a></li>
+                              <li><a href="#" className="text-brand-gray hover:text-brand-red">{t('header.searchDropdown.buy.evaluate')}</a></li>
+                          </ul>
+                      </div>
+                      {/* Procurar para alugar */}
+                      <div className="space-y-2">
+                          <h3 className="font-bold text-brand-dark">{t('header.searchDropdown.rent.title')}</h3>
+                          <ul className="space-y-2 pl-2">
+                              <li><a href="#" className="text-brand-gray hover:text-brand-red">{t('header.searchDropdown.rent.explore')}</a></li>
+                          </ul>
+                      </div>
+                  </div>
+              )}
+          </div>
           <hr className="my-4" />
           <button 
             onClick={onPublishAdClick}
