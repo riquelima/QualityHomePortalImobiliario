@@ -849,34 +849,29 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
             .select('*, owner:anunciante_id(*)')
             .single();
 
-        if (propertyError || !insertedProperty) {
-            console.error("Error inserting property:", propertyError);
-            alert("Ocorreu um erro ao publicar seu anúncio. Tente novamente.");
-            return;
-        }
+        if (propertyError) throw propertyError;
+        if (!insertedProperty) throw new Error("Falha ao criar o imóvel no banco de dados.");
 
         let uploadedMedia: { url: string; tipo: 'imagem' | 'video' }[] = [];
         if (files.length > 0) {
             const uploadPromises = files.map(async (file) => {
                 const fileExt = file.name.split('.').pop();
                 const fileName = `${crypto.randomUUID()}.${fileExt}`;
-                const filePath = `public/${user.id}/${fileName}`;
+                // CORREÇÃO: Simplificado o caminho do arquivo para facilitar as políticas RLS do Storage.
+                const filePath = `public/${fileName}`;
 
                 const { error: uploadError } = await supabase.storage
                     .from('midia')
                     .upload(filePath, file);
 
-                if (uploadError) {
-                    console.error('Error uploading file:', uploadError);
-                    return null;
-                }
+                if (uploadError) throw uploadError;
 
                 const { data: { publicUrl } } = supabase.storage.from('midia').getPublicUrl(filePath);
                 return { url: publicUrl, tipo: file.type.startsWith('video') ? 'video' : 'imagem' };
             });
 
             const results = await Promise.all(uploadPromises);
-            uploadedMedia = results.filter((result): result is { url: string; tipo: 'imagem' | 'video' } => result !== null);
+            uploadedMedia = results.filter((result): result is { url: string; tipo: 'imagem' | 'video' } => !!result);
 
             if (uploadedMedia.length > 0) {
                 const mediaToInsert = uploadedMedia.map(media => ({
@@ -886,8 +881,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
                 }));
                 const { error: mediaError } = await supabase.from('midias_imovel').insert(mediaToInsert);
                 if (mediaError) {
-                    console.error("Error inserting media records:", mediaError);
-                    alert("Seu anúncio foi publicado, mas houve um erro ao salvar as mídias. Você pode editá-lo mais tarde.");
+                    console.warn("Anúncio publicado, mas erro ao salvar mídias:", mediaError);
                 }
             }
         }
@@ -921,9 +915,9 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
         };
         onAddProperty(frontendProperty);
 
-    } catch (error) {
-        console.error("An unexpected error occurred during publishing:", error);
-        alert("Ocorreu um erro inesperado. Por favor, tente novamente.");
+    } catch (error: any) {
+        console.error("Erro detalhado na publicação:", error);
+        alert(`Falha na publicação: ${error.message}`);
     } finally {
         setIsPublishing(false);
     }
