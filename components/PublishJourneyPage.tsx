@@ -825,7 +825,32 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
     const CLOUDINARY_UPLOAD_PRESET = "quallityhome"; 
 
     try {
-        console.log("Iniciando publicação...");
+        // FIX: Ensure user profile exists before attempting to insert a property.
+        console.log("Passo 0: Verificando/Criando perfil do usuário...");
+        const { data: userProfile, error: profileError } = await supabase
+            .from('perfis')
+            .select('id')
+            .eq('id', user.id)
+            .single();
+
+        if (profileError && profileError.code !== 'PGRST116') { // PGRST116 means no rows found, which is fine
+            throw new Error(`Erro no Passo 0 (Verificar Perfil): ${profileError.message}`);
+        }
+
+        if (!userProfile) {
+            console.log("Perfil não encontrado, criando um novo...");
+            const { error: insertError } = await supabase.from('perfis').insert({
+                id: user.id,
+                nome_completo: user.user_metadata.full_name || user.email,
+                url_foto_perfil: user.user_metadata.avatar_url,
+            });
+            if (insertError) {
+                throw new Error(`Erro no Passo 0 (Criar Perfil): ${insertError.message}`);
+            }
+            console.log("Perfil criado com sucesso.");
+        } else {
+             console.log("Perfil já existe.");
+        }
 
         let uploadedMedia: { url: string; tipo: 'imagem' | 'video' }[] = [];
         if (files.length > 0) {
@@ -903,7 +928,6 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
             console.log("Passo 3: Inserindo URLs das mídias no DB...", mediaToInsert);
             const { error: mediaError } = await supabase.from('midias_imovel').insert(mediaToInsert);
             if (mediaError) {
-                // Tenta apagar o imóvel criado se a inserção de mídias falhar para não deixar dados órfãos.
                 await supabase.from('imoveis').delete().eq('id', insertedProperty.id);
                 throw new Error(`Erro no Passo 3 (Inserir Mídia): ${mediaError.message}`);
             }
