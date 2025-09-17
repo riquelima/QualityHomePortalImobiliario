@@ -816,11 +816,9 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
     }
     
     setIsPublishing(true);
-    console.log("Iniciando publicação...");
-
+    
     try {
-        // ETAPA 1: Garantir que o perfil do usuário existe
-        console.log("Etapa 1: Verificando perfil do usuário...");
+        // Step 1: Ensure user profile exists
         const { data: userProfile, error: profileError } = await supabase
             .from('perfis')
             .select('id')
@@ -831,7 +829,6 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
              throw new Error(`Erro ao verificar perfil: ${profileError.message}`);
         }
         if (!userProfile) {
-            console.log("Perfil não encontrado, criando...");
             const { error: insertError } = await supabase.from('perfis').insert({
                 id: user.id,
                 nome_completo: user.user_metadata.full_name || user.email,
@@ -840,12 +837,10 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
             });
             if (insertError) throw new Error(`Erro ao criar perfil: ${insertError.message}`);
         }
-         console.log("Etapa 1 concluída.");
 
-        // ETAPA 2: Upload de mídias para o Cloudinary (se houver)
+        // Step 2: Upload media to Cloudinary if any
         let uploadedMediaData: { url: string; tipo: 'imagem' | 'video' }[] = [];
         if (files.length > 0) {
-            console.log(`Etapa 2: Fazendo upload de ${files.length} mídias para o Cloudinary...`);
             const CLOUDINARY_CLOUD_NAME = "dpmviwctq"; 
             const CLOUDINARY_UPLOAD_PRESET = "quallityhome"; 
             
@@ -865,11 +860,9 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
                 return { url: data.secure_url, tipo: resourceType as 'imagem' | 'video' };
             });
             uploadedMediaData = await Promise.all(uploadPromises);
-            console.log("Etapa 2 concluída. Mídias enviadas.");
         }
 
-        // ETAPA 3: Inserir dados do imóvel no Supabase
-        console.log("Etapa 3: Inserindo dados do imóvel no Supabase...");
+        // Step 3: Insert property data into Supabase
         const newPropertyData = {
             anunciante_id: user.id,
             titulo: details.title,
@@ -898,32 +891,9 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
         
         if (propertyError) throw new Error(`Erro ao inserir imóvel: ${propertyError.message}`);
         if (!insertedProperty) throw new Error("Falha ao recuperar os dados do imóvel recém-criado.");
-        console.log("Etapa 3 concluída. Imóvel criado com ID:", insertedProperty.id);
-
-        // ETAPA 4: Inserir URLs das mídias na tabela `midias_imovel` (se houver)
-        if (uploadedMediaData.length > 0) {
-            console.log("Etapa 4: Associando mídias ao imóvel...");
-            const mediaToInsert = uploadedMediaData.map(media => ({
-                imovel_id: insertedProperty.id,
-                url: media.url,
-                tipo: media.tipo,
-            }));
-            const { error: mediaError } = await supabase.from('midias_imovel').insert(mediaToInsert);
-            if (mediaError) {
-                console.error("Erro ao inserir mídias, revertendo...", mediaError);
-                await supabase.from('imoveis').delete().eq('id', insertedProperty.id);
-                throw new Error(`Erro ao associar mídias: ${mediaError.message}`);
-            }
-             console.log("Etapa 4 concluída.");
-        }
         
-        // ETAPA FINAL: Adicionar o novo imóvel à interface
-        const finalPropertyData = { ...insertedProperty, midias_imovel: uploadedMediaData };
-        
-        // FIX: If no images were uploaded, add a placeholder to prevent rendering errors.
-        if (finalPropertyData.midias_imovel.length === 0) {
-            finalPropertyData.midias_imovel.push({ url: 'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', tipo: 'imagem' });
-        }
+        // Final Step: Construct property object for UI update (without media URLs as requested)
+        const finalPropertyData = { ...insertedProperty, midias_imovel: [] }; // No media URLs
 
         const frontendProperty: Property = {
             id: finalPropertyData.id,
@@ -936,8 +906,8 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
             area: finalPropertyData.area_bruta,
             lat: finalPropertyData.latitude,
             lng: finalPropertyData.longitude,
-            images: finalPropertyData.midias_imovel.filter(m => m.tipo === 'imagem').map(m => m.url),
-            videos: finalPropertyData.midias_imovel.filter(m => m.tipo === 'video').map(m => m.url),
+            images: [], // Start with an empty array
+            videos: [],
             owner: finalPropertyData.owner,
             anunciante_id: finalPropertyData.anunciante_id,
             titulo: finalPropertyData.titulo,
@@ -949,7 +919,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
             quartos: finalPropertyData.quartos,
             banheiros: finalPropertyData.banheiros,
             area_bruta: finalPropertyData.area_bruta,
-            midias_imovel: finalPropertyData.midias_imovel
+            midias_imovel: []
         };
         
         onAddProperty(frontendProperty);
