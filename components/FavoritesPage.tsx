@@ -17,6 +17,7 @@ interface FavoritesPageProps {
   favorites: number[];
   onToggleFavorite: (id: number) => void;
   onNavigateToFavorites: () => void;
+  onNavigateToChatList: () => void;
 }
 
 const FavoritesPage: React.FC<FavoritesPageProps> = ({
@@ -29,7 +30,8 @@ const FavoritesPage: React.FC<FavoritesPageProps> = ({
   onViewDetails,
   favorites,
   onToggleFavorite,
-  onNavigateToFavorites
+  onNavigateToFavorites,
+  onNavigateToChatList
 }) => {
   const { t } = useLanguage();
 
@@ -41,6 +43,7 @@ const FavoritesPage: React.FC<FavoritesPageProps> = ({
         user={user}
         onLogout={onLogout}
         onNavigateToFavorites={onNavigateToFavorites}
+        onNavigateToChatList={onNavigateToChatList}
       />
       <main className="flex-grow">
         <div className="container mx-auto px-4 sm:px-6 py-8">

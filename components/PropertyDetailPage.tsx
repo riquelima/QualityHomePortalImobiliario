@@ -22,6 +22,8 @@ interface PropertyDetailPageProps {
   isFavorite: boolean;
   onToggleFavorite: (id: number) => void;
   onNavigateToFavorites: () => void;
+  onStartChat: (property: Property) => void;
+  onNavigateToChatList: () => void;
 }
 
 const currencyConfig = {
@@ -39,7 +41,9 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({
   onLogout,
   isFavorite,
   onToggleFavorite,
-  onNavigateToFavorites
+  onNavigateToFavorites,
+  onStartChat,
+  onNavigateToChatList
 }) => {
   const { t, language } = useLanguage();
   const [selectedImage, setSelectedImage] = useState(property.images[0]);
@@ -60,6 +64,7 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({
         user={user}
         onLogout={onLogout}
         onNavigateToFavorites={onNavigateToFavorites}
+        onNavigateToChatList={onNavigateToChatList}
       />
       <main className="container mx-auto px-4 sm:px-6 py-8">
         {/* Breadcrumbs */}
@@ -186,6 +191,10 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({
       onClose={() => setIsContactModalOpen(false)}
       owner={property.owner}
       propertyTitle={property.title}
+      onStartChat={() => {
+        onStartChat(property);
+        setIsContactModalOpen(false);
+      }}
     />
     </>
   );

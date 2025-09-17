@@ -24,6 +24,7 @@ interface PublishJourneyPageProps {
   onLogout: () => void;
   onNavigateToFavorites: () => void;
   onAddProperty: (propertyData: Omit<Property, 'id' | 'images' | 'status'>) => void;
+  onNavigateToChatList: () => void;
 }
 
 // Define state shapes for props
@@ -535,7 +536,7 @@ const Step3Photos: React.FC<Step3PhotosProps> = ({ onBack, onFinish }) => {
 };
 
 
-const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPublishAdClick, onOpenLoginModal, user, onLogout, onNavigateToFavorites, onAddProperty }) => {
+const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPublishAdClick, onOpenLoginModal, user, onLogout, onNavigateToFavorites, onAddProperty, onNavigateToChatList }) => {
   const { t } = useLanguage();
   const [currentStep, setCurrentStep] = useState(1);
 
@@ -759,7 +760,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
   return (
     <>
       <div className="bg-brand-light-gray min-h-screen">
-        <Header onPublishAdClick={onPublishAdClick} onAccessClick={onOpenLoginModal} user={user} onLogout={onLogout} onNavigateToFavorites={onNavigateToFavorites} />
+        <Header onPublishAdClick={onPublishAdClick} onAccessClick={onOpenLoginModal} user={user} onLogout={onLogout} onNavigateToFavorites={onNavigateToFavorites} onNavigateToChatList={onNavigateToChatList} />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-10">
           <div className="max-w-4xl mx-auto mb-8">
               <div className="flex items-center text-xs sm:text-sm md:text-base">

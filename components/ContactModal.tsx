@@ -10,9 +10,10 @@ interface ContactModalProps {
   onClose: () => void;
   owner?: { name: string; phone: string };
   propertyTitle: string;
+  onStartChat: () => void;
 }
 
-const ContactModal: React.FC<ContactModalProps> = ({ isOpen, onClose, owner, propertyTitle }) => {
+const ContactModal: React.FC<ContactModalProps> = ({ isOpen, onClose, owner, propertyTitle, onStartChat }) => {
   const { t } = useLanguage();
 
   if (!isOpen || !owner) {
@@ -66,7 +67,7 @@ const ContactModal: React.FC<ContactModalProps> = ({ isOpen, onClose, owner, pro
             <span>{t('contactModal.whatsappButton')}</span>
           </a>
           <button
-            onClick={() => alert('Funcionalidade de chat em desenvolvimento.')}
+            onClick={onStartChat}
             className="w-full flex items-center justify-center bg-gray-200 text-brand-dark font-bold py-3 px-4 rounded-md hover:bg-gray-300 transition-colors duration-300"
           >
             <ChatIcon className="w-6 h-6 mr-3" />

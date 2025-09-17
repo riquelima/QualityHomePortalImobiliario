@@ -3,6 +3,7 @@ import { Property, PropertyStatus } from '../types';
 import PropertyCard from './PropertyCard';
 import { useLanguage } from '../contexts/LanguageContext';
 
+// FIX: Added email to each owner to align with the updated Property type for chat functionality.
 export const MOCK_PROPERTIES: Property[] = [
   {
     id: 1,
@@ -18,7 +19,7 @@ export const MOCK_PROPERTIES: Property[] = [
     status: PropertyStatus.New,
     lat: -13.010,
     lng: -38.533,
-    owner: { name: 'Carlos Andrade', phone: '5571988776655' }
+    owner: { name: 'Carlos Andrade', phone: '5571988776655', email: 'carlos.andrade@email.com' }
   },
   {
     id: 2,
@@ -33,7 +34,7 @@ export const MOCK_PROPERTIES: Property[] = [
     status: PropertyStatus.Updated,
     lat: -16.495,
     lng: -39.060,
-    owner: { name: 'Mariana Costa', phone: '5573999887766' }
+    owner: { name: 'Mariana Costa', phone: '5573999887766', email: 'mariana.costa@email.com' }
   },
   {
     id: 3,
@@ -47,7 +48,7 @@ export const MOCK_PROPERTIES: Property[] = [
     description: 'Esta cobertura duplex exclusiva no Corredor da Vitória oferece um estilo de vida de alto padrão. No primeiro piso, encontram-se as áreas sociais integradas e uma cozinha gourmet. O segundo piso conta com um terraço privativo com piscina e uma vista deslumbrante da Baía de Todos os Santos.',
     lat: -12.991,
     lng: -38.528,
-    owner: { name: 'Fernanda Lima', phone: '5571991234567' }
+    owner: { name: 'Fernanda Lima', phone: '5571991234567', email: 'fernanda.lima@email.com' }
   },
     {
     id: 4,
@@ -63,7 +64,7 @@ export const MOCK_PROPERTIES: Property[] = [
     status: PropertyStatus.New,
     lat: -12.561,
     lng: -41.390,
-    owner: { name: 'Ricardo Alves', phone: '5575988771122' }
+    owner: { name: 'Ricardo Alves', phone: '5575988771122', email: 'ricardo.alves@email.com' }
   },
   {
     id: 5,
@@ -77,7 +78,7 @@ export const MOCK_PROPERTIES: Property[] = [
     description: 'Este bangalô romântico é perfeito para casais, oferecendo uma vista espetacular para o mar da Praia da Concha. Com um design rústico-chique, possui uma varanda privativa com rede, uma pequena cozinha e um ambiente totalmente integrado à natureza. Ideal para quem busca um refúgio tranquilo e inspirador.',
     lat: -14.280,
     lng: -38.996,
-    owner: { name: 'Ana Pereira', phone: '5573999554433' }
+    owner: { name: 'Ana Pereira', phone: '5573999554433', email: 'ana.pereira@email.com' }
   },
   {
     id: 6,
@@ -92,14 +93,14 @@ export const MOCK_PROPERTIES: Property[] = [
     status: PropertyStatus.Updated,
     lat: -16.581,
     lng: -39.073,
-    owner: { name: 'Beatriz Monteiro', phone: '5573988771234' }
+    owner: { name: 'Beatriz Monteiro', phone: '5573988771234', email: 'beatriz.monteiro@email.com' }
   },
-  { id: 7, title: 'Apartamento na Pituba, 3 quartos', address: 'Rua Ceará, Pituba, Salvador, Bahia', price: 650000, bedrooms: 3, bathrooms: 2, area: 110, images: ['https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', 'https://images.pexels.com/photos/271816/pexels-photo-271816.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'], description: 'Amplo apartamento na Pituba, próximo a escolas, supermercados e tudo que sua família precisa. Possui 3 quartos, sendo uma suíte, e varanda.', lat: -12.999, lng: -38.455, owner: { name: 'João Santos', phone: '5571999998888' } },
-  { id: 8, title: 'Casa com piscina em Stella Maris', address: 'Alameda Praia de Guaratuba, Stella Maris, Salvador, Bahia', price: 1200000, bedrooms: 4, bathrooms: 4, area: 350, images: ['https://images.pexels.com/photos/189296/pexels-photo-189296.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', 'https://images.pexels.com/photos/221540/pexels-photo-221540.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'], description: 'Excelente casa em condomínio fechado em Stella Maris, com 4 suítes, piscina privativa e área gourmet. A poucos metros da praia.', videos: ['https://www.youtube.com/embed/z2w7-I0W_0g'], status: PropertyStatus.New, lat: -12.943, lng: -38.337, owner: { name: 'Maria Oliveira', phone: '5571988887777' } },
-  { id: 9, title: 'Apartamento 2 quartos no Rio Vermelho', address: 'Rua da Paciência, Rio Vermelho, Salvador, Bahia', price: 520000, bedrooms: 2, bathrooms: 2, area: 80, images: ['https://images.pexels.com/photos/276724/pexels-photo-276724.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', 'https://images.pexels.com/photos/1571459/pexels-photo-1571459.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'], description: 'Apartamento charmoso no coração do Rio Vermelho, o bairro mais boêmio de Salvador. Ideal para quem busca viver perto de bares, restaurantes e da vida cultural da cidade.', lat: -13.014, lng: -38.494, owner: { name: 'Pedro Souza', phone: '5571999887766' } },
-  { id: 10, title: 'Casa no Pelourinho para fins comerciais', address: 'Largo do Pelourinho, Pelourinho, Salvador, Bahia', price: 950000, bedrooms: 5, bathrooms: 3, area: 250, images: ['https://images.pexels.com/photos/161815/brazil-carnival-salvador-pelourinho-161815.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', 'https://images.pexels.com/photos/1560065/pexels-photo-1560065.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'], description: 'Casarão histórico no Pelourinho, perfeito para instalação de pousada, restaurante ou galeria de arte. Uma oportunidade única de investimento no centro histórico de Salvador.', lat: -12.971, lng: -38.509, owner: { name: 'Luiza Fernandes', phone: '5571988776655' } },
-  { id: 54, title: 'Casa em condomínio em SAJ', address: 'Rua do Cajueiro, Santo Antônio de Jesus, Bahia', price: 550000, bedrooms: 3, bathrooms: 3, area: 180, images: ['https://images.pexels.com/photos/210602/pexels-photo-210602.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', 'https://images.pexels.com/photos/2251247/pexels-photo-2251247.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'], description: 'Casa moderna em condomínio fechado com infraestrutura de lazer em Santo Antônio de Jesus.', lat: -12.960, lng: -39.255, owner: { name: 'José Almeida', phone: '5575999881122' } },
-  { id: 55, title: 'Terreno para loteamento em SAJ', address: 'Zona de Expansão Urbana, SAJ, Bahia', price: 2200000, bedrooms: 0, bathrooms: 0, area: 30000, images: ['https://images.pexels.com/photos/158826/field-corn-air-frisch-158826.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', 'https://images.pexels.com/photos/417054/pexels-photo-417054.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'], description: 'Grande área para desenvolvimento de loteamento residencial na zona de expansão de SAJ.', status: PropertyStatus.New, lat: -12.980, lng: -39.250, owner: { name: 'Construtora Sol Nascente', phone: '557536310000' } },
+  { id: 7, title: 'Apartamento na Pituba, 3 quartos', address: 'Rua Ceará, Pituba, Salvador, Bahia', price: 650000, bedrooms: 3, bathrooms: 2, area: 110, images: ['https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', 'https://images.pexels.com/photos/271816/pexels-photo-271816.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'], description: 'Amplo apartamento na Pituba, próximo a escolas, supermercados e tudo que sua família precisa. Possui 3 quartos, sendo uma suíte, e varanda.', lat: -12.999, lng: -38.455, owner: { name: 'João Santos', phone: '5571999998888', email: 'joao.santos@email.com' } },
+  { id: 8, title: 'Casa com piscina em Stella Maris', address: 'Alameda Praia de Guaratuba, Stella Maris, Salvador, Bahia', price: 1200000, bedrooms: 4, bathrooms: 4, area: 350, images: ['https://images.pexels.com/photos/189296/pexels-photo-189296.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', 'https://images.pexels.com/photos/221540/pexels-photo-221540.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'], description: 'Excelente casa em condomínio fechado em Stella Maris, com 4 suítes, piscina privativa e área gourmet. A poucos metros da praia.', videos: ['https://www.youtube.com/embed/z2w7-I0W_0g'], status: PropertyStatus.New, lat: -12.943, lng: -38.337, owner: { name: 'Maria Oliveira', phone: '5571988887777', email: 'maria.oliveira@email.com' } },
+  { id: 9, title: 'Apartamento 2 quartos no Rio Vermelho', address: 'Rua da Paciência, Rio Vermelho, Salvador, Bahia', price: 520000, bedrooms: 2, bathrooms: 2, area: 80, images: ['https://images.pexels.com/photos/276724/pexels-photo-276724.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', 'https://images.pexels.com/photos/1571459/pexels-photo-1571459.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'], description: 'Apartamento charmoso no coração do Rio Vermelho, o bairro mais boêmio de Salvador. Ideal para quem busca viver perto de bares, restaurantes e da vida cultural da cidade.', lat: -13.014, lng: -38.494, owner: { name: 'Pedro Souza', phone: '5571999887766', email: 'pedro.souza@email.com' } },
+  { id: 10, title: 'Casa no Pelourinho para fins comerciais', address: 'Largo do Pelourinho, Pelourinho, Salvador, Bahia', price: 950000, bedrooms: 5, bathrooms: 3, area: 250, images: ['https://images.pexels.com/photos/161815/brazil-carnival-salvador-pelourinho-161815.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', 'https://images.pexels.com/photos/1560065/pexels-photo-1560065.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'], description: 'Casarão histórico no Pelourinho, perfeito para instalação de pousada, restaurante ou galeria de arte. Uma oportunidade única de investimento no centro histórico de Salvador.', lat: -12.971, lng: -38.509, owner: { name: 'Luiza Fernandes', phone: '5571988776655', email: 'luiza.fernandes@email.com' } },
+  { id: 54, title: 'Casa em condomínio em SAJ', address: 'Rua do Cajueiro, Santo Antônio de Jesus, Bahia', price: 550000, bedrooms: 3, bathrooms: 3, area: 180, images: ['https://images.pexels.com/photos/210602/pexels-photo-210602.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', 'https://images.pexels.com/photos/2251247/pexels-photo-2251247.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'], description: 'Casa moderna em condomínio fechado com infraestrutura de lazer em Santo Antônio de Jesus.', lat: -12.960, lng: -39.255, owner: { name: 'José Almeida', phone: '5575999881122', email: 'jose.almeida@email.com' } },
+  { id: 55, title: 'Terreno para loteamento em SAJ', address: 'Zona de Expansão Urbana, SAJ, Bahia', price: 2200000, bedrooms: 0, bathrooms: 0, area: 30000, images: ['https://images.pexels.com/photos/158826/field-corn-air-frisch-158826.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', 'https://images.pexels.com/photos/417054/pexels-photo-417054.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'], description: 'Grande área para desenvolvimento de loteamento residencial na zona de expansão de SAJ.', status: PropertyStatus.New, lat: -12.980, lng: -39.250, owner: { name: 'Construtora Sol Nascente', phone: '557536310000', email: 'contato@solnascente.com' } },
 ];
 
 interface PropertyListingsProps {

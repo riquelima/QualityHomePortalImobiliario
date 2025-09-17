@@ -316,6 +316,19 @@ const ptTranslations = {
     "chatButton": "Conversar pelo chat",
     "whatsappMessage": "Olá, vi este imóvel no Quality Home Portal e gostaria de mais informações. Título do anúncio: {title}"
   },
+  "chatList": {
+    "title": "Minhas Conversas",
+    "breadcrumb": "Chat",
+    "noChats": {
+      "title": "Você ainda não tem conversas",
+      "description": "Inicie uma conversa a partir da página de detalhes de um imóvel."
+    }
+  },
+  "chatPage": {
+    "title": "Conversa sobre: {title}",
+    "messagePlaceholder": "Digite sua mensagem...",
+    "sendButton": "Enviar"
+  },
   "footer": {
     "text": "Quality Home Portal Imobiliário. Todos os direitos reservados."
   }
@@ -634,6 +647,19 @@ const enTranslations = {
     "chatButton": "Chat via app",
     "whatsappMessage": "Hello, I saw this property on the Quality Home Portal and would like more information. Ad title: {title}"
   },
+  "chatList": {
+    "title": "My Chats",
+    "breadcrumb": "Chat",
+    "noChats": {
+      "title": "You have no chats yet",
+      "description": "Start a conversation from a property's detail page."
+    }
+  },
+  "chatPage": {
+    "title": "Chat about: {title}",
+    "messagePlaceholder": "Type your message...",
+    "sendButton": "Send"
+  },
   "footer": {
     "text": "Quality Home Real Estate Portal. All rights reserved."
   }
@@ -951,6 +977,19 @@ const esTranslations = {
     "whatsappButton": "Chatear por WhatsApp",
     "chatButton": "Chatear por el chat",
     "whatsappMessage": "Hola, vi este inmueble en el Portal Quality Home y me gustaría más información. Título del anuncio: {title}"
+  },
+  "chatList": {
+    "title": "Mis Chats",
+    "breadcrumb": "Chat",
+    "noChats": {
+      "title": "Aún no tienes conversaciones",
+      "description": "Inicia una conversación desde la página de detalles de un inmueble."
+    }
+  },
+  "chatPage": {
+    "title": "Chat sobre: {title}",
+    "messagePlaceholder": "Escribe tu mensaje...",
+    "sendButton": "Enviar"
   },
   "footer": {
     "text": "Quality Home Portal Inmobiliario. Todos los derechos reservados."

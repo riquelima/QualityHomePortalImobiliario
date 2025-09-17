@@ -13,15 +13,18 @@ import GeolocationErrorModal from './components/GeolocationErrorModal';
 import SearchResultsPage from './components/SearchResultsPage';
 import PropertyDetailPage from './components/PropertyDetailPage';
 import FavoritesPage from './components/FavoritesPage';
+import ChatListPage from './components/ChatListPage';
+import ChatPage from './components/ChatPage';
 import { useLanguage } from './contexts/LanguageContext';
-import type { User, Property } from './types';
+import type { User, Property, ChatSession, Message } from './types';
 import { PropertyStatus } from './types';
 
 interface PageState {
-  page: 'home' | 'map' | 'publish' | 'publish-journey' | 'searchResults' | 'propertyDetail' | 'favorites';
+  page: 'home' | 'map' | 'publish' | 'publish-journey' | 'searchResults' | 'propertyDetail' | 'favorites' | 'chatList' | 'chat';
   userLocation: { lat: number; lng: number } | null;
   searchQuery?: string;
   propertyId?: number;
+  chatSessionId?: string;
 }
 
 // Função para decodificar o JWT do Google de forma segura
@@ -41,7 +44,7 @@ function decodeJwt(token: string): any {
 }
 
 const App: React.FC = () => {
-  const [pageState, setPageState] = useState<PageState>({ page: 'home', userLocation: null, searchQuery: '' });
+  const [pageState, setPageState] = useState<PageState>({ page: 'home', userLocation: null });
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isGeoErrorModalOpen, setIsGeoErrorModalOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
@@ -49,14 +52,17 @@ const App: React.FC = () => {
   const [favorites, setFavorites] = useState<number[]>([]);
   const { t } = useLanguage();
   const [properties, setProperties] = useState<Property[]>(MOCK_PROPERTIES);
+  const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
 
-  const navigateHome = () => setPageState({ page: 'home', userLocation: null, searchQuery: '' });
-  const navigateToMap = (location: { lat: number; lng: number } | null = null) => setPageState({ page: 'map', userLocation: location, searchQuery: '' });
-  const navigateToPublish = () => setPageState({ page: 'publish', userLocation: null, searchQuery: '' });
-  const navigateToPublishJourney = () => setPageState({ page: 'publish-journey', userLocation: null, searchQuery: '' });
+  const navigateHome = () => setPageState({ page: 'home', userLocation: null });
+  const navigateToMap = (location: { lat: number; lng: number } | null = null) => setPageState({ page: 'map', userLocation: location });
+  const navigateToPublish = () => setPageState({ page: 'publish', userLocation: null });
+  const navigateToPublishJourney = () => setPageState({ page: 'publish-journey', userLocation: null });
   const navigateToSearchResults = (query: string) => setPageState({ page: 'searchResults', userLocation: null, searchQuery: query });
-  const navigateToPropertyDetail = (id: number) => setPageState({ page: 'propertyDetail', propertyId: id, userLocation: null, searchQuery: '' });
-  const navigateToFavorites = () => setPageState({ page: 'favorites', userLocation: null, searchQuery: '' });
+  const navigateToPropertyDetail = (id: number) => setPageState({ page: 'propertyDetail', propertyId: id, userLocation: null });
+  const navigateToFavorites = () => setPageState({ page: 'favorites', userLocation: null });
+  const navigateToChatList = () => setPageState({ page: 'chatList', userLocation: null });
+  const navigateToChat = (sessionId: string) => setPageState({ page: 'chat', chatSessionId: sessionId, userLocation: null });
   
   const openLoginModal = (intent: 'default' | 'publish' = 'default') => {
     setLoginIntent(intent);
@@ -86,6 +92,7 @@ const App: React.FC = () => {
   const handleLogout = () => {
     setUser(null);
     setFavorites([]); // Limpa os favoritos ao deslogar
+    setChatSessions([]); // Limpa os chats ao deslogar
   };
 
   const toggleFavorite = (propertyId: number) => {
@@ -111,6 +118,51 @@ const App: React.FC = () => {
     alert(t('publishJourney.adPublishedSuccess'));
     navigateHome();
   };
+  
+  const handleStartChat = (property: Property) => {
+    if (!user || !property.owner) {
+      openLoginModal();
+      return;
+    }
+    const participants = [user.email, property.owner.email].sort();
+    const sessionId = `${property.id}-${participants[0]}-${participants[1]}`;
+    const existingSession = chatSessions.find(s => s.sessionId === sessionId);
+
+    if (existingSession) {
+      navigateToChat(sessionId);
+    } else {
+      const newSession: ChatSession = {
+        sessionId,
+        propertyId: property.id,
+        participants: {
+          [user.email]: user.name,
+          [property.owner.email]: property.owner.name,
+        },
+        messages: [],
+      };
+      setChatSessions(prev => [...prev, newSession]);
+      navigateToChat(sessionId);
+    }
+  };
+
+  const handleSendMessage = (sessionId: string, text: string) => {
+    if (!user || !text.trim()) return;
+
+    const newMessage: Message = {
+      id: `${Date.now()}-${Math.random()}`,
+      senderId: user.email,
+      text: text.trim(),
+      timestamp: new Date(),
+    };
+
+    setChatSessions(prevSessions =>
+      prevSessions.map(session =>
+        session.sessionId === sessionId
+          ? { ...session, messages: [...session.messages, newMessage] }
+          : session
+      )
+    );
+  };
 
 
   const renderCurrentPage = () => {
@@ -133,6 +185,7 @@ const App: React.FC = () => {
                   user={user}
                   onLogout={handleLogout}
                   onNavigateToFavorites={navigateToFavorites}
+                  onNavigateToChatList={navigateToChatList}
                />;
       case 'publish-journey':
         return <PublishJourneyPage
@@ -143,6 +196,7 @@ const App: React.FC = () => {
                   onLogout={handleLogout}
                   onNavigateToFavorites={navigateToFavorites}
                   onAddProperty={handleAddProperty}
+                  onNavigateToChatList={navigateToChatList}
                 />;
       case 'searchResults':
         const query = pageState.searchQuery?.toLowerCase() ?? '';
@@ -163,6 +217,7 @@ const App: React.FC = () => {
           favorites={favorites}
           onToggleFavorite={toggleFavorite}
           onNavigateToFavorites={navigateToFavorites}
+          onNavigateToChatList={navigateToChatList}
         />;
       case 'propertyDetail':
         const property = properties.find(p => p.id === pageState.propertyId);
@@ -180,6 +235,8 @@ const App: React.FC = () => {
                   isFavorite={favorites.includes(property.id)}
                   onToggleFavorite={toggleFavorite}
                   onNavigateToFavorites={navigateToFavorites}
+                  onStartChat={handleStartChat}
+                  onNavigateToChatList={navigateToChatList}
                 />;
       case 'favorites':
           const favoriteProperties = properties.filter(p => favorites.includes(p.id));
@@ -194,12 +251,44 @@ const App: React.FC = () => {
             favorites={favorites}
             onToggleFavorite={toggleFavorite}
             onNavigateToFavorites={navigateToFavorites}
+            onNavigateToChatList={navigateToChatList}
           />;
+      case 'chatList':
+        if (!user) {
+          navigateHome();
+          return null;
+        }
+        return <ChatListPage
+                  onBack={navigateHome}
+                  user={user}
+                  onLogout={handleLogout}
+                  onPublishAdClick={navigateToPublish}
+                  onAccessClick={() => openLoginModal('default')}
+                  onNavigateToFavorites={navigateToFavorites}
+                  onNavigateToChatList={navigateToChatList}
+                  chatSessions={chatSessions.filter(s => Object.keys(s.participants).includes(user.email))}
+                  properties={properties}
+                  onNavigateToChat={navigateToChat}
+               />;
+      case 'chat':
+        const session = chatSessions.find(s => s.sessionId === pageState.chatSessionId);
+        const propertyForChat = properties.find(p => p.id === session?.propertyId);
+        if (!session || !user || !propertyForChat) {
+          navigateHome();
+          return null;
+        }
+        return <ChatPage
+                  onBack={navigateToChatList}
+                  user={user}
+                  session={session}
+                  property={propertyForChat}
+                  onSendMessage={handleSendMessage}
+               />;
       case 'home':
       default:
         return (
           <div className="bg-white font-sans text-brand-dark">
-            <Header onPublishAdClick={navigateToPublish} onAccessClick={() => openLoginModal('default')} user={user} onLogout={handleLogout} onNavigateToFavorites={navigateToFavorites} />
+            <Header onPublishAdClick={navigateToPublish} onAccessClick={() => openLoginModal('default')} user={user} onLogout={handleLogout} onNavigateToFavorites={navigateToFavorites} onNavigateToChatList={navigateToChatList} />
             <main>
               <Hero 
                 onDrawOnMapClick={() => navigateToMap()} 
