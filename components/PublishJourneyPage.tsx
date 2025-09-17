@@ -843,7 +843,6 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
             taxa_condominio: parseInt(details.condoFee, 10) || 0,
         };
 
-        // 1. Insert property data
         const { data: insertedProperty, error: propertyError } = await supabase
             .from('imoveis')
             .insert([newPropertyData])
@@ -856,13 +855,12 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
             return;
         }
 
-        // 2. Upload files if any
         let uploadedMedia: { url: string; tipo: 'imagem' | 'video' }[] = [];
         if (files.length > 0) {
             const uploadPromises = files.map(async (file) => {
                 const fileExt = file.name.split('.').pop();
-                const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
-                const filePath = `public/${user.id}/${insertedProperty.id}/${fileName}`;
+                const fileName = `${crypto.randomUUID()}.${fileExt}`;
+                const filePath = `public/${user.id}/${fileName}`;
 
                 const { error: uploadError } = await supabase.storage
                     .from('midia')
@@ -894,7 +892,6 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
             }
         }
 
-        // 3. Adapt data and update UI
         const finalPropertyData = { ...insertedProperty, midias_imovel: uploadedMedia };
         const frontendProperty: Property = {
             id: finalPropertyData.id,
