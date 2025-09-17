@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Header from './Header';
 import { useLanguage } from '../contexts/LanguageContext';
-import type { User } from '../types';
+import type { User, Property } from '../types';
 import BoltIcon from './icons/BoltIcon';
 import BriefcaseIcon from './icons/BriefcaseIcon';
 import LocationConfirmationModal from './LocationConfirmationModal';
@@ -23,12 +23,14 @@ interface PublishJourneyPageProps {
   user: User | null;
   onLogout: () => void;
   onNavigateToFavorites: () => void;
+  onAddProperty: (propertyData: Omit<Property, 'id' | 'images' | 'status'>) => void;
 }
 
 // Define state shapes for props
 interface AddressState { city: string; street: string; number: string; }
 interface ContactInfoState { phone: string; preference: string; }
 interface DetailsState {
+    title: string;
     propertyType: string[];
     condition: string;
     grossArea: string;
@@ -264,6 +266,26 @@ const Step2Details: React.FC<Step2DetailsProps> = ({
             <h2 className="text-base sm:text-lg font-bold text-brand-navy mb-4">{t('publishJourney.detailsForm.title')}</h2>
             
             <form className="space-y-8" onSubmit={handleContinueToPhotos}>
+
+                 {/* Título do Anúncio */}
+                <div className="space-y-6 border-b pb-8">
+                     <h3 className="text-lg sm:text-xl font-bold text-brand-dark">{t('publishJourney.detailsForm.adTitle')}</h3>
+                     <div>
+                        <label htmlFor="title" className="sr-only">{t('publishJourney.detailsForm.adTitle')}</label>
+                        <input 
+                            type="text" 
+                            id="title" 
+                            name="title" 
+                            value={details.title} 
+                            onChange={handleDetailsChange}
+                            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red"
+                            placeholder={t('publishJourney.detailsForm.adTitlePlaceholder')}
+                            required
+                        />
+                    </div>
+                </div>
+
+
                 {/* Características do apartamento */}
                 <div className="space-y-6 border-b pb-8">
                     <h3 className="text-lg sm:text-xl font-bold text-brand-dark">{t('publishJourney.detailsForm.apartmentCharacteristics')}</h3>
@@ -513,7 +535,7 @@ const Step3Photos: React.FC<Step3PhotosProps> = ({ onBack, onFinish }) => {
 };
 
 
-const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPublishAdClick, onOpenLoginModal, user, onLogout, onNavigateToFavorites }) => {
+const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPublishAdClick, onOpenLoginModal, user, onLogout, onNavigateToFavorites, onAddProperty }) => {
   const { t } = useLanguage();
   const [currentStep, setCurrentStep] = useState(1);
 
@@ -531,6 +553,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
 
   // Step 2 State
   const [details, setDetails] = useState<DetailsState>({
+    title: '',
     propertyType: [] as string[],
     condition: '',
     grossArea: '',
@@ -661,6 +684,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
   };
 
   const handleConfirmLocation = async (coords: { lat: number; lng: number }) => {
+    setInitialCoords(coords);
     setIsLocationModalOpen(false);
     const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${coords.lat}&lon=${coords.lng}&addressdetails=1`;
     try {
@@ -698,12 +722,32 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
   
   const handleContinueToPhotos = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!details.title.trim()) {
+        alert("Por favor, preencha o título do anúncio.");
+        return;
+    }
     setCurrentStep(3);
   }
 
   const handleFinish = () => {
-    alert("Anúncio publicado com sucesso!");
-    onBack();
+    if (!details.title.trim()) {
+      alert("Erro: O título do anúncio é obrigatório.");
+      setCurrentStep(2);
+      return;
+    }
+     const newPropertyData = {
+        title: details.title,
+        address: verifiedAddress,
+        price: parseInt(details.price, 10) || 0,
+        bedrooms: details.bedrooms,
+        bathrooms: details.bathrooms,
+        area: parseInt(details.grossArea, 10) || 0,
+        description: details.description,
+        videos: [], // Placeholder for now
+        lat: initialCoords?.lat ?? 0,
+        lng: initialCoords?.lng ?? 0,
+     };
+     onAddProperty(newPropertyData);
   }
 
   const getStepClass = (stepNumber: number) => {

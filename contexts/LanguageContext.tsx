@@ -145,6 +145,7 @@ const ptTranslations = {
       "step3": "3. Fotos"
     },
     "title": "Publicar o seu anúncio de particular",
+    "adPublishedSuccess": "Anúncio publicado com sucesso!",
     "form": {
       "propertyType": {
         "label": "Escolha o tipo de imóvel"
@@ -189,6 +190,8 @@ const ptTranslations = {
     },
     "detailsForm": {
       "title": "Aproveita, este anúncio é grátis ;-)",
+      "adTitle": "Título do anúncio",
+      "adTitlePlaceholder": "Ex: Apartamento incrível com vista mar na Barra",
       "apartmentCharacteristics": "Características do apartamento",
       "propertyType": "Tipo de apartamento (opcional)",
       "apartment": "Apartamento",
@@ -452,6 +455,7 @@ const enTranslations = {
       "step3": "3. Photos"
     },
     "title": "Publish your private ad",
+    "adPublishedSuccess": "Ad published successfully!",
     "form": {
       "propertyType": {
         "label": "Choose the property type"
@@ -496,6 +500,8 @@ const enTranslations = {
     },
      "detailsForm": {
       "title": "Take advantage, this ad is free ;-)",
+      "adTitle": "Ad Title",
+      "adTitlePlaceholder": "e.g., Amazing apartment with sea view in Barra",
       "apartmentCharacteristics": "Apartment characteristics",
       "propertyType": "Type of apartment (optional)",
       "apartment": "Apartment",
@@ -759,6 +765,7 @@ const esTranslations = {
       "step3": "3. Fotos"
     },
     "title": "Publicar tu anuncio de particular",
+    "adPublishedSuccess": "¡Anuncio publicado con éxito!",
     "form": {
       "propertyType": {
         "label": "Elige el tipo de inmueble"
@@ -803,6 +810,8 @@ const esTranslations = {
     },
      "detailsForm": {
       "title": "Aprovecha, este anuncio es gratis ;-)",
+      "adTitle": "Título del anuncio",
+      "adTitlePlaceholder": "Ej: Increíble apartamento con vistas al mar en Barra",
       "apartmentCharacteristics": "Características del apartamento",
       "propertyType": "Tipo de apartamento (opcional)",
       "apartment": "Apartamento",

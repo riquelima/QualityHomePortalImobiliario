@@ -3,7 +3,8 @@ import React, { useState } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import InfoSection from './components/InfoSection';
-import PropertyListings, { MOCK_PROPERTIES } from './components/PropertyListings';
+import PropertyListings from './components/PropertyListings';
+import { MOCK_PROPERTIES } from './components/PropertyListings';
 import MapDrawPage from './components/MapDrawPage';
 import PublishAdPage from './components/PublishAdPage';
 import PublishJourneyPage from './components/PublishJourneyPage';
@@ -13,7 +14,8 @@ import SearchResultsPage from './components/SearchResultsPage';
 import PropertyDetailPage from './components/PropertyDetailPage';
 import FavoritesPage from './components/FavoritesPage';
 import { useLanguage } from './contexts/LanguageContext';
-import type { User } from './types';
+import type { User, Property } from './types';
+import { PropertyStatus } from './types';
 
 interface PageState {
   page: 'home' | 'map' | 'publish' | 'publish-journey' | 'searchResults' | 'propertyDetail' | 'favorites';
@@ -46,6 +48,7 @@ const App: React.FC = () => {
   const [loginIntent, setLoginIntent] = useState<'default' | 'publish'>('default');
   const [favorites, setFavorites] = useState<number[]>([]);
   const { t } = useLanguage();
+  const [properties, setProperties] = useState<Property[]>(MOCK_PROPERTIES);
 
   const navigateHome = () => setPageState({ page: 'home', userLocation: null, searchQuery: '' });
   const navigateToMap = (location: { lat: number; lng: number } | null = null) => setPageState({ page: 'map', userLocation: location, searchQuery: '' });
@@ -97,6 +100,18 @@ const App: React.FC = () => {
     );
   };
 
+  const handleAddProperty = (newPropertyData: Omit<Property, 'id' | 'images' | 'status'>) => {
+    const newProperty: Property = {
+      ...newPropertyData,
+      id: properties.length + 1, // Simple ID generation
+      images: ['https://picsum.photos/seed/newprop' + (properties.length + 1) + '/800/600', 'https://picsum.photos/seed/newprop' + (properties.length + 2) + '/800/600'], // Placeholder image
+      status: PropertyStatus.New,
+    };
+    setProperties(prev => [newProperty, ...prev]);
+    alert(t('publishJourney.adPublishedSuccess'));
+    navigateHome();
+  };
+
 
   const renderCurrentPage = () => {
     switch (pageState.page) {
@@ -107,6 +122,7 @@ const App: React.FC = () => {
                   onViewDetails={navigateToPropertyDetail}
                   favorites={favorites}
                   onToggleFavorite={toggleFavorite}
+                  properties={properties}
                />;
       case 'publish':
         return <PublishAdPage 
@@ -126,11 +142,12 @@ const App: React.FC = () => {
                   user={user}
                   onLogout={handleLogout}
                   onNavigateToFavorites={navigateToFavorites}
+                  onAddProperty={handleAddProperty}
                 />;
       case 'searchResults':
         const query = pageState.searchQuery?.toLowerCase() ?? '';
         const filteredProperties = query
-          ? MOCK_PROPERTIES.filter(p =>
+          ? properties.filter(p =>
             p.title.toLowerCase().includes(query) || p.address.toLowerCase().includes(query)
           )
           : [];
@@ -147,7 +164,7 @@ const App: React.FC = () => {
           onToggleFavorite={toggleFavorite}
         />;
       case 'propertyDetail':
-        const property = MOCK_PROPERTIES.find(p => p.id === pageState.propertyId);
+        const property = properties.find(p => p.id === pageState.propertyId);
         if (!property) {
           navigateHome();
           return null;
@@ -163,7 +180,7 @@ const App: React.FC = () => {
                   onToggleFavorite={toggleFavorite}
                 />;
       case 'favorites':
-          const favoriteProperties = MOCK_PROPERTIES.filter(p => favorites.includes(p.id));
+          const favoriteProperties = properties.filter(p => favorites.includes(p.id));
           return <FavoritesPage
             onBack={navigateHome}
             properties={favoriteProperties}
@@ -193,6 +210,7 @@ const App: React.FC = () => {
                 onPublishAdClick={navigateToPublish}
               />
               <PropertyListings 
+                properties={properties}
                 onViewDetails={navigateToPropertyDetail} 
                 favorites={favorites}
                 onToggleFavorite={toggleFavorite}

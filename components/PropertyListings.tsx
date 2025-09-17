@@ -142,12 +142,13 @@ export const MOCK_PROPERTIES: Property[] = [
 ];
 
 interface PropertyListingsProps {
+  properties: Property[];
   onViewDetails: (id: number) => void;
   favorites: number[];
   onToggleFavorite: (id: number) => void;
 }
 
-const PropertyListings: React.FC<PropertyListingsProps> = ({ onViewDetails, favorites, onToggleFavorite }) => {
+const PropertyListings: React.FC<PropertyListingsProps> = ({ properties, onViewDetails, favorites, onToggleFavorite }) => {
   const { t } = useLanguage();
 
   return (
@@ -158,7 +159,7 @@ const PropertyListings: React.FC<PropertyListingsProps> = ({ onViewDetails, favo
           {t('listings.description')}
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-          {MOCK_PROPERTIES.map((property) => (
+          {properties.map((property) => (
             <PropertyCard 
               key={property.id} 
               property={property} 

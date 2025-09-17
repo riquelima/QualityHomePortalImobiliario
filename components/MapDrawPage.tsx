@@ -3,7 +3,6 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, CircleMarker } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet-draw';
-import { MOCK_PROPERTIES } from './PropertyListings';
 import type { Property } from '../types';
 import PropertyCard from './PropertyCard';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -16,6 +15,7 @@ interface MapDrawPageProps {
   onViewDetails: (id: number) => void;
   favorites: number[];
   onToggleFavorite: (id: number) => void;
+  properties: Property[];
 }
 
 // Interface for properties with a calculated distance for sorting
@@ -26,8 +26,9 @@ interface PropertyWithDistance extends Property {
 // Componente para atualizar a visão do mapa e limpar camadas
 const MapUpdater: React.FC<{ 
   userLocation: { lat: number, lng: number } | null, 
-  onPropertiesFound: (props: PropertyWithDistance[]) => void 
-}> = ({ userLocation, onPropertiesFound }) => {
+  onPropertiesFound: (props: PropertyWithDistance[]) => void,
+  properties: Property[],
+}> = ({ userLocation, onPropertiesFound, properties }) => {
   const map = useMap();
   const { t } = useLanguage();
 
@@ -38,7 +39,7 @@ const MapUpdater: React.FC<{
       map.setView([userLocation.lat, userLocation.lng], 14);
       const searchRadius = 5000; // 5km
       const userLatLng = L.latLng(userLocation.lat, userLocation.lng);
-      const foundProperties: PropertyWithDistance[] = MOCK_PROPERTIES
+      const foundProperties: PropertyWithDistance[] = properties
         .map(prop => ({ ...prop, distance: userLatLng.distanceTo(L.latLng(prop.lat, prop.lng)) }))
         .filter(prop => prop.distance <= searchRadius)
         .sort((a, b) => a.distance - b.distance);
@@ -47,7 +48,7 @@ const MapUpdater: React.FC<{
       map.setView([-12.9777, -38.5016], 13);
       onPropertiesFound([]);
     }
-  }, [userLocation, map, onPropertiesFound, t]);
+  }, [userLocation, map, onPropertiesFound, t, properties]);
 
   return null;
 };
@@ -125,7 +126,7 @@ const DrawingManager: React.FC<{
 };
 
 
-const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewDetails, favorites, onToggleFavorite }) => {
+const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewDetails, favorites, onToggleFavorite, properties }) => {
   const [propertiesInZone, setPropertiesInZone] = useState<PropertyWithDistance[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { t } = useLanguage();
@@ -142,7 +143,7 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewD
         const drawnLatLng = layer.getLatLng();
         const drawnRadius = layer.getRadius();
 
-        const foundProperties = MOCK_PROPERTIES.filter(prop => {
+        const foundProperties = properties.filter(prop => {
             const propLatLng = L.latLng(prop.lat, prop.lng);
             const distance = drawnLatLng.distanceTo(propLatLng);
             return distance <= drawnRadius;
@@ -159,7 +160,7 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewD
     } else {
         setDrawingState('idle');
     }
-  }, []);
+  }, [properties]);
 
   const handleClearDrawing = useCallback(() => {
       if(featureGroupRef.current) {
@@ -190,7 +191,7 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewD
           url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         />
         
-        <MapUpdater userLocation={userLocation} onPropertiesFound={handlePropertiesFound} />
+        <MapUpdater userLocation={userLocation} onPropertiesFound={handlePropertiesFound} properties={properties} />
         
         {!userLocation && (
           <DrawingManager
@@ -201,7 +202,7 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewD
           />
         )}
         
-        {propertiesInZone.map(prop => (
+        {properties.map(prop => (
           <Marker key={prop.id} position={[prop.lat, prop.lng]}>
             <Popup>
               <b>{prop.title}</b><br/>{prop.address}
