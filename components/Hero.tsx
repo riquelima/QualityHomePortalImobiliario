@@ -27,13 +27,18 @@ const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe, onGeoloca
 
   // Efeito para gerar título dinâmico com a IA do Gemini
   useEffect(() => {
-    // Atualiza o título padrão quando o idioma muda
+    let isCancelled = false;
+
+    // Redefine o estado para cada execução do efeito
     setHeroTitle(t('hero.defaultTitle'));
+    setIsLoadingTitle(true);
 
     const generateTitle = async () => {
       if (!process.env.API_KEY) {
         console.error("API Key for Gemini is not configured.");
-        setIsLoadingTitle(false);
+        if (!isCancelled) {
+          setIsLoadingTitle(false);
+        }
         return;
       }
 
@@ -46,19 +51,30 @@ const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe, onGeoloca
           contents: prompt,
         });
 
+        if (isCancelled) return;
+
         const text = response.text.trim();
         if (text) {
           setHeroTitle(text.replace(/["']/g, ""));
         }
       } catch (error) {
-        console.error("Erro ao gerar título com a IA:", error);
+        if (!isCancelled) {
+          console.error("Erro ao gerar título com a IA:", error);
+        }
       } finally {
-        setIsLoadingTitle(false);
+        if (!isCancelled) {
+          setIsLoadingTitle(false);
+        }
       }
     };
 
     generateTitle();
-  }, [t, language]); // Re-executa quando o idioma muda
+
+    // Função de limpeza para cancelar a solicitação se o componente for desmontado ou o efeito re-executar
+    return () => {
+      isCancelled = true;
+    };
+  }, [t, language]); // Re-executa quando o idioma ou a função de tradução mudam
 
 
   useEffect(() => {
