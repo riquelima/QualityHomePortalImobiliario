@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 
@@ -15,7 +14,7 @@ const InfoSection: React.FC<InfoSectionProps> = ({ onDrawOnMapClick, onPublishAd
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
           {/* Card 1: Desenhar zona */}
           <div className="bg-white p-6 rounded-lg border border-gray-200 flex items-center space-x-4 sm:space-x-6">
-            <img src="https://picsum.photos/seed/map/100/100" alt="Map illustration" className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover flex-shrink-0"/>
+            <img src="https://cdn-icons-png.flaticon.com/512/0/581.png" alt="Map illustration" className="w-20 h-20 sm:w-24 sm:h-24 object-contain flex-shrink-0"/>
             <div>
               <h3 className="text-lg sm:text-xl font-bold text-brand-navy mb-2">{t('infoSection.draw.title')}</h3>
               <p className="text-brand-gray mb-4 text-sm sm:text-base">{t('infoSection.draw.description')}</p>
@@ -30,7 +29,7 @@ const InfoSection: React.FC<InfoSectionProps> = ({ onDrawOnMapClick, onPublishAd
 
           {/* Card 2: Publicar imóvel */}
           <div className="bg-white p-6 rounded-lg border border-gray-200 flex items-center space-x-4 sm:space-x-6">
-            <img src="https://picsum.photos/seed/phone/100/100" alt="Phone illustration" className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover flex-shrink-0"/>
+            <img src="https://cdn-icons-png.flaticon.com/512/5455/5455731.png" alt="Phone illustration" className="w-20 h-20 sm:w-24 sm:h-24 object-contain flex-shrink-0"/>
             <div>
               <h3 className="text-lg sm:text-xl font-bold text-brand-navy mb-2">{t('infoSection.publish.title')}</h3>
               <p className="text-brand-gray mb-4 text-sm sm:text-base">{t('infoSection.publish.description')}</p>
