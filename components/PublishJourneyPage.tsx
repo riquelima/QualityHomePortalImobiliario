@@ -624,6 +624,10 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
   // Step 3 State
   const [files, setFiles] = useState<File[]>([]);
   const [isPublishing, setIsPublishing] = useState(false);
+  
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [currentStep]);
 
   const handleDetailsChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -791,66 +795,23 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
     }
 
     setIsPublishing(true);
+    let insertedPropertyId: number | null = null;
+    const uploadedFilePaths: string[] = [];
 
     try {
-        // Step 1: Ensure user profile exists and update it
-        const { data: userProfile, error: profileError } = await supabase
+        // Step 1: Update user profile with name and phone from the form
+        const { error: updateError } = await supabase
             .from('perfis')
-            .select('id')
-            .eq('id', user.id)
-            .single();
-
-        if (profileError && profileError.code !== 'PGRST116') {
-             throw new Error(`Erro ao verificar perfil: ${profileError.message}`);
-        }
-        if (!userProfile) {
-            const { error: insertError } = await supabase.from('perfis').insert({
-                id: user.id,
+            .update({ 
                 nome_completo: contactInfo.name,
-                url_foto_perfil: user.user_metadata.avatar_url,
-                telefone: contactInfo.phone,
-            });
-            if (insertError) throw new Error(`Erro ao criar perfil: ${insertError.message}`);
-        } else {
-            // Profile exists, update it with new name and phone
-            const { error: updateError } = await supabase
-                .from('perfis')
-                .update({ 
-                    nome_completo: contactInfo.name,
-                    telefone: contactInfo.phone 
-                })
-                .eq('id', user.id);
-            if (updateError) {
-                // Don't throw, just log, as it might not be critical
-                console.error("Erro ao atualizar perfil:", updateError.message);
-            }
-        }
-        
-        // Step 2: Upload media to Cloudinary if any
-        let uploadedMedia: { url: string; tipo: 'imagem' | 'video' }[] = [];
-        if (files.length > 0) {
-            const CLOUDINARY_CLOUD_NAME = "dpmviwctq"; 
-            const CLOUDINARY_UPLOAD_PRESET = "quallityhome"; 
-            
-            const uploadPromises = files.map(async file => {
-                const formData = new FormData();
-                formData.append('file', file);
-                formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-                const resourceType = file.type.startsWith('video') ? 'video' : 'image';
-                const url = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`;
-                
-                const response = await fetch(url, { method: 'POST', body: formData });
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(`Erro no upload do Cloudinary: ${errorData.error.message}`);
-                }
-                const data = await response.json();
-                return { url: data.secure_url, tipo: resourceType as 'imagem' | 'video' };
-            });
-            uploadedMedia = await Promise.all(uploadPromises);
+                telefone: contactInfo.phone 
+            })
+            .eq('id', user.id);
+        if (updateError) {
+            console.warn("Aviso: Não foi possível atualizar o perfil do usuário:", updateError.message);
         }
 
-        // Step 3: Insert property data into Supabase
+        // Step 2: Insert property data to get an ID for storage organization.
         const newPropertyData = {
             anunciante_id: user.id,
             titulo: details.title,
@@ -878,16 +839,53 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
         const { data: insertedProperty, error: propertyError } = await supabase
             .from('imoveis')
             .insert([newPropertyData])
-            .select('*, owner:anunciante_id(*)')
+            .select('id')
             .single();
         
         if (propertyError) throw new Error(`Erro ao Inserir Imóvel: ${propertyError.message}`);
         if (!insertedProperty) throw new Error("Falha ao criar o imóvel.");
 
+        insertedPropertyId = insertedProperty.id;
+
+        // Step 3: Upload files to Supabase Storage
+        let uploadedMedia: { url: string; tipo: 'imagem' | 'video' }[] = [];
+        if (files.length > 0) {
+            const uploadPromises = files.map(async (file) => {
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
+                const filePath = `imoveis/${insertedPropertyId}/${fileName}`;
+                
+                const { error: uploadError } = await supabase.storage
+                    .from('imoveis-midias')
+                    .upload(filePath, file);
+
+                if (uploadError) {
+                    throw new Error(`Erro no upload para o Supabase Storage: ${uploadError.message}`);
+                }
+                
+                uploadedFilePaths.push(filePath);
+
+                const { data: publicUrlData } = supabase.storage
+                    .from('imoveis-midias')
+                    .getPublicUrl(filePath);
+
+                if (!publicUrlData) {
+                    throw new Error("Não foi possível obter a URL pública do arquivo.");
+                }
+
+                // FIX: Use 'imagem' for image types to match the database ENUM.
+                // FIX: Explicitly typing `resourceType` prevents TypeScript from widening it to a generic `string`, ensuring it matches the expected `'imagem' | 'video'` literal union type.
+                const resourceType: 'video' | 'imagem' = file.type.startsWith('video') ? 'video' : 'imagem';
+                
+                return { url: publicUrlData.publicUrl, tipo: resourceType };
+            });
+            uploadedMedia = await Promise.all(uploadPromises);
+        }
+
         // Step 4: Insert media URLs into Supabase `midias_imovel` table
         if (uploadedMedia.length > 0) {
             const mediaToInsert = uploadedMedia.map(media => ({
-                imovel_id: insertedProperty.id,
+                imovel_id: insertedPropertyId,
                 url: media.url,
                 tipo: media.tipo,
             }));
@@ -896,46 +894,51 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
             if (mediaError) throw new Error(`Erro ao Salvar Mídias: ${mediaError.message}`);
         }
         
-        // Final Step: Construct final property object for UI update
+        // Step 5: Fetch the complete property data to pass to the parent
+        const { data: finalProperty, error: fetchError } = await supabase
+            .from('imoveis')
+            .select('*, owner:anunciante_id(*), midias_imovel(*)')
+            .eq('id', insertedPropertyId)
+            .single();
+
+        if (fetchError || !finalProperty) {
+            throw new Error("Não foi possível buscar os dados do imóvel recém-criado.");
+        }
+
         const imagesForUI = uploadedMedia.filter(m => m.tipo === 'imagem').map(m => m.url);
-        
         if (imagesForUI.length === 0) {
             imagesForUI.push('https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1');
         }
 
-        const finalPropertyData = { 
-            ...insertedProperty, 
-            midias_imovel: uploadedMedia 
-        };
-
+        // The onAddProperty function re-fetches all data, but expects a property object.
         const frontendProperty: Property = {
-            id: finalPropertyData.id,
-            title: finalPropertyData.titulo,
-            address: finalPropertyData.endereco_completo,
-            price: finalPropertyData.preco,
-            description: finalPropertyData.descricao || '',
-            bedrooms: finalPropertyData.quartos,
-            bathrooms: finalPropertyData.banheiros,
-            area: finalPropertyData.area_bruta,
-            lat: finalPropertyData.latitude,
-            lng: finalPropertyData.longitude,
+            id: finalProperty.id,
+            title: finalProperty.titulo,
+            address: finalProperty.endereco_completo,
+            price: finalProperty.preco,
+            description: finalProperty.descricao || '',
+            bedrooms: finalProperty.quartos,
+            bathrooms: finalProperty.banheiros,
+            area: finalProperty.area_bruta,
+            lat: finalProperty.latitude,
+            lng: finalProperty.longitude,
             images: imagesForUI,
             videos: uploadedMedia.filter(m => m.tipo === 'video').map(m => m.url),
-            owner: finalPropertyData.owner,
-            anunciante_id: finalPropertyData.anunciante_id,
-            titulo: finalPropertyData.titulo,
-            descricao: finalPropertyData.descricao,
-            endereco_completo: finalPropertyData.endereco_completo,
-            latitude: finalPropertyData.latitude,
-            longitude: finalPropertyData.longitude,
-            preco: finalPropertyData.preco,
-            quartos: finalPropertyData.quartos,
-            banheiros: finalPropertyData.banheiros,
-            area_bruta: finalPropertyData.area_bruta,
-            midias_imovel: finalPropertyData.midias_imovel,
-            caracteristicas_imovel: finalPropertyData.caracteristicas_imovel,
-            caracteristicas_condominio: finalPropertyData.caracteristicas_condominio,
-            situacao_ocupacao: finalPropertyData.situacao_ocupacao,
+            owner: finalProperty.owner,
+            anunciante_id: finalProperty.anunciante_id,
+            titulo: finalProperty.titulo,
+            descricao: finalProperty.descricao,
+            endereco_completo: finalProperty.endereco_completo,
+            latitude: finalProperty.latitude,
+            longitude: finalProperty.longitude,
+            preco: finalProperty.preco,
+            quartos: finalProperty.quartos,
+            banheiros: finalProperty.banheiros,
+            area_bruta: finalProperty.area_bruta,
+            midias_imovel: finalProperty.midias_imovel,
+            caracteristicas_imovel: finalProperty.caracteristicas_imovel,
+            caracteristicas_condominio: finalProperty.caracteristicas_condominio,
+            situacao_ocupacao: finalProperty.situacao_ocupacao,
         };
         
         onAddProperty(frontendProperty);
@@ -944,10 +947,26 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
     } catch (error: any) {
         console.error("ERRO COMPLETO NA PUBLICAÇÃO:", error);
         alert(`Falha na publicação: ${error.message}`);
+
+        // ROLLBACK on failure
+        if (insertedPropertyId) {
+            console.log("Iniciando rollback...");
+            if (uploadedFilePaths.length > 0) {
+                const { error: deleteFilesError } = await supabase.storage
+                    .from('imoveis-midias')
+                    .remove(uploadedFilePaths);
+                if (deleteFilesError) console.error("Falha ao deletar arquivos no rollback:", deleteFilesError.message);
+            }
+            const { error: deletePropertyError } = await supabase
+                .from('imoveis')
+                .delete()
+                .eq('id', insertedPropertyId);
+            if (deletePropertyError) console.error("Falha ao deletar imóvel no rollback:", deletePropertyError.message);
+        }
     } finally {
         setIsPublishing(false);
     }
-}, [user, details, verifiedAddress, address, initialCoords, operation, files, onAddProperty, onOpenLoginModal, contactInfo.phone, contactInfo.name, onBack]);
+}, [user, details, verifiedAddress, address, initialCoords, operation, files, onAddProperty, onOpenLoginModal, onBack, contactInfo.name, contactInfo.phone]);
 
 
   const getStepClass = (stepNumber: number) => {
