@@ -29,6 +29,7 @@ interface HeaderProps {
   onLogout: () => void;
   onNavigateToFavorites: () => void;
   onNavigateToChatList: () => void;
+  onNavigateToMyAds: () => void;
 }
 
 // Helper function outside the component
@@ -37,7 +38,7 @@ const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
 }
 
-const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, profile, onLogout, onNavigateToFavorites, onNavigateToChatList }) => {
+const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, profile, onLogout, onNavigateToFavorites, onNavigateToChatList, onNavigateToMyAds }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
@@ -214,10 +215,10 @@ const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, 
                       </div>
                     </div>
                     <nav className="py-2">
-                      <a href="#" className="flex items-center px-4 py-2 text-sm text-brand-dark hover:bg-gray-100">
+                      <button onClick={(e) => { e.preventDefault(); onNavigateToMyAds(); setIsUserDropdownOpen(false); }} className="w-full text-left flex items-center px-4 py-2 text-sm text-brand-dark hover:bg-gray-100">
                           <AdsIcon className="w-5 h-5 mr-3 text-brand-gray" />
                           <span>{t('header.ads')}</span>
-                      </a>
+                      </button>
                       <a href="#" className="flex items-center px-4 py-2 text-sm text-brand-dark hover:bg-gray-100">
                           <BellIcon className="w-5 h-5 mr-3 text-brand-gray" />
                           <span>{t('header.savedSearches')}</span>

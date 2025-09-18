@@ -5,7 +5,6 @@ import Header from './components/Header';
 import Hero from './components/Hero';
 import InfoSection from './components/InfoSection';
 import PropertyListings from './components/PropertyListings';
-import { MOCK_PROPERTIES } from './components/PropertyListings';
 import MapDrawPage from './components/MapDrawPage';
 import PublishAdPage from './components/PublishAdPage';
 import PublishJourneyPage from './components/PublishJourneyPage';
@@ -16,12 +15,13 @@ import PropertyDetailPage from './components/PropertyDetailPage';
 import FavoritesPage from './components/FavoritesPage';
 import ChatListPage from './components/ChatListPage';
 import ChatPage from './components/ChatPage';
+import MyAdsPage from './components/MyAdsPage';
 import { useLanguage } from './contexts/LanguageContext';
 import { supabase } from './supabaseClient';
 import type { User, Property, ChatSession, Message, Profile } from './types';
 
 interface PageState {
-  page: 'home' | 'map' | 'publish' | 'publish-journey' | 'searchResults' | 'propertyDetail' | 'favorites' | 'chatList' | 'chat';
+  page: 'home' | 'map' | 'publish' | 'publish-journey' | 'searchResults' | 'propertyDetail' | 'favorites' | 'chatList' | 'chat' | 'myAds';
   userLocation: { lat: number; lng: number } | null;
   searchQuery?: string;
   propertyId?: number;
@@ -37,7 +37,8 @@ const App: React.FC = () => {
   const [loginIntent, setLoginIntent] = useState<'default' | 'publish'>('default');
   const [favorites, setFavorites] = useState<number[]>([]);
   const { t } = useLanguage();
-  const [properties, setProperties] = useState<Property[]>(MOCK_PROPERTIES);
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [myAds, setMyAds] = useState<Property[]>([]);
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
 
   // Adapt Supabase property data to legacy frontend Property type
@@ -51,7 +52,6 @@ const App: React.FC = () => {
       area: dbProperty.area_bruta,
       lat: dbProperty.latitude,
       lng: dbProperty.longitude,
-      // FIX: Map database fields `preco` and `descricao` to frontend fields `price` and `description`.
       price: dbProperty.preco,
       description: dbProperty.descricao,
       images: dbProperty.midias_imovel?.filter((m: any) => m.tipo === 'imagem').map((m: any) => m.url) || ['https://picsum.photos/seed/' + dbProperty.id + '/800/600'],
@@ -59,7 +59,7 @@ const App: React.FC = () => {
       owner: dbProperty.owner ? {
           ...dbProperty.owner,
           phone: dbProperty.owner.telefone,
-          email: 'user-not-exposed-for-privacy@email.com', // Don't expose owner email directly
+          email: 'user-not-exposed-for-privacy@email.com',
       } : undefined,
       caracteristicas_imovel: dbProperty.caracteristicas_imovel,
       caracteristicas_condominio: dbProperty.caracteristicas_condominio,
@@ -69,6 +69,20 @@ const App: React.FC = () => {
     };
   };
   
+  const fetchMyAds = useCallback(async (currentUser: User) => {
+    const { data, error } = await supabase
+        .from('imoveis')
+        .select('*, owner:anunciante_id(*), midias_imovel(*)')
+        .eq('anunciante_id', currentUser.id);
+    
+    if (error) {
+      console.error("Error fetching user's ads:", error);
+      setMyAds([]);
+    } else if (data) {
+        setMyAds(data.map(adaptSupabaseProperty));
+    }
+  }, []);
+
   const fetchAllData = useCallback(async (currentUser: User | null) => {
     // Fetch Properties
     const { data: propertiesData, error: propertiesError } = await supabase
@@ -76,13 +90,18 @@ const App: React.FC = () => {
       .select('*, owner:anunciante_id(*), midias_imovel(*)')
       .eq('status', 'ativo');
       
-    if (propertiesError) console.error('Error fetching properties:', propertiesError);
-    else {
+    if (propertiesError) {
+      console.error('Error fetching properties:', propertiesError);
+      setProperties([]);
+    } else {
       const adaptedProperties = propertiesData.map(adaptSupabaseProperty);
-      setProperties([...MOCK_PROPERTIES, ...adaptedProperties]);
+      setProperties(adaptedProperties);
     }
 
     if(currentUser) {
+      // Fetch user's ads
+      fetchMyAds(currentUser);
+
       // Fetch Favorites
       const { data: favoritesData, error: favoritesError } = await supabase
         .from('favoritos_usuario')
@@ -98,7 +117,6 @@ const App: React.FC = () => {
 
       if (chatError) console.error('Error fetching chat sessions:', chatError);
       else if (chatData) {
-        // Adapt data from RPC to frontend ChatSession type
         const adaptedSessions = chatData.map((s: any) => ({
             id: s.session_id,
             sessionId: s.session_id,
@@ -117,7 +135,7 @@ const App: React.FC = () => {
                 conteudo: m.conteudo,
                 data_envio: m.data_envio,
             })),
-            mensagens: s.messages, // Keep original for consistency
+            mensagens: s.messages,
             participantes: s.participants.reduce((acc: any, p: any) => {
                 acc[p.id] = { id: p.id, nome_completo: p.nome_completo };
                 return acc;
@@ -128,8 +146,9 @@ const App: React.FC = () => {
     } else {
       setFavorites([]);
       setChatSessions([]);
+      setMyAds([]);
     }
-  }, []);
+  }, [fetchMyAds]);
 
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -143,7 +162,7 @@ const App: React.FC = () => {
           .eq('id', currentUser.id)
           .single();
 
-        if (error && error.code === 'PGRST116') { // "Not a single row" - profile doesn't exist
+        if (error && error.code === 'PGRST116') {
           const { data: newProfile, error: insertError } = await supabase
             .from('perfis')
             .insert({
@@ -170,7 +189,6 @@ const App: React.FC = () => {
       }
     });
 
-    // Fetch initial data for non-logged-in users
     fetchAllData(null);
 
     return () => {
@@ -178,7 +196,6 @@ const App: React.FC = () => {
     };
   }, [loginIntent, fetchAllData]);
   
-  // Supabase Realtime for Chat
   useEffect(() => {
     const channel = supabase
       .channel('public:mensagens_chat')
@@ -226,7 +243,15 @@ const App: React.FC = () => {
   const navigateToFavorites = () => setPageState({ page: 'favorites', userLocation: null });
   const navigateToChatList = () => setPageState({ page: 'chatList', userLocation: null });
   const navigateToChat = (sessionId: string) => setPageState({ page: 'chat', chatSessionId: sessionId, userLocation: null });
-  
+  const navigateToMyAds = () => {
+    if (user) {
+      fetchMyAds(user);
+      setPageState({ page: 'myAds', userLocation: null });
+    } else {
+      openLoginModal();
+    }
+  };
+
   const openLoginModal = (intent: 'default' | 'publish' = 'default') => {
     setLoginIntent(intent);
     setIsLoginModalOpen(true);
@@ -259,16 +284,34 @@ const App: React.FC = () => {
 
   const handleAddProperty = useCallback((newProperty: Property) => {
     setProperties(prev => [newProperty, ...prev]);
+    if (user) fetchMyAds(user);
     alert(t('publishJourney.adPublishedSuccess'));
-  }, [t]);
+  }, [t, user, fetchMyAds]);
   
+  const handleDeactivateProperty = useCallback(async (propertyId: number) => {
+    const { error } = await supabase
+      .from('imoveis')
+      .update({ status: 'inativo' })
+      .eq('id', propertyId);
+
+    if (error) {
+      alert(t('myAdsPage.adDeletedError'));
+      console.error('Error deactivating property:', error);
+    } else {
+      alert(t('myAdsPage.adDeletedSuccess'));
+      if(user) {
+        fetchAllData(user);
+        fetchMyAds(user);
+      }
+    }
+  }, [user, fetchAllData, fetchMyAds, t]);
+
   const handleStartChat = async (property: Property) => {
     if (!user || !property.anunciante_id) {
       openLoginModal();
       return;
     }
     
-    // Find existing chat session
     const { data: existing, error: findError } = await supabase.rpc('find_chat_session', {
       p_imovel_id: property.id,
       user1_id: user.id,
@@ -283,7 +326,6 @@ const App: React.FC = () => {
     if (existing) {
         navigateToChat(existing);
     } else {
-        // Create new session
         const { data: newSession, error: createError } = await supabase.rpc('create_chat_session', {
             p_imovel_id: property.id,
             user1_id: user.id,
@@ -292,7 +334,6 @@ const App: React.FC = () => {
         if (createError) {
             console.error("Error creating chat session:", createError);
         } else if (newSession) {
-            // Refetch sessions to get the new one correctly formatted
             fetchAllData(user);
             navigateToChat(newSession);
         }
@@ -334,6 +375,7 @@ const App: React.FC = () => {
                   onLogout={handleLogout}
                   onNavigateToFavorites={navigateToFavorites}
                   onNavigateToChatList={navigateToChatList}
+                  onNavigateToMyAds={navigateToMyAds}
                />;
       case 'publish-journey':
         return <PublishJourneyPage
@@ -346,6 +388,7 @@ const App: React.FC = () => {
                   onNavigateToFavorites={navigateToFavorites}
                   onAddProperty={handleAddProperty}
                   onNavigateToChatList={navigateToChatList}
+                  onNavigateToMyAds={navigateToMyAds}
                 />;
       case 'searchResults':
         const query = pageState.searchQuery?.toLowerCase() ?? '';
@@ -368,9 +411,10 @@ const App: React.FC = () => {
           onToggleFavorite={toggleFavorite}
           onNavigateToFavorites={navigateToFavorites}
           onNavigateToChatList={navigateToChatList}
+          onNavigateToMyAds={navigateToMyAds}
         />;
       case 'propertyDetail':
-        const property = properties.find(p => p.id === pageState.propertyId);
+        const property = [...properties, ...myAds].find(p => p.id === pageState.propertyId);
         if (!property) {
           navigateHome();
           return null;
@@ -388,6 +432,7 @@ const App: React.FC = () => {
                   onNavigateToFavorites={navigateToFavorites}
                   onStartChat={handleStartChat}
                   onNavigateToChatList={navigateToChatList}
+                  onNavigateToMyAds={navigateToMyAds}
                 />;
       case 'favorites':
           const favoriteProperties = properties.filter(p => favorites.includes(p.id));
@@ -404,12 +449,10 @@ const App: React.FC = () => {
             onToggleFavorite={toggleFavorite}
             onNavigateToFavorites={navigateToFavorites}
             onNavigateToChatList={navigateToChatList}
+            onNavigateToMyAds={navigateToMyAds}
           />;
       case 'chatList':
-        if (!user) {
-          navigateHome();
-          return null;
-        }
+        if (!user) { navigateHome(); return null; }
         return <ChatListPage
                   onBack={navigateHome}
                   user={user}
@@ -422,14 +465,12 @@ const App: React.FC = () => {
                   chatSessions={chatSessions.filter(s => s.participantes[user.id])}
                   properties={properties}
                   onNavigateToChat={navigateToChat}
+                  onNavigateToMyAds={navigateToMyAds}
                />;
       case 'chat':
         const session = chatSessions.find(s => s.id === pageState.chatSessionId);
         const propertyForChat = properties.find(p => p.id === session?.imovel_id);
-        if (!session || !user || !propertyForChat) {
-          navigateHome();
-          return null;
-        }
+        if (!session || !user || !propertyForChat) { navigateHome(); return null; }
         return <ChatPage
                   onBack={navigateToChatList}
                   user={user}
@@ -437,11 +478,27 @@ const App: React.FC = () => {
                   property={propertyForChat}
                   onSendMessage={handleSendMessage}
                />;
+      case 'myAds':
+        if (!user) { navigateHome(); return null; }
+        return <MyAdsPage
+            onBack={navigateHome}
+            user={user}
+            profile={profile}
+            onLogout={handleLogout}
+            onPublishAdClick={navigateToPublishJourney}
+            onAccessClick={() => openLoginModal('default')}
+            onNavigateToFavorites={navigateToFavorites}
+            onNavigateToChatList={navigateToChatList}
+            onNavigateToMyAds={navigateToMyAds}
+            userProperties={myAds}
+            onViewDetails={navigateToPropertyDetail}
+            onDeleteProperty={handleDeactivateProperty}
+        />;
       case 'home':
       default:
         return (
           <div className="bg-white font-sans text-brand-dark">
-            <Header onPublishAdClick={navigateToPublish} onAccessClick={() => openLoginModal('default')} user={user} profile={profile} onLogout={handleLogout} onNavigateToFavorites={navigateToFavorites} onNavigateToChatList={navigateToChatList} />
+            <Header onPublishAdClick={navigateToPublish} onAccessClick={() => openLoginModal('default')} user={user} profile={profile} onLogout={handleLogout} onNavigateToFavorites={navigateToFavorites} onNavigateToChatList={navigateToChatList} onNavigateToMyAds={navigateToMyAds} />
             <main>
               <Hero 
                 onDrawOnMapClick={() => navigateToMap()} 

@@ -20,10 +20,12 @@ interface ChatListPageProps {
   chatSessions: ChatSession[];
   properties: Property[];
   onNavigateToChat: (sessionId: string) => void;
+  // FIX: Add onNavigateToMyAds prop to resolve typing error.
+  onNavigateToMyAds: () => void;
 }
 
 const ChatListPage: React.FC<ChatListPageProps> = ({
-  onBack, user, profile, onLogout, onPublishAdClick, onAccessClick, onNavigateToFavorites, onNavigateToChatList, chatSessions, properties, onNavigateToChat
+  onBack, user, profile, onLogout, onPublishAdClick, onAccessClick, onNavigateToFavorites, onNavigateToChatList, chatSessions, properties, onNavigateToChat, onNavigateToMyAds
 }) => {
   const { t } = useLanguage();
 
@@ -40,6 +42,7 @@ const ChatListPage: React.FC<ChatListPageProps> = ({
   return (
     <div className="bg-brand-light-gray min-h-screen flex flex-col">
       {/* FIX: Pass profile prop to Header. */}
+      {/* FIX: Pass onNavigateToMyAds prop to Header. */}
       <Header
         onPublishAdClick={onPublishAdClick}
         onAccessClick={onAccessClick}
@@ -48,6 +51,7 @@ const ChatListPage: React.FC<ChatListPageProps> = ({
         onLogout={onLogout}
         onNavigateToFavorites={onNavigateToFavorites}
         onNavigateToChatList={onNavigateToChatList}
+        onNavigateToMyAds={onNavigateToMyAds}
       />
       <main className="flex-grow">
         <div className="container mx-auto px-4 sm:px-6 py-8">

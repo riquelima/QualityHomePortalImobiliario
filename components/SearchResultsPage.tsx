@@ -23,6 +23,8 @@ interface SearchResultsPageProps {
   onToggleFavorite: (id: number) => void;
   onNavigateToFavorites: () => void;
   onNavigateToChatList: () => void;
+  // FIX: Add onNavigateToMyAds prop to resolve typing error.
+  onNavigateToMyAds: () => void;
 }
 
 const SearchResultsPage: React.FC<SearchResultsPageProps> = ({ 
@@ -38,13 +40,15 @@ const SearchResultsPage: React.FC<SearchResultsPageProps> = ({
   favorites,
   onToggleFavorite,
   onNavigateToFavorites,
-  onNavigateToChatList
+  onNavigateToChatList,
+  onNavigateToMyAds
 }) => {
   const { t } = useLanguage();
 
   return (
     <div className="bg-brand-light-gray min-h-screen flex flex-col">
       {/* FIX: Pass profile prop to Header. */}
+      {/* FIX: Pass onNavigateToMyAds prop to Header. */}
       <Header 
         onPublishAdClick={onPublishAdClick} 
         onAccessClick={onAccessClick} 
@@ -53,6 +57,7 @@ const SearchResultsPage: React.FC<SearchResultsPageProps> = ({
         onLogout={onLogout} 
         onNavigateToFavorites={onNavigateToFavorites}
         onNavigateToChatList={onNavigateToChatList}
+        onNavigateToMyAds={onNavigateToMyAds}
       />
       <main className="flex-grow">
         <div className="container mx-auto px-4 sm:px-6 py-8">

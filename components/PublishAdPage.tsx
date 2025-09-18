@@ -18,9 +18,11 @@ interface PublishAdPageProps {
   onLogout: () => void;
   onNavigateToFavorites: () => void;
   onNavigateToChatList: () => void;
+  // FIX: Add onNavigateToMyAds prop to resolve typing error.
+  onNavigateToMyAds: () => void;
 }
 
-const PublishAdPage: React.FC<PublishAdPageProps> = ({ onBack, onPublishAdClick, onOpenLoginModal, onNavigateToJourney, user, profile, onLogout, onNavigateToFavorites, onNavigateToChatList }) => {
+const PublishAdPage: React.FC<PublishAdPageProps> = ({ onBack, onPublishAdClick, onOpenLoginModal, onNavigateToJourney, user, profile, onLogout, onNavigateToFavorites, onNavigateToChatList, onNavigateToMyAds }) => {
   const { t } = useLanguage();
 
   const handlePublishClick = () => {
@@ -34,7 +36,8 @@ const PublishAdPage: React.FC<PublishAdPageProps> = ({ onBack, onPublishAdClick,
   return (
     <div className="bg-brand-light-gray min-h-screen">
        {/* FIX: Pass profile prop to Header. */}
-       <Header onPublishAdClick={onPublishAdClick} onAccessClick={onOpenLoginModal} user={user} profile={profile} onLogout={onLogout} onNavigateToFavorites={onNavigateToFavorites} onNavigateToChatList={onNavigateToChatList} />
+       {/* FIX: Pass onNavigateToMyAds prop to Header. */}
+       <Header onPublishAdClick={onPublishAdClick} onAccessClick={onOpenLoginModal} user={user} profile={profile} onLogout={onLogout} onNavigateToFavorites={onNavigateToFavorites} onNavigateToChatList={onNavigateToChatList} onNavigateToMyAds={onNavigateToMyAds} />
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumbs */}
         <div className="text-sm mb-6">

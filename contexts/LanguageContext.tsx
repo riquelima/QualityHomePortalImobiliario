@@ -372,6 +372,21 @@ const ptTranslations = {
     "messagePlaceholder": "Digite sua mensagem...",
     "sendButton": "Enviar"
   },
+  "myAdsPage": {
+    "title": "Meus Anúncios",
+    "breadcrumb": "Meus Anúncios",
+    "noAds": {
+      "title": "Você ainda não publicou nenhum anúncio",
+      "description": "Comece agora e alcance milhares de pessoas interessadas no seu imóvel."
+    },
+    "newAdButton": "Publicar Novo Anúncio",
+    "viewButton": "Visualizar",
+    "editButton": "Editar",
+    "deleteButton": "Excluir",
+    "deleteConfirm": "Tem certeza que deseja excluir este anúncio? Esta ação o tornará inativo.",
+    "adDeletedSuccess": "Anúncio desativado com sucesso!",
+    "adDeletedError": "Erro ao desativar o anúncio."
+  },
   "footer": {
     "text": "Quality Home Portal Imobiliário. Todos os direitos reservados."
   }
@@ -753,6 +768,21 @@ const enTranslations = {
     "messagePlaceholder": "Type your message...",
     "sendButton": "Send"
   },
+  "myAdsPage": {
+    "title": "My Ads",
+    "breadcrumb": "My Ads",
+    "noAds": {
+      "title": "You haven't published any ads yet",
+      "description": "Get started now and reach thousands of people interested in your property."
+    },
+    "newAdButton": "Publish New Ad",
+    "viewButton": "View",
+    "editButton": "Edit",
+    "deleteButton": "Delete",
+    "deleteConfirm": "Are you sure you want to delete this ad? This action will make it inactive.",
+    "adDeletedSuccess": "Ad successfully deactivated!",
+    "adDeletedError": "Error deactivating ad."
+  },
   "footer": {
     "text": "Quality Home Real Estate Portal. All rights reserved."
   }
@@ -1133,6 +1163,21 @@ const esTranslations = {
     "title": "Chat sobre: {title}",
     "messagePlaceholder": "Escribe tu mensaje...",
     "sendButton": "Enviar"
+  },
+  "myAdsPage": {
+    "title": "Mis Anuncios",
+    "breadcrumb": "Mis Anuncios",
+    "noAds": {
+      "title": "Aún no has publicado ningún anuncio",
+      "description": "Empieza ahora y llega a miles de personas interesadas en tu inmueble."
+    },
+    "newAdButton": "Publicar Nuevo Anuncio",
+    "viewButton": "Ver",
+    "editButton": "Editar",
+    "deleteButton": "Eliminar",
+    "deleteConfirm": "¿Estás seguro de que quieres eliminar este anuncio? Esta acción lo desactivará.",
+    "adDeletedSuccess": "¡Anuncio desactivado con éxito!",
+    "adDeletedError": "Error al desactivar el anuncio."
   },
   "footer": {
     "text": "Quality Home Portal Inmobiliario. Todos los derechos reservados."

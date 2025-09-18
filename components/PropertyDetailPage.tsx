@@ -25,6 +25,8 @@ interface PropertyDetailPageProps {
   onNavigateToFavorites: () => void;
   onStartChat: (property: Property) => void;
   onNavigateToChatList: () => void;
+  // FIX: Add onNavigateToMyAds prop to resolve typing error.
+  onNavigateToMyAds: () => void;
 }
 
 const currencyConfig = {
@@ -45,7 +47,8 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({
   onToggleFavorite,
   onNavigateToFavorites,
   onStartChat,
-  onNavigateToChatList
+  onNavigateToChatList,
+  onNavigateToMyAds
 }) => {
   const { t, language } = useLanguage();
   
@@ -70,6 +73,7 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({
   return (
     <>
     <div className="bg-brand-light-gray min-h-screen">
+      {/* FIX: Pass onNavigateToMyAds prop to Header. */}
       <Header
         onPublishAdClick={onPublishAdClick}
         onAccessClick={onAccessClick}
@@ -78,6 +82,7 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({
         onLogout={onLogout}
         onNavigateToFavorites={onNavigateToFavorites}
         onNavigateToChatList={onNavigateToChatList}
+        onNavigateToMyAds={onNavigateToMyAds}
       />
       <main className="container mx-auto px-4 sm:px-6 py-8">
         {/* Breadcrumbs */}

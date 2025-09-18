@@ -1,9 +1,5 @@
 
 
-
-
-
-
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Header from './Header';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -34,6 +30,8 @@ interface PublishJourneyPageProps {
   onNavigateToFavorites: () => void;
   onAddProperty: (propertyData: Property) => void;
   onNavigateToChatList: () => void;
+  // FIX: Add onNavigateToMyAds prop to resolve typing error.
+  onNavigateToMyAds: () => void;
 }
 
 // Define state shapes for props
@@ -589,7 +587,7 @@ const Step3Photos: React.FC<Step3PhotosProps> = ({ onBack, onFinish, files, setF
 };
 
 
-const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPublishAdClick, onOpenLoginModal, user, profile, onLogout, onNavigateToFavorites, onAddProperty, onNavigateToChatList }) => {
+const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPublishAdClick, onOpenLoginModal, user, profile, onLogout, onNavigateToFavorites, onAddProperty, onNavigateToChatList, onNavigateToMyAds }) => {
   const { t } = useLanguage();
   const [currentStep, setCurrentStep] = useState(1);
 
@@ -960,7 +958,8 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
   return (
     <>
       <div className="bg-brand-light-gray min-h-screen">
-        <Header onPublishAdClick={onPublishAdClick} onAccessClick={onOpenLoginModal} user={user} profile={profile} onLogout={onLogout} onNavigateToFavorites={onNavigateToFavorites} onNavigateToChatList={onNavigateToChatList} />
+        {/* FIX: Pass onNavigateToMyAds prop to Header. */}
+        <Header onPublishAdClick={onPublishAdClick} onAccessClick={onOpenLoginModal} user={user} profile={profile} onLogout={onLogout} onNavigateToFavorites={onNavigateToFavorites} onNavigateToChatList={onNavigateToChatList} onNavigateToMyAds={onNavigateToMyAds} />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-10">
           <div className="max-w-4xl mx-auto mb-8">
               <div className="flex items-center text-xs sm:text-sm md:text-base">
