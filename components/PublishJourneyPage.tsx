@@ -856,7 +856,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
                 const filePath = `imoveis/${insertedPropertyId}/${fileName}`;
                 
                 const { error: uploadError } = await supabase.storage
-                    .from('imoveis-midias')
+                    .from('midia')
                     .upload(filePath, file);
 
                 if (uploadError) {
@@ -866,7 +866,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
                 uploadedFilePaths.push(filePath);
 
                 const { data: publicUrlData } = supabase.storage
-                    .from('imoveis-midias')
+                    .from('midia')
                     .getPublicUrl(filePath);
 
                 if (!publicUrlData) {
@@ -953,7 +953,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
             console.log("Iniciando rollback...");
             if (uploadedFilePaths.length > 0) {
                 const { error: deleteFilesError } = await supabase.storage
-                    .from('imoveis-midias')
+                    .from('midia')
                     .remove(uploadedFilePaths);
                 if (deleteFilesError) console.error("Falha ao deletar arquivos no rollback:", deleteFilesError.message);
             }
