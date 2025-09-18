@@ -1,4 +1,5 @@
 
+
 import type { User } from '@supabase/supabase-js';
 
 export { User };
@@ -51,6 +52,9 @@ export interface Property {
   status?: PropertyStatus;
   owner?: Profile & { email?: string, phone?: string }; // Merged Profile with legacy owner fields for compatibility
   midias_imovel?: { url: string, tipo: 'imagem' | 'video' }[];
+  caracteristicas_imovel?: string[];
+  caracteristicas_condominio?: string[];
+  situacao_ocupacao?: string;
 }
 
 export interface Message {

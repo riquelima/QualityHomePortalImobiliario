@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useCallback } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
@@ -59,7 +60,10 @@ const App: React.FC = () => {
           ...dbProperty.owner,
           phone: dbProperty.owner.telefone,
           email: 'user-not-exposed-for-privacy@email.com', // Don't expose owner email directly
-      } : undefined
+      } : undefined,
+      caracteristicas_imovel: dbProperty.caracteristicas_imovel,
+      caracteristicas_condominio: dbProperty.caracteristicas_condominio,
+      situacao_ocupacao: dbProperty.situacao_ocupacao,
     };
   };
   

@@ -2,6 +2,8 @@
 
 
 
+
+
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Header from './Header';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -869,6 +871,9 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
             area_bruta: parseInt(details.grossArea, 10) || 0,
             possui_elevador: details.hasElevator,
             taxa_condominio: parseInt(details.condoFee, 10) || 0,
+            caracteristicas_imovel: details.homeFeatures,
+            caracteristicas_condominio: details.buildingFeatures,
+            situacao_ocupacao: details.saleSituation,
         };
 
         const { data: insertedProperty, error: propertyError } = await supabase
@@ -928,7 +933,10 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
             quartos: finalPropertyData.quartos,
             banheiros: finalPropertyData.banheiros,
             area_bruta: finalPropertyData.area_bruta,
-            midias_imovel: finalPropertyData.midias_imovel
+            midias_imovel: finalPropertyData.midias_imovel,
+            caracteristicas_imovel: finalPropertyData.caracteristicas_imovel,
+            caracteristicas_condominio: finalPropertyData.caracteristicas_condominio,
+            situacao_ocupacao: finalPropertyData.situacao_ocupacao,
         };
         
         onAddProperty(frontendProperty);
