@@ -10,9 +10,31 @@ interface PropertyListingsProps {
   onViewDetails: (id: number) => void;
   favorites: number[];
   onToggleFavorite: (id: number) => void;
+  isLoading: boolean;
 }
 
-const PropertyListings: React.FC<PropertyListingsProps> = ({ properties, onViewDetails, favorites, onToggleFavorite }) => {
+const SkeletonCard: React.FC = () => (
+    <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 animate-pulse">
+        <div className="bg-gray-300 h-56 w-full"></div>
+        <div className="p-4 sm:p-6">
+            <div className="bg-gray-300 h-6 w-3/4 rounded mb-2"></div>
+            <div className="bg-gray-300 h-4 w-full rounded mb-4"></div>
+            <div className="bg-gray-300 h-8 w-1/2 rounded mb-4"></div>
+            <div className="grid grid-cols-3 gap-2 sm:gap-4 border-t border-b border-gray-200 py-4 mb-4">
+                <div className="bg-gray-300 h-10 rounded"></div>
+                <div className="bg-gray-300 h-10 rounded"></div>
+                <div className="bg-gray-300 h-10 rounded"></div>
+            </div>
+            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+                <div className="bg-gray-300 h-10 w-full rounded-md"></div>
+                <div className="bg-gray-300 h-10 w-full rounded-md"></div>
+            </div>
+        </div>
+    </div>
+);
+
+
+const PropertyListings: React.FC<PropertyListingsProps> = ({ properties, onViewDetails, favorites, onToggleFavorite, isLoading }) => {
   const { t } = useLanguage();
 
   return (
@@ -23,15 +45,19 @@ const PropertyListings: React.FC<PropertyListingsProps> = ({ properties, onViewD
           {t('listings.description')}
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-          {properties.map((property) => (
-            <PropertyCard 
-              key={property.id} 
-              property={property} 
-              onViewDetails={onViewDetails}
-              isFavorite={favorites.includes(property.id)}
-              onToggleFavorite={onToggleFavorite}
-            />
-          ))}
+          {isLoading ? (
+            Array.from({ length: 6 }).map((_, index) => <SkeletonCard key={index} />)
+          ) : (
+            properties.map((property) => (
+              <PropertyCard 
+                key={property.id} 
+                property={property} 
+                onViewDetails={onViewDetails}
+                isFavorite={favorites.includes(property.id)}
+                onToggleFavorite={onToggleFavorite}
+              />
+            ))
+          )}
         </div>
       </div>
     </section>

@@ -189,6 +189,7 @@ const App: React.FC = () => {
   const [properties, setProperties] = useState<Property[]>([]);
   const [myAds, setMyAds] = useState<Property[]>([]);
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Adapt Supabase property data to legacy frontend Property type
   const adaptSupabaseProperty = (dbProperty: any): Property => {
@@ -219,18 +220,15 @@ const App: React.FC = () => {
   };
 
   const fetchAllData = useCallback(async (currentUser: User | null) => {
-    // Fetch Properties
-    // Simplified the query to fetch only from the main 'imoveis' table.
-    // This is a debugging step to ensure data is displayed, bypassing potential issues with RLS on related tables or misconfigured relationships.
+    setIsLoading(true);
+    
     let query = supabase
       .from('imoveis')
-      .select('*');
+      .select('*, midias_imovel(*)');
       
     if (currentUser) {
-      // For a logged-in user, fetch their own ads (any status) OR other people's active ads.
       query = query.or(`anunciante_id.eq.${currentUser.id},status.eq.ativo`);
     } else {
-      // For a guest, just show all active properties.
       query = query.eq('status', 'ativo');
     }
 
@@ -241,7 +239,6 @@ const App: React.FC = () => {
       setProperties([]);
       setMyAds([]);
     } else {
-      // Use a Map to handle potential duplicates if an ad is both owned by the user and active.
       const propertyMap = new Map();
       propertiesData.forEach(prop => propertyMap.set(prop.id, prop));
       const uniquePropertiesData = Array.from(propertyMap.values());
@@ -256,9 +253,7 @@ const App: React.FC = () => {
       }
     }
 
-
     if(currentUser) {
-      // Fetch Favorites
       const { data: favoritesData, error: favoritesError } = await supabase
         .from('favoritos_usuario')
         .select('imovel_id')
@@ -267,7 +262,6 @@ const App: React.FC = () => {
       if(favoritesError) console.error('Error fetching favorites:', favoritesError);
       else setFavorites(favoritesData.map(f => f.imovel_id));
 
-      // Fetch Chat Sessions
       const { data: chatData, error: chatError } = await supabase
         .rpc('get_user_chat_sessions', { user_id_param: currentUser.id });
 
@@ -304,6 +298,7 @@ const App: React.FC = () => {
       setChatSessions([]);
       setMyAds([]);
     }
+    setIsLoading(false);
   }, []);
 
   useEffect(() => {
@@ -311,7 +306,7 @@ const App: React.FC = () => {
       const currentUser = session?.user ?? null;
       setUser(currentUser);
 
-      if (event === 'SIGNED_IN' && currentUser) {
+      if (currentUser) {
         const { data: userProfile, error } = await supabase
           .from('perfis')
           .select('*')
@@ -333,22 +328,17 @@ const App: React.FC = () => {
         } else if (userProfile) {
           setProfile(userProfile);
         }
-        fetchAllData(currentUser);
 
         if (loginIntent === 'publish') {
           navigateToPublishJourney();
           setLoginIntent('default');
         }
-      } else if (event === 'SIGNED_OUT') {
+      } else {
         setProfile(null);
-        fetchAllData(null);
       }
+      
+      fetchAllData(currentUser);
     });
-    
-    // Initial fetch for guest user
-    const session = supabase.auth.getSession();
-    session.then(({ data }) => fetchAllData(data.session?.user ?? null));
-
 
     return () => {
       authListener.subscription.unsubscribe();
@@ -356,7 +346,6 @@ const App: React.FC = () => {
   }, [loginIntent, fetchAllData]);
   
   useEffect(() => {
-    // Development only: expose a function to seed the database from the console.
     (window as any).seedDatabase = seedDatabase;
     console.log("Função de teste 'seedDatabase()' disponível. Use para popular o banco de dados.");
   }, []);
@@ -675,6 +664,7 @@ const App: React.FC = () => {
                 onViewDetails={navigateToPropertyDetail} 
                 favorites={favorites}
                 onToggleFavorite={toggleFavorite}
+                isLoading={isLoading}
               />
             </main>
             <footer className="bg-brand-light-gray text-brand-gray py-8 text-center mt-20">
