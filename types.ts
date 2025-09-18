@@ -55,6 +55,8 @@ export interface Property {
   caracteristicas_imovel?: string[];
   caracteristicas_condominio?: string[];
   situacao_ocupacao?: string;
+  taxa_condominio?: number;
+  possui_elevador?: boolean;
 }
 
 export interface Message {

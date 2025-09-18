@@ -332,7 +332,16 @@ const ptTranslations = {
     "videos": "Galeria de Vídeos",
     "scheduleVisit": "Agendar Visita",
     "addToFavorites": "Adicionar aos Favoritos",
-    "removeFromFavorites": "Remover dos Favoritos"
+    "removeFromFavorites": "Remover dos Favoritos",
+    "generalDetails": "Detalhes Gerais",
+    "propertyFeatures": "Características do Imóvel",
+    "condoAmenities": "Comodidades do Condomínio",
+    "propertyType": "Tipo de imóvel",
+    "occupationStatus": "Situação",
+    "hasElevator": "Elevador",
+    "yes": "Sim",
+    "no": "Não",
+    "condoFee": "Condomínio"
   },
   "favoritesPage": {
     "title": "Meus Imóveis Favoritos",
@@ -704,7 +713,16 @@ const enTranslations = {
     "videos": "Video Gallery",
     "scheduleVisit": "Schedule Visit",
     "addToFavorites": "Add to Favorites",
-    "removeFromFavorites": "Remove from Favorites"
+    "removeFromFavorites": "Remove from Favorites",
+    "generalDetails": "General Details",
+    "propertyFeatures": "Property Features",
+    "condoAmenities": "Condo Amenities",
+    "propertyType": "Property type",
+    "occupationStatus": "Status",
+    "hasElevator": "Elevator",
+    "yes": "Yes",
+    "no": "No",
+    "condoFee": "Condo Fee"
   },
   "favoritesPage": {
     "title": "My Favorite Properties",
@@ -1076,7 +1094,16 @@ const esTranslations = {
     "videos": "Galería de Vídeos",
     "scheduleVisit": "Agendar Visita",
     "addToFavorites": "Añadir a Favoritos",
-    "removeFromFavorites": "Quitar de Favoritos"
+    "removeFromFavorites": "Quitar de Favoritos",
+    "generalDetails": "Detalles Generales",
+    "propertyFeatures": "Características del Inmueble",
+    "condoAmenities": "Comodidades del Condominio",
+    "propertyType": "Tipo de inmueble",
+    "occupationStatus": "Situación",
+    "hasElevator": "Ascensor",
+    "yes": "Sí",
+    "no": "No",
+    "condoFee": "Comunidad"
   },
   "favoritesPage": {
     "title": "Mis Inmuebles Favoritos",

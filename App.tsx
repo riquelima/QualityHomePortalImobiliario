@@ -64,6 +64,8 @@ const App: React.FC = () => {
       caracteristicas_imovel: dbProperty.caracteristicas_imovel,
       caracteristicas_condominio: dbProperty.caracteristicas_condominio,
       situacao_ocupacao: dbProperty.situacao_ocupacao,
+      taxa_condominio: dbProperty.taxa_condominio,
+      possui_elevador: dbProperty.possui_elevador,
     };
   };
   

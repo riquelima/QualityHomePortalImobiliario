@@ -9,6 +9,7 @@ import AreaIcon from './icons/AreaIcon';
 import HeartIcon from './icons/HeartIcon';
 import HeartFilledIcon from './icons/HeartFilledIcon';
 import ContactModal from './ContactModal';
+import FeatureIcon from './FeatureIcon';
 
 
 interface PropertyDetailPageProps {
@@ -59,6 +60,12 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({
     style: 'currency',
     currency: currency,
   }).format(property.price);
+  
+  const formattedCondoFee = property.taxa_condominio ? new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency: currency,
+  }).format(property.taxa_condominio) : null;
+
 
   return (
     <>
@@ -110,11 +117,67 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({
                 <h2 className="text-xl sm:text-2xl font-bold text-brand-navy mb-4">{t('propertyDetail.description')}</h2>
                 <p className="text-brand-gray leading-relaxed whitespace-pre-line">{property.description}</p>
               </section>
+              
+              {/* General Details */}
+              <section className="mb-8">
+                <h2 className="text-xl sm:text-2xl font-bold text-brand-navy mb-4 border-t pt-6">{t('propertyDetail.generalDetails')}</h2>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-y-4 gap-x-6 p-4 bg-brand-light-gray rounded-lg">
+                  {property.tipo_imovel && (
+                    <div>
+                      <p className="text-sm font-semibold text-brand-navy">{t('propertyDetail.propertyType')}</p>
+                      <p className="text-brand-gray">{property.tipo_imovel}</p>
+                    </div>
+                  )}
+                  {property.situacao_ocupacao && (
+                    <div>
+                      <p className="text-sm font-semibold text-brand-navy">{t('propertyDetail.occupationStatus')}</p>
+                      <p className="text-brand-gray">{t(`publishJourney.detailsForm.${property.situacao_ocupacao === 'rented' ? 'rentedWithTenants' : 'withoutTenants'}`)}</p>
+                    </div>
+                  )}
+                  {property.possui_elevador !== null && property.possui_elevador !== undefined && (
+                    <div>
+                      <p className="text-sm font-semibold text-brand-navy">{t('propertyDetail.hasElevator')}</p>
+                      <p className="text-brand-gray">{property.possui_elevador ? t('publishJourney.detailsForm.yes') : t('publishJourney.detailsForm.no')}</p>
+                    </div>
+                  )}
+                </div>
+              </section>
+
+              {/* Property Features */}
+              {property.caracteristicas_imovel && property.caracteristicas_imovel.length > 0 && (
+                <section className="mb-8">
+                  <h2 className="text-xl sm:text-2xl font-bold text-brand-navy mb-4 border-t pt-6">{t('propertyDetail.propertyFeatures')}</h2>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-4 gap-x-6">
+                    {property.caracteristicas_imovel.map(feature => (
+                      <div key={feature} className="flex items-center space-x-3">
+                        <FeatureIcon feature={feature} className="w-6 h-6 text-brand-navy flex-shrink-0" />
+                        <span className="text-brand-gray">{t(`publishJourney.detailsForm.${feature}`)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+              
+              {/* Condo Amenities */}
+              {property.caracteristicas_condominio && property.caracteristicas_condominio.length > 0 && (
+                <section className="mb-8">
+                  <h2 className="text-xl sm:text-2xl font-bold text-brand-navy mb-4 border-t pt-6">{t('propertyDetail.condoAmenities')}</h2>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-4 gap-x-6">
+                    {property.caracteristicas_condominio.map(feature => (
+                      <div key={feature} className="flex items-center space-x-3">
+                        <FeatureIcon feature={feature} className="w-6 h-6 text-brand-navy flex-shrink-0" />
+                        <span className="text-brand-gray">{t(`publishJourney.detailsForm.${feature}`)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
 
               {/* Video Gallery */}
               {property.videos && property.videos.length > 0 && (
                 <section>
-                  <h2 className="text-xl sm:text-2xl font-bold text-brand-navy mb-4">{t('propertyDetail.videos')}</h2>
+                  <h2 className="text-xl sm:text-2xl font-bold text-brand-navy mb-4 border-t pt-6">{t('propertyDetail.videos')}</h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {property.videos.map((videoUrl, index) => (
                       <div key={index} className="aspect-w-16 aspect-h-9">
@@ -144,7 +207,13 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({
                   <p className="text-sm">{property.address}</p>
                 </div>
                 
-                <p className="text-3xl sm:text-4xl font-bold text-brand-red mb-6">{formattedPrice}</p>
+                <p className="text-3xl sm:text-4xl font-bold text-brand-red mb-2">{formattedPrice}</p>
+                 {formattedCondoFee && (
+                  <p className="text-md text-brand-gray mb-6">
+                    {t('propertyDetail.condoFee')}: {formattedCondoFee}
+                  </p>
+                )}
+
                 
                 <h2 className="text-lg sm:text-xl font-bold text-brand-navy mb-4 border-t pt-4">{t('propertyDetail.details')}</h2>
                 <div className="grid grid-cols-3 gap-4 text-center mb-6">
