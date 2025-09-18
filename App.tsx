@@ -200,6 +200,7 @@ const App: React.FC = () => {
   const [myAds, setMyAds] = useState<Property[]>([]);
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAuthReady, setIsAuthReady] = useState(false);
 
   const showModal = useCallback((config: Omit<ModalConfig, 'isOpen'>) => {
     setModalConfig({ ...config, isOpen: true });
@@ -230,6 +231,7 @@ const App: React.FC = () => {
         if (!propertiesData || propertiesData.length === 0) {
             setProperties([]);
             setMyAds([]);
+            setIsLoading(false); // Make sure to stop loading
             return;
         }
         
@@ -383,15 +385,20 @@ const App: React.FC = () => {
       } else {
         setProfile(null);
       }
-      
-      fetchAllData(currentUser);
+      setIsAuthReady(true);
     });
 
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, [loginIntent, fetchAllData]);
+  }, [loginIntent]);
   
+  useEffect(() => {
+    if(isAuthReady) {
+      fetchAllData(user);
+    }
+  }, [isAuthReady, user, fetchAllData]);
+
   useEffect(() => {
     (window as any).seedDatabase = seedDatabase;
     console.log("Função de teste 'seedDatabase()' disponível. Use para popular o banco de dados.");
