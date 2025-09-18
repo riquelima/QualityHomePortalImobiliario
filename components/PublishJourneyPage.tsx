@@ -19,6 +19,12 @@ import InfoIcon from './icons/InfoIcon';
 
 type MediaItem = File | { id: number; url: string; tipo: 'imagem' | 'video' };
 
+interface ModalRequestConfig {
+    type: 'success' | 'error' | 'confirm';
+    title: string;
+    message: string;
+    onConfirm?: () => void;
+}
 
 interface PublishJourneyPageProps {
   onBack: () => void;
@@ -34,6 +40,7 @@ interface PublishJourneyPageProps {
   onNavigateToChatList: () => void;
   onNavigateToMyAds: () => void;
   propertyToEdit?: Property | null;
+  onRequestModal: (config: ModalRequestConfig) => void;
 }
 
 // Define state shapes for props
@@ -598,7 +605,7 @@ const Step3Photos: React.FC<Step3PhotosProps> = ({ onBack, onFinish, media, setM
 };
 
 
-const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPublishAdClick, onOpenLoginModal, user, profile, onLogout, onNavigateToFavorites, onAddProperty, onUpdateProperty, onPublishError, onNavigateToChatList, onNavigateToMyAds, propertyToEdit }) => {
+const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPublishAdClick, onOpenLoginModal, user, profile, onLogout, onNavigateToFavorites, onAddProperty, onUpdateProperty, onPublishError, onNavigateToChatList, onNavigateToMyAds, propertyToEdit, onRequestModal }) => {
   const { t } = useLanguage();
   const [currentStep, setCurrentStep] = useState(1);
   const isEditMode = !!propertyToEdit;
@@ -614,6 +621,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
   const [isAddressVerified, setIsAddressVerified] = useState(false);
   const [verifiedAddress, setVerifiedAddress] = useState('');
   const [contactInfo, setContactInfo] = useState<ContactInfoState>({ phone: '', preference: 'chat_and_phone', name: '' });
+  const [userRegion, setUserRegion] = useState<string | null>(null);
 
   // Step 2 State
   const [details, setDetails] = useState<DetailsState>({
@@ -671,6 +679,44 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [currentStep]);
 
+  useEffect(() => {
+    if (isEditMode || !onRequestModal) return;
+
+    const handleAllowLocation = () => {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    const { latitude, longitude } = position.coords;
+                    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`;
+                    try {
+                        const response = await fetch(url);
+                        const data = await response.json();
+                        if (data && data.address && data.address.state) {
+                            setUserRegion(data.address.state);
+                        }
+                    } catch (error) {
+                        console.error("Error reverse geocoding:", error);
+                    }
+                },
+                (error) => {
+                    console.warn("Geolocation permission denied or failed:", error.message);
+                }
+            );
+        }
+    };
+    
+    const timer = setTimeout(() => {
+        onRequestModal({
+            type: 'confirm',
+            title: t('publishJourney.locationPermissionModal.title'),
+            message: t('publishJourney.locationPermissionModal.message'),
+            onConfirm: handleAllowLocation,
+        });
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [isEditMode, onRequestModal, t]);
+
   const handleDetailsChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setDetails(prev => ({ ...prev, [name]: value }));
@@ -726,7 +772,11 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
     };
 
     const getSuggestions = async () => {
-      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address.city)}&countrycodes=br&limit=10&addressdetails=1`;
+      let searchQuery = address.city;
+      if (userRegion) {
+          searchQuery = `${address.city}, ${userRegion}`;
+      }
+      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&countrycodes=br&limit=10&addressdetails=1`;
       try {
         const response = await fetch(url);
         const data = await response.json();
@@ -769,7 +819,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
     };
     const handler = setTimeout(getSuggestions, 300);
     return () => clearTimeout(handler);
-  }, [address.city]);
+  }, [address.city, userRegion]);
 
   const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setAddress(prev => ({ ...prev, [e.target.id]: e.target.value }));

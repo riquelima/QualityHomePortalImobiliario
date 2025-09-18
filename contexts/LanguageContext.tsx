@@ -311,6 +311,10 @@ const ptTranslations = {
       "countryInfo": "Brasil",
       "confirmButton": "Confirmar endereço",
       "backButton": "Digitar o endereço novamente"
+    },
+    "locationPermissionModal": {
+      "title": "Melhorar sugestões de cidade?",
+      "message": "Para oferecer sugestões mais relevantes para sua região, podemos usar sua localização. Seus dados exatos nunca são salvos ou compartilhados."
     }
   },
   "geolocationErrorModal": {
@@ -404,7 +408,8 @@ const ptTranslations = {
     "confirmButton": "Confirmar",
     "cancelButton": "Cancelar",
     "fetchError": "Não foi possível carregar os anúncios. Por favor, tente recarregar a página.",
-    "editSuccessMessage": "Anúncio atualizado com sucesso!"
+    "editSuccessMessage": "Anúncio atualizado com sucesso!",
+    "errorDetails": "Detalhes do erro"
   },
   "footer": {
     "text": "Quality Home Portal Imobiliário. Todos os direitos reservados."
@@ -726,6 +731,10 @@ const enTranslations = {
       "countryInfo": "Brazil",
       "confirmButton": "Confirm address",
       "backButton": "Go back to writing the address"
+    },
+    "locationPermissionModal": {
+      "title": "Improve City Suggestions?",
+      "message": "To provide more relevant suggestions for your region, we can use your location. Your exact location data is never saved or shared."
     }
   },
   "geolocationErrorModal": {
@@ -819,7 +828,8 @@ const enTranslations = {
     "confirmButton": "Confirm",
     "cancelButton": "Cancel",
     "fetchError": "Could not load ads. Please try reloading the page.",
-    "editSuccessMessage": "Ad updated successfully!"
+    "editSuccessMessage": "Ad updated successfully!",
+    "errorDetails": "Error details"
   },
   "footer": {
     "text": "Quality Home Real Estate Portal. All rights reserved."
@@ -1141,6 +1151,10 @@ const esTranslations = {
       "countryInfo": "Brasil",
       "confirmButton": "Confirmar dirección",
       "backButton": "Volver a escribir la dirección"
+    },
+    "locationPermissionModal": {
+      "title": "¿Mejorar sugerencias de ciudad?",
+      "message": "Para ofrecer sugerencias más relevantes para tu región, podemos usar tu ubicación. Tus datos de ubicación exacta nunca se guardan ni se comparten."
     }
   },
   "geolocationErrorModal": {
@@ -1234,7 +1248,8 @@ const esTranslations = {
     "confirmButton": "Confirmar",
     "cancelButton": "Cancelar",
     "fetchError": "No se pudieron cargar los anuncios. Por favor, intenta recargar la página.",
-    "editSuccessMessage": "¡Anuncio actualizado con éxito!"
+    "editSuccessMessage": "¡Anuncio actualizado con éxito!",
+    "errorDetails": "Detalles del error"
   },
   "footer": {
     "text": "Quality Home Portal Inmobiliario. Todos los derechos reservados."

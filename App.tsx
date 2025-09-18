@@ -523,7 +523,7 @@ const App: React.FC = () => {
         .eq('id', propertyId);
 
     if (error) {
-        showModal({ type: 'error', title: t('systemModal.errorTitle'), message: t('myAdsPage.adDeletedError') });
+        showModal({ type: 'error', title: t('systemModal.errorTitle'), message: `${t('myAdsPage.adDeletedError')} ${t('systemModal.errorDetails')}: ${error.message}` });
         console.error('Error deactivating property:', error);
     } else {
         showModal({ type: 'success', title: t('systemModal.successTitle'), message: t('myAdsPage.adDeletedSuccess') });
@@ -629,6 +629,7 @@ const App: React.FC = () => {
                   onNavigateToChatList={navigateToChatList}
                   onNavigateToMyAds={navigateToMyAds}
                   onPublishError={handlePublishError}
+                  onRequestModal={showModal}
                 />;
       case 'searchResults':
         const query = pageState.searchQuery?.toLowerCase() ?? '';
