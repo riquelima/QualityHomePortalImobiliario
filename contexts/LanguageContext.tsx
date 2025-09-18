@@ -14,43 +14,35 @@ const ptTranslations = {
     "openMenu": "Abrir menu",
     "closeMenu": "Fechar menu",
     "menuTitle": "Menu",
-    "logout": "Terminar sessão",
-    "myAccount": "Ir para a tua conta",
+    "logout": "Sair",
+    "myAccount": "Minha conta",
     "ads": "Anúncios",
-    "savedSearches": "Pesquisas guardadas",
+    "savedSearches": "Pesquisas salvas",
     "favorites": "Favoritos",
     "chat": "Chat",
     "ownersDropdown": {
       "sell": {
         "title": "Vender",
-        "publish": "Publica o teu anúncio",
-        "evaluate": "Avaliar a tua casa",
+        "publish": "Publicar seu anúncio",
         "guide": "Guia para vender",
-        "documents": "Documentos necessários para a venda",
-        "findAgencies": "Procurar agências para vender"
+        "documents": "Documentos necessários para a venda"
       },
       "rent": {
-        "title": "Colocar para alugar",
-        "publish": "Publica o teu anúncio",
-        "findAgencies": "Procurar agências para alugar"
+        "title": "Alugar",
+        "publish": "Publicar seu anúncio"
       },
       "forYourHome": {
-        "title": "Para a tua habitação",
-        "ownerArea": "Área do proprietário",
-        "transferCredit": "Transferir o teu crédito habitação para outro banco",
-        "calculateRemodel": "Calcular o preço de uma remodelação"
+        "title": "Serviços",
+        "ownerArea": "Área do cliente"
       }
     },
     "searchDropdown": {
       "buy": {
-        "title": "Procurar para comprar",
-        "whatToBuy": "Que casa você pode comprar?",
-        "credit": "O seu crédito habitação passo a passo",
-        "explore": "Explorar bairros e preços",
-        "evaluate": "Avaliar uma casa"
+        "title": "Buscar para comprar",
+        "explore": "Explorar bairros e preços"
       },
       "rent": {
-        "title": "Procurar para alugar",
+        "title": "Buscar para alugar",
         "explore": "Explorar bairros e preços"
       }
     }
@@ -132,34 +124,34 @@ const ptTranslations = {
   },
   "publishAdPage": {
     "breadcrumbHome": "Início",
-    "breadcrumbPublish": "Como colocar um anúncio",
+    "breadcrumbPublish": "Como publicar um anúncio",
     "mainCard": {
-      "title": "Como colocar um anúncio na Quallity Home",
-      "benefit1": "Seus 2 primeiros anúncios são grátis. Se forem quartos, pode publicar até 5 anúncios grátis.",
+      "title": "Como publicar um anúncio na Quality Home",
+      "benefit1": "Seus 2 primeiros anúncios são grátis. Para quartos, você pode publicar até 5 anúncios gratuitos.",
       "benefit2": "Você tem acesso a uma área privada onde pode gerenciar seu anúncio e os contatos que recebe.",
-      "benefit3": "Você pode resolver questões, trocar informações e organizar visitas de uma forma eficiente através do nosso chat.",
+      "benefit3": "Você pode tirar dúvidas, trocar informações e organizar visitas de forma eficiente através do nosso chat.",
       "agencyInfo": "Para vender ou alugar mais rápido, contate uma agência imobiliária.",
       "publishButton": "Publique seu anúncio grátis",
-      "professionalInfo": "Você é um profissional imobiliário? Conheça as nossas vantagens para profissionais."
+      "professionalInfo": "Você é um profissional do mercado imobiliário? Conheça nossas vantagens para profissionais."
     },
     "steps": {
-      "title": "Quais são os passos a seguir para publicar o seu anúncio como proprietário particular?",
-      "intro": "Há 4 pontos essenciais para vender ou alugar o seu imóvel o mais rapidamente possível:",
-      "step1Title": "1. Inserir as melhores fotografias que você tiver e, se possível, uma planta que mostre a disposição dos cômodos",
-      "step1Content": "• Certifique-se de que tem fotos de qualidade à mão quando publicar o seu anúncio. Se não as tiver, poderá adicionar mais tarde, mas lembre-se, sem fotos não terá resultados.\n• A foto principal é essencial. Será a capa do seu anúncio, a única que será enviada por email aos interessados e a que vai aparecer na lista de resultados.\n• Ordene suas fotos de forma lógica para criar uma história atrativa e opte por imagens horizontais que ficam muito bem.\n• Incluir uma planta feita à mão, mesmo que não esteja detalhada, oferece informação útil para que os interessados visualizem a distribuição dos cômodos e como seria viver ali.",
-      "step2Title": "2. Indicar o endereço exato",
-      "step2Content": "Para que as pessoas que procuram na zona conheçam o seu anúncio, é muito importante indicar o endereço correto do imóvel. Se, por algum motivo, não queira indicá-lo, tem à sua disposição a possibilidade de ocultar o endereço por R$ 9,90.",
-      "step3Title": "3. Colocar um preço de acordo com o valor de mercado",
-      "step3Content": "Em caso de dúvida, pode fazer uma avaliação gratuita do seu imóvel no nosso site ou verificar o preço médio nessa zona.",
-      "step4Title": "4. Indicar as características do seu imóvel e descrever a sua casa em detalhes",
-      "step4Content": "Inclua informações sobre o seu imóvel, como o número de quartos, m2, banheiros, etc. Refira também as comodidades adicionais, como a presença de um elevador, um terraço, uma vaga de estacionamento, uma arrecadação, etc. Afinal, todos estes detalhes valorizam o seu imóvel. Destaque as características especiais do seu imóvel, sobretudo as que aparecem nas fotografias. Não se esqueça de explicar os serviços próximos, os transportes disponíveis e os lugares de interesse na zona."
+      "title": "Quais são os passos para publicar seu anúncio?",
+      "intro": "Existem 4 pontos essenciais para vender ou alugar seu imóvel o mais rápido possível:",
+      "step1Title": "1. Adicione as melhores fotos que você tiver e, se possível, a planta do imóvel",
+      "step1Content": "• Certifique-se de que tem fotos de qualidade à mão quando publicar seu anúncio. Se não as tiver, poderá adicionar mais tarde, mas lembre-se, sem fotos, você não terá resultados.\n• A foto principal é essencial. Será a capa do seu anúncio, a única que será enviada por e-mail aos interessados e a que vai aparecer na lista de resultados.\n• Organize suas fotos de forma lógica para criar uma história atrativa e opte por imagens horizontais que ficam muito bem.\n• Incluir uma planta, mesmo que desenhada à mão, oferece informações úteis para que os interessados visualizem a distribuição dos cômodos e como seria viver ali.",
+      "step2Title": "2. Informe o endereço exato",
+      "step2Content": "Para que as pessoas que procuram na região encontrem seu anúncio, é muito importante informar o endereço correto do imóvel. Se, por algum motivo, você não queira informá-lo, você tem a opção de ocultar o endereço por R$ 9,90.",
+      "step3Title": "3. Defina um preço de acordo com o valor de mercado",
+      "step3Content": "Em caso de dúvida, você pode fazer uma avaliação gratuita do seu imóvel em nosso site ou verificar o preço médio na região.",
+      "step4Title": "4. Descreva as características e os detalhes do seu imóvel",
+      "step4Content": "Inclua informações sobre seu imóvel, como o número de quartos, m², banheiros, etc. Mencione também as comodidades adicionais, como a presença de elevador, terraço, vaga de garagem, etc. Afinal, todos estes detalhes valorizam seu imóvel. Destaque as características especiais, principalmente as que aparecem nas fotos. Não se esqueça de mencionar os serviços próximos, os transportes disponíveis e os pontos de interesse na região."
     },
     "advantages": {
-      "title": "Vantagens de publicar na Quallity Home",
+      "title": "Vantagens de publicar na Quality Home",
       "advantage1Title": "Garantia de visibilidade",
-      "advantage1Content": "Os anúncios publicados no nosso site são visitados por milhões de utilizadores, o que lhe dá a oportunidade de vender ou alugar o seu imóvel de uma forma mais rápida e eficaz.",
+      "advantage1Content": "Os anúncios publicados em nosso site são visitados por milhões de usuários, o que lhe dá a oportunidade de vender ou alugar seu imóvel de forma mais rápida e eficaz.",
       "advantage2Title": "A melhor experiência",
-      "advantage2Content": "O APP da Quallity Home tem múltiplas funcionalidades que ajudarão você a gerenciar sua publicação e para quem procura um imóvel, permite configurar alertas totalmente personalizados para receber imediatamente novos imóveis.",
+      "advantage2Content": "O aplicativo da Quality Home tem múltiplas funcionalidades que ajudarão você a gerenciar sua publicação e, para quem procura um imóvel, permite configurar alertas personalizados para receber novos imóveis imediatamente.",
       "advantage3Title": "Grande variedade de produtos para o seu anúncio",
       "advantage3Content": "Disponibilizamos uma vasta gama de ferramentas para melhorar a posição do seu anúncio e ganhar visibilidade."
     }
@@ -179,7 +171,7 @@ const ptTranslations = {
       "step2": "2. Detalhes",
       "step3": "3. Fotos"
     },
-    "title": "Publicar o seu anúncio de particular",
+    "title": "Publicar seu anúncio particular",
     "adPublishedSuccess": "Anúncio publicado com sucesso!",
     "form": {
       "propertyType": {
@@ -190,9 +182,9 @@ const ptTranslations = {
       },
       "location": {
         "label": "Localização do imóvel",
-        "city": "Localidade",
+        "city": "Cidade / Bairro",
         "street": "Rua",
-        "number": "Número da via"
+        "number": "Número"
       },
       "submitButton": "Verificar endereço"
     },
@@ -201,28 +193,28 @@ const ptTranslations = {
       "edit": "Editar"
     },
     "contactDetails": {
-      "title": "Os teus dados de contacto",
-      "emailLabel": "O teu email",
-      "emailDescription": "Nunca será visto no anúncio, apenas nas alertas e notificações.",
+      "title": "Seus dados de contato",
+      "emailLabel": "Seu e-mail",
+      "emailDescription": "Nunca será exibido no anúncio, apenas em alertas e notificações.",
       "changeAccount": "Entrar com outra conta",
-      "phoneLabel": "O teu telefone",
+      "phoneLabel": "Seu telefone",
       "phonePlaceholder": "Seu número com DDD",
-      "addPhone": "Acrescentar telefone adicional",
-      "nameLabel": "O teu nome",
-      "nameDescription": "Será visível no anúncio e quando escrevas a outros utilizadores.",
-      "preferenceLabel": "Como preferes ser contactado?",
+      "addPhone": "Adicionar outro telefone",
+      "nameLabel": "Seu nome",
+      "nameDescription": "Será visível no anúncio e quando você enviar mensagens para outros usuários.",
+      "preferenceLabel": "Como prefere ser contatado?",
       "prefChatAndPhone": "Telefone e mensagens no nosso chat (recomendado)",
-      "prefChatAndPhoneDesc": "Irás receber um aviso das mensagens por e-mail e notificações na nossa app",
-      "prefChatOnly": "Só por mensagens de chat",
-      "prefChatOnlyDesc": "Irás receber um aviso das mensagens por e-mail e notificações na nossa app",
-      "prefPhoneOnly": "Só por telefone",
-      "continueButton": "Continuar para detalhes do imóvel",
-      "nextStepInfo": "No próximo passo poderás inserir as características e o preço."
+      "prefChatAndPhoneDesc": "Você receberá um aviso das mensagens por e-mail e notificações em nosso aplicativo",
+      "prefChatOnly": "Apenas por mensagens de chat",
+      "prefChatOnlyDesc": "Você receberá um aviso das mensagens por e-mail e notificações em nosso aplicativo",
+      "prefPhoneOnly": "Apenas por telefone",
+      "continueButton": "Continuar para os detalhes do imóvel",
+      "nextStepInfo": "No próximo passo, você poderá inserir as características e o preço."
     },
     "detailsForm": {
-      "title": "Aproveita, este anúncio é grátis ;-)",
+      "title": "Aproveite, este anúncio é grátis ;-)",
       "adTitle": "Título do anúncio",
-      "adTitlePlaceholder": "Ex: Apartamento incrível com vista mar na Barra",
+      "adTitlePlaceholder": "Ex: Apartamento incrível com vista para o mar na Barra",
       "apartmentCharacteristics": "Características do imóvel",
       "propertyType": "Tipo de imóvel (opcional)",
       "apartment": "Apartamento",
@@ -230,30 +222,29 @@ const ptTranslations = {
       "room": "Quarto",
       "office": "Escritório",
       "land": "Terreno",
-      "condition": "Estado",
-      "forRenovation": "Para recuperar",
+      "condition": "Condição",
+      "forRenovation": "Precisa de reforma",
       "goodCondition": "Bom estado",
       "grossArea": "m² área bruta",
-      "netArea": "m² úteis (opcional)",
-      "bedrooms": "Número de quartos na casa",
-      "bathrooms": "Número de casas de banho completas e de serviço",
-      "hasElevator": "Tem elevador?",
-      "yes": "Sim, tem",
-      "no": "Não tem",
-      "otherHomeFeatures": "Outras características da tua moradia",
+      "netArea": "m² área útil (opcional)",
+      "bedrooms": "Número de quartos",
+      "bathrooms": "Número de banheiros",
+      "hasElevator": "Possui elevador?",
+      "yes": "Sim",
+      "no": "Não",
+      "otherHomeFeatures": "Outras características do seu imóvel",
       "builtInWardrobes": "Armários embutidos",
       "airConditioning": "Ar condicionado",
       "terrace": "Terraço",
       "balcony": "Varanda",
-      "storageRoom": "Arrecadação",
-      "garage": "Lugar de garagem/Box",
+      "garage": "Vaga de garagem/Box",
       "mobiliado": "Mobiliado",
       "cozinhaEquipada": "Cozinha equipada",
       "suite": "Suíte",
       "escritorio": "Escritório",
-      "otherBuildingFeatures": "Outras características do teu prédio",
+      "otherBuildingFeatures": "Outras características do condomínio",
       "pool": "Piscina",
-      "greenArea": "Zona verde",
+      "greenArea": "Área verde",
       "portaria24h": "Portaria 24h",
       "academia": "Academia",
       "salaoDeFestas": "Salão de festas",
@@ -262,30 +253,30 @@ const ptTranslations = {
       "quadraEsportiva": "Quadra esportiva",
       "sauna": "Sauna",
       "espacoGourmet": "Espaço gourmet",
-      "showMoreDetails": "Indicar mais detalhes",
+      "showMoreDetails": "Mostrar mais detalhes",
       "propertyPrice": "Preço do imóvel",
       "price": "Preço",
-      "condoFee": "Gastos de condomínio (opcional)",
+      "condoFee": "Valor do condomínio (opcional)",
       "currency": {
         "price": "reais",
         "fee": "reais/mês"
       },
-      "saleSituation": "Em que situação será vendido o imóvel?",
-      "rentedWithTenants": "Arrendado, com inquilinos",
-      "withoutTenants": "Sem inquilinos",
+      "saleSituation": "Situação de ocupação do imóvel",
+      "rentedWithTenants": "Alugado (com inquilinos)",
+      "withoutTenants": "Desocupado (sem inquilinos)",
       "adDescription": "Descrição do anúncio",
-      "descriptionPlaceholder": "Escreve aqui a descrição em português. Mais tarde, poderás adicionar outras línguas.",
-      "continueToPhotosButton": "Continuar e importar fotos"
+      "descriptionPlaceholder": "Escreva aqui a descrição do anúncio. Mais tarde, você poderá adicionar outros idiomas.",
+      "continueToPhotosButton": "Continuar para fotos"
     },
     "photosForm": {
-      "title": "Adicionar fotos, plantas e vídeos ao teu anúncio",
-      "dragAndDrop": "Arrasta e solta as tuas fotos aqui ou seleciona-as a partir do teu dispositivo",
+      "title": "Adicione fotos, plantas e vídeos ao seu anúncio",
+      "dragAndDrop": "Arraste e solte suas fotos aqui ou selecione do seu dispositivo",
       "addButton": "Adicionar fotos e vídeos",
-      "limitsInfo": "Seleciona até 40 fotos e 10 plantas (máx. 32 MB cada) e 6 vídeos (máx. 600 MB cada) da tua galeria.",
-      "rememberTitle": "Lembra-te que...",
-      "tip1": "Fotos, plantas e vídeos: atraem mais pessoas para o teu anúncio",
-      "tip2": "Se tiveres uma planta do imóvel, podes tirar uma foto da mesma ou desenhá-la à mão e tirar uma fotografia do desenho",
-      "tip3": "Quando tirares as tuas fotografias, certifica-te de que cada divisão está arrumada, limpa e bem iluminada",
+      "limitsInfo": "Selecione até 40 fotos e 10 plantas (máx. 32MB cada) e 6 vídeos (máx. 600MB cada) da sua galeria.",
+      "rememberTitle": "Lembre-se...",
+      "tip1": "Fotos, plantas e vídeos atraem mais pessoas para o seu anúncio",
+      "tip2": "Se você tiver a planta do imóvel, pode tirar uma foto dela ou desenhá-la à mão e fotografar o desenho",
+      "tip3": "Ao tirar suas fotos, certifique-se de que cada cômodo esteja arrumado, limpo e bem iluminado",
       "backButton": "Voltar",
       "continueButton": "Continuar sem fotos",
       "publishButton": "Publicar Anúncio",
@@ -294,29 +285,29 @@ const ptTranslations = {
     },
     "sidebar": {
       "title": "Informação útil",
-      "p1": "Prepare as fotos. Se ainda não as tem, poderá adicioná-las mais tarde. Sem fotos não obterá resultados.",
-      "p2": "Oferecemos os dois primeiros anúncios grátis para que experimente o nosso serviço. Pode publicar anúncios grátis de apartamentos, moradias, terrenos, espaços comerciais, etc. até que o vendas ou alugues.",
-      "p3": "Além disso, podes publicar até 5 quartos grátis, em imóveis para partilhar, que não se somam ao número de anúncios que te oferecemos.",
-      "p4": "Para garantir a qualidade dos nossos serviços, cobramos uma taxa nos seguintes casos:",
+      "p1": "Prepare as fotos. Se ainda não as tem, poderá adicioná-las mais tarde. Sem fotos, seu anúncio não terá bons resultados.",
+      "p2": "Oferecemos os dois primeiros anúncios grátis para que você experimente nosso serviço. Anuncie apartamentos, casas, terrenos ou espaços comerciais gratuitamente.",
+      "p3": "Além disso, você pode publicar até 5 quartos para alugar gratuitamente, que não entram na conta do limite de anúncios.",
+      "p4": "Para garantir a qualidade dos nossos serviços, uma taxa será cobrada nos seguintes casos:",
       "case1": "anunciantes com mais de dois imóveis",
       "case2": "anunciantes de imóveis duplicados",
-      "case3": "imóveis à venda por mais de 1.000.000 de euros",
-      "case4": "imóveis em arrendamento por mais de 2.500 €/mês",
+      "case3": "imóveis à venda por mais de R$ 5.000.000",
+      "case4": "imóveis para aluguel por mais de R$ 10.000/mês",
       "quickSell": {
-        "title": "Quer vender a sua casa rapidamente?",
-        "link": "Encontre a agência imobiliária mais adequada"
+        "title": "Quer vender seu imóvel rapidamente?",
+        "link": "Encontre a imobiliária mais adequada para você"
       },
       "professional": {
-        "title": "É profissional imobiliário?",
-        "link": "Conhece as vantagens que oferecemos para profissionais"
+        "title": "Você é um profissional do mercado imobiliário?",
+        "link": "Conheça as vantagens que oferecemos para profissionais"
       }
     },
     "locationConfirmationModal": {
-      "title": "Está no lugar correto?",
-      "subtitle": "Se não está bem localizado, pode arrastar o pino até à posição correta.",
+      "title": "A localização está correta?",
+      "subtitle": "Se não estiver bem localizado, você pode arrastar o marcador para a posição correta.",
       "countryInfo": "Brasil",
       "confirmButton": "Confirmar endereço",
-      "backButton": "Voltar a escrever o endereço"
+      "backButton": "Digitar o endereço novamente"
     }
   },
   "geolocationErrorModal": {
@@ -618,7 +609,6 @@ const enTranslations = {
       "airConditioning": "Air conditioning",
       "terrace": "Terrace",
       "balcony": "Balcony",
-      "storageRoom": "Storage room",
       "garage": "Garage space/Box",
       "mobiliado": "Furnished",
       "cozinhaEquipada": "Equipped Kitchen",
@@ -991,7 +981,6 @@ const esTranslations = {
       "airConditioning": "Aire acondicionado",
       "terrace": "Terraza",
       "balcony": "Balcón",
-      "storageRoom": "Trastero",
       "garage": "Plaza de garaje/Box",
       "mobiliado": "Amueblado",
       "cozinhaEquipada": "Cocina equipada",

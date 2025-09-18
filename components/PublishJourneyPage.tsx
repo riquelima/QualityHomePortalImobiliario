@@ -385,7 +385,7 @@ const Step2Details: React.FC<Step2DetailsProps> = ({
                     <div>
                         <label className="block text-base sm:text-md font-semibold text-brand-navy mb-3">{t('publishJourney.detailsForm.otherHomeFeatures')}</label>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                            {['builtInWardrobes', 'airConditioning', 'terrace', 'balcony', 'storageRoom', 'garage', 'mobiliado', 'cozinhaEquipada', 'suite', 'escritorio'].map(f => (
+                            {['builtInWardrobes', 'airConditioning', 'terrace', 'balcony', 'garage', 'mobiliado', 'cozinhaEquipada', 'suite', 'escritorio'].map(f => (
                                 <label key={f} className="flex items-center space-x-2 cursor-pointer">
                                     <input type="checkbox" value={f} checked={details.homeFeatures.includes(f)} onChange={(e) => handleCheckboxChange(e, 'homeFeatures')} className="h-4 w-4 text-brand-red border-gray-300 rounded focus:ring-brand-red" />
                                     <span>{t(`publishJourney.detailsForm.${f}`)}</span>
