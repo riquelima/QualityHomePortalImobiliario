@@ -15,7 +15,7 @@ import FavoritesPage from './components/FavoritesPage';
 import ChatListPage from './components/ChatListPage';
 import ChatPage from './components/ChatPage';
 import MyAdsPage from './components/MyAdsPage';
-import ConfirmationModal from './components/ConfirmationModal';
+import SystemModal from './components/SystemModal';
 import { useLanguage } from './contexts/LanguageContext';
 import { supabase } from './supabaseClient';
 import type { User, Property, ChatSession, Message, Profile } from './types';
@@ -26,6 +26,14 @@ interface PageState {
   searchQuery?: string;
   propertyId?: number;
   chatSessionId?: string;
+}
+
+interface ModalConfig {
+  isOpen: boolean;
+  type: 'success' | 'error' | 'confirm';
+  title: string;
+  message: string;
+  onConfirm?: () => void;
 }
 
 // ====================================================================================
@@ -181,7 +189,7 @@ const App: React.FC = () => {
   const [pageState, setPageState] = useState<PageState>({ page: 'home', userLocation: null });
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isGeoErrorModalOpen, setIsGeoErrorModalOpen] = useState(false);
-  const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
+  const [modalConfig, setModalConfig] = useState<ModalConfig>({ isOpen: false, type: 'success', title: '', message: '' });
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loginIntent, setLoginIntent] = useState<'default' | 'publish'>('default');
@@ -191,6 +199,14 @@ const App: React.FC = () => {
   const [myAds, setMyAds] = useState<Property[]>([]);
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const showModal = (config: Omit<ModalConfig, 'isOpen'>) => {
+    setModalConfig({ ...config, isOpen: true });
+  };
+
+  const hideModal = () => {
+      setModalConfig(prev => ({ ...prev, isOpen: false }));
+  };
 
   const fetchAllData = useCallback(async (currentUser: User | null) => {
     setIsLoading(true);
@@ -463,28 +479,49 @@ const App: React.FC = () => {
 
   const handleAddProperty = useCallback((newProperty: Property) => {
     if (user) {
-      fetchAllData(user);
-    }
-    setIsConfirmationModalOpen(true);
-  }, [user, fetchAllData]);
-  
-  const handleDeactivateProperty = useCallback(async (propertyId: number) => {
-    const { error } = await supabase
-      .from('imoveis')
-      .update({ status: 'inativo' })
-      .eq('id', propertyId);
-
-    if (error) {
-      alert(t('myAdsPage.adDeletedError'));
-      console.error('Error deactivating property:', error);
-    } else {
-      alert(t('myAdsPage.adDeletedSuccess'));
-      if(user) {
         fetchAllData(user);
-      }
     }
+    showModal({
+        type: 'success',
+        title: t('systemModal.successTitle'),
+        message: t('confirmationModal.message'),
+    });
   }, [user, fetchAllData, t]);
 
+  const handlePublishError = useCallback((message: string) => {
+    showModal({
+        type: 'error',
+        title: t('systemModal.errorTitle'),
+        message: message,
+    });
+  }, [t]);
+
+  const confirmDeactivateProperty = async (propertyId: number) => {
+    const { error } = await supabase
+        .from('imoveis')
+        .update({ status: 'inativo' })
+        .eq('id', propertyId);
+
+    if (error) {
+        showModal({ type: 'error', title: t('systemModal.errorTitle'), message: t('myAdsPage.adDeletedError') });
+        console.error('Error deactivating property:', error);
+    } else {
+        showModal({ type: 'success', title: t('systemModal.successTitle'), message: t('myAdsPage.adDeletedSuccess') });
+        if (user) {
+            fetchAllData(user);
+        }
+    }
+  };
+
+  const handleRequestDeactivateProperty = useCallback((propertyId: number) => {
+    showModal({
+        type: 'confirm',
+        title: t('systemModal.confirmTitle'),
+        message: t('myAdsPage.deleteConfirm'),
+        onConfirm: () => confirmDeactivateProperty(propertyId),
+    });
+  }, [t, user, fetchAllData]);
+  
   const handleStartChat = async (property: Property) => {
     if (!user || !property.anunciante_id) {
       openLoginModal();
@@ -568,6 +605,7 @@ const App: React.FC = () => {
                   onAddProperty={handleAddProperty}
                   onNavigateToChatList={navigateToChatList}
                   onNavigateToMyAds={navigateToMyAds}
+                  onPublishError={handlePublishError}
                 />;
       case 'searchResults':
         const query = pageState.searchQuery?.toLowerCase() ?? '';
@@ -671,7 +709,7 @@ const App: React.FC = () => {
             onNavigateToMyAds={navigateToMyAds}
             userProperties={myAds}
             onViewDetails={navigateToPropertyDetail}
-            onDeleteProperty={handleDeactivateProperty}
+            onDeleteProperty={handleRequestDeactivateProperty}
         />;
       case 'home':
       default:
@@ -708,11 +746,9 @@ const App: React.FC = () => {
       {renderCurrentPage()}
       <LoginModal isOpen={isLoginModalOpen} onClose={closeLoginModal} />
       <GeolocationErrorModal isOpen={isGeoErrorModalOpen} onClose={closeGeoErrorModal} />
-      <ConfirmationModal
-        isOpen={isConfirmationModalOpen}
-        onClose={() => setIsConfirmationModalOpen(false)}
-        title={t('confirmationModal.title')}
-        message={t('confirmationModal.message')}
+      <SystemModal
+        {...modalConfig}
+        onClose={hideModal}
       />
     </>
   );

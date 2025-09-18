@@ -29,6 +29,7 @@ interface PublishJourneyPageProps {
   onLogout: () => void;
   onNavigateToFavorites: () => void;
   onAddProperty: (propertyData: Property) => void;
+  onPublishError: (message: string) => void;
   onNavigateToChatList: () => void;
   // FIX: Add onNavigateToMyAds prop to resolve typing error.
   onNavigateToMyAds: () => void;
@@ -560,7 +561,7 @@ const Step3Photos: React.FC<Step3PhotosProps> = ({ onBack, onFinish, files, setF
                 </div>
             )}
             
-            <div className="bg-blue-50 border border-blue-200 text-blue-800 p-4 rounded-md text-sm mb-8 flex items-start space-x-3">
+            <div className="bg-blue-50 border border-blue-200 text-blue-800 p-4 rounded-md text-sm flex items-start space-x-3">
                 <InfoIcon className="w-5 h-5 flex-shrink-0 mt-0.5" />
                 <p>{t('publishJourney.photosForm.limitsInfo')}</p>
             </div>
@@ -587,7 +588,7 @@ const Step3Photos: React.FC<Step3PhotosProps> = ({ onBack, onFinish, files, setF
 };
 
 
-const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPublishAdClick, onOpenLoginModal, user, profile, onLogout, onNavigateToFavorites, onAddProperty, onNavigateToChatList, onNavigateToMyAds }) => {
+const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPublishAdClick, onOpenLoginModal, user, profile, onLogout, onNavigateToFavorites, onAddProperty, onPublishError, onNavigateToChatList, onNavigateToMyAds }) => {
   const { t } = useLanguage();
   const [currentStep, setCurrentStep] = useState(1);
 
@@ -789,7 +790,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
 
   const handleFinish = useCallback(async () => {
     if (!user) {
-        alert("Você precisa estar logado para publicar um anúncio.");
+        onPublishError("Você precisa estar logado para publicar um anúncio.");
         onOpenLoginModal();
         return;
     }
@@ -943,7 +944,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
 
     } catch (error: any) {
         console.error("ERRO COMPLETO NA PUBLICAÇÃO:", error);
-        alert(`Falha na publicação: ${error.message}`);
+        onPublishError(error.message);
 
         // ROLLBACK on failure
         if (insertedPropertyId) {
@@ -963,7 +964,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
     } finally {
         setIsPublishing(false);
     }
-}, [user, details, verifiedAddress, address, initialCoords, operation, files, onAddProperty, onOpenLoginModal, onBack, contactInfo.name, contactInfo.phone]);
+}, [user, details, verifiedAddress, address, initialCoords, operation, files, onAddProperty, onOpenLoginModal, onBack, contactInfo.name, contactInfo.phone, onPublishError]);
 
 
   const getStepClass = (stepNumber: number) => {

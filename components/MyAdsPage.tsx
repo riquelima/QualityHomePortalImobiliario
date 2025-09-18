@@ -25,12 +25,6 @@ const MyAdsPage: React.FC<MyAdsPageProps> = ({
 }) => {
   const { t } = useLanguage();
 
-  const handleDelete = (id: number) => {
-    if (window.confirm(t('myAdsPage.deleteConfirm'))) {
-      onDeleteProperty(id);
-    }
-  };
-
   return (
     <div className="bg-brand-light-gray min-h-screen flex flex-col">
       <Header
@@ -65,7 +59,7 @@ const MyAdsPage: React.FC<MyAdsPageProps> = ({
                   property={property}
                   onView={onViewDetails}
                   onEdit={() => { alert('A funcionalidade de edição será implementada em breve.'); }}
-                  onDelete={handleDelete}
+                  onDelete={onDeleteProperty}
                 />
               ))}
             </div>

@@ -392,6 +392,14 @@ const ptTranslations = {
     "message": "Seu anúncio foi publicado com sucesso e já está visível no portal.",
     "closeButton": "Entendido"
   },
+  "systemModal": {
+    "successTitle": "Sucesso!",
+    "errorTitle": "Ocorreu um Erro",
+    "confirmTitle": "Você tem certeza?",
+    "okButton": "Entendido",
+    "confirmButton": "Confirmar",
+    "cancelButton": "Cancelar"
+  },
   "footer": {
     "text": "Quality Home Portal Imobiliário. Todos os direitos reservados."
   }
@@ -793,6 +801,14 @@ const enTranslations = {
     "message": "Your ad has been successfully published and is now visible on the portal.",
     "closeButton": "Got it"
   },
+  "systemModal": {
+    "successTitle": "Success!",
+    "errorTitle": "An Error Occurred",
+    "confirmTitle": "Are you sure?",
+    "okButton": "Got it",
+    "confirmButton": "Confirm",
+    "cancelButton": "Cancel"
+  },
   "footer": {
     "text": "Quality Home Real Estate Portal. All rights reserved."
   }
@@ -1193,6 +1209,14 @@ const esTranslations = {
     "title": "¡Éxito!",
     "message": "Tu anuncio se ha publicado correctamente y ya está visible en el portal.",
     "closeButton": "Entendido"
+  },
+  "systemModal": {
+    "successTitle": "¡Éxito!",
+    "errorTitle": "Ocurrió un Error",
+    "confirmTitle": "¿Estás seguro?",
+    "okButton": "Entendido",
+    "confirmButton": "Confirmar",
+    "cancelButton": "Cancelar"
   },
   "footer": {
     "text": "Quality Home Portal Inmobiliario. Todos los derechos reservados."
