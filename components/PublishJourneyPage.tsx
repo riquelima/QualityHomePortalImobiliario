@@ -1,5 +1,4 @@
 
-
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Header from './Header';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -156,7 +155,7 @@ const Step1Form: React.FC<Step1FormProps> = ({
                     {isCitySuggestionsOpen && citySuggestions.length > 0 && (
                         <div className="absolute top-full left-0 w-full bg-white border border-gray-200 rounded-b-md shadow-lg z-20">
                         {citySuggestions.map((s) => (
-                            <button type="button" key={s.place_id} onClick={() => handleSuggestionClick(s)} className="w-full text-left px-4 py-3 text-brand-dark hover:bg-gray-100">{s.display_name}</button>
+                            <button type="button" key={s.place_id} onClick={() => handleSuggestionClick(s)} className="w-full text-left px-4 py-3 text-brand-dark hover:bg-gray-100">{s.displayName}</button>
                         ))}
                         </div>
                     )}
@@ -716,21 +715,48 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
       return;
     }
 
+    const stateMap: { [key: string]: string } = {
+        'Acre': 'AC', 'Alagoas': 'AL', 'Amapá': 'AP', 'Amazonas': 'AM', 'Bahia': 'BA',
+        'Ceará': 'CE', 'Distrito Federal': 'DF', 'Espírito Santo': 'ES', 'Goiás': 'GO',
+        'Maranhão': 'MA', 'Mato Grosso': 'MT', 'Mato Grosso do Sul': 'MS', 'Minas Gerais': 'MG',
+        'Pará': 'PA', 'Paraíba': 'PB', 'Paraná': 'PR', 'Pernambuco': 'PE', 'Piauí': 'PI',
+        'Rio de Janeiro': 'RJ', 'Rio Grande do Norte': 'RN', 'Rio Grande do Sul': 'RS',
+        'Rondônia': 'RO', 'Roraima': 'RR', 'Santa Catarina': 'SC', 'São Paulo': 'SP',
+        'Sergipe': 'SE', 'Tocantins': 'TO'
+    };
+
     const getSuggestions = async () => {
-      const url = `https://nominatim.openstreetmap.org/search?format=json&city=${encodeURIComponent(address.city)}&countrycodes=br&limit=5&addressdetails=1`;
+      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address.city)}&countrycodes=br&limit=10&addressdetails=1`;
       try {
         const response = await fetch(url);
         const data = await response.json();
         if (data && data.length > 0) {
-          const uniqueSuggestions = data.reduce((acc: any[], current: any) => {
-              const displayName = current.display_name;
-              if (!acc.some(item => item.display_name === displayName)) {
-                  acc.push(current);
-              }
-              return acc;
-          }, []);
-          setCitySuggestions(uniqueSuggestions);
-          setIsCitySuggestionsOpen(true);
+            const seen = new Set<string>();
+            const filteredSuggestions = data
+                .map((result: any) => {
+                    const addr = result.address;
+                    const city = addr.city || addr.town || addr.village || addr.municipality;
+                    const state = addr.state;
+                    
+                    const isLocality = result.type === 'administrative' || result.type === 'city' || result.type === 'town' || result.type === 'village';
+                    
+                    if (city && state && isLocality) {
+                        const stateAbbr = stateMap[state] || state;
+                        const displayName = `${city}, ${stateAbbr}`;
+                        return { ...result, displayName };
+                    }
+                    return null;
+                })
+                .filter((item: any): item is any => {
+                    if (!item || seen.has(item.displayName)) {
+                        return false;
+                    }
+                    seen.add(item.displayName);
+                    return true;
+                });
+
+            setCitySuggestions(filteredSuggestions);
+            setIsCitySuggestionsOpen(filteredSuggestions.length > 0);
         } else {
           setCitySuggestions([]);
           setIsCitySuggestionsOpen(false);
@@ -750,17 +776,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
   };
   
   const handleSuggestionClick = (suggestion: any) => {
-    const { address: suggestionAddress } = suggestion;
-    // Nominatim may return city, town, or village for the main locality. Prioritize them.
-    const city = suggestionAddress.city || suggestionAddress.town || suggestionAddress.village || '';
-    const state = suggestionAddress.state || '';
-
-    // Create a clean "City, State" string, avoiding duplicates.
-    const parts = [city, state].filter(Boolean); // Filter out empty strings
-    const uniqueParts = [...new Set(parts)]; // Remove duplicates (e.g., if city and state are the same)
-    const formattedLocation = uniqueParts.join(', ');
-
-    setAddress(prev => ({ ...prev, city: formattedLocation }));
+    setAddress(prev => ({ ...prev, city: suggestion.displayName }));
     setIsCitySuggestionsOpen(false);
   };
 
@@ -841,16 +857,74 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
     if (isEditMode && propertyToEdit) {
         // UPDATE LOGIC
         try {
-            const updatedPropertyData = {
-                titulo: details.title,
-                descricao: details.description,
-                preco: parseInt(details.price, 10) || 0,
-                // Include all other updatable fields from the 'details' state
-            };
-            // ... more logic to handle media deletions and additions
+            const { error: updateError } = await supabase
+                .from('imoveis')
+                .update({
+                    titulo: details.title,
+                    descricao: details.description,
+                    endereco_completo: verifiedAddress,
+                    cidade: address.city,
+                    rua: address.street,
+                    numero: address.number,
+                    latitude: initialCoords?.lat ?? 0,
+                    longitude: initialCoords?.lng ?? 0,
+                    preco: parseInt(details.price, 10) || 0,
+                    tipo_operacao: operation,
+                    tipo_imovel: details.propertyType.join(', '),
+                    quartos: details.bedrooms,
+                    banheiros: details.bathrooms,
+                    area_bruta: parseInt(details.grossArea, 10) || 0,
+                    possui_elevador: details.hasElevator,
+                    taxa_condominio: parseInt(details.condoFee, 10) || 0,
+                    caracteristicas_imovel: details.homeFeatures,
+                    caracteristicas_condominio: details.buildingFeatures,
+                    situacao_ocupacao: details.saleSituation,
+                })
+                .eq('id', propertyToEdit.id);
+
+            if (updateError) throw new Error(`Erro ao atualizar imóvel: ${updateError.message}`);
+
+            // Media management
+            const existingMediaIds = initialMedia.map(m => m.id);
+            const currentMediaIds = media.filter(m => !(m instanceof File)).map(m => (m as Media).id);
+            const mediaIdsToDelete = existingMediaIds.filter(id => !currentMediaIds.includes(id));
+            const filesToUpload = media.filter(m => m instanceof File) as File[];
+
+            if (mediaIdsToDelete.length > 0) {
+                const mediaToDelete = initialMedia.filter(m => mediaIdsToDelete.includes(m.id));
+                const pathsToDelete = mediaToDelete.map(m => m.url.split('/').slice(-2).join('/'));
+                const { error: deleteStorageError } = await supabase.storage.from('midia').remove(pathsToDelete);
+                if (deleteStorageError) console.error("Erro ao remover mídias do storage:", deleteStorageError.message);
+
+                const { error: deleteDbError } = await supabase.from('midias_imovel').delete().in('id', mediaIdsToDelete);
+                if (deleteDbError) console.error("Erro ao remover mídias do BD:", deleteDbError.message);
+            }
+
+            if (filesToUpload.length > 0) {
+                 for (const file of filesToUpload) {
+                    const fileExt = file.name.split('.').pop();
+                    const fileName = `${Date.now()}-${Math.random()}.${fileExt}`;
+                    const filePath = `${user.id}/${propertyToEdit.id}/${fileName}`;
+                    
+                    const { error: uploadError } = await supabase.storage.from('midia').upload(filePath, file);
+                    if (uploadError) throw new Error(`Erro no upload para o Supabase Storage: ${uploadError.message}`);
+                    
+                    const { data: urlData } = supabase.storage.from('midia').getPublicUrl(filePath);
+                    const resourceType = file.type.startsWith('image') ? 'imagem' : 'video';
+                    
+                    const { error: mediaDbError } = await supabase.from('midias_imovel').insert({
+                        imovel_id: propertyToEdit.id,
+                        url: urlData.publicUrl,
+                        tipo: resourceType
+                    });
+                    if (mediaDbError) throw new Error(`Erro ao Salvar Mídias: ${mediaDbError.message}`);
+                }
+            }
+
             await onUpdateProperty();
+
         } catch (error: any) {
-            onPublishError(error.message);
+            onPublishError(`${t('systemModal.errorTitle')}: ${error.message}`);
         } finally {
             setIsPublishing(false);
         }
@@ -860,7 +934,14 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
         const uploadedFilePaths: string[] = [];
 
         try {
-            // ... (rest of create logic remains the same)
+            if (profile && (profile.nome_completo !== contactInfo.name || profile.telefone !== contactInfo.phone)) {
+                const { error: profileError } = await supabase
+                    .from('perfis')
+                    .update({ nome_completo: contactInfo.name, telefone: contactInfo.phone })
+                    .eq('id', user.id);
+                if (profileError) throw new Error(`Erro ao atualizar perfil: ${profileError.message}`);
+            }
+
             const newPropertyData = {
                 anunciante_id: user.id,
                 titulo: details.title,
@@ -892,20 +973,42 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
 
             const filesToUpload = media.filter(item => item instanceof File) as File[];
             if (filesToUpload.length > 0) {
-              // ... upload logic here
+                for (const file of filesToUpload) {
+                    const fileExt = file.name.split('.').pop();
+                    const fileName = `${Date.now()}-${Math.random()}.${fileExt}`;
+                    const filePath = `${user.id}/${insertedPropertyId}/${fileName}`;
+                    uploadedFilePaths.push(filePath);
+                    
+                    const { error: uploadError } = await supabase.storage.from('midia').upload(filePath, file);
+                    if (uploadError) throw new Error(`Erro no upload para o Supabase Storage: ${uploadError.message}`);
+                    
+                    const { data: urlData } = supabase.storage.from('midia').getPublicUrl(filePath);
+                    const resourceType = file.type.startsWith('image/') ? 'imagem' : 'video';
+                    
+                    const { error: mediaDbError } = await supabase.from('midias_imovel').insert({
+                        imovel_id: insertedPropertyId,
+                        url: urlData.publicUrl,
+                        tipo: resourceType
+                    });
+                    if (mediaDbError) throw new Error(`Erro ao Salvar Mídias: ${mediaDbError.message}`);
+                }
             }
-
-            onAddProperty(insertedProperty as Property);
+            onAddProperty({ ...newPropertyData, id: insertedPropertyId } as Property);
             onBack();
 
         } catch (error: any) {
-            onPublishError(error.message);
-            // ... (rollback logic)
+             onPublishError(`${t('systemModal.errorTitle')}: ${error.message}`);
+            if (insertedPropertyId) {
+                if (uploadedFilePaths.length > 0) {
+                    await supabase.storage.from('midia').remove(uploadedFilePaths);
+                }
+                await supabase.from('imoveis').delete().eq('id', insertedPropertyId);
+            }
         } finally {
             setIsPublishing(false);
         }
     }
-}, [user, details, verifiedAddress, address, initialCoords, operation, media, onAddProperty, onOpenLoginModal, onBack, onPublishError, isEditMode, propertyToEdit, onUpdateProperty]);
+}, [user, details, verifiedAddress, address, initialCoords, operation, media, contactInfo, profile, initialMedia, onAddProperty, onOpenLoginModal, onBack, onPublishError, isEditMode, propertyToEdit, onUpdateProperty, t]);
 
 
   const getStepClass = (stepNumber: number) => {
@@ -917,7 +1020,6 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
   return (
     <>
       <div className="bg-brand-light-gray min-h-screen">
-        {/* FIX: Corrected prop names being passed to Header. */}
         <Header onPublishAdClick={onPublishAdClick} onAccessClick={onOpenLoginModal} user={user} profile={profile} onLogout={onLogout} onNavigateToFavorites={onNavigateToFavorites} onNavigateToChatList={onNavigateToChatList} onNavigateToMyAds={onNavigateToMyAds} />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-10">
           <div className="max-w-4xl mx-auto mb-8">
