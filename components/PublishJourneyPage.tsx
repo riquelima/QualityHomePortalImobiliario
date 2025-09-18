@@ -853,7 +853,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
             const uploadPromises = files.map(async (file) => {
                 const fileExt = file.name.split('.').pop();
                 const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
-                const filePath = `imoveis/${insertedPropertyId}/${fileName}`;
+                const filePath = `${user.id}/${insertedPropertyId}/${fileName}`;
                 
                 const { error: uploadError } = await supabase.storage
                     .from('midia')

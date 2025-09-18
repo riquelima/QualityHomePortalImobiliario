@@ -220,9 +220,11 @@ const App: React.FC = () => {
 
   const fetchAllData = useCallback(async (currentUser: User | null) => {
     // Fetch Properties
+    // Simplified the query to fetch only from the main 'imoveis' table.
+    // This is a debugging step to ensure data is displayed, bypassing potential issues with RLS on related tables or misconfigured relationships.
     let query = supabase
       .from('imoveis')
-      .select('*, owner:anunciante_id(*), midias_imovel(*)');
+      .select('*');
       
     if (currentUser) {
       // For a logged-in user, fetch their own ads (any status) OR other people's active ads.
@@ -667,10 +669,6 @@ const App: React.FC = () => {
                 onSearchNearMe={(location) => navigateToMap(location)}
                 onGeolocationError={openGeoErrorModal}
                 onSearchSubmit={navigateToSearchResults}
-              />
-              <InfoSection 
-                onDrawOnMapClick={() => navigateToMap()}
-                onPublishAdClick={navigateToPublish}
               />
               <PropertyListings 
                 properties={properties}
