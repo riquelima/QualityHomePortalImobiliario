@@ -847,14 +847,14 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
 
         insertedPropertyId = insertedProperty.id;
 
-        // Step 3: Upload files to Supabase Storage
+        // Step 3: Upload files to Supabase Storage sequentially
         let uploadedMedia: { url: string; tipo: 'imagem' | 'video' }[] = [];
         if (files.length > 0) {
-            const uploadPromises = files.map(async (file) => {
+            for (const file of files) {
                 const fileExt = file.name.split('.').pop();
-                const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
+                const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
                 const filePath = `${user.id}/${insertedPropertyId}/${fileName}`;
-                
+
                 const { error: uploadError } = await supabase.storage
                     .from('midia')
                     .upload(filePath, file);
@@ -873,15 +873,12 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
                     throw new Error("Não foi possível obter a URL pública do arquivo.");
                 }
 
-                // FIX: Use 'imagem' for image types to match the database ENUM.
-                // FIX: Explicitly typing `resourceType` prevents TypeScript from widening it to a generic `string`, ensuring it matches the expected `'imagem' | 'video'` literal union type.
                 const resourceType: 'video' | 'imagem' = file.type.startsWith('video') ? 'video' : 'imagem';
                 
-                return { url: publicUrlData.publicUrl, tipo: resourceType };
-            });
-            uploadedMedia = await Promise.all(uploadPromises);
+                uploadedMedia.push({ url: publicUrlData.publicUrl, tipo: resourceType });
+            }
         }
-
+        
         // Step 4: Insert media URLs into Supabase `midias_imovel` table
         if (uploadedMedia.length > 0) {
             const mediaToInsert = uploadedMedia.map(media => ({
