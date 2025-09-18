@@ -18,14 +18,15 @@ import MyAdsPage from './components/MyAdsPage';
 import SystemModal from './components/SystemModal';
 import { useLanguage } from './contexts/LanguageContext';
 import { supabase } from './supabaseClient';
-import type { User, Property, ChatSession, Message, Profile } from './types';
+import type { User, Property, ChatSession, Message, Profile, Media } from './types';
 
 interface PageState {
-  page: 'home' | 'map' | 'publish' | 'publish-journey' | 'searchResults' | 'propertyDetail' | 'favorites' | 'chatList' | 'chat' | 'myAds';
+  page: 'home' | 'map' | 'publish' | 'publish-journey' | 'searchResults' | 'propertyDetail' | 'favorites' | 'chatList' | 'chat' | 'myAds' | 'edit-journey';
   userLocation: { lat: number; lng: number } | null;
   searchQuery?: string;
   propertyId?: number;
   chatSessionId?: string;
+  propertyToEdit?: Property;
 }
 
 interface ModalConfig {
@@ -276,6 +277,7 @@ const App: React.FC = () => {
                 images: propertyMedia.filter(m => m.tipo === 'imagem').map(m => m.url),
                 videos: propertyMedia.filter(m => m.tipo === 'video').map(m => m.url),
                 owner: ownerProfile ? { ...ownerProfile, phone: ownerProfile.telefone } : undefined,
+                midias_imovel: propertyMedia,
             };
         });
 
@@ -449,6 +451,9 @@ const App: React.FC = () => {
       openLoginModal();
     }
   };
+  const navigateToEditJourney = (property: Property) => {
+    setPageState({ page: 'edit-journey', userLocation: null, propertyToEdit: property });
+  };
 
   const openLoginModal = (intent: 'default' | 'publish' = 'default') => {
     setLoginIntent(intent);
@@ -489,6 +494,18 @@ const App: React.FC = () => {
         title: t('systemModal.successTitle'),
         message: t('confirmationModal.message'),
     });
+  }, [user, fetchAllData, t, showModal]);
+
+  const handleUpdateProperty = useCallback(async () => {
+    if (user) {
+        await fetchAllData(user);
+    }
+    showModal({
+        type: 'success',
+        title: t('systemModal.successTitle'),
+        message: t('systemModal.editSuccessMessage'),
+    });
+    navigateHome();
   }, [user, fetchAllData, t, showModal]);
 
   const handlePublishError = useCallback((message: string) => {
@@ -597,7 +614,9 @@ const App: React.FC = () => {
                   onNavigateToMyAds={navigateToMyAds}
                />;
       case 'publish-journey':
+      case 'edit-journey':
         return <PublishJourneyPage
+                  propertyToEdit={pageState.page === 'edit-journey' ? pageState.propertyToEdit : null}
                   onBack={navigateHome}
                   onPublishAdClick={navigateToPublish}
                   onOpenLoginModal={() => openLoginModal('default')}
@@ -606,6 +625,7 @@ const App: React.FC = () => {
                   onLogout={handleLogout}
                   onNavigateToFavorites={navigateToFavorites}
                   onAddProperty={handleAddProperty}
+                  onUpdateProperty={handleUpdateProperty}
                   onNavigateToChatList={navigateToChatList}
                   onNavigateToMyAds={navigateToMyAds}
                   onPublishError={handlePublishError}
@@ -713,6 +733,7 @@ const App: React.FC = () => {
             userProperties={myAds}
             onViewDetails={navigateToPropertyDetail}
             onDeleteProperty={handleRequestDeactivateProperty}
+            onEditProperty={navigateToEditJourney}
         />;
       case 'home':
       default:

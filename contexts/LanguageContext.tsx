@@ -172,6 +172,7 @@ const ptTranslations = {
       "step3": "3. Fotos"
     },
     "title": "Publicar seu anúncio particular",
+    "editTitle": "Editar seu anúncio",
     "adPublishedSuccess": "Anúncio publicado com sucesso!",
     "form": {
       "propertyType": {
@@ -280,7 +281,9 @@ const ptTranslations = {
       "backButton": "Voltar",
       "continueButton": "Continuar sem fotos",
       "publishButton": "Publicar Anúncio",
+      "updateButton": "Atualizar Anúncio",
       "publishingButton": "Publicando...",
+      "updatingButton": "Atualizando...",
       "removeFile": "Remover arquivo"
     },
     "sidebar": {
@@ -385,7 +388,8 @@ const ptTranslations = {
     "deleteButton": "Excluir",
     "deleteConfirm": "Tem certeza que deseja excluir este anúncio? Esta ação o tornará inativo.",
     "adDeletedSuccess": "Anúncio desativado com sucesso!",
-    "adDeletedError": "Erro ao desativar o anúncio."
+    "adDeletedError": "Erro ao desativar o anúncio.",
+    "inactiveStatus": "Inativo"
   },
   "confirmationModal": {
     "title": "Sucesso!",
@@ -399,7 +403,8 @@ const ptTranslations = {
     "okButton": "Entendido",
     "confirmButton": "Confirmar",
     "cancelButton": "Cancelar",
-    "fetchError": "Não foi possível carregar os anúncios. Por favor, tente recarregar a página."
+    "fetchError": "Não foi possível carregar os anúncios. Por favor, tente recarregar a página.",
+    "editSuccessMessage": "Anúncio atualizado com sucesso!"
   },
   "footer": {
     "text": "Quality Home Portal Imobiliário. Todos os direitos reservados."
@@ -582,6 +587,7 @@ const enTranslations = {
       "step3": "3. Photos"
     },
     "title": "Publish your private ad",
+    "editTitle": "Edit your ad",
     "adPublishedSuccess": "Ad published successfully!",
     "form": {
       "propertyType": {
@@ -690,7 +696,9 @@ const enTranslations = {
       "backButton": "Back",
       "continueButton": "Continue without photos",
       "publishButton": "Publish Ad",
+      "updateButton": "Update Ad",
       "publishingButton": "Publishing...",
+      "updatingButton": "Updating...",
       "removeFile": "Remove file"
     },
     "sidebar": {
@@ -795,7 +803,8 @@ const enTranslations = {
     "deleteButton": "Delete",
     "deleteConfirm": "Are you sure you want to delete this ad? This action will make it inactive.",
     "adDeletedSuccess": "Ad successfully deactivated!",
-    "adDeletedError": "Error deactivating ad."
+    "adDeletedError": "Error deactivating ad.",
+    "inactiveStatus": "Inactive"
   },
   "confirmationModal": {
     "title": "Success!",
@@ -809,7 +818,8 @@ const enTranslations = {
     "okButton": "Got it",
     "confirmButton": "Confirm",
     "cancelButton": "Cancel",
-    "fetchError": "Could not load ads. Please try reloading the page."
+    "fetchError": "Could not load ads. Please try reloading the page.",
+    "editSuccessMessage": "Ad updated successfully!"
   },
   "footer": {
     "text": "Quality Home Real Estate Portal. All rights reserved."
@@ -992,6 +1002,7 @@ const esTranslations = {
       "step3": "3. Fotos"
     },
     "title": "Publicar tu anuncio de particular",
+    "editTitle": "Editar tu anuncio",
     "adPublishedSuccess": "¡Anuncio publicado con éxito!",
     "form": {
       "propertyType": {
@@ -1100,7 +1111,9 @@ const esTranslations = {
         "backButton": "Volver",
         "continueButton": "Continuar sin fotos",
         "publishButton": "Publicar Anuncio",
+        "updateButton": "Actualizar Anuncio",
         "publishingButton": "Publicando...",
+        "updatingButton": "Actualizando...",
         "removeFile": "Quitar archivo"
     },
     "sidebar": {
@@ -1205,7 +1218,8 @@ const esTranslations = {
     "deleteButton": "Eliminar",
     "deleteConfirm": "¿Estás seguro de que quieres eliminar este anuncio? Esta acción lo desactivará.",
     "adDeletedSuccess": "¡Anuncio desactivado con éxito!",
-    "adDeletedError": "Error al desactivar el anuncio."
+    "adDeletedError": "Error al desactivar el anuncio.",
+    "inactiveStatus": "Inactivo"
   },
   "confirmationModal": {
     "title": "¡Éxito!",
@@ -1219,7 +1233,8 @@ const esTranslations = {
     "okButton": "Entendido",
     "confirmButton": "Confirmar",
     "cancelButton": "Cancelar",
-    "fetchError": "No se pudieron cargar los anuncios. Por favor, intenta recargar la página."
+    "fetchError": "No se pudieron cargar los anuncios. Por favor, intenta recargar la página.",
+    "editSuccessMessage": "¡Anuncio actualizado con éxito!"
   },
   "footer": {
     "text": "Quality Home Portal Inmobiliario. Todos los derechos reservados."

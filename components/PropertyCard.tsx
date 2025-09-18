@@ -49,7 +49,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onViewDetails, is
       <div className="relative">
         <img src={imageSrc} alt={property.title} className="w-full h-56 object-cover aspect-video" />
         {property.status && (
-          <span className={`absolute top-3 left-3 text-white text-xs font-bold px-3 py-1 rounded-full ${statusColorMap[property.status]}`}>
+          <span className={`absolute top-3 left-3 text-white text-xs font-bold px-3 py-1 rounded-full ${statusColorMap[property.status as keyof typeof statusColorMap]}`}>
             {property.status}
           </span>
         )}

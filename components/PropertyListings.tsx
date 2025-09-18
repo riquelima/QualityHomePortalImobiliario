@@ -1,7 +1,8 @@
 
 
 import React from 'react';
-import { Property, PropertyStatus } from '../types';
+// FIX: Removed unused import of PropertyStatus.
+import type { Property } from '../types';
 import PropertyCard from './PropertyCard';
 import { useLanguage } from '../contexts/LanguageContext';
 

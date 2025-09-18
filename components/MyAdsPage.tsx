@@ -18,10 +18,11 @@ interface MyAdsPageProps {
   userProperties: Property[];
   onViewDetails: (id: number) => void;
   onDeleteProperty: (id: number) => void;
+  onEditProperty: (property: Property) => void;
 }
 
 const MyAdsPage: React.FC<MyAdsPageProps> = ({
-  onBack, user, profile, onLogout, onPublishAdClick, onAccessClick, onNavigateToFavorites, onNavigateToChatList, onNavigateToMyAds, userProperties, onViewDetails, onDeleteProperty
+  onBack, user, profile, onLogout, onPublishAdClick, onAccessClick, onNavigateToFavorites, onNavigateToChatList, onNavigateToMyAds, userProperties, onViewDetails, onDeleteProperty, onEditProperty
 }) => {
   const { t } = useLanguage();
 
@@ -58,7 +59,7 @@ const MyAdsPage: React.FC<MyAdsPageProps> = ({
                   key={property.id}
                   property={property}
                   onView={onViewDetails}
-                  onEdit={() => { alert('A funcionalidade de edição será implementada em breve.'); }}
+                  onEdit={onEditProperty}
                   onDelete={onDeleteProperty}
                 />
               ))}

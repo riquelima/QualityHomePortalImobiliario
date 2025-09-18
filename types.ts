@@ -4,6 +4,7 @@ import type { User } from '@supabase/supabase-js';
 
 export { User };
 
+// FIX: Added the missing PropertyStatus enum which is used in PropertyCard.tsx.
 export enum PropertyStatus {
   New = 'Novo',
   Updated = 'Atualizado',
@@ -14,6 +15,13 @@ export interface Profile {
   nome_completo: string;
   url_foto_perfil: string;
   telefone?: string;
+}
+
+export interface Media {
+  id: number;
+  imovel_id: number;
+  url: string;
+  tipo: 'imagem' | 'video';
 }
 
 export interface Property {
@@ -49,9 +57,9 @@ export interface Property {
   // Campos que já existem no front
   images: string[];
   videos?: string[];
-  status?: PropertyStatus;
+  status?: string; // Alterado para string para suportar 'ativo'/'inativo'
   owner?: Profile & { email?: string, phone?: string }; // Merged Profile with legacy owner fields for compatibility
-  midias_imovel?: { url: string, tipo: 'imagem' | 'video' }[];
+  midias_imovel?: Media[];
   caracteristicas_imovel?: string[];
   caracteristicas_condominio?: string[];
   situacao_ocupacao?: string;
