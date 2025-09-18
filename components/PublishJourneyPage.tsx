@@ -1,5 +1,7 @@
 
 
+
+
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Header from './Header';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -7,7 +9,6 @@ import type { User, Property, Profile } from '../types';
 import BoltIcon from './icons/BoltIcon';
 import BriefcaseIcon from './icons/BriefcaseIcon';
 import LocationConfirmationModal from './LocationConfirmationModal';
-import InfoIcon from './icons/InfoIcon';
 import VerifiedIcon from './icons/VerifiedIcon';
 import PlusIcon from './icons/PlusIcon';
 import MinusIcon from './icons/MinusIcon';
@@ -17,6 +18,8 @@ import PlanIcon from './icons/PlanIcon';
 import VideoIcon from './icons/VideoIcon';
 import { supabase } from '../supabaseClient';
 import CloseIcon from './icons/CloseIcon';
+// FIX: Import InfoIcon component to resolve 'Cannot find name' error.
+import InfoIcon from './icons/InfoIcon';
 
 
 interface PublishJourneyPageProps {
@@ -298,8 +301,8 @@ const Step2Details: React.FC<Step2DetailsProps> = ({
                     {/* Tipo de Imóvel */}
                     <div>
                         <label className="block text-base sm:text-md font-semibold text-brand-navy mb-3">{t('publishJourney.detailsForm.propertyType')}</label>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            {['apartment', 'house', 'room', 'office'].map(type => (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+                            {['apartment', 'house', 'room', 'office', 'land'].map(type => (
                                 <label key={type} className="flex items-center space-x-2 cursor-pointer">
                                     <input type="checkbox" value={type} checked={details.propertyType.includes(type)} onChange={(e) => handleCheckboxChange(e, 'propertyType')} className="h-4 w-4 text-brand-red border-gray-300 rounded focus:ring-brand-red" />
                                     <span>{t(`publishJourney.detailsForm.${type}`)}</span>
@@ -382,7 +385,7 @@ const Step2Details: React.FC<Step2DetailsProps> = ({
                     <div>
                         <label className="block text-base sm:text-md font-semibold text-brand-navy mb-3">{t('publishJourney.detailsForm.otherHomeFeatures')}</label>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                            {['builtInWardrobes', 'airConditioning', 'terrace', 'balcony', 'storageRoom', 'garage'].map(f => (
+                            {['builtInWardrobes', 'airConditioning', 'terrace', 'balcony', 'storageRoom', 'garage', 'mobiliado', 'cozinhaEquipada', 'suite', 'escritorio'].map(f => (
                                 <label key={f} className="flex items-center space-x-2 cursor-pointer">
                                     <input type="checkbox" value={f} checked={details.homeFeatures.includes(f)} onChange={(e) => handleCheckboxChange(e, 'homeFeatures')} className="h-4 w-4 text-brand-red border-gray-300 rounded focus:ring-brand-red" />
                                     <span>{t(`publishJourney.detailsForm.${f}`)}</span>
@@ -393,7 +396,7 @@ const Step2Details: React.FC<Step2DetailsProps> = ({
                     <div>
                         <label className="block text-base sm:text-md font-semibold text-brand-navy mb-3">{t('publishJourney.detailsForm.otherBuildingFeatures')}</label>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                            {['pool', 'greenArea'].map(f => (
+                            {['pool', 'greenArea', 'portaria24h', 'academia', 'salaoDeFestas', 'churrasqueira', 'parqueInfantil', 'quadraEsportiva', 'sauna', 'espacoGourmet'].map(f => (
                                 <label key={f} className="flex items-center space-x-2 cursor-pointer">
                                     <input type="checkbox" value={f} checked={details.buildingFeatures.includes(f)} onChange={(e) => handleCheckboxChange(e, 'buildingFeatures')} className="h-4 w-4 text-brand-red border-gray-300 rounded focus:ring-brand-red" />
                                     <span>{t(`publishJourney.detailsForm.${f}`)}</span>
@@ -412,14 +415,14 @@ const Step2Details: React.FC<Step2DetailsProps> = ({
                             <label htmlFor="price" className="block text-base sm:text-md font-semibold text-brand-navy mb-2">{t('publishJourney.detailsForm.price')}</label>
                             <div className="relative">
                                 <input type="number" id="price" name="price" value={details.price} onChange={handleDetailsChange} className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" />
-                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray">euros</span>
+                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray">{t('publishJourney.detailsForm.currency.price')}</span>
                             </div>
                         </div>
                         <div>
                             <label htmlFor="condoFee" className="block text-base sm:text-md font-semibold text-brand-navy mb-2">{t('publishJourney.detailsForm.condoFee')}</label>
                             <div className="relative">
                                 <input type="number" id="condoFee" name="condoFee" value={details.condoFee} onChange={handleDetailsChange} className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" />
-                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray">euros/mês</span>
+                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray">{t('publishJourney.detailsForm.currency.fee')}</span>
                             </div>
                         </div>
                     </div>

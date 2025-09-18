@@ -13,6 +13,7 @@ import ChatIcon from './icons/ChatIcon';
 import LogoutIcon from './icons/LogoutIcon';
 import { useLanguage } from '../contexts/LanguageContext';
 import type { User, Profile } from '../types';
+import CheckIcon from './icons/CheckIcon';
 
 const languageMap = {
   pt: { name: 'Português', Flag: FlagBRIcon },
@@ -44,6 +45,7 @@ const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, 
   const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false); // State for search submenu
   const [isMobileOwnersMenuOpen, setIsMobileOwnersMenuOpen] = useState(false);
   const [isMobileSearchMenuOpen, setIsMobileSearchMenuOpen] = useState(false); // State for mobile search submenu
+  const [isMobileLangMenuOpen, setIsMobileLangMenuOpen] = useState(false);
   const langDropdownRef = useRef<HTMLDivElement>(null);
   const userDropdownRef = useRef<HTMLDivElement>(null);
   const { language, changeLanguage, t } = useLanguage();
@@ -158,7 +160,7 @@ const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, 
             </button>
             
             {/* Language Selector */}
-            <div className="relative" ref={langDropdownRef}>
+            <div className="relative hidden md:block" ref={langDropdownRef}>
               <button onClick={() => setIsLangDropdownOpen(prev => !prev)} className="flex items-center space-x-1">
                 <CurrentFlag className="w-6 h-auto" />
                 <ChevronDownIcon className="w-4 h-4 text-brand-gray" />
@@ -343,6 +345,39 @@ const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, 
               )}
           </div>
           <hr className="my-4" />
+          
+          {/* Mobile Language Selector */}
+          <div>
+            <button
+                onClick={() => setIsMobileLangMenuOpen(prev => !prev)}
+                className="w-full flex justify-between items-center text-brand-dark hover:text-brand-red transition duration-300"
+            >
+                <span className="flex items-center space-x-3">
+                    <CurrentFlag className="w-6 h-auto" />
+                    <span>{languageMap[language as keyof typeof languageMap].name}</span>
+                </span>
+                <ChevronDownIcon className={`w-5 h-5 transition-transform duration-300 ${isMobileLangMenuOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {isMobileLangMenuOpen && (
+                <div className="pl-4 mt-3 space-y-2 text-base">
+                    {Object.entries(languageMap).map(([langCode, { name, Flag }]) => (
+                        <button
+                            key={langCode}
+                            onClick={() => {
+                                changeLanguage(langCode as 'pt' | 'en' | 'es');
+                                setIsMobileLangMenuOpen(false);
+                            }}
+                            className={`w-full flex items-center p-2 rounded-md transition-colors ${language === langCode ? 'text-brand-red bg-red-50' : 'text-brand-gray hover:text-brand-red hover:bg-gray-100'}`}
+                        >
+                            <Flag className="w-5 h-auto mr-3" />
+                            <span>{name}</span>
+                            {language === langCode && <CheckIcon className="w-5 h-5 ml-auto text-brand-red" />}
+                        </button>
+                    ))}
+                </div>
+            )}
+        </div>
+
           <button 
             onClick={onPublishAdClick}
             className="w-full text-center px-4 py-2 bg-brand-red text-white rounded-md hover:opacity-90 transition duration-300"
