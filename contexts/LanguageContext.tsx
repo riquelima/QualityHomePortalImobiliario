@@ -1,4 +1,5 @@
 
+
 import React, { createContext, useState, useContext, ReactNode } from 'react';
 
 // Translations are embedded directly to avoid module resolution issues.
@@ -193,10 +194,6 @@ const ptTranslations = {
         "street": "Rua",
         "number": "Número da via"
       },
-      "hideAddress": {
-        "label": "Quer ocultar a rua e o número? (opcional)",
-        "option": "Ocultar endereço por R$ 9,90"
-      },
       "submitButton": "Verificar endereço"
     },
     "verifiedAddress": {
@@ -226,12 +223,12 @@ const ptTranslations = {
       "title": "Aproveita, este anúncio é grátis ;-)",
       "adTitle": "Título do anúncio",
       "adTitlePlaceholder": "Ex: Apartamento incrível com vista mar na Barra",
-      "apartmentCharacteristics": "Características do apartamento",
-      "propertyType": "Tipo de apartamento (opcional)",
+      "apartmentCharacteristics": "Características do imóvel",
+      "propertyType": "Tipo de imóvel (opcional)",
       "apartment": "Apartamento",
-      "penthouse": "Penthouse",
-      "duplex": "Duplex",
-      "studio": "Tole/estúdio/loft",
+      "house": "Casa",
+      "room": "Quarto",
+      "office": "Escritório",
       "condition": "Estado",
       "forRenovation": "Para recuperar",
       "goodCondition": "Bom estado",
@@ -242,14 +239,6 @@ const ptTranslations = {
       "hasElevator": "Tem elevador?",
       "yes": "Sim, tem",
       "no": "Não tem",
-      "energyCertificate": "Certificado energético",
-      "energyClass": "Classe energética",
-      "select": "Seleciona",
-      "orientation": "Orientação (opcional)",
-      "north": "Norte",
-      "south": "Sul",
-      "east": "Este",
-      "west": "Oeste",
       "otherHomeFeatures": "Outras características da tua moradia",
       "builtInWardrobes": "Armários embutidos",
       "airConditioning": "Ar condicionado",
@@ -561,10 +550,6 @@ const enTranslations = {
         "street": "Street",
         "number": "Street number"
       },
-      "hideAddress": {
-        "label": "Want to hide the street and number? (optional)",
-        "option": "Hide address for R$ 9,90"
-      },
       "submitButton": "Verify address"
     },
     "verifiedAddress": {
@@ -594,12 +579,12 @@ const enTranslations = {
       "title": "Take advantage, this ad is free ;-)",
       "adTitle": "Ad Title",
       "adTitlePlaceholder": "e.g., Amazing apartment with sea view in Barra",
-      "apartmentCharacteristics": "Apartment characteristics",
-      "propertyType": "Type of apartment (optional)",
+      "apartmentCharacteristics": "Property characteristics",
+      "propertyType": "Type of property (optional)",
       "apartment": "Apartment",
-      "penthouse": "Penthouse",
-      "duplex": "Duplex",
-      "studio": "Studio/loft",
+      "house": "House",
+      "room": "Room",
+      "office": "Office",
       "condition": "Condition",
       "forRenovation": "For renovation",
       "goodCondition": "Good condition",
@@ -610,14 +595,6 @@ const enTranslations = {
       "hasElevator": "Has an elevator?",
       "yes": "Yes, it has",
       "no": "No, it doesn't",
-      "energyCertificate": "Energy certificate",
-      "energyClass": "Energy class",
-      "select": "Select",
-      "orientation": "Orientation (optional)",
-      "north": "North",
-      "south": "South",
-      "east": "East",
-      "west": "West",
       "otherHomeFeatures": "Other features of your home",
       "builtInWardrobes": "Built-in wardrobes",
       "airConditioning": "Air conditioning",
@@ -929,10 +906,6 @@ const esTranslations = {
         "street": "Calle",
         "number": "Número de la vía"
       },
-      "hideAddress": {
-        "label": "¿Quieres ocultar la calle y el número? (opcional)",
-        "option": "Ocultar dirección por 9,90 €"
-      },
       "submitButton": "Verificar dirección"
     },
     "verifiedAddress": {
@@ -962,12 +935,12 @@ const esTranslations = {
       "title": "Aprovecha, este anuncio es gratis ;-)",
       "adTitle": "Título del anuncio",
       "adTitlePlaceholder": "Ej: Increíble apartamento con vistas al mar en Barra",
-      "apartmentCharacteristics": "Características del apartamento",
-      "propertyType": "Tipo de apartamento (opcional)",
+      "apartmentCharacteristics": "Características del inmueble",
+      "propertyType": "Tipo de inmueble (opcional)",
       "apartment": "Apartamento",
-      "penthouse": "Penthouse",
-      "duplex": "Dúplex",
-      "studio": "Estudio/loft",
+      "house": "Casa",
+      "room": "Habitación",
+      "office": "Oficina",
       "condition": "Estado",
       "forRenovation": "Para reformar",
       "goodCondition": "Buen estado",
@@ -978,14 +951,6 @@ const esTranslations = {
       "hasElevator": "¿Tiene ascensor?",
       "yes": "Sí, tiene",
       "no": "No tiene",
-      "energyCertificate": "Certificado energético",
-      "energyClass": "Clase energética",
-      "select": "Selecciona",
-      "orientation": "Orientación (opcional)",
-      "north": "Norte",
-      "south": "Sur",
-      "east": "Este",
-      "west": "Oeste",
       "otherHomeFeatures": "Otras características de tu vivienda",
       "builtInWardrobes": "Armarios empotrados",
       "airConditioning": "Aire acondicionado",

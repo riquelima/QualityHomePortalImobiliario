@@ -1,4 +1,5 @@
 
+
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Header from './Header';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -32,7 +33,7 @@ interface PublishJourneyPageProps {
 
 // Define state shapes for props
 interface AddressState { city: string; street: string; number: string; }
-interface ContactInfoState { phone: string; preference: string; }
+interface ContactInfoState { phone: string; preference: string; name: string; }
 interface DetailsState {
     title: string;
     propertyType: string[];
@@ -42,8 +43,6 @@ interface DetailsState {
     bedrooms: number;
     bathrooms: number;
     hasElevator: boolean | null;
-    energyCertificate: string;
-    orientation: string[];
     homeFeatures: string[];
     buildingFeatures: string[];
     price: string;
@@ -99,7 +98,6 @@ const Step1Form: React.FC<Step1FormProps> = ({
     handlePreferenceChange
 }) => {
     const { t } = useLanguage();
-    const userName = profile?.nome_completo || user?.email || 'Usuário';
 
     return (
         <form className="space-y-8" onSubmit={!isAddressVerified ? handleVerifyAddress : handleContinueToDetails}>
@@ -147,8 +145,7 @@ const Step1Form: React.FC<Step1FormProps> = ({
                     <div className="relative" ref={citySuggestionsRef}>
                     <label htmlFor="city" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.form.location.city')}</label>
                     <div className="relative">
-                        <InfoIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
-                        <input type="text" id="city" value={address.city} onChange={handleAddressChange} onFocus={() => { if (citySuggestions.length > 0) setIsCitySuggestionsOpen(true); }} className="w-full p-3 pl-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" required autoComplete="off" />
+                        <input type="text" id="city" value={address.city} onChange={handleAddressChange} onFocus={() => { if (citySuggestions.length > 0) setIsCitySuggestionsOpen(true); }} className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" required autoComplete="off" />
                     </div>
                     {isCitySuggestionsOpen && citySuggestions.length > 0 && (
                         <div className="absolute top-full left-0 w-full bg-white border border-gray-200 rounded-b-md shadow-lg z-20">
@@ -188,9 +185,16 @@ const Step1Form: React.FC<Step1FormProps> = ({
                     <button type="button" className="text-sm text-brand-red hover:underline mt-1">{t('publishJourney.contactDetails.addPhone')}</button>
                     </div>
                     <div>
-                    <label className="block text-sm font-medium text-brand-dark">{t('publishJourney.contactDetails.nameLabel')}</label>
-                    <div className="mt-1 p-3 bg-gray-100 border border-gray-300 rounded-md text-brand-gray">{userName}</div>
-                    <p className="text-xs text-brand-gray mt-1">{t('publishJourney.contactDetails.nameDescription')}</p>
+                        <label htmlFor="name" className="block text-sm font-medium text-brand-dark">{t('publishJourney.contactDetails.nameLabel')}</label>
+                        <input
+                            type="text"
+                            id="name"
+                            value={contactInfo.name}
+                            onChange={handleContactChange}
+                            className="mt-1 w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red"
+                            required
+                        />
+                        <p className="text-xs text-brand-gray mt-1">{t('publishJourney.contactDetails.nameDescription')}</p>
                     </div>
                     <div>
                     <label className="block text-sm font-medium text-brand-dark mb-2">{t('publishJourney.contactDetails.preferenceLabel')}</label>
@@ -224,13 +228,6 @@ const Step1Form: React.FC<Step1FormProps> = ({
                 </div>
                 </div>
             )}
-            <div>
-                <label className="block text-sm font-medium text-brand-dark mb-2">{t('publishJourney.form.hideAddress.label')}</label>
-                <div className="flex items-center">
-                    <input id="hide-address" type="checkbox" className="h-4 w-4 text-brand-red border-gray-300 rounded focus:ring-brand-red" />
-                    <label htmlFor="hide-address" className="ml-2 block text-sm text-brand-dark">{t('publishJourney.form.hideAddress.option')}</label>
-                </div>
-            </div>
             <div>
                 {!isAddressVerified ? (
                 <button type="submit" className="px-6 py-3 bg-gray-300 text-brand-dark font-bold rounded-md hover:bg-gray-400 transition-colors">
@@ -298,11 +295,11 @@ const Step2Details: React.FC<Step2DetailsProps> = ({
                 <div className="space-y-6 border-b pb-8">
                     <h3 className="text-lg sm:text-xl font-bold text-brand-dark">{t('publishJourney.detailsForm.apartmentCharacteristics')}</h3>
                     
-                    {/* Tipo de Apartamento */}
+                    {/* Tipo de Imóvel */}
                     <div>
                         <label className="block text-base sm:text-md font-semibold text-brand-navy mb-3">{t('publishJourney.detailsForm.propertyType')}</label>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            {['apartment', 'penthouse', 'duplex', 'studio'].map(type => (
+                            {['apartment', 'house', 'room', 'office'].map(type => (
                                 <label key={type} className="flex items-center space-x-2 cursor-pointer">
                                     <input type="checkbox" value={type} checked={details.propertyType.includes(type)} onChange={(e) => handleCheckboxChange(e, 'propertyType')} className="h-4 w-4 text-brand-red border-gray-300 rounded focus:ring-brand-red" />
                                     <span>{t(`publishJourney.detailsForm.${type}`)}</span>
@@ -376,29 +373,6 @@ const Step2Details: React.FC<Step2DetailsProps> = ({
                                 <input type="radio" name="hasElevator" value="no" checked={details.hasElevator === false} onChange={() => setDetails(p => ({...p, hasElevator: false}))} className="h-5 w-5 text-brand-red focus:ring-brand-red border-gray-300" />
                                 <span>{t('publishJourney.detailsForm.no')}</span>
                             </label>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Certificado e Orientação */}
-                <div className="space-y-6 border-b pb-8">
-                    <div>
-                        <label htmlFor="energyCertificate" className="block text-base sm:text-md font-semibold text-brand-navy mb-2">{t('publishJourney.detailsForm.energyCertificate')}</label>
-                        <p className="text-sm text-brand-gray mb-2">Que informações deves preencher?</p>
-                        <select id="energyCertificate" name="energyCertificate" value={details.energyCertificate} onChange={handleDetailsChange} className="w-full md:w-1/2 p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red">
-                            <option value="">{t('publishJourney.detailsForm.select')}</option>
-                            <option value="A+">A+</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label className="block text-base sm:text-md font-semibold text-brand-navy mb-3">{t('publishJourney.detailsForm.orientation')}</label>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            {['north', 'south', 'east', 'west'].map(o => (
-                                <label key={o} className="flex items-center space-x-2 cursor-pointer">
-                                    <input type="checkbox" value={o} checked={details.orientation.includes(o)} onChange={(e) => handleCheckboxChange(e, 'orientation')} className="h-4 w-4 text-brand-red border-gray-300 rounded focus:ring-brand-red" />
-                                    <span>{t(`publishJourney.detailsForm.${o}`)}</span>
-                                </label>
-                            ))}
                         </div>
                     </div>
                 </div>
@@ -624,7 +598,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
   const citySuggestionsRef = useRef<HTMLDivElement>(null);
   const [isAddressVerified, setIsAddressVerified] = useState(false);
   const [verifiedAddress, setVerifiedAddress] = useState('');
-  const [contactInfo, setContactInfo] = useState<ContactInfoState>({ phone: '', preference: 'chat_and_phone' });
+  const [contactInfo, setContactInfo] = useState<ContactInfoState>({ phone: '', preference: 'chat_and_phone', name: '' });
 
   // Step 2 State
   const [details, setDetails] = useState<DetailsState>({
@@ -636,8 +610,6 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
     bedrooms: 0,
     bathrooms: 1,
     hasElevator: null as boolean | null,
-    energyCertificate: '',
-    orientation: [] as string[],
     homeFeatures: [] as string[],
     buildingFeatures: [] as string[],
     price: '',
@@ -816,11 +788,9 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
     }
 
     setIsPublishing(true);
-    console.log("Iniciando publicação...");
 
     try {
-        // Step 1: Ensure user profile exists
-        console.log("Passo 1: Verificando perfil do usuário...");
+        // Step 1: Ensure user profile exists and update it
         const { data: userProfile, error: profileError } = await supabase
             .from('perfis')
             .select('id')
@@ -831,21 +801,31 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
              throw new Error(`Erro ao verificar perfil: ${profileError.message}`);
         }
         if (!userProfile) {
-            console.log("Perfil não encontrado, criando novo...");
             const { error: insertError } = await supabase.from('perfis').insert({
                 id: user.id,
-                nome_completo: user.user_metadata.full_name || user.email,
+                nome_completo: contactInfo.name,
                 url_foto_perfil: user.user_metadata.avatar_url,
                 telefone: contactInfo.phone,
             });
             if (insertError) throw new Error(`Erro ao criar perfil: ${insertError.message}`);
+        } else {
+            // Profile exists, update it with new name and phone
+            const { error: updateError } = await supabase
+                .from('perfis')
+                .update({ 
+                    nome_completo: contactInfo.name,
+                    telefone: contactInfo.phone 
+                })
+                .eq('id', user.id);
+            if (updateError) {
+                // Don't throw, just log, as it might not be critical
+                console.error("Erro ao atualizar perfil:", updateError.message);
+            }
         }
-        console.log("Perfil verificado com sucesso.");
         
         // Step 2: Upload media to Cloudinary if any
         let uploadedMedia: { url: string; tipo: 'imagem' | 'video' }[] = [];
         if (files.length > 0) {
-            console.log(`Passo 2: Fazendo upload de ${files.length} arquivos para o Cloudinary...`);
             const CLOUDINARY_CLOUD_NAME = "dpmviwctq"; 
             const CLOUDINARY_UPLOAD_PRESET = "quallityhome"; 
             
@@ -865,13 +845,9 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
                 return { url: data.secure_url, tipo: resourceType as 'imagem' | 'video' };
             });
             uploadedMedia = await Promise.all(uploadPromises);
-            console.log("Upload para o Cloudinary concluído.");
-        } else {
-             console.log("Passo 2: Nenhum arquivo para upload.");
         }
 
         // Step 3: Insert property data into Supabase
-        console.log("Passo 3: Inserindo dados do imóvel no Supabase...");
         const newPropertyData = {
             anunciante_id: user.id,
             titulo: details.title,
@@ -900,11 +876,9 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
         
         if (propertyError) throw new Error(`Erro ao Inserir Imóvel: ${propertyError.message}`);
         if (!insertedProperty) throw new Error("Falha ao criar o imóvel.");
-        console.log("Imóvel inserido com sucesso, ID:", insertedProperty.id);
 
         // Step 4: Insert media URLs into Supabase `midias_imovel` table
         if (uploadedMedia.length > 0) {
-            console.log("Passo 4: Inserindo URLs da mídia no Supabase...");
             const mediaToInsert = uploadedMedia.map(media => ({
                 imovel_id: insertedProperty.id,
                 url: media.url,
@@ -913,14 +887,11 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
 
             const { error: mediaError } = await supabase.from('midias_imovel').insert(mediaToInsert);
             if (mediaError) throw new Error(`Erro ao Salvar Mídias: ${mediaError.message}`);
-            console.log("Mídias salvas com sucesso.");
         }
         
         // Final Step: Construct final property object for UI update
-        console.log("Passo Final: Preparando dados para a UI...");
         const imagesForUI = uploadedMedia.filter(m => m.tipo === 'imagem').map(m => m.url);
         
-        // **SAFEGUARD**: If no images were uploaded, add a placeholder to prevent rendering crashes.
         if (imagesForUI.length === 0) {
             imagesForUI.push('https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1');
         }
@@ -958,15 +929,15 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
         };
         
         onAddProperty(frontendProperty);
+        onBack(); // Navigate home on success
 
     } catch (error: any) {
         console.error("ERRO COMPLETO NA PUBLICAÇÃO:", error);
         alert(`Falha na publicação: ${error.message}`);
     } finally {
-        console.log("Finalizando processo de publicação.");
         setIsPublishing(false);
     }
-}, [user, details, verifiedAddress, address, initialCoords, operation, files, onAddProperty, onOpenLoginModal, contactInfo.phone]);
+}, [user, details, verifiedAddress, address, initialCoords, operation, files, onAddProperty, onOpenLoginModal, contactInfo.phone, contactInfo.name, onBack]);
 
 
   const getStepClass = (stepNumber: number) => {

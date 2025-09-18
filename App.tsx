@@ -251,11 +251,10 @@ const App: React.FC = () => {
     }
   };
 
-  const handleAddProperty = (newProperty: Property) => {
+  const handleAddProperty = useCallback((newProperty: Property) => {
     setProperties(prev => [newProperty, ...prev]);
     alert(t('publishJourney.adPublishedSuccess'));
-    navigateHome();
-  };
+  }, [t]);
   
   const handleStartChat = async (property: Property) => {
     if (!user || !property.anunciante_id) {
