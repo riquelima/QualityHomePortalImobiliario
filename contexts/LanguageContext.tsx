@@ -387,6 +387,11 @@ const ptTranslations = {
     "adDeletedSuccess": "Anúncio desativado com sucesso!",
     "adDeletedError": "Erro ao desativar o anúncio."
   },
+  "confirmationModal": {
+    "title": "Sucesso!",
+    "message": "Seu anúncio foi publicado com sucesso e já está visível no portal.",
+    "closeButton": "Entendido"
+  },
   "footer": {
     "text": "Quality Home Portal Imobiliário. Todos os direitos reservados."
   }
@@ -783,6 +788,11 @@ const enTranslations = {
     "adDeletedSuccess": "Ad successfully deactivated!",
     "adDeletedError": "Error deactivating ad."
   },
+  "confirmationModal": {
+    "title": "Success!",
+    "message": "Your ad has been successfully published and is now visible on the portal.",
+    "closeButton": "Got it"
+  },
   "footer": {
     "text": "Quality Home Real Estate Portal. All rights reserved."
   }
@@ -1178,6 +1188,11 @@ const esTranslations = {
     "deleteConfirm": "¿Estás seguro de que quieres eliminar este anuncio? Esta acción lo desactivará.",
     "adDeletedSuccess": "¡Anuncio desactivado con éxito!",
     "adDeletedError": "Error al desactivar el anuncio."
+  },
+  "confirmationModal": {
+    "title": "¡Éxito!",
+    "message": "Tu anuncio se ha publicado correctamente y ya está visible en el portal.",
+    "closeButton": "Entendido"
   },
   "footer": {
     "text": "Quality Home Portal Inmobiliario. Todos los derechos reservados."

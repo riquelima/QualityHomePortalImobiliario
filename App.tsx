@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect, useCallback } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
@@ -16,6 +15,7 @@ import FavoritesPage from './components/FavoritesPage';
 import ChatListPage from './components/ChatListPage';
 import ChatPage from './components/ChatPage';
 import MyAdsPage from './components/MyAdsPage';
+import ConfirmationModal from './components/ConfirmationModal';
 import { useLanguage } from './contexts/LanguageContext';
 import { supabase } from './supabaseClient';
 import type { User, Property, ChatSession, Message, Profile } from './types';
@@ -181,6 +181,7 @@ const App: React.FC = () => {
   const [pageState, setPageState] = useState<PageState>({ page: 'home', userLocation: null });
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isGeoErrorModalOpen, setIsGeoErrorModalOpen] = useState(false);
+  const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loginIntent, setLoginIntent] = useState<'default' | 'publish'>('default');
@@ -464,8 +465,8 @@ const App: React.FC = () => {
     if (user) {
       fetchAllData(user);
     }
-    alert(t('publishJourney.adPublishedSuccess'));
-  }, [t, user, fetchAllData]);
+    setIsConfirmationModalOpen(true);
+  }, [user, fetchAllData]);
   
   const handleDeactivateProperty = useCallback(async (propertyId: number) => {
     const { error } = await supabase
@@ -707,6 +708,12 @@ const App: React.FC = () => {
       {renderCurrentPage()}
       <LoginModal isOpen={isLoginModalOpen} onClose={closeLoginModal} />
       <GeolocationErrorModal isOpen={isGeoErrorModalOpen} onClose={closeGeoErrorModal} />
+      <ConfirmationModal
+        isOpen={isConfirmationModalOpen}
+        onClose={() => setIsConfirmationModalOpen(false)}
+        title={t('confirmationModal.title')}
+        message={t('confirmationModal.message')}
+      />
     </>
   );
 };
