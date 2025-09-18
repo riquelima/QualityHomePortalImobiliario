@@ -193,6 +193,7 @@ const App: React.FC = () => {
 
   // Adapt Supabase property data to legacy frontend Property type
   const adaptSupabaseProperty = (dbProperty: any): Property => {
+    const media = dbProperty.midias_imovel || [];
     return {
       ...dbProperty,
       title: dbProperty.titulo,
@@ -204,8 +205,8 @@ const App: React.FC = () => {
       lng: dbProperty.longitude,
       price: dbProperty.preco,
       description: dbProperty.descricao,
-      images: dbProperty.midias_imovel?.filter((m: any) => m.tipo === 'imagem').map((m: any) => m.url) || ['https://picsum.photos/seed/' + dbProperty.id + '/800/600'],
-      videos: dbProperty.midias_imovel?.filter((m: any) => m.tipo === 'video').map((m: any) => m.url),
+      images: media.filter((m: any) => m.tipo === 'imagem').map((m: any) => m.url),
+      videos: media.filter((m: any) => m.tipo === 'video').map((m: any) => m.url),
       owner: dbProperty.owner ? {
           ...dbProperty.owner,
           phone: dbProperty.owner.telefone,
@@ -224,7 +225,7 @@ const App: React.FC = () => {
     
     let query = supabase
       .from('imoveis')
-      .select('*, midias_imovel(*)');
+      .select('*');
       
     if (currentUser) {
       query = query.or(`anunciante_id.eq.${currentUser.id},status.eq.ativo`);
