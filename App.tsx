@@ -68,40 +68,45 @@ const App: React.FC = () => {
       possui_elevador: dbProperty.possui_elevador,
     };
   };
-  
-  const fetchMyAds = useCallback(async (currentUser: User) => {
-    const { data, error } = await supabase
-        .from('imoveis')
-        .select('*, owner:anunciante_id(*), midias_imovel(*)')
-        .eq('anunciante_id', currentUser.id);
-    
-    if (error) {
-      console.error("Error fetching user's ads:", error);
-      setMyAds([]);
-    } else if (data) {
-        setMyAds(data.map(adaptSupabaseProperty));
-    }
-  }, []);
 
   const fetchAllData = useCallback(async (currentUser: User | null) => {
     // Fetch Properties
-    const { data: propertiesData, error: propertiesError } = await supabase
+    let query = supabase
       .from('imoveis')
-      .select('*, owner:anunciante_id(*), midias_imovel(*)')
-      .eq('status', 'ativo');
+      .select('*, owner:anunciante_id(*), midias_imovel(*)');
+      
+    if (currentUser) {
+      // For a logged-in user, fetch their own ads (any status) OR other people's active ads.
+      query = query.or(`anunciante_id.eq.${currentUser.id},status.eq.ativo`);
+    } else {
+      // For a guest, just show all active properties.
+      query = query.eq('status', 'ativo');
+    }
+
+    const { data: propertiesData, error: propertiesError } = await query;
       
     if (propertiesError) {
       console.error('Error fetching properties:', propertiesError);
       setProperties([]);
+      setMyAds([]);
     } else {
-      const adaptedProperties = propertiesData.map(adaptSupabaseProperty);
+      // Use a Map to handle potential duplicates if an ad is both owned by the user and active.
+      const propertyMap = new Map();
+      propertiesData.forEach(prop => propertyMap.set(prop.id, prop));
+      const uniquePropertiesData = Array.from(propertyMap.values());
+
+      const adaptedProperties = uniquePropertiesData.map(adaptSupabaseProperty);
       setProperties(adaptedProperties);
+      
+      if (currentUser) {
+        setMyAds(adaptedProperties.filter(p => p.anunciante_id === currentUser.id));
+      } else {
+        setMyAds([]);
+      }
     }
 
-    if(currentUser) {
-      // Fetch user's ads
-      fetchMyAds(currentUser);
 
+    if(currentUser) {
       // Fetch Favorites
       const { data: favoritesData, error: favoritesError } = await supabase
         .from('favoritos_usuario')
@@ -148,7 +153,7 @@ const App: React.FC = () => {
       setChatSessions([]);
       setMyAds([]);
     }
-  }, [fetchMyAds]);
+  }, []);
 
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -188,8 +193,11 @@ const App: React.FC = () => {
         fetchAllData(null);
       }
     });
+    
+    // Initial fetch for guest user
+    const session = supabase.auth.getSession();
+    session.then(({ data }) => fetchAllData(data.session?.user ?? null));
 
-    fetchAllData(null);
 
     return () => {
       authListener.subscription.unsubscribe();
@@ -245,7 +253,6 @@ const App: React.FC = () => {
   const navigateToChat = (sessionId: string) => setPageState({ page: 'chat', chatSessionId: sessionId, userLocation: null });
   const navigateToMyAds = () => {
     if (user) {
-      fetchMyAds(user);
       setPageState({ page: 'myAds', userLocation: null });
     } else {
       openLoginModal();
@@ -283,10 +290,11 @@ const App: React.FC = () => {
   };
 
   const handleAddProperty = useCallback((newProperty: Property) => {
-    setProperties(prev => [newProperty, ...prev]);
-    if (user) fetchMyAds(user);
+    if (user) {
+      fetchAllData(user);
+    }
     alert(t('publishJourney.adPublishedSuccess'));
-  }, [t, user, fetchMyAds]);
+  }, [t, user, fetchAllData]);
   
   const handleDeactivateProperty = useCallback(async (propertyId: number) => {
     const { error } = await supabase
@@ -301,10 +309,9 @@ const App: React.FC = () => {
       alert(t('myAdsPage.adDeletedSuccess'));
       if(user) {
         fetchAllData(user);
-        fetchMyAds(user);
       }
     }
-  }, [user, fetchAllData, fetchMyAds, t]);
+  }, [user, fetchAllData, t]);
 
   const handleStartChat = async (property: Property) => {
     if (!user || !property.anunciante_id) {

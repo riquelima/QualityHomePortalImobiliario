@@ -872,6 +872,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = ({ onBack, onPubli
             caracteristicas_imovel: details.homeFeatures,
             caracteristicas_condominio: details.buildingFeatures,
             situacao_ocupacao: details.saleSituation,
+            status: 'ativo',
         };
 
         const { data: insertedProperty, error: propertyError } = await supabase
