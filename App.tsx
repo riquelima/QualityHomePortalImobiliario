@@ -231,7 +231,6 @@ const App: React.FC = () => {
         if (!propertiesData || propertiesData.length === 0) {
             setProperties([]);
             setMyAds([]);
-            setIsLoading(false); // Make sure to stop loading
             return;
         }
         
@@ -343,7 +342,7 @@ const App: React.FC = () => {
         showModal({
             type: 'error',
             title: t('systemModal.errorTitle'),
-            message: t('systemModal.fetchError'),
+            message: `${t('systemModal.fetchError')} ${t('systemModal.errorDetails')}: ${error.message}`,
         });
     } finally {
         setIsLoading(false);
@@ -440,6 +439,26 @@ const App: React.FC = () => {
         supabase.removeChannel(channel);
       }
   }, [user]);
+
+  useEffect(() => {
+    if (!isAuthReady) return;
+
+    const propertiesChannel = supabase
+      .channel('public:imoveis')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'imoveis' },
+        (payload) => {
+          console.log('Real-time change detected on imoveis table:', payload);
+          fetchAllData(user);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(propertiesChannel);
+    };
+  }, [isAuthReady, user, fetchAllData]);
 
 
   const navigateHome = () => setPageState({ page: 'home', userLocation: null });
