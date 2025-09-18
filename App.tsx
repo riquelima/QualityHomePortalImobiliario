@@ -200,9 +200,9 @@ const App: React.FC = () => {
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const showModal = (config: Omit<ModalConfig, 'isOpen'>) => {
+  const showModal = useCallback((config: Omit<ModalConfig, 'isOpen'>) => {
     setModalConfig({ ...config, isOpen: true });
-  };
+  }, []);
 
   const hideModal = () => {
       setModalConfig(prev => ({ ...prev, isOpen: false }));
@@ -210,138 +210,141 @@ const App: React.FC = () => {
 
   const fetchAllData = useCallback(async (currentUser: User | null) => {
     setIsLoading(true);
+    try {
+        // Etapa 1: Buscar os imóveis principais
+        let propertiesQuery = supabase.from('imoveis').select(`*`);
 
-    // Etapa 1: Buscar os imóveis principais
-    let propertiesQuery = supabase
-      .from('imoveis')
-      .select(`*`);
+        if (currentUser) {
+            propertiesQuery = propertiesQuery.or(`anunciante_id.eq.${currentUser.id},status.eq.ativo`);
+        } else {
+            propertiesQuery = propertiesQuery.eq('status', 'ativo');
+        }
 
-    if (currentUser) {
-      propertiesQuery = propertiesQuery.or(`anunciante_id.eq.${currentUser.id},status.eq.ativo`);
-    } else {
-      propertiesQuery = propertiesQuery.eq('status', 'ativo');
+        const { data: propertiesData, error: propertiesError } = await propertiesQuery;
+
+        if (propertiesError) {
+            throw new Error(`Error fetching properties: ${propertiesError.message}`);
+        }
+
+        if (!propertiesData || propertiesData.length === 0) {
+            setProperties([]);
+            setMyAds([]);
+            return;
+        }
+        
+        // De-duplicar imóveis que podem ser do usuário E ativos
+        const propertyMap = new Map();
+        propertiesData.forEach(prop => propertyMap.set(prop.id, prop));
+        const uniquePropertiesData = Array.from(propertyMap.values());
+
+        const propertyIds = uniquePropertiesData.map(p => p.id);
+        const advertiserIds = [...new Set(uniquePropertiesData.map(p => p.anunciante_id).filter(Boolean))];
+
+        // Etapa 2: Buscar mídias e perfis em paralelo
+        const [mediaResponse, profilesResponse] = await Promise.all([
+            supabase.from('midias_imovel').select('*').in('imovel_id', propertyIds),
+            advertiserIds.length > 0 ? supabase.from('perfis').select('*').in('id', advertiserIds) : Promise.resolve({ data: [], error: null })
+        ]);
+
+        const { data: mediaData, error: mediaError } = mediaResponse;
+        const { data: profilesData, error: profilesError } = profilesResponse;
+
+        if (mediaError) console.warn('Warning fetching media:', mediaError.message);
+        if (profilesError) console.warn('Warning fetching profiles:', profilesError.message);
+
+        const profilesMap = new Map<string, Profile>();
+        if (profilesData) {
+            profilesData.forEach(p => profilesMap.set(p.id, p));
+        }
+        
+        // Etapa 3: Combinar todos os dados
+        const adaptedProperties = uniquePropertiesData.map((dbProperty): Property => {
+            const propertyMedia = mediaData?.filter(m => m.imovel_id === dbProperty.id) || [];
+            const ownerProfile = dbProperty.anunciante_id ? profilesMap.get(dbProperty.anunciante_id) : undefined;
+            
+            return {
+                ...dbProperty,
+                title: dbProperty.titulo,
+                address: dbProperty.endereco_completo,
+                bedrooms: dbProperty.quartos,
+                bathrooms: dbProperty.banheiros,
+                area: dbProperty.area_bruta,
+                lat: dbProperty.latitude,
+                lng: dbProperty.longitude,
+                price: dbProperty.preco,
+                description: dbProperty.descricao,
+                images: propertyMedia.filter(m => m.tipo === 'imagem').map(m => m.url),
+                videos: propertyMedia.filter(m => m.tipo === 'video').map(m => m.url),
+                owner: ownerProfile ? { ...ownerProfile, phone: ownerProfile.telefone } : undefined,
+            };
+        });
+
+        setProperties(adaptedProperties);
+        if (currentUser) {
+            setMyAds(adaptedProperties.filter(p => p.anunciante_id === currentUser.id));
+        } else {
+            setMyAds([]);
+        }
+
+        // Etapa 4: Buscar dados específicos do usuário (favoritos, chats)
+        if(currentUser) {
+            const { data: favoritesData, error: favoritesError } = await supabase
+                .from('favoritos_usuario')
+                .select('imovel_id')
+                .eq('usuario_id', currentUser.id);
+            
+            if(favoritesError) console.error('Error fetching favorites:', favoritesError);
+            else setFavorites(favoritesData.map(f => f.imovel_id));
+
+            const { data: chatData, error: chatError } = await supabase
+                .rpc('get_user_chat_sessions', { user_id_param: currentUser.id });
+
+            if (chatError) console.error('Error fetching chat sessions:', chatError);
+            else if (chatData) {
+                const adaptedSessions = chatData.map((s: any) => ({
+                    id: s.session_id,
+                    sessionId: s.session_id,
+                    propertyId: s.imovel_id,
+                    imovel_id: s.imovel_id,
+                    participants: s.participants.reduce((acc: any, p: any) => {
+                        acc[p.id] = { id: p.id, nome_completo: p.nome_completo };
+                        return acc;
+                    }, {}),
+                    messages: s.messages.map((m: any): Message => ({
+                        id: m.id,
+                        senderId: m.remetente_id,
+                        text: m.conteudo,
+                        timestamp: new Date(m.data_envio),
+                        remetente_id: m.remetente_id,
+                        conteudo: m.conteudo,
+                        data_envio: m.data_envio,
+                    })),
+                    mensagens: s.messages,
+                    participantes: s.participants.reduce((acc: any, p: any) => {
+                        acc[p.id] = { id: p.id, nome_completo: p.nome_completo };
+                        return acc;
+                    }, {}),
+                }));
+                setChatSessions(adaptedSessions);
+            }
+        } else {
+            setFavorites([]);
+            setChatSessions([]);
+            setMyAds([]);
+        }
+    } catch (error: any) {
+        console.error('Falha ao buscar dados:', error);
+        setProperties([]);
+        setMyAds([]);
+        showModal({
+            type: 'error',
+            title: t('systemModal.errorTitle'),
+            message: t('systemModal.fetchError'),
+        });
+    } finally {
+        setIsLoading(false);
     }
-
-    const { data: propertiesData, error: propertiesError } = await propertiesQuery;
-
-    if (propertiesError) {
-      console.error('Error fetching properties:', propertiesError);
-      setProperties([]);
-      setMyAds([]);
-      setIsLoading(false);
-      return;
-    }
-
-    if (!propertiesData || propertiesData.length === 0) {
-      setProperties([]);
-      setMyAds([]);
-      setIsLoading(false);
-      return;
-    }
-    
-    // De-duplicar imóveis que podem ser do usuário E ativos
-    const propertyMap = new Map();
-    propertiesData.forEach(prop => propertyMap.set(prop.id, prop));
-    const uniquePropertiesData = Array.from(propertyMap.values());
-
-    const propertyIds = uniquePropertiesData.map(p => p.id);
-    const advertiserIds = [...new Set(uniquePropertiesData.map(p => p.anunciante_id).filter(Boolean))];
-
-    // Etapa 2: Buscar mídias e perfis em paralelo
-    const [mediaResponse, profilesResponse] = await Promise.all([
-      supabase.from('midias_imovel').select('*').in('imovel_id', propertyIds),
-      advertiserIds.length > 0 ? supabase.from('perfis').select('*').in('id', advertiserIds) : Promise.resolve({ data: [], error: null })
-    ]);
-
-    const { data: mediaData, error: mediaError } = mediaResponse;
-    const { data: profilesData, error: profilesError } = profilesResponse;
-
-    if (mediaError) console.error('Error fetching media:', mediaError);
-    if (profilesError) console.error('Error fetching profiles:', profilesError);
-
-    const profilesMap = new Map<string, Profile>();
-    if (profilesData) {
-      profilesData.forEach(p => profilesMap.set(p.id, p));
-    }
-    
-    // Etapa 3: Combinar todos os dados
-    const adaptedProperties = uniquePropertiesData.map((dbProperty): Property => {
-      const propertyMedia = mediaData?.filter(m => m.imovel_id === dbProperty.id) || [];
-      const ownerProfile = dbProperty.anunciante_id ? profilesMap.get(dbProperty.anunciante_id) : undefined;
-      
-      return {
-        ...dbProperty,
-        title: dbProperty.titulo,
-        address: dbProperty.endereco_completo,
-        bedrooms: dbProperty.quartos,
-        bathrooms: dbProperty.banheiros,
-        area: dbProperty.area_bruta,
-        lat: dbProperty.latitude,
-        lng: dbProperty.longitude,
-        price: dbProperty.preco,
-        description: dbProperty.descricao,
-        images: propertyMedia.filter(m => m.tipo === 'imagem').map(m => m.url),
-        videos: propertyMedia.filter(m => m.tipo === 'video').map(m => m.url),
-        owner: ownerProfile ? { ...ownerProfile, phone: ownerProfile.telefone } : undefined,
-      };
-    });
-
-    setProperties(adaptedProperties);
-    if (currentUser) {
-      setMyAds(adaptedProperties.filter(p => p.anunciante_id === currentUser.id));
-    } else {
-      setMyAds([]);
-    }
-
-    // Etapa 4: Buscar dados específicos do usuário (favoritos, chats)
-    if(currentUser) {
-      const { data: favoritesData, error: favoritesError } = await supabase
-        .from('favoritos_usuario')
-        .select('imovel_id')
-        .eq('usuario_id', currentUser.id);
-      
-      if(favoritesError) console.error('Error fetching favorites:', favoritesError);
-      else setFavorites(favoritesData.map(f => f.imovel_id));
-
-      const { data: chatData, error: chatError } = await supabase
-        .rpc('get_user_chat_sessions', { user_id_param: currentUser.id });
-
-      if (chatError) console.error('Error fetching chat sessions:', chatError);
-      else if (chatData) {
-        const adaptedSessions = chatData.map((s: any) => ({
-            id: s.session_id,
-            sessionId: s.session_id,
-            propertyId: s.imovel_id,
-            imovel_id: s.imovel_id,
-            participants: s.participants.reduce((acc: any, p: any) => {
-                acc[p.id] = { id: p.id, nome_completo: p.nome_completo };
-                return acc;
-            }, {}),
-            messages: s.messages.map((m: any): Message => ({
-                id: m.id,
-                senderId: m.remetente_id,
-                text: m.conteudo,
-                timestamp: new Date(m.data_envio),
-                remetente_id: m.remetente_id,
-                conteudo: m.conteudo,
-                data_envio: m.data_envio,
-            })),
-            mensagens: s.messages,
-            participantes: s.participants.reduce((acc: any, p: any) => {
-                acc[p.id] = { id: p.id, nome_completo: p.nome_completo };
-                return acc;
-            }, {}),
-        }));
-        setChatSessions(adaptedSessions);
-      }
-    } else {
-      setFavorites([]);
-      setChatSessions([]);
-      setMyAds([]);
-    }
-    
-    setIsLoading(false);
-  }, []);
+  }, [t, showModal]);
 
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -486,7 +489,7 @@ const App: React.FC = () => {
         title: t('systemModal.successTitle'),
         message: t('confirmationModal.message'),
     });
-  }, [user, fetchAllData, t]);
+  }, [user, fetchAllData, t, showModal]);
 
   const handlePublishError = useCallback((message: string) => {
     showModal({
@@ -494,7 +497,7 @@ const App: React.FC = () => {
         title: t('systemModal.errorTitle'),
         message: message,
     });
-  }, [t]);
+  }, [t, showModal]);
 
   const confirmDeactivateProperty = async (propertyId: number) => {
     const { error } = await supabase
@@ -520,7 +523,7 @@ const App: React.FC = () => {
         message: t('myAdsPage.deleteConfirm'),
         onConfirm: () => confirmDeactivateProperty(propertyId),
     });
-  }, [t, user, fetchAllData]);
+  }, [t, user, fetchAllData, showModal]);
   
   const handleStartChat = async (property: Property) => {
     if (!user || !property.anunciante_id) {

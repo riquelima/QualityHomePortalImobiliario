@@ -398,7 +398,8 @@ const ptTranslations = {
     "confirmTitle": "Você tem certeza?",
     "okButton": "Entendido",
     "confirmButton": "Confirmar",
-    "cancelButton": "Cancelar"
+    "cancelButton": "Cancelar",
+    "fetchError": "Não foi possível carregar os anúncios. Por favor, tente recarregar a página."
   },
   "footer": {
     "text": "Quality Home Portal Imobiliário. Todos os direitos reservados."
@@ -807,7 +808,8 @@ const enTranslations = {
     "confirmTitle": "Are you sure?",
     "okButton": "Got it",
     "confirmButton": "Confirm",
-    "cancelButton": "Cancel"
+    "cancelButton": "Cancel",
+    "fetchError": "Could not load ads. Please try reloading the page."
   },
   "footer": {
     "text": "Quality Home Real Estate Portal. All rights reserved."
@@ -1216,7 +1218,8 @@ const esTranslations = {
     "confirmTitle": "¿Estás seguro?",
     "okButton": "Entendido",
     "confirmButton": "Confirmar",
-    "cancelButton": "Cancelar"
+    "cancelButton": "Cancelar",
+    "fetchError": "No se pudieron cargar los anuncios. Por favor, intenta recargar la página."
   },
   "footer": {
     "text": "Quality Home Portal Inmobiliario. Todos los derechos reservados."
