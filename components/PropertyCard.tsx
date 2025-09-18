@@ -45,7 +45,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onViewDetails, is
     : 'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1';
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden transform transition-all duration-300 ease-in-out hover:scale-[1.02] hover:shadow-xl flex flex-col border border-gray-200">
+    <div className="w-full bg-white rounded-lg shadow-md overflow-hidden transform transition-all duration-300 ease-in-out hover:scale-[1.02] hover:shadow-xl flex flex-col border border-gray-200">
       <div className="relative">
         <img src={imageSrc} alt={property.title} className="w-full h-56 object-cover aspect-video" />
         {property.status && (
