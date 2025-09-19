@@ -313,7 +313,7 @@ const App: React.FC = () => {
                         acc[p.id] = { id: p.id, nome_completo: p.nome_completo };
                         return acc;
                     }, {}),
-                    messages: s.messages.map((m: any): Message => ({
+                    messages: (s.messages || []).map((m: any): Message => ({
                         id: m.id,
                         senderId: m.remetente_id,
                         text: m.conteudo,
@@ -322,7 +322,7 @@ const App: React.FC = () => {
                         conteudo: m.conteudo,
                         data_envio: m.data_envio,
                     })),
-                    mensagens: s.messages,
+                    mensagens: s.messages || [],
                     participantes: s.participants.reduce((acc: any, p: any) => {
                         acc[p.id] = { id: p.id, nome_completo: p.nome_completo };
                         return acc;
