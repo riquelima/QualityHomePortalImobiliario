@@ -309,7 +309,7 @@ const App: React.FC = () => {
                     sessionId: s.session_id,
                     propertyId: s.imovel_id,
                     imovel_id: s.imovel_id,
-                    participants: s.participants.reduce((acc: any, p: any) => {
+                    participants: (s.participants || []).reduce((acc: any, p: any) => {
                         acc[p.id] = { id: p.id, nome_completo: p.nome_completo };
                         return acc;
                     }, {}),
@@ -323,7 +323,7 @@ const App: React.FC = () => {
                         data_envio: m.data_envio,
                     })),
                     mensagens: s.messages || [],
-                    participantes: s.participants.reduce((acc: any, p: any) => {
+                    participantes: (s.participants || []).reduce((acc: any, p: any) => {
                         acc[p.id] = { id: p.id, nome_completo: p.nome_completo };
                         return acc;
                     }, {}),
@@ -542,15 +542,28 @@ const App: React.FC = () => {
     });
   }, [t, showModal]);
 
-  const confirmDeactivateProperty = async (propertyId: number) => {
-    const { error } = await supabase
+  const confirmDeleteProperty = async (propertyId: number) => {
+    // Primeiro, deletar mídias associadas para evitar violação de chave estrangeira
+    const { error: mediaError } = await supabase
+        .from('midias_imovel')
+        .delete()
+        .eq('imovel_id', propertyId);
+
+    if (mediaError) {
+        showModal({ type: 'error', title: t('systemModal.errorTitle'), message: `${t('myAdsPage.adDeletedError')} (media): ${mediaError.message}` });
+        console.error('Error deleting property media:', mediaError);
+        return;
+    }
+    
+    // Depois, deletar o imóvel
+    const { error: propertyError } = await supabase
         .from('imoveis')
-        .update({ status: 'inativo' })
+        .delete()
         .eq('id', propertyId);
 
-    if (error) {
-        showModal({ type: 'error', title: t('systemModal.errorTitle'), message: `${t('myAdsPage.adDeletedError')} ${t('systemModal.errorDetails')}: ${error.message}` });
-        console.error('Error deactivating property:', error);
+    if (propertyError) {
+        showModal({ type: 'error', title: t('systemModal.errorTitle'), message: `${t('myAdsPage.adDeletedError')} ${t('systemModal.errorDetails')}: ${propertyError.message}` });
+        console.error('Error deleting property:', propertyError);
     } else {
         showModal({ type: 'success', title: t('systemModal.successTitle'), message: t('myAdsPage.adDeletedSuccess') });
         if (user) {
@@ -559,12 +572,12 @@ const App: React.FC = () => {
     }
   };
 
-  const handleRequestDeactivateProperty = useCallback((propertyId: number) => {
+  const handleRequestDeleteProperty = useCallback((propertyId: number) => {
     showModal({
         type: 'confirm',
         title: t('systemModal.confirmTitle'),
         message: t('myAdsPage.deleteConfirm'),
-        onConfirm: () => confirmDeactivateProperty(propertyId),
+        onConfirm: () => confirmDeleteProperty(propertyId),
     });
   }, [t, user, fetchAllData, showModal]);
   
@@ -759,7 +772,7 @@ const App: React.FC = () => {
             onNavigateToMyAds={navigateToMyAds}
             userProperties={myAds}
             onViewDetails={navigateToPropertyDetail}
-            onDeleteProperty={handleRequestDeactivateProperty}
+            onDeleteProperty={handleRequestDeleteProperty}
             onEditProperty={navigateToEditJourney}
         />;
       case 'home':

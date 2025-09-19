@@ -390,9 +390,9 @@ const ptTranslations = {
     "viewButton": "Visualizar",
     "editButton": "Editar",
     "deleteButton": "Excluir",
-    "deleteConfirm": "Tem certeza que deseja excluir este anúncio? Esta ação o tornará inativo.",
-    "adDeletedSuccess": "Anúncio desativado com sucesso!",
-    "adDeletedError": "Erro ao desativar o anúncio.",
+    "deleteConfirm": "Tem certeza que deseja excluir este anúncio? Esta ação não pode ser desfeita.",
+    "adDeletedSuccess": "Anúncio excluído com sucesso.",
+    "adDeletedError": "Erro ao excluir o anúncio.",
     "inactiveStatus": "Inativo"
   },
   "confirmationModal": {
@@ -810,9 +810,9 @@ const enTranslations = {
     "viewButton": "View",
     "editButton": "Edit",
     "deleteButton": "Delete",
-    "deleteConfirm": "Are you sure you want to delete this ad? This action will make it inactive.",
-    "adDeletedSuccess": "Ad successfully deactivated!",
-    "adDeletedError": "Error deactivating ad.",
+    "deleteConfirm": "Are you sure you want to delete this ad? This action cannot be undone.",
+    "adDeletedSuccess": "Ad deleted successfully!",
+    "adDeletedError": "Error deleting ad.",
     "inactiveStatus": "Inactive"
   },
   "confirmationModal": {
@@ -1230,9 +1230,9 @@ const esTranslations = {
     "viewButton": "Ver",
     "editButton": "Editar",
     "deleteButton": "Eliminar",
-    "deleteConfirm": "¿Estás seguro de que quieres eliminar este anuncio? Esta acción lo desactivará.",
-    "adDeletedSuccess": "¡Anuncio desactivado con éxito!",
-    "adDeletedError": "Error al desactivar el anuncio.",
+    "deleteConfirm": "¿Estás seguro de que quieres eliminar este anuncio? Esta acción no se puede deshacer.",
+    "adDeletedSuccess": "¡Anuncio eliminado con éxito!",
+    "adDeletedError": "Error al eliminar el anuncio.",
     "inactiveStatus": "Inactivo"
   },
   "confirmationModal": {
