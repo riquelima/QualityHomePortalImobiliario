@@ -326,11 +326,11 @@ const VendaDetailsForm: React.FC<DetailsFormProps> = ({ details, handleDetailsCh
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                  <div>
                     <label htmlFor="salePrice" className="block text-base sm:text-lg font-bold text-brand-navy mb-3">{t('publishJourney.detailsForm.salePrice')}</label>
-                    <div className="relative"><input type="number" id="salePrice" value={details.salePrice} onChange={(e) => handleDetailsChange(e.target.value, 'salePrice')} className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" /><span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray">{t('publishJourney.detailsForm.currency.reais')}</span></div>
+                    <div className="relative"><input type="text" inputMode="numeric" id="salePrice" value={details.salePrice} onChange={(e) => handleDetailsChange(e.target.value, 'salePrice')} className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" /><span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray">{t('publishJourney.detailsForm.currency.reais')}</span></div>
                 </div>
                 <div>
                     <label htmlFor="iptuAnnual" className="block text-base sm:text-lg font-bold text-brand-navy mb-3">{t('publishJourney.detailsForm.iptuAnnual')}</label>
-                    <div className="relative"><input type="number" id="iptuAnnual" value={details.iptuAnnual} onChange={(e) => handleDetailsChange(e.target.value, 'iptuAnnual')} className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" /><span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray">{t('publishJourney.detailsForm.currency.reais')}</span></div>
+                    <div className="relative"><input type="text" inputMode="numeric" id="iptuAnnual" value={details.iptuAnnual} onChange={(e) => handleDetailsChange(e.target.value, 'iptuAnnual')} className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" /><span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray">{t('publishJourney.detailsForm.currency.reais')}</span></div>
                 </div>
             </div>
             <div>
@@ -372,15 +372,15 @@ const AluguelDetailsForm: React.FC<DetailsFormProps> = ({ details, handleDetails
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div>
                     <label htmlFor="monthlyRent" className="block text-base sm:text-lg font-bold text-brand-navy mb-3">{t('publishJourney.detailsForm.monthlyRent')}</label>
-                    <div className="relative"><input type="number" id="monthlyRent" value={details.monthlyRent} onChange={(e) => handleDetailsChange(e.target.value, 'monthlyRent')} className="w-full p-3 border border-gray-300 rounded-md" /><span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray">{t('publishJourney.detailsForm.currency.reaisMonth')}</span></div>
+                    <div className="relative"><input type="text" inputMode="numeric" id="monthlyRent" value={details.monthlyRent} onChange={(e) => handleDetailsChange(e.target.value, 'monthlyRent')} className="w-full p-3 border border-gray-300 rounded-md" /><span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray">{t('publishJourney.detailsForm.currency.reaisMonth')}</span></div>
                 </div>
                 <div>
                     <label htmlFor="condoFee" className="block text-base sm:text-lg font-bold text-brand-navy mb-3">{t('publishJourney.detailsForm.condoFee')}</label>
-                    <div className="relative"><input type="number" id="condoFee" value={details.condoFee} onChange={(e) => handleDetailsChange(e.target.value, 'condoFee')} className="w-full p-3 border border-gray-300 rounded-md" /><span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray">{t('publishJourney.detailsForm.currency.reaisMonth')}</span></div>
+                    <div className="relative"><input type="text" inputMode="numeric" id="condoFee" value={details.condoFee} onChange={(e) => handleDetailsChange(e.target.value, 'condoFee')} className="w-full p-3 border border-gray-300 rounded-md" /><span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray">{t('publishJourney.detailsForm.currency.reaisMonth')}</span></div>
                 </div>
                 <div>
                     <label htmlFor="iptuMonthly" className="block text-base sm:text-lg font-bold text-brand-navy mb-3">{t('publishJourney.detailsForm.iptuMonthly')}</label>
-                    <div className="relative"><input type="number" id="iptuMonthly" value={details.iptuMonthly} onChange={(e) => handleDetailsChange(e.target.value, 'iptuMonthly')} className="w-full p-3 border border-gray-300 rounded-md" /><span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray">{t('publishJourney.detailsForm.currency.reaisMonth')}</span></div>
+                    <div className="relative"><input type="text" inputMode="numeric" id="iptuMonthly" value={details.iptuMonthly} onChange={(e) => handleDetailsChange(e.target.value, 'iptuMonthly')} className="w-full p-3 border border-gray-300 rounded-md" /><span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray">{t('publishJourney.detailsForm.currency.reaisMonth')}</span></div>
                 </div>
             </div>
             <div>
@@ -485,11 +485,11 @@ const TemporadaDetailsForm: React.FC<DetailsFormProps> = ({ details, handleDetai
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div>
                     <label htmlFor="dailyRate" className="block text-base sm:text-lg font-bold text-brand-navy mb-3">{t('publishJourney.detailsForm.dailyRate')}</label>
-                    <div className="relative"><input type="number" id="dailyRate" value={details.dailyRate} onChange={(e) => handleDetailsChange(e.target.value, 'dailyRate')} className="w-full p-3 border border-gray-300 rounded-md" /><span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray">{t('publishJourney.detailsForm.currency.reais')}</span></div>
+                    <div className="relative"><input type="text" inputMode="numeric" id="dailyRate" value={details.dailyRate} onChange={(e) => handleDetailsChange(e.target.value, 'dailyRate')} className="w-full p-3 border border-gray-300 rounded-md" /><span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray">{t('publishJourney.detailsForm.currency.reais')}</span></div>
                 </div>
                 <div>
                     <label htmlFor="cleaningFee" className="block text-base sm:text-lg font-bold text-brand-navy mb-3">{t('publishJourney.detailsForm.cleaningFee')}</label>
-                    <div className="relative"><input type="number" id="cleaningFee" value={details.cleaningFee} onChange={(e) => handleDetailsChange(e.target.value, 'cleaningFee')} className="w-full p-3 border border-gray-300 rounded-md" /><span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray">{t('publishJourney.detailsForm.currency.reais')}</span></div>
+                    <div className="relative"><input type="text" inputMode="numeric" id="cleaningFee" value={details.cleaningFee} onChange={(e) => handleDetailsChange(e.target.value, 'cleaningFee')} className="w-full p-3 border border-gray-300 rounded-md" /><span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray">{t('publishJourney.detailsForm.currency.reais')}</span></div>
                 </div>
                  <div>
                     <label htmlFor="minStay" className="block text-base sm:text-lg font-bold text-brand-navy mb-3">{t('publishJourney.detailsForm.minStay')}</label>
@@ -754,6 +754,32 @@ const Step3Form: React.FC<Step3FormProps> = ({ media, handleFileChange, handleRe
     );
 };
 
+// Helper functions for currency formatting
+const formatCurrencyForInput = (value: string): string => {
+    if (!value) return '';
+    const digitsOnly = value.replace(/\D/g, '');
+    if (digitsOnly === '') return '';
+
+    const numberValue = parseFloat(digitsOnly) / 100;
+    return numberValue.toLocaleString('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    });
+};
+
+const unformatCurrency = (value: string): string => {
+    if (!value) return '';
+    return value.replace(/\./g, '').replace(',', '.');
+};
+
+const formatStoredCurrency = (value?: number): string => {
+    if (value === undefined || value === null) return '';
+    return value.toLocaleString('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    });
+};
+
 // Helper function for mock AI response
 const mockAITitleGeneration = (originalTitle: string): Promise<string> => {
     return new Promise(resolve => {
@@ -866,7 +892,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
         name: propertyToEdit.owner?.nome_completo || '',
       });
       
-      const price = propertyToEdit.preco?.toString() || '';
+      const price = propertyToEdit.preco;
       setDetails({
         title: propertyToEdit.titulo || '',
         propertyType: propertyToEdit.tipo_imovel ? [propertyToEdit.tipo_imovel] : [],
@@ -879,19 +905,19 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
         homeFeatures: propertyToEdit.caracteristicas_imovel || [],
         buildingFeatures: propertyToEdit.caracteristicas_condominio || [],
         description: propertyToEdit.descricao || '',
-        salePrice: propertyToEdit.tipo_operacao === 'venda' ? price : '',
-        iptuAnnual: propertyToEdit.tipo_operacao === 'venda' ? propertyToEdit.valor_iptu?.toString() || '' : '',
+        salePrice: propertyToEdit.tipo_operacao === 'venda' ? formatStoredCurrency(price) : '',
+        iptuAnnual: propertyToEdit.tipo_operacao === 'venda' ? formatStoredCurrency(propertyToEdit.valor_iptu) : '',
         acceptsFinancing: propertyToEdit.aceita_financiamento ?? null,
         occupationSituation: propertyToEdit.situacao_ocupacao || 'vacant',
-        monthlyRent: propertyToEdit.tipo_operacao === 'aluguel' ? price : '',
-        condoFee: propertyToEdit.taxa_condominio?.toString() || '',
-        iptuMonthly: propertyToEdit.tipo_operacao === 'aluguel' ? propertyToEdit.valor_iptu?.toString() || '' : '',
+        monthlyRent: propertyToEdit.tipo_operacao === 'aluguel' ? formatStoredCurrency(price) : '',
+        condoFee: formatStoredCurrency(propertyToEdit.taxa_condominio),
+        iptuMonthly: propertyToEdit.tipo_operacao === 'aluguel' ? formatStoredCurrency(propertyToEdit.valor_iptu) : '',
         rentalConditions: propertyToEdit.condicoes_aluguel || [],
         petsAllowed: propertyToEdit.permite_animais ?? null,
-        dailyRate: propertyToEdit.tipo_operacao === 'temporada' ? price : '',
+        dailyRate: propertyToEdit.tipo_operacao === 'temporada' ? formatStoredCurrency(price) : '',
         minStay: propertyToEdit.minimo_diarias?.toString() || '',
         maxGuests: propertyToEdit.maximo_hospedes?.toString() || '',
-        cleaningFee: propertyToEdit.taxa_limpeza?.toString() || '',
+        cleaningFee: formatStoredCurrency(propertyToEdit.taxa_limpeza),
       });
       setAvailableDates(propertyToEdit.datas_disponiveis || []);
       setMedia(propertyToEdit.midias_imovel || []);
@@ -1049,7 +1075,12 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
   }
 
   const handleDetailsChange = (value: any, name: string) => {
-    setDetails(prev => ({ ...prev, [name]: value }));
+    const currencyFields = ['salePrice', 'iptuAnnual', 'monthlyRent', 'condoFee', 'iptuMonthly', 'dailyRate', 'cleaningFee'];
+    if (currencyFields.includes(name)) {
+        setDetails(prev => ({ ...prev, [name]: formatCurrencyForInput(value) }));
+    } else {
+        setDetails(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const incrementCounter = (field: 'bedrooms' | 'bathrooms') => {
@@ -1176,27 +1207,27 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
     if (operation === 'venda') {
         propertyData = {
             ...propertyData,
-            preco: parseFloat(details.salePrice) || 0,
-            valor_iptu: parseFloat(details.iptuAnnual) || undefined,
+            preco: parseFloat(unformatCurrency(details.salePrice)) || 0,
+            valor_iptu: parseFloat(unformatCurrency(details.iptuAnnual)) || undefined,
             aceita_financiamento: details.acceptsFinancing,
             situacao_ocupacao: details.occupationSituation,
         };
     } else if (operation === 'aluguel') {
         propertyData = {
             ...propertyData,
-            preco: parseFloat(details.monthlyRent) || 0,
-            taxa_condominio: parseFloat(details.condoFee) || undefined,
-            valor_iptu: parseFloat(details.iptuMonthly) || undefined,
+            preco: parseFloat(unformatCurrency(details.monthlyRent)) || 0,
+            taxa_condominio: parseFloat(unformatCurrency(details.condoFee)) || undefined,
+            valor_iptu: parseFloat(unformatCurrency(details.iptuMonthly)) || undefined,
             condicoes_aluguel: details.rentalConditions,
             permite_animais: details.petsAllowed,
         };
     } else if (operation === 'temporada') {
         propertyData = {
             ...propertyData,
-            preco: parseFloat(details.dailyRate) || 0,
+            preco: parseFloat(unformatCurrency(details.dailyRate)) || 0,
             minimo_diarias: parseInt(details.minStay, 10) || undefined,
             maximo_hospedes: parseInt(details.maxGuests, 10) || undefined,
-            taxa_limpeza: parseFloat(details.cleaningFee) || undefined,
+            taxa_limpeza: parseFloat(unformatCurrency(details.cleaningFee)) || undefined,
             datas_disponiveis: availableDates,
         };
     }
