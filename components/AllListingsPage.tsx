@@ -106,13 +106,14 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
             setIsLoadingGeo(false);
         },
         (error) => {
-            console.error("Geolocation error:", error);
+            // Gracefully handle geolocation errors without showing a modal.
+            // The map will default to Salvador's coordinates.
+            console.error("Falha ao obter geolocalização, usando localização padrão:", error);
             setIsLoadingGeo(false);
-            props.onGeolocationError();
         },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
-  }, [props.onGeolocationError]);
+  }, []);
   
   const handleShapeDrawn = useCallback((layer: L.Layer) => {
       setDrawnShape(layer);
