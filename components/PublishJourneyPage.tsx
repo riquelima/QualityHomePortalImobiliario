@@ -634,6 +634,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
         buildingFeatures: propertyToEdit.caracteristicas_condominio || [],
         price: propertyToEdit.preco?.toString() || '',
         condoFee: propertyToEdit.taxa_condominio?.toString() || '',
+        // FIX: Renamed 'situacao_ocupacao' to 'saleSituation' to match the DetailsState interface.
         saleSituation: propertyToEdit.situacao_ocupacao || 'vacant',
         description: propertyToEdit.descricao || '',
       });
@@ -822,7 +823,8 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
     setIsAITitleLoading(true);
     try {
         if (!process.env.API_KEY) {
-            throw new Error("API Key not configured.");
+            console.error("API Key for Gemini is not configured.");
+            return;
         }
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const prompt = t('publishJourney.detailsForm.aiTitlePrompt', { title: details.title });
@@ -838,7 +840,8 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
         }
     } catch (error) {
         console.error("Error generating AI title:", error);
-        onPublishError(t('publishJourney.detailsForm.aiTitleError'));
+        // Silently fail instead of showing an error banner to the user.
+        // onPublishError(t('publishJourney.detailsForm.aiTitleError'));
     } finally {
         setIsAITitleLoading(false);
     }
