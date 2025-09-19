@@ -1253,15 +1253,13 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
         const newMediaFiles = media.filter((m): m is File => m instanceof File);
         const uploadedUrls: { url: string; tipo: 'imagem' | 'video' }[] = [];
 
-        for (const file of newMediaFiles) {
-            const fileExt = file.name.split('.').pop();
-            const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '');
-            const fileName = `${user.id}-${Date.now()}-${sanitizedFileName}`;
-            const filePath = `${user.id}/${fileName}`;
-
+        for (const [index, file] of newMediaFiles.entries()) {
+            const fileExt = file.name.split('.').pop()?.toLowerCase() || 'bin';
+            const fileName = `${user.id}/${Date.now()}-${index}.${fileExt}`;
+            
             const { error: uploadError } = await supabase.storage
                 .from('midia')
-                .upload(filePath, file);
+                .upload(fileName, file);
 
             if (uploadError) {
                 throw new Error(`Falha no upload do arquivo "${file.name}": ${uploadError.message}`);
@@ -1269,7 +1267,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
 
             const { data } = supabase.storage
                 .from('midia')
-                .getPublicUrl(filePath);
+                .getPublicUrl(fileName);
             
             if (!data.publicUrl) {
                 throw new Error(`Não foi possível obter a URL pública do arquivo: ${file.name}`);
