@@ -44,7 +44,7 @@ interface PublishJourneyPageProps {
 }
 
 // Define state shapes for props
-interface AddressState { city: string; street: string; number: string; }
+interface AddressState { city: string; street: string; number: string; state: string; }
 interface ContactInfoState { phone: string; preference: string; name: string; }
 interface DetailsState {
     title: string;
@@ -539,7 +539,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
   const [operation, setOperation] = useState('venda');
   const [isAddressVerified, setIsAddressVerified] = useState(false);
   const [verifiedAddress, setVerifiedAddress] = useState('');
-  const [address, setAddress] = useState<AddressState>({ city: '', street: '', number: '' });
+  const [address, setAddress] = useState<AddressState>({ city: '', street: '', number: '', state: '' });
   const [coordinates, setCoordinates] = useState<{ lat: number, lng: number } | null>(null);
   const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
   const [citySuggestions, setCitySuggestions] = useState<any[]>([]);
@@ -548,7 +548,6 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
   const [streetSuggestions, setStreetSuggestions] = useState<string[]>([]);
   const [isStreetSuggestionsOpen, setIsStreetSuggestionsOpen] = useState(false);
   const streetSuggestionsRef = useRef<HTMLDivElement>(null);
-  const [userState, setUserState] = useState<string | null>(null);
   const [contactInfo, setContactInfo] = useState<ContactInfoState>({ phone: '', preference: 'chat_and_phone', name: '' });
   const [details, setDetails] = useState<DetailsState>({
     title: '',
@@ -575,10 +574,12 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
 
   useEffect(() => {
     if (propertyToEdit) {
+      const [cityPart = '', statePart = ''] = (propertyToEdit.cidade || '').split(',').map(s => s.trim());
       setAddress({
-        city: propertyToEdit.cidade || '',
-        street: propertyToEdit.rua || '',
-        number: propertyToEdit.numero || '',
+          city: cityPart,
+          state: statePart,
+          street: propertyToEdit.rua || '',
+          number: propertyToEdit.numero || '',
       });
       setVerifiedAddress(propertyToEdit.endereco_completo || '');
       setCoordinates({ lat: propertyToEdit.latitude, lng: propertyToEdit.longitude });
@@ -615,14 +616,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
             message: t('publishJourney.locationPermissionModal.message'),
             onConfirm: () => {
                 navigator.geolocation.getCurrentPosition(
-                    async (position) => {
-                        const { latitude, longitude } = position.coords;
-                        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
-                        const data = await response.json();
-                        if (data.address && data.address.state) {
-                            setUserState(data.address.state);
-                        }
-                    },
+                    async (position) => {},
                     (error) => { console.warn("Could not get user location:", error.message); }
                 );
             }
@@ -632,33 +626,39 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
 
   const handleAddressChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
-    setAddress(prev => ({ ...prev, [id]: value }));
+    
+    if (id === 'city') {
+        setAddress(prev => ({ ...prev, city: value, state: '', street: '' }));
+    } else {
+        setAddress(prev => ({ ...prev, [id]: value }));
+    }
 
     if (id === 'city') {
       setIsStreetSuggestionsOpen(false);
       setStreetSuggestions([]);
       if (value.length > 2) {
-        const query = userState ? `${value}, ${userState}` : value;
-        const endpoint = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&countrycodes=br&limit=5`;
+        const endpoint = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(value)}&format=json&addressdetails=1&countrycodes=br&limit=5`;
         
         try {
           const response = await fetch(endpoint);
           const data = await response.json();
           
-          const mappedResults = data
-            .map((item: any) => {
-              const city = item.address.city || item.address.town || item.address.village || item.address.municipality;
-              const state = item.address.state;
-              if (city && state && ['city', 'town', 'village', 'municipality'].includes(item.type)) {
-                return {
-                  ...item,
-                  displayName: `${city}, ${state}`,
-                  state: state,
-                };
-              }
-              return null;
-            })
-            .filter(Boolean);
+            const mappedResults = data
+                .map((item: any) => {
+                    const city = item.address.city || item.address.town || item.address.village || item.address.municipality;
+                    const state = item.address.state;
+                    const validAddresstypes = ['city', 'town', 'village', 'municipality'];
+                    if (city && state && validAddresstypes.includes(item.addresstype)) {
+                        return {
+                            place_id: item.place_id,
+                            displayName: `${city}, ${state}`,
+                            city: city,
+                            state: state,
+                        };
+                    }
+                    return null;
+                })
+                .filter(Boolean);
 
           const uniqueResults = Array.from(new Map(mappedResults.map(item => [item.displayName, item])).values());
           
@@ -673,8 +673,8 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
         setIsCitySuggestionsOpen(false);
       }
     } else if (id === 'street') {
-      if (value.length > 2 && address.city) {
-          const endpoint = `https://nominatim.openstreetmap.org/search?street=${encodeURIComponent(value)}&q=${encodeURIComponent(address.city)}&format=json&addressdetails=1&countrycodes=br&limit=10`;
+      if (value.length > 2 && address.city && address.state) {
+          const endpoint = `https://nominatim.openstreetmap.org/search?street=${encodeURIComponent(value)}&city=${encodeURIComponent(address.city)}&state=${encodeURIComponent(address.state)}&format=json&addressdetails=1&countrycodes=br&limit=10`;
           
           try {
             const response = await fetch(endpoint);
@@ -696,7 +696,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
   };
 
   const handleSuggestionClick = (suggestion: any) => {
-    setAddress(prev => ({ ...prev, city: suggestion.displayName }));
+    setAddress(prev => ({ ...prev, city: suggestion.city, state: suggestion.state, street: '' }));
     setIsCitySuggestionsOpen(false);
   };
   
@@ -720,7 +720,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
 
   const handleVerifyAddress = async (e: React.FormEvent) => {
     e.preventDefault();
-    const fullAddress = `${address.street}, ${address.number}, ${address.city}, Brasil`;
+    const fullAddress = `${address.street}, ${address.number}, ${address.city}, ${address.state}, Brasil`;
     const endpoint = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(fullAddress)}&format=json&limit=1`;
     const response = await fetch(endpoint);
     const data = await response.json();
@@ -814,7 +814,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
             tipo_operacao: operation,
             // Campos de endereço
             endereco_completo: verifiedAddress,
-            cidade: address.city,
+            cidade: address.state ? `${address.city}, ${address.state}` : address.city,
             rua: address.street,
             numero: address.number,
             latitude: coordinates?.lat,
@@ -889,7 +889,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
             titulo: details.title,
             descricao: details.description,
             endereco_completo: verifiedAddress,
-            cidade: address.city,
+            cidade: address.state ? `${address.city}, ${address.state}` : address.city,
             rua: address.street,
             numero: address.number,
             latitude: coordinates?.lat,
