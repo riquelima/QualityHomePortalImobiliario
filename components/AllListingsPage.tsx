@@ -25,6 +25,7 @@ interface AllListingsPageProps {
   onNavigateToAllListings: () => void;
   hasUnreadMessages: boolean;
   onGeolocationError: () => void;
+  onContactClick: (property: Property) => void;
 }
 
 const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
@@ -143,6 +144,7 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
           favorites={props.favorites}
           onToggleFavorite={props.onToggleFavorite}
           isLoading={false}
+          onContactClick={props.onContactClick}
         />
       </main>
       <footer className="bg-brand-light-gray text-brand-gray py-8 text-center mt-12">

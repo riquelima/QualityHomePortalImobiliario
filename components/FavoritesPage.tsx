@@ -26,6 +26,7 @@ interface FavoritesPageProps {
   onNavigateToMyAds: () => void;
   onNavigateToAllListings: () => void;
   hasUnreadMessages: boolean;
+  onContactClick: (property: Property) => void;
 }
 
 const FavoritesPage: React.FC<FavoritesPageProps> = ({
@@ -43,7 +44,8 @@ const FavoritesPage: React.FC<FavoritesPageProps> = ({
   onNavigateToChatList,
   onNavigateToMyAds,
   onNavigateToAllListings,
-  hasUnreadMessages
+  hasUnreadMessages,
+  onContactClick
 }) => {
   const { t } = useLanguage();
 
@@ -87,6 +89,7 @@ const FavoritesPage: React.FC<FavoritesPageProps> = ({
                   onViewDetails={onViewDetails}
                   isFavorite={favorites.includes(property.id)}
                   onToggleFavorite={onToggleFavorite}
+                  onContactClick={onContactClick}
                 />
               ))}
             </div>

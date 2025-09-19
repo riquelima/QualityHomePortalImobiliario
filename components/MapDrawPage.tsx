@@ -1,4 +1,5 @@
 
+
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, CircleMarker } from 'react-leaflet';
 import L from 'leaflet';
@@ -16,6 +17,7 @@ interface MapDrawPageProps {
   favorites: number[];
   onToggleFavorite: (id: number) => void;
   properties: Property[];
+  onContactClick: (property: Property) => void;
 }
 
 // Interface for properties with a calculated distance for sorting
@@ -130,7 +132,7 @@ const DrawingManager: React.FC<{
 };
 
 
-const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewDetails, favorites, onToggleFavorite, properties }) => {
+const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewDetails, favorites, onToggleFavorite, properties, onContactClick }) => {
   const [propertiesInZone, setPropertiesInZone] = useState<PropertyWithDistance[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { t } = useLanguage();
@@ -318,6 +320,7 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewD
                             onViewDetails={onViewDetails}
                             isFavorite={favorites.includes(prop.id)}
                             onToggleFavorite={onToggleFavorite}
+                            onContactClick={onContactClick}
                         />
                     ))
                 ) : (

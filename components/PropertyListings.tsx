@@ -13,6 +13,7 @@ interface PropertyListingsProps {
   onToggleFavorite: (id: number) => void;
   isLoading: boolean;
   title?: string;
+  onContactClick: (property: Property) => void;
 }
 
 const SkeletonCard: React.FC = () => (
@@ -36,7 +37,7 @@ const SkeletonCard: React.FC = () => (
 );
 
 
-const PropertyListings: React.FC<PropertyListingsProps> = ({ properties, onViewDetails, favorites, onToggleFavorite, isLoading, title }) => {
+const PropertyListings: React.FC<PropertyListingsProps> = ({ properties, onViewDetails, favorites, onToggleFavorite, isLoading, title, onContactClick }) => {
   const { t } = useLanguage();
 
   return (
@@ -57,6 +58,7 @@ const PropertyListings: React.FC<PropertyListingsProps> = ({ properties, onViewD
                 onViewDetails={onViewDetails}
                 isFavorite={favorites.includes(property.id)}
                 onToggleFavorite={onToggleFavorite}
+                onContactClick={onContactClick}
               />
             ))
           ) : (

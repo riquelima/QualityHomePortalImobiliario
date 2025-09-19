@@ -27,6 +27,7 @@ interface SearchResultsPageProps {
   onNavigateToMyAds: () => void;
   onNavigateToAllListings: () => void;
   hasUnreadMessages: boolean;
+  onContactClick: (property: Property) => void;
 }
 
 const SearchResultsPage: React.FC<SearchResultsPageProps> = ({ 
@@ -45,7 +46,8 @@ const SearchResultsPage: React.FC<SearchResultsPageProps> = ({
   onNavigateToChatList,
   onNavigateToMyAds,
   onNavigateToAllListings,
-  hasUnreadMessages
+  hasUnreadMessages,
+  onContactClick
 }) => {
   const { t } = useLanguage();
 
@@ -92,6 +94,7 @@ const SearchResultsPage: React.FC<SearchResultsPageProps> = ({
                     onViewDetails={onViewDetails}
                     isFavorite={favorites.includes(property.id)}
                     onToggleFavorite={onToggleFavorite}
+                    onContactClick={onContactClick}
                 />
               ))}
             </div>

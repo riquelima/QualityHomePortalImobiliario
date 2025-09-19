@@ -16,6 +16,7 @@ import ChatPage from './components/ChatPage';
 import MyAdsPage from './components/MyAdsPage';
 import SystemModal from './components/SystemModal';
 import AllListingsPage from './components/AllListingsPage';
+import ContactModal from './components/ContactModal';
 import { useLanguage } from './contexts/LanguageContext';
 import { supabase } from './supabaseClient';
 import type { User, Property, ChatSession, Message, Profile, Media } from './types';
@@ -203,6 +204,7 @@ const App: React.FC = () => {
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
   const fetchingRef = useRef(false);
+  const [contactModalProperty, setContactModalProperty] = useState<Property | null>(null);
 
   const navigateHome = () => setPageState({ page: 'home', userLocation: null });
 
@@ -681,6 +683,15 @@ const App: React.FC = () => {
     const { error } = await supabase.from('mensagens_chat').insert(newMessage);
     if(error) console.error("Error sending message:", error);
   };
+  
+  const openContactModal = (property: Property) => {
+    if (!property.owner) {
+      console.warn("Attempted to open contact modal for property with no owner.", property);
+      return;
+    }
+    setContactModalProperty(property);
+  };
+  const closeContactModal = () => setContactModalProperty(null);
 
   const renderCurrentPage = () => {
     switch (pageState.page) {
@@ -692,6 +703,7 @@ const App: React.FC = () => {
                   favorites={favorites}
                   onToggleFavorite={toggleFavorite}
                   properties={properties}
+                  onContactClick={openContactModal}
                />;
       case 'publish':
         return <PublishAdPage 
@@ -752,6 +764,7 @@ const App: React.FC = () => {
           onNavigateToMyAds={navigateToMyAds}
           onNavigateToAllListings={navigateToAllListings}
           hasUnreadMessages={hasUnreadMessages}
+          onContactClick={openContactModal}
         />;
       case 'propertyDetail':
         const property = [...properties, ...myAds].find(p => p.id === pageState.propertyId);
@@ -794,6 +807,7 @@ const App: React.FC = () => {
             onNavigateToMyAds={navigateToMyAds}
             onNavigateToAllListings={navigateToAllListings}
             hasUnreadMessages={hasUnreadMessages}
+            onContactClick={openContactModal}
           />;
       case 'chatList':
         if (!user) { navigateHome(); return null; }
@@ -862,6 +876,7 @@ const App: React.FC = () => {
           onNavigateToAllListings={navigateToAllListings}
           hasUnreadMessages={hasUnreadMessages}
           onGeolocationError={openGeoErrorModal}
+          onContactClick={openContactModal}
         />;
       case 'home':
       default:
@@ -892,6 +907,7 @@ const App: React.FC = () => {
                 favorites={favorites}
                 onToggleFavorite={toggleFavorite}
                 isLoading={isLoading}
+                onContactClick={openContactModal}
               />
             </main>
             <footer className="bg-brand-light-gray text-brand-gray py-8 text-center mt-20">
@@ -912,6 +928,18 @@ const App: React.FC = () => {
       <SystemModal
         {...modalConfig}
         onClose={hideModal}
+      />
+      <ContactModal 
+        isOpen={!!contactModalProperty}
+        onClose={closeContactModal}
+        owner={contactModalProperty?.owner}
+        propertyTitle={contactModalProperty?.title || ''}
+        onStartChat={() => {
+          if (contactModalProperty) {
+            handleStartChat(contactModalProperty);
+            closeContactModal();
+          }
+        }}
       />
     </>
   );

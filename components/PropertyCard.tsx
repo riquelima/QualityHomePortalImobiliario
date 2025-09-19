@@ -16,6 +16,7 @@ interface PropertyCardProps {
   onViewDetails: (id: number) => void;
   isFavorite: boolean;
   onToggleFavorite: (id: number) => void;
+  onContactClick: (property: Property) => void;
 }
 
 const statusColorMap = {
@@ -29,7 +30,7 @@ const currencyConfig = {
   es: { locale: 'es-ES', currency: 'EUR' },
 };
 
-const PropertyCard: React.FC<PropertyCardProps> = ({ property, onViewDetails, isFavorite, onToggleFavorite }) => {
+const PropertyCard: React.FC<PropertyCardProps> = ({ property, onViewDetails, isFavorite, onToggleFavorite, onContactClick }) => {
   const { language, t } = useLanguage();
   const { locale, currency } = currencyConfig[language as keyof typeof currencyConfig];
 
@@ -98,9 +99,13 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onViewDetails, is
             >
                 {t('propertyCard.details')}
             </button>
-            <button className="w-full bg-gray-200 hover:bg-gray-300 text-brand-dark font-medium py-2 px-4 rounded-md transition duration-300">
-                {t('propertyCard.contact')}
-            </button>
+            {property.owner && (
+              <button 
+                onClick={() => onContactClick(property)}
+                className="w-full bg-gray-200 hover:bg-gray-300 text-brand-dark font-medium py-2 px-4 rounded-md transition duration-300">
+                  {t('propertyCard.contact')}
+              </button>
+            )}
         </div>
       </div>
     </div>

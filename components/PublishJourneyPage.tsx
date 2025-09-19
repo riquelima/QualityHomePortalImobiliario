@@ -1,4 +1,5 @@
 
+
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Header from './Header';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -1544,7 +1545,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
                     <BoltIcon className="w-6 h-6 text-brand-red flex-shrink-0 mt-1" />
                     <div>
                         <h4 className="font-bold text-brand-navy">{t('publishJourney.sidebar.quickSell.title')}</h4>
-                        <a href="#" className="text-sm text-brand-red hover:underline">{t('publishJourney.sidebar.quickSell.link')}</a>
+                        <a href="#" onClick={(e) => e.preventDefault()} className="text-sm text-brand-red hover:underline cursor-not-allowed opacity-70">{t('publishJourney.sidebar.quickSell.link')}</a>
                     </div>
                   </div>
               </div>
@@ -1553,7 +1554,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
                     <BriefcaseIcon className="w-6 h-6 text-brand-red flex-shrink-0 mt-1" />
                     <div>
                         <h4 className="font-bold text-brand-navy">{t('publishJourney.sidebar.professional.title')}</h4>
-                        <a href="#" className="text-sm text-brand-red hover:underline">{t('publishJourney.sidebar.professional.link')}</a>
+                        <a href="#" onClick={(e) => e.preventDefault()} className="text-sm text-brand-red hover:underline cursor-not-allowed opacity-70">{t('publishJourney.sidebar.professional.link')}</a>
                     </div>
                   </div>
               </div>

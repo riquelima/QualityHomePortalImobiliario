@@ -74,6 +74,11 @@ const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, 
     };
   }, []);
 
+  const handleWIPClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    alert('Página em construção.');
+  };
+
   return (
     <>
       <header className="bg-white shadow-sm sticky top-0 z-40">
@@ -100,8 +105,8 @@ const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, 
                         <h3 className="font-bold text-brand-dark text-base">{t('header.ownersDropdown.sell.title')}</h3>
                         <ul className="space-y-3 text-sm">
                           <li><a href="#" onClick={(e) => { e.preventDefault(); onPublishAdClick(); }} className="text-brand-gray hover:text-brand-red">{t('header.ownersDropdown.sell.publish')}</a></li>
-                          <li><a href="#" className="text-brand-gray hover:text-brand-red">{t('header.ownersDropdown.sell.guide')}</a></li>
-                          <li><a href="#" className="text-brand-gray hover:text-brand-red">{t('header.ownersDropdown.sell.documents')}</a></li>
+                          <li><a href="#" onClick={handleWIPClick} className="text-brand-gray hover:text-brand-red">{t('header.ownersDropdown.sell.guide')}</a></li>
+                          <li><a href="#" onClick={handleWIPClick} className="text-brand-gray hover:text-brand-red">{t('header.ownersDropdown.sell.documents')}</a></li>
                         </ul>
                       </div>
                       {/* Colocar para arrendamento */}
@@ -115,7 +120,7 @@ const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, 
                       <div className="space-y-4">
                         <h3 className="font-bold text-brand-dark text-base">{t('header.ownersDropdown.forYourHome.title')}</h3>
                         <ul className="space-y-3 text-sm">
-                          <li><a href="#" onClick={(e) => { e.preventDefault(); onAccessClick(); }} className="text-brand-gray hover:text-brand-red">{t('header.ownersDropdown.forYourHome.ownerArea')}</a></li>
+                          <li><a href="#" onClick={(e) => { e.preventDefault(); onNavigateToMyAds(); }} className="text-brand-gray hover:text-brand-red">{t('header.ownersDropdown.forYourHome.ownerArea')}</a></li>
                         </ul>
                       </div>
                     </div>
@@ -213,7 +218,7 @@ const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, 
                       )}
                       <div>
                         <p className="text-sm font-bold text-brand-dark truncate">{userName}</p>
-                        <a href="#" className="text-xs text-brand-red hover:underline">{t('header.myAccount')}</a>
+                        <a href="#" onClick={(e) => { e.preventDefault(); onNavigateToMyAds(); setIsUserDropdownOpen(false); }} className="text-xs text-brand-red hover:underline">{t('header.myAccount')}</a>
                       </div>
                     </div>
                     <nav className="py-2">
@@ -221,10 +226,6 @@ const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, 
                           <AdsIcon className="w-5 h-5 mr-3 text-brand-gray" />
                           <span>{t('header.ads')}</span>
                       </button>
-                      <a href="#" className="flex items-center px-4 py-2 text-sm text-brand-dark hover:bg-gray-100">
-                          <BellIcon className="w-5 h-5 mr-3 text-brand-gray" />
-                          <span>{t('header.savedSearches')}</span>
-                      </a>
                       <a href="#" onClick={(e) => { e.preventDefault(); onNavigateToFavorites(); setIsUserDropdownOpen(false); }} className="flex items-center px-4 py-2 text-sm text-brand-dark hover:bg-gray-100">
                           <HeartIcon className="w-5 h-5 mr-3 text-brand-gray" />
                           <span>{t('header.favorites')}</span>
@@ -302,8 +303,8 @@ const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, 
                           <h3 className="font-bold text-brand-dark">{t('header.ownersDropdown.sell.title')}</h3>
                           <ul className="space-y-1 pl-2">
                               <li><a href="#" onClick={(e) => { e.preventDefault(); onPublishAdClick(); setIsMenuOpen(false); }} className="text-brand-gray hover:text-brand-red block py-1">{t('header.ownersDropdown.sell.publish')}</a></li>
-                              <li><a href="#" className="text-brand-gray hover:text-brand-red block py-1">{t('header.ownersDropdown.sell.guide')}</a></li>
-                              <li><a href="#" className="text-brand-gray hover:text-brand-red block py-1">{t('header.ownersDropdown.sell.documents')}</a></li>
+                              <li><a href="#" onClick={handleWIPClick} className="text-brand-gray hover:text-brand-red block py-1">{t('header.ownersDropdown.sell.guide')}</a></li>
+                              <li><a href="#" onClick={handleWIPClick} className="text-brand-gray hover:text-brand-red block py-1">{t('header.ownersDropdown.sell.documents')}</a></li>
                           </ul>
                       </div>
                       {/* Colocar para arrendamento */}
@@ -317,7 +318,7 @@ const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, 
                       <div className="space-y-1">
                           <h3 className="font-bold text-brand-dark">{t('header.ownersDropdown.forYourHome.title')}</h3>
                           <ul className="space-y-1 pl-2">
-                              <li><a href="#" onClick={(e) => { e.preventDefault(); onAccessClick(); setIsMenuOpen(false); }} className="text-brand-gray hover:text-brand-red block py-1">{t('header.ownersDropdown.forYourHome.ownerArea')}</a></li>
+                              <li><a href="#" onClick={(e) => { e.preventDefault(); onNavigateToMyAds(); setIsMenuOpen(false); }} className="text-brand-gray hover:text-brand-red block py-1">{t('header.ownersDropdown.forYourHome.ownerArea')}</a></li>
                           </ul>
                       </div>
                   </div>
