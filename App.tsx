@@ -1,6 +1,7 @@
 
 
 
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
@@ -833,6 +834,7 @@ const App: React.FC = () => {
           onSearchSubmit={navigateToSearchResults}
           onNavigateToAllListings={navigateToAllListings}
           hasUnreadMessages={hasUnreadMessages}
+          onGeolocationError={openGeoErrorModal}
         />;
       case 'home':
       default:
