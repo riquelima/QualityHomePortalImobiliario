@@ -64,6 +64,7 @@ interface DetailsState {
 }
 
 // Props for Step1Form
+// FIX: Pass setter functions for suggestion visibility to fix call expression error.
 interface Step1FormProps {
   isAddressVerified: boolean;
   handleVerifyAddress: (e: React.FormEvent) => Promise<void>;
@@ -74,9 +75,14 @@ interface Step1FormProps {
   handleAddressChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   citySuggestionsRef: React.RefObject<HTMLDivElement>;
   isCitySuggestionsOpen: boolean;
-  setIsCitySuggestionsOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  setIsCitySuggestionsOpen: (value: boolean) => void;
   citySuggestions: any[];
   handleSuggestionClick: (suggestion: any) => void;
+  streetSuggestionsRef: React.RefObject<HTMLDivElement>;
+  isStreetSuggestionsOpen: boolean;
+  setIsStreetSuggestionsOpen: (value: boolean) => void;
+  streetSuggestions: string[];
+  handleStreetSuggestionClick: (street: string) => void;
   verifiedAddress: string;
   handleEditAddress: () => void;
   user: User | null;
@@ -100,6 +106,11 @@ const Step1Form: React.FC<Step1FormProps> = ({
     setIsCitySuggestionsOpen,
     citySuggestions,
     handleSuggestionClick,
+    streetSuggestionsRef,
+    isStreetSuggestionsOpen,
+    setIsStreetSuggestionsOpen,
+    streetSuggestions,
+    handleStreetSuggestionClick,
     verifiedAddress,
     handleEditAddress,
     user,
@@ -157,6 +168,7 @@ const Step1Form: React.FC<Step1FormProps> = ({
                     <div className="relative" ref={citySuggestionsRef}>
                     <label htmlFor="city" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.form.location.city')}</label>
                     <div className="relative">
+{/* FIX: Use setter function setIsCitySuggestionsOpen instead of boolean isCitySuggestionsOpen. */}
                         <input type="text" id="city" value={address.city} onChange={handleAddressChange} onFocus={() => { if (citySuggestions.length > 0) setIsCitySuggestionsOpen(true); }} className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" required autoComplete="off" />
                     </div>
                     {isCitySuggestionsOpen && citySuggestions.length > 0 && (
@@ -167,9 +179,24 @@ const Step1Form: React.FC<Step1FormProps> = ({
                         </div>
                     )}
                     </div>
-                    <div>
-                    <label htmlFor="street" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.form.location.street')}</label>
-                    <input type="text" id="street" value={address.street} onChange={handleAddressChange} className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" required />
+                    <div className="relative" ref={streetSuggestionsRef}>
+                        <label htmlFor="street" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.form.location.street')}</label>
+{/* FIX: Use setter function setIsStreetSuggestionsOpen instead of boolean isStreetSuggestionsOpen. */}
+                        <input type="text" id="street" value={address.street} onChange={handleAddressChange} className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" required autoComplete="off" onFocus={() => { if (streetSuggestions.length > 0) setIsStreetSuggestionsOpen(true); }}/>
+                        {isStreetSuggestionsOpen && streetSuggestions.length > 0 && (
+                            <div className="absolute top-full left-0 w-full bg-white border border-gray-200 rounded-b-md shadow-lg z-10">
+                            {streetSuggestions.map((s, index) => (
+                                <button 
+                                    type="button" 
+                                    key={index} 
+                                    onClick={() => handleStreetSuggestionClick(s)} 
+                                    className="w-full text-left px-4 py-3 text-brand-dark hover:bg-gray-100"
+                                >
+                                    {s}
+                                </button>
+                            ))}
+                            </div>
+                        )}
                     </div>
                     <div>
                     <label htmlFor="number" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.form.location.number')}</label>
@@ -518,6 +545,9 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
   const [citySuggestions, setCitySuggestions] = useState<any[]>([]);
   const [isCitySuggestionsOpen, setIsCitySuggestionsOpen] = useState(false);
   const citySuggestionsRef = useRef<HTMLDivElement>(null);
+  const [streetSuggestions, setStreetSuggestions] = useState<string[]>([]);
+  const [isStreetSuggestionsOpen, setIsStreetSuggestionsOpen] = useState(false);
+  const streetSuggestionsRef = useRef<HTMLDivElement>(null);
   const [userState, setUserState] = useState<string | null>(null);
   const [contactInfo, setContactInfo] = useState<ContactInfoState>({ phone: '', preference: 'chat_and_phone', name: '' });
   const [details, setDetails] = useState<DetailsState>({
@@ -604,36 +634,64 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
     const { id, value } = e.target;
     setAddress(prev => ({ ...prev, [id]: value }));
 
-    if (id === 'city' && value.length > 2) {
-      const endpoint = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(value)}&format=json&addressdetails=1&countrycodes=br&limit=5`;
-      const response = await fetch(endpoint);
-      const data = await response.json();
-      
-      const filteredResults = data.filter((item: any) => 
-        ['city', 'town', 'village', 'municipality'].includes(item.type)
-      ).map((item: any) => {
-          const city = item.address.city || item.address.town || item.address.village || item.address.municipality;
-          const state = item.address.state;
-          return {
-              ...item,
-              displayName: `${city}, ${state}`.replace(/undefined, /g, ''),
-              state: state,
-          };
-      });
-      
-      // Prioritize results from the user's state
-      if (userState) {
-        filteredResults.sort((a: any, b: any) => {
-            if (a.state === userState && b.state !== userState) return -1;
-            if (a.state !== userState && b.state === userState) return 1;
-            return 0;
-        });
-      }
+    if (id === 'city') {
+      setIsStreetSuggestionsOpen(false);
+      setStreetSuggestions([]);
+      if (value.length > 2) {
+        const query = userState ? `${value}, ${userState}` : value;
+        const endpoint = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&countrycodes=br&limit=5`;
+        
+        try {
+          const response = await fetch(endpoint);
+          const data = await response.json();
+          
+          const mappedResults = data
+            .map((item: any) => {
+              const city = item.address.city || item.address.town || item.address.village || item.address.municipality;
+              const state = item.address.state;
+              if (city && state && ['city', 'town', 'village', 'municipality'].includes(item.type)) {
+                return {
+                  ...item,
+                  displayName: `${city}, ${state}`,
+                  state: state,
+                };
+              }
+              return null;
+            })
+            .filter(Boolean);
 
-      setCitySuggestions(filteredResults);
-      setIsCitySuggestionsOpen(true);
-    } else {
-      setIsCitySuggestionsOpen(false);
+          const uniqueResults = Array.from(new Map(mappedResults.map(item => [item.displayName, item])).values());
+          
+          setCitySuggestions(uniqueResults);
+          setIsCitySuggestionsOpen(true);
+        } catch (error) {
+          console.error("Error fetching city suggestions:", error);
+          setCitySuggestions([]);
+        }
+
+      } else {
+        setIsCitySuggestionsOpen(false);
+      }
+    } else if (id === 'street') {
+      if (value.length > 2 && address.city) {
+          const endpoint = `https://nominatim.openstreetmap.org/search?street=${encodeURIComponent(value)}&q=${encodeURIComponent(address.city)}&format=json&addressdetails=1&countrycodes=br&limit=10`;
+          
+          try {
+            const response = await fetch(endpoint);
+            const data = await response.json();
+            
+            if (data) {
+                const uniqueStreets = [...new Set(data.map((item: any) => item.address.road).filter(Boolean))];
+                setStreetSuggestions(uniqueStreets as string[]);
+                setIsStreetSuggestionsOpen(true);
+            }
+          } catch (error) {
+            console.error("Error fetching street suggestions:", error);
+            setStreetSuggestions([]);
+          }
+      } else {
+        setIsStreetSuggestionsOpen(false);
+      }
     }
   };
 
@@ -642,10 +700,18 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
     setIsCitySuggestionsOpen(false);
   };
   
+  const handleStreetSuggestionClick = (street: string) => {
+    setAddress(prev => ({ ...prev, street: street }));
+    setIsStreetSuggestionsOpen(false);
+  };
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (citySuggestionsRef.current && !citySuggestionsRef.current.contains(event.target as Node)) {
         setIsCitySuggestionsOpen(false);
+      }
+      if (streetSuggestionsRef.current && !streetSuggestionsRef.current.contains(event.target as Node)) {
+        setIsStreetSuggestionsOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -944,6 +1010,11 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
                     setIsCitySuggestionsOpen={setIsCitySuggestionsOpen}
                     citySuggestions={citySuggestions}
                     handleSuggestionClick={handleSuggestionClick}
+                    streetSuggestionsRef={streetSuggestionsRef}
+                    isStreetSuggestionsOpen={isStreetSuggestionsOpen}
+                    setIsStreetSuggestionsOpen={setIsStreetSuggestionsOpen}
+                    streetSuggestions={streetSuggestions}
+                    handleStreetSuggestionClick={handleStreetSuggestionClick}
                     verifiedAddress={verifiedAddress}
                     handleEditAddress={handleEditAddress}
                     user={user}

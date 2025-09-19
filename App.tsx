@@ -222,35 +222,26 @@ const App: React.FC = () => {
     console.time('fetchAllData');
 
     try {
-        const activePropertiesQuery = supabase
-          .from('imoveis')
-          .select(`
-            id, titulo, endereco_completo, quartos, banheiros, area_bruta, latitude, longitude, preco, descricao, anunciante_id, status,
-            midias_imovel ( url, tipo ),
-            perfis:anunciante_id ( id, nome_completo, telefone, url_foto_perfil )
-          `)
-          .eq('status','ativo');
-
-        const userPropertiesQuery = currentUser
-          ? supabase
-              .from('imoveis')
-              .select(`
+        let query = supabase
+            .from('imoveis')
+            .select(`
                 id, titulo, endereco_completo, quartos, banheiros, area_bruta, latitude, longitude, preco, descricao, anunciante_id, status,
                 midias_imovel ( url, tipo ),
                 perfis:anunciante_id ( id, nome_completo, telefone, url_foto_perfil )
-              `)
-              .eq('anunciante_id', currentUser.id)
-          : Promise.resolve({ data: [], error: null } as any);
+            `);
 
-        const [activeRes, userRes] = await Promise.all([activePropertiesQuery, userPropertiesQuery]);
+        // Apply filter: active properties for everyone, plus own properties for logged-in users.
+        if (currentUser) {
+            query = query.or(`status.eq.ativo,anunciante_id.eq.${currentUser.id}`);
+        } else {
+            query = query.eq('status', 'ativo');
+        }
 
-        if (activeRes.error) throw activeRes.error;
-        if (userRes.error) throw userRes.error;
+        const { data: propertiesData, error } = await query;
+        if (error) throw error;
 
-        // De-duplicate properties
-        const allDbProperties = [...(activeRes.data ?? []), ...(userRes.data ?? [])];
-        const propertyMap = new Map(allDbProperties.map((p: any) => [p.id, p]));
-        const uniquePropertiesData = [...propertyMap.values()];
+        // The query is now unified, so no de-duplication is needed.
+        const uniquePropertiesData = propertiesData || [];
 
         const adaptedProperties = uniquePropertiesData.map((db:any): Property => ({
           ...db,
