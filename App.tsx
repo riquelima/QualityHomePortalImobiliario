@@ -536,6 +536,8 @@ const App: React.FC = () => {
 
   const handleAddProperty = useCallback(async (newProperty: Property) => {
     if (user) {
+        // Aguarda a busca de dados ser concluída para garantir que a UI
+        // tenha os dados mais recentes antes de exibir a confirmação.
         await fetchAllData(user);
     }
     showModal({
