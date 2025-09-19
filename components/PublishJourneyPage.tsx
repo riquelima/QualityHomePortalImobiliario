@@ -895,9 +895,9 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
       setCoordinates({ lat: propertyToEdit.latitude, lng: propertyToEdit.longitude });
       setOperation(propertyToEdit.tipo_operacao || 'venda');
       setContactInfo({
-        phone: propertyToEdit.owner?.phone || '',
+        phone: profile?.telefone || '',
         preference: 'chat_and_phone', // Assuming a default, not stored in DB
-        name: propertyToEdit.owner?.nome_completo || '',
+        name: profile?.nome_completo || '',
       });
       
       const price = propertyToEdit.preco;
@@ -933,6 +933,9 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
       setCurrentStep(1); // Start at step 1 for editing
     } else {
         // Request geolocation only for new ads
+        if (profile) {
+            setContactInfo(prev => ({ ...prev, name: profile.nome_completo, phone: profile.telefone || '' }))
+        }
         onRequestModal({
             type: 'confirm',
             title: t('publishJourney.locationPermissionModal.title'),
@@ -945,7 +948,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
             }
         });
     }
-  }, [propertyToEdit, t, onRequestModal]);
+  }, [propertyToEdit, t, onRequestModal, profile]);
 
   const handleAddressChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
@@ -1182,98 +1185,174 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
 
   const handleFinish = async () => {
     if (!user || !profile) {
-      onOpenLoginModal();
-      return;
+        onOpenLoginModal();
+        return;
     }
-  
-    setPublishError(null); // Limpa erros anteriores a cada nova tentativa
+
+    setPublishError(null);
     setIsSubmitting(true);
-  
+
     try {
-      const existingMedia = media.filter(m => !(m instanceof File)) as { id: number; url: string; tipo: 'imagem' | 'video' }[];
-      const newMediaFiles = media.filter(m => m instanceof File) as File[];
-  
-      let propertyData: any = {
-        anunciante_id: user.id,
-        titulo: details.title,
-        descricao: details.description,
-        endereco_completo: verifiedAddress,
-        cidade: address.state ? `${address.city}, ${address.state}` : address.city,
-        rua: address.street,
-        numero: address.number,
-        latitude: coordinates?.lat,
-        longitude: coordinates?.lng,
-        tipo_operacao: operation,
-        tipo_imovel: details.propertyType[0] || null,
-        quartos: details.bedrooms,
-        banheiros: details.bathrooms,
-        area_bruta: parseIntToNull(details.grossArea),
-        possui_elevador: details.hasElevator,
-        caracteristicas_imovel: details.homeFeatures,
-        caracteristicas_condominio: details.buildingFeatures,
-        status: 'ativo',
-      };
-  
-      if (operation === 'venda') {
-        propertyData = {
-            ...propertyData,
-            preco: parseCurrencyToNull(details.salePrice) ?? 0,
-            valor_iptu: parseCurrencyToNull(details.iptuAnnual),
-            aceita_financiamento: details.acceptsFinancing,
-            situacao_ocupacao: details.occupationSituation,
+        // Step 1: Upload any new files to Supabase Storage
+        const newMediaFiles = media.filter((m): m is File => m instanceof File);
+        const uploadedUrls: { url: string; tipo: 'imagem' | 'video' }[] = [];
+
+        if (newMediaFiles.length > 0) {
+            // FIX: Added an explicit return type to the async map callback to ensure TypeScript
+            // correctly infers the type of `results` as `{ url: string; tipo: "imagem" | "video"; }[]`
+            // instead of a wider `{ url: any; tipo: string; }[]`.
+            const uploadPromises = newMediaFiles.map(async (file): Promise<{ url: string; tipo: 'imagem' | 'video' }> => {
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${Date.now()}-${Math.random()}.${fileExt}`;
+                const filePath = `${user.id}/${fileName}`;
+
+                const { error: uploadError } = await supabase.storage
+                    .from('midia')
+                    .upload(filePath, file);
+
+                if (uploadError) {
+                    throw new Error(`Falha no upload do arquivo: ${uploadError.message}`);
+                }
+
+                const { data } = supabase.storage
+                    .from('midia')
+                    .getPublicUrl(filePath);
+                
+                if (!data.publicUrl) {
+                    throw new Error('Não foi possível obter a URL pública do arquivo.');
+                }
+
+                return {
+                    url: data.publicUrl,
+                    tipo: file.type.startsWith('video') ? 'video' : 'imagem',
+                };
+            });
+
+            const results = await Promise.all(uploadPromises);
+            uploadedUrls.push(...results);
+        }
+
+        // Step 2: Prepare property data
+        let propertyData: any = {
+            anunciante_id: user.id,
+            titulo: details.title,
+            descricao: details.description,
+            endereco_completo: verifiedAddress,
+            cidade: address.state ? `${address.city}, ${address.state}` : address.city,
+            rua: address.street,
+            numero: address.number,
+            latitude: coordinates?.lat,
+            longitude: coordinates?.lng,
+            tipo_operacao: operation,
+            tipo_imovel: details.propertyType[0] || null,
+            quartos: details.bedrooms,
+            banheiros: details.bathrooms,
+            area_bruta: parseIntToNull(details.grossArea),
+            possui_elevador: details.hasElevator,
+            caracteristicas_imovel: details.homeFeatures,
+            caracteristicas_condominio: details.buildingFeatures,
+            status: 'ativo',
         };
-      } else if (operation === 'aluguel') {
-        propertyData = {
-            ...propertyData,
-            preco: parseCurrencyToNull(details.monthlyRent) ?? 0,
-            taxa_condominio: parseCurrencyToNull(details.condoFee),
-            valor_iptu: parseCurrencyToNull(details.iptuMonthly),
-            condicoes_aluguel: details.rentalConditions,
-            permite_animais: details.petsAllowed,
-        };
-      } else if (operation === 'temporada') {
-        propertyData = {
-            ...propertyData,
-            preco: parseCurrencyToNull(details.dailyRate) ?? 0,
-            minimo_diarias: parseIntToNull(details.minStay),
-            maximo_hospedes: parseIntToNull(details.maxGuests),
-            taxa_limpeza: parseCurrencyToNull(details.cleaningFee),
-            datas_disponiveis: availableDates,
-        };
-      }
-  
-      if (propertyToEdit) {
-        // Lógica de Atualização
-        const { error: updateError } = await supabase
-            .from('imoveis')
-            .update(propertyData)
-            .eq('id', propertyToEdit.id);
+
+        if (operation === 'venda') {
+            propertyData = {
+                ...propertyData,
+                preco: parseCurrencyToNull(details.salePrice) ?? 0,
+                valor_iptu: parseCurrencyToNull(details.iptuAnnual),
+                aceita_financiamento: details.acceptsFinancing,
+                situacao_ocupacao: details.occupationSituation,
+            };
+        } else if (operation === 'aluguel') {
+            propertyData = {
+                ...propertyData,
+                preco: parseCurrencyToNull(details.monthlyRent) ?? 0,
+                taxa_condominio: parseCurrencyToNull(details.condoFee),
+                valor_iptu: parseCurrencyToNull(details.iptuMonthly),
+                condicoes_aluguel: details.rentalConditions,
+                permite_animais: details.petsAllowed,
+            };
+        } else if (operation === 'temporada') {
+            propertyData = {
+                ...propertyData,
+                preco: parseCurrencyToNull(details.dailyRate) ?? 0,
+                minimo_diarias: parseIntToNull(details.minStay),
+                maximo_hospedes: parseIntToNull(details.maxGuests),
+                taxa_limpeza: parseCurrencyToNull(details.cleaningFee),
+                datas_disponiveis: availableDates,
+            };
+        }
+
+        let finalPropertyId: number;
+
+        // Step 3: Insert or Update the main property data
+        if (propertyToEdit) {
+            // UPDATE LOGIC
+            finalPropertyId = propertyToEdit.id;
+            const { error: updateError } = await supabase
+                .from('imoveis')
+                .update(propertyData)
+                .eq('id', finalPropertyId);
+
+            if (updateError) throw updateError;
+
+            // Step 4a (Update): Clear old media and re-insert all current media
+            const { error: deleteMediaError } = await supabase
+                .from('midias_imovel')
+                .delete()
+                .eq('imovel_id', finalPropertyId);
+            
+            if (deleteMediaError) throw deleteMediaError;
+
+        } else {
+            // CREATE LOGIC
+            const { data: newProperty, error: propertyError } = await supabase
+                .from('imoveis')
+                .insert(propertyData)
+                .select('id')
+                .single();
+
+            if (propertyError) throw propertyError;
+            if (!newProperty || !newProperty.id) throw new Error("Falha ao criar o anúncio, ID não retornado.");
+
+            finalPropertyId = newProperty.id;
+        }
+
+        // Step 4b (Create & Update): Insert media records
+        const existingMediaUrls = media
+            .filter((m): m is Media => !(m instanceof File))
+            .map(m => ({ url: m.url, tipo: m.tipo }));
         
-        if (updateError) throw updateError;
-        
-        await onUpdateProperty();
-  
-      } else {
-        // Lógica de Criação
-        const { data: newProperty, error: propertyError } = await supabase
-          .from('imoveis')
-          .insert(propertyData)
-          .select()
-          .single();
-  
-        if (propertyError) throw propertyError;
-  
-        await onAddProperty(newProperty as Property);
-        onBack();
-      }
+        const allMediaToInsert = [...existingMediaUrls, ...uploadedUrls];
+
+        if (allMediaToInsert.length > 0) {
+            const mediaRecords = allMediaToInsert.map(m => ({
+                imovel_id: finalPropertyId,
+                url: m.url,
+                tipo: m.tipo,
+            }));
+
+            const { error: mediaInsertError } = await supabase
+                .from('midias_imovel')
+                .insert(mediaRecords);
+
+            if (mediaInsertError) throw mediaInsertError;
+        }
+
+        // Step 5: Finalize and navigate
+        if (propertyToEdit) {
+            await onUpdateProperty();
+        } else {
+            await onAddProperty({ id: finalPropertyId } as Property);
+            onBack();
+        }
     } catch (error: any) {
-      const errorMessage = error.message || 'Ocorreu um erro desconhecido.';
-      console.error('Falha na publicação:', error);
-      setPublishError(errorMessage); // Define o erro para ser exibido na tela
+        const errorMessage = error.message || 'Ocorreu um erro desconhecido ao publicar.';
+        console.error('Falha na publicação:', error);
+        setPublishError(errorMessage);
     } finally {
-      setIsSubmitting(false); // Garante que o estado de carregamento seja desativado
+        setIsSubmitting(false);
     }
-  };
+};
 
   const renderDetailsForm = () => {
     const commonProps = {
