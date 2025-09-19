@@ -1,4 +1,5 @@
 
+
 import React, { useState, useRef, useEffect } from 'react';
 import SearchIcon from './icons/SearchIcon';
 import ChevronDownIcon from './icons/ChevronDownIcon';
@@ -34,10 +35,7 @@ const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe, onGeoloca
     setIsLoadingTitle(true);
 
     const generateTitle = async () => {
-      // API Key is hardcoded as requested by the user.
-      const apiKey = "AIzaSyCsX9l10XCu3TtSCU1BSx-qOYrwUKYw2xk";
-
-      if (!apiKey) {
+      if (!process.env.API_KEY) {
         console.error("API Key for Gemini is not configured.");
         if (!isCancelled) {
           setIsLoadingTitle(false);
@@ -46,8 +44,7 @@ const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe, onGeoloca
       }
 
       try {
-        // Initialize GoogleGenAI with the provided API key.
-        const ai = new GoogleGenAI({ apiKey: apiKey });
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const prompt = t('hero.geminiPrompt');
         
         const response = await ai.models.generateContent({

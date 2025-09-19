@@ -15,6 +15,10 @@ import VideoIcon from './icons/VideoIcon';
 import { supabase } from '../supabaseClient';
 import CloseIcon from './icons/CloseIcon';
 import InfoIcon from './icons/InfoIcon';
+import { GoogleGenAI } from '@google/genai';
+import AIIcon from './icons/AIIcon';
+import SpinnerIcon from './icons/SpinnerIcon';
+
 
 type MediaItem = File | { id: number; url: string; tipo: 'imagem' | 'video' };
 
@@ -291,6 +295,8 @@ interface Step2FormProps {
     incrementCounter: (field: 'bedrooms' | 'bathrooms') => void;
     decrementCounter: (field: 'bedrooms' | 'bathrooms') => void;
     handleContinueToPhotos: () => void;
+    onGenerateAITitle: () => Promise<void>;
+    isAITitleLoading: boolean;
 }
 
 const Step2Form: React.FC<Step2FormProps> = ({
@@ -298,7 +304,9 @@ const Step2Form: React.FC<Step2FormProps> = ({
     handleDetailsChange,
     incrementCounter,
     decrementCounter,
-    handleContinueToPhotos
+    handleContinueToPhotos,
+    onGenerateAITitle,
+    isAITitleLoading
 }) => {
     const { t } = useLanguage();
 
@@ -341,7 +349,30 @@ const Step2Form: React.FC<Step2FormProps> = ({
             <h2 className="text-xl font-bold text-brand-navy">{t('publishJourney.detailsForm.title')}</h2>
             <div>
                 <label htmlFor="adTitle" className="block text-base sm:text-lg font-bold text-brand-navy mb-3">{t('publishJourney.detailsForm.adTitle')}</label>
-                <input type="text" id="adTitle" value={details.title} onChange={(e) => handleDetailsChange(e.target.value, 'title')} placeholder={t('publishJourney.detailsForm.adTitlePlaceholder')} className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" required />
+                 <div className="relative">
+                    <input 
+                        type="text" 
+                        id="adTitle" 
+                        value={details.title} 
+                        onChange={(e) => handleDetailsChange(e.target.value, 'title')} 
+                        placeholder={t('publishJourney.detailsForm.adTitlePlaceholder')} 
+                        className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red pr-12" 
+                        required 
+                    />
+                    {details.title.trim().length > 0 && (
+                        <button
+                            type="button"
+                            onClick={onGenerateAITitle}
+                            disabled={isAITitleLoading}
+                            className="absolute top-1/2 right-3 -translate-y-1/2 text-brand-navy hover:text-brand-red disabled:opacity-50 disabled:cursor-wait p-1"
+                            title={t('publishJourney.detailsForm.aiTitleButtonLabel')}
+                        >
+                            {isAITitleLoading 
+                                ? <SpinnerIcon className="w-6 h-6 animate-spin text-brand-navy" /> 
+                                : <AIIcon className="w-6 h-6" />}
+                        </button>
+                    )}
+                </div>
             </div>
 
             <CheckboxGroup
@@ -567,6 +598,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
   });
   const [media, setMedia] = useState<MediaItem[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAITitleLoading, setIsAITitleLoading] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -783,6 +815,34 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
   const handleRemoveMedia = (index: number) => {
       setMedia(prev => prev.filter((_, i) => i !== index));
   };
+
+  const handleGenerateAITitle = useCallback(async () => {
+    if (!details.title.trim()) return;
+
+    setIsAITitleLoading(true);
+    try {
+        if (!process.env.API_KEY) {
+            throw new Error("API Key not configured.");
+        }
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const prompt = t('publishJourney.detailsForm.aiTitlePrompt', { title: details.title });
+
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+        });
+
+        const newTitle = response.text.trim().replace(/^"|"$/g, '');
+        if (newTitle) {
+            setDetails(prev => ({ ...prev, title: newTitle }));
+        }
+    } catch (error) {
+        console.error("Error generating AI title:", error);
+        onPublishError(t('publishJourney.detailsForm.aiTitleError'));
+    } finally {
+        setIsAITitleLoading(false);
+    }
+  }, [details.title, t, onPublishError]);
 
   const handleFinish = async () => {
     if (!user || !profile) {
@@ -1032,6 +1092,8 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
                     incrementCounter={incrementCounter}
                     decrementCounter={decrementCounter}
                     handleContinueToPhotos={() => setCurrentStep(3)}
+                    onGenerateAITitle={handleGenerateAITitle}
+                    isAITitleLoading={isAITitleLoading}
                 />
             )}
             {currentStep === 3 && (
