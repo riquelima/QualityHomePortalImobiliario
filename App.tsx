@@ -225,7 +225,7 @@ const App: React.FC = () => {
         let query = supabase
             .from('imoveis')
             .select(`
-                id, titulo, endereco_completo, quartos, banheiros, area_bruta, latitude, longitude, preco, descricao, anunciante_id, status,
+                *,
                 midias_imovel ( url, tipo ),
                 perfis:anunciante_id ( id, nome_completo, telefone, url_foto_perfil )
             `);
