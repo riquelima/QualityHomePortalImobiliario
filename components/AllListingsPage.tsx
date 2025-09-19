@@ -155,7 +155,7 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
                       autoComplete="off"
                     />
                     {isSuggestionsOpen && suggestions.length > 0 && (
-                        <div className="absolute top-full left-0 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-20 text-left">
+                        <div className="absolute top-full left-0 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-[1000] text-left">
                             {suggestions.map((s) => (
                                 <button
                                     type="button"
@@ -219,6 +219,7 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
         </div>
 
         <PropertyListings
+          title={activeSearchQuery ? t('listings.foundTitle') : t('listings.title')}
           properties={filteredProperties}
           onViewDetails={props.onViewDetails}
           favorites={props.favorites}

@@ -12,6 +12,7 @@ interface PropertyListingsProps {
   favorites: number[];
   onToggleFavorite: (id: number) => void;
   isLoading: boolean;
+  title?: string;
 }
 
 const SkeletonCard: React.FC = () => (
@@ -35,13 +36,13 @@ const SkeletonCard: React.FC = () => (
 );
 
 
-const PropertyListings: React.FC<PropertyListingsProps> = ({ properties, onViewDetails, favorites, onToggleFavorite, isLoading }) => {
+const PropertyListings: React.FC<PropertyListingsProps> = ({ properties, onViewDetails, favorites, onToggleFavorite, isLoading, title }) => {
   const { t } = useLanguage();
 
   return (
     <section className="bg-white py-16 sm:py-20">
       <div className="container mx-auto px-4 sm:px-6">
-        <h2 className="text-3xl sm:text-4xl font-bold text-brand-navy text-center mb-4">{t('listings.title')}</h2>
+        <h2 className="text-3xl sm:text-4xl font-bold text-brand-navy text-center mb-4">{title || t('listings.title')}</h2>
         <p className="text-base sm:text-lg text-brand-gray text-center max-w-2xl mx-auto mb-12">
           {t('listings.description')}
         </p>

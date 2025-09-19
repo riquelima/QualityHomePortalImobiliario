@@ -68,6 +68,7 @@ const ptTranslations = {
   },
   "listings": {
     "title": "Imóveis em Destaque",
+    "foundTitle": "Imóveis Encontrados",
     "description": "Explore nossa seleção exclusiva de imóveis que combinam luxo, conforto e localização privilegiada.",
     "noResults": "Nenhum imóvel encontrado no momento."
   },
@@ -494,6 +495,7 @@ const enTranslations = {
   },
   "listings": {
     "title": "Featured Properties",
+    "foundTitle": "Properties Found",
     "description": "Explore our exclusive selection of properties that combine luxury, comfort, and prime location.",
     "noResults": "No properties found at the moment."
   },
@@ -920,6 +922,7 @@ const esTranslations = {
   },
   "listings": {
     "title": "Inmuebles Destacados",
+    "foundTitle": "Inmuebles Encontrados",
     "description": "Explora nuestra selección exclusiva de inmuebles que combinan lujo, confort y una ubicación privilegiada.",
     "noResults": "No se encontraron propiedades por el momento."
   },
