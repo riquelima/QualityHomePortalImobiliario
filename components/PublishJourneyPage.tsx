@@ -563,6 +563,28 @@ const Step3Form: React.FC<Step3FormProps> = ({ media, handleFileChange, handleRe
     );
 };
 
+// Helper function for mock AI response
+const mockAITitleGeneration = (originalTitle: string): Promise<string> => {
+    return new Promise(resolve => {
+        setTimeout(() => {
+            const prefixes = ["Oportunidade Única:", "Imperdível:", "Exclusivo:", "Lindo", "Espetacular"];
+            const suffixes = ["na melhor localização", "com vista incrível", "perfeito para você", "dos seus sonhos", "acabamento de primeira"];
+            
+            const capitalizedTitle = originalTitle.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+
+            const randomPrefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+            const randomSuffix = suffixes[Math.floor(Math.random() * suffixes.length)];
+            
+            let newTitle = `${randomPrefix} ${capitalizedTitle}`;
+            if (Math.random() > 0.5) {
+                newTitle += ` ${randomSuffix}`;
+            }
+
+            resolve(newTitle.slice(0, 100)); // Limit length
+        }, 800); // Simulate network delay
+    });
+};
+
 const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
   const { onBack, onPublishAdClick, onOpenLoginModal, user, profile, onLogout, onNavigateToFavorites, onAddProperty, onUpdateProperty, onPublishError, onNavigateToChatList, onNavigateToMyAds, propertyToEdit, onRequestModal, hasUnreadMessages } = props;
   const { t } = useLanguage();
@@ -822,10 +844,15 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
 
     setIsAITitleLoading(true);
     try {
+        // Check for API Key. If not present, use the mock function.
         if (!process.env.API_KEY) {
-            console.error("API Key for Gemini is not configured.");
-            return;
+            console.warn("Chave de API do Gemini não configurada. Usando resposta simulada para demonstração.");
+            const newTitle = await mockAITitleGeneration(details.title);
+            setDetails(prev => ({ ...prev, title: newTitle }));
+            return; // Exit after mock generation
         }
+
+        // Proceed with the real API call if key exists
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const prompt = t('publishJourney.detailsForm.aiTitlePrompt', { title: details.title });
 
@@ -839,13 +866,11 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
             setDetails(prev => ({ ...prev, title: newTitle }));
         }
     } catch (error) {
-        console.error("Error generating AI title:", error);
-        // Silently fail instead of showing an error banner to the user.
-        // onPublishError(t('publishJourney.detailsForm.aiTitleError'));
+        console.error("Erro ao gerar título com IA:", error);
     } finally {
         setIsAITitleLoading(false);
     }
-  }, [details.title, t, onPublishError]);
+  }, [details.title, t]);
 
   const handleFinish = async () => {
     if (!user || !profile) {

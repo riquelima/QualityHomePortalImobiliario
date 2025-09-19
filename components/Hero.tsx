@@ -15,6 +15,23 @@ interface HeroProps {
   onSearchSubmit: (query: string) => void;
 }
 
+// Helper function for mock slogan generation
+const mockHeroTitleGeneration = (): Promise<string> => {
+    return new Promise(resolve => {
+        setTimeout(() => {
+            const mockTitles = [
+                "O lugar certo para o imóvel certo.",
+                "Sua nova jornada começa aqui.",
+                "Encontre o lar dos seus sonhos.",
+                "Qualidade e confiança em cada anúncio.",
+                "O seu futuro endereço está aqui."
+            ];
+            const randomIndex = Math.floor(Math.random() * mockTitles.length);
+            resolve(mockTitles[randomIndex]);
+        }, 800);
+    });
+};
+
 const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe, onGeolocationError, onSearchSubmit }) => {
   const [activeTab, setActiveTab] = useState('comprar');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -30,20 +47,20 @@ const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe, onGeoloca
   useEffect(() => {
     let isCancelled = false;
 
-    // Redefine o estado para cada execução do efeito
     setHeroTitle(t('hero.defaultTitle'));
     setIsLoadingTitle(true);
 
     const generateTitle = async () => {
-      if (!process.env.API_KEY) {
-        console.error("API Key for Gemini is not configured.");
-        if (!isCancelled) {
-          setIsLoadingTitle(false);
-        }
-        return;
-      }
-
       try {
+        if (!process.env.API_KEY) {
+            console.warn("Chave de API do Gemini não configurada. Usando slogan simulado para demonstração.");
+            const text = await mockHeroTitleGeneration();
+            if (!isCancelled) {
+                setHeroTitle(text);
+            }
+            return;
+        }
+
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const prompt = t('hero.geminiPrompt');
         
@@ -71,11 +88,10 @@ const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe, onGeoloca
 
     generateTitle();
 
-    // Função de limpeza para cancelar a solicitação se o componente for desmontado ou o efeito re-executar
     return () => {
       isCancelled = true;
     };
-  }, [t, language]); // Re-executa quando o idioma ou a função de tradução mudam
+  }, [t, language]);
 
 
   useEffect(() => {
