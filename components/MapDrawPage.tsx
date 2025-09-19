@@ -61,7 +61,8 @@ const DrawingManager: React.FC<{
     featureGroupRef: React.MutableRefObject<L.FeatureGroup | null>;
 }> = ({ onDrawCreated, drawingState, setDrawingState, featureGroupRef }) => {
     const map = useMap();
-    const drawHandlerRef = useRef<L.Draw.Circle | null>(null);
+    // FIX: Use 'any' type for drawHandlerRef as L.Draw.Circle is not available without @types/leaflet-draw.
+    const drawHandlerRef = useRef<any | null>(null);
     const isDrawingCancelledRef = useRef(true);
 
     // Configura o feature group e o listener de criação
@@ -76,10 +77,12 @@ const DrawingManager: React.FC<{
             onDrawCreated(e.layer);
         };
         
-        map.on(L.Draw.Event.CREATED, handleCreated);
+        // FIX: Use string event name 'draw:created' as L.Draw.Event is not available without @types/leaflet-draw.
+        map.on('draw:created', handleCreated);
 
         return () => {
-            map.off(L.Draw.Event.CREATED, handleCreated);
+            // FIX: Use string event name 'draw:created' as L.Draw.Event is not available without @types/leaflet-draw.
+            map.off('draw:created', handleCreated);
         };
     }, [map, onDrawCreated, featureGroupRef]);
 
@@ -91,7 +94,8 @@ const DrawingManager: React.FC<{
             // FIX: Cast map to 'any' to resolve TypeScript error with leaflet-draw.
             // The useMap() hook from react-leaflet returns a type that is not fully
             // compatible with the type expected by leaflet-draw's constructor.
-            const newDrawHandler = new L.Draw.Circle(map as any, {
+            // FIX: Use (L as any).Draw.Circle to construct the circle drawer as L.Draw is not available without @types/leaflet-draw.
+            const newDrawHandler = new (L as any).Draw.Circle(map as any, {
                 shapeOptions: {
                     color: '#D81B2B',
                     fillColor: '#D81B2B',

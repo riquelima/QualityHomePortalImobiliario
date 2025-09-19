@@ -192,7 +192,7 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
                             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
                             url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
                         />
-                        {props.properties.map(property => (
+                        {filteredProperties.map(property => (
                             <Marker key={property.id} position={[property.lat, property.lng]}>
                                 <Popup>
                                     <div className="w-48">
