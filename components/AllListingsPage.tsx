@@ -4,7 +4,7 @@ import PropertyListings from './PropertyListings';
 import type { Property, User, Profile } from '../types';
 import { useLanguage } from '../contexts/LanguageContext';
 import SearchIcon from './icons/SearchIcon';
-import { MapContainer, TileLayer, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, useMap, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet-draw';
 
@@ -183,6 +183,22 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
                             url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
                         />
                         <DrawControl onShapeDrawn={handleShapeDrawn} onShapeDeleted={handleShapeDeleted} />
+                        {props.properties.map(property => (
+                            <Marker key={property.id} position={[property.lat, property.lng]}>
+                                <Popup>
+                                    <div className="w-48">
+                                        <h3 className="font-bold text-base mb-1 truncate">{property.title}</h3>
+                                        <p className="text-xs text-brand-gray mb-2 truncate">{property.address}</p>
+                                        <button 
+                                            onClick={() => props.onViewDetails(property.id)}
+                                            className="w-full bg-brand-red text-white text-xs font-bold py-1 px-2 rounded hover:opacity-90"
+                                        >
+                                            {t('propertyCard.details')}
+                                        </button>
+                                    </div>
+                                </Popup>
+                            </Marker>
+                        ))}
                     </MapContainer>
                 )}
             </div>
