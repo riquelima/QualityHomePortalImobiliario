@@ -4,9 +4,8 @@ import PropertyListings from './PropertyListings';
 import type { Property, User, Profile } from '../types';
 import { useLanguage } from '../contexts/LanguageContext';
 import SearchIcon from './icons/SearchIcon';
-import { MapContainer, TileLayer, useMap, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
-import 'leaflet-draw';
 
 // Debounce utility function
 function debounce<F extends (...args: any[]) => any>(func: F, waitFor: number) {
@@ -21,69 +20,6 @@ function debounce<F extends (...args: any[]) => any>(func: F, waitFor: number) {
 
   return debounced;
 }
-
-// This component will handle adding the draw control to the map
-const DrawControl: React.FC<{ 
-  onShapeDrawn: (layer: L.Layer) => void, 
-  onShapeDeleted: () => void 
-}> = ({ onShapeDrawn, onShapeDeleted }) => {
-    const map = useMap();
-    const drawnItems = React.useRef<L.FeatureGroup>(new L.FeatureGroup());
-
-    useEffect(() => {
-        map.addLayer(drawnItems.current);
-        const drawControl = new L.Control.Draw({
-            edit: {
-                featureGroup: drawnItems.current,
-                remove: true,
-            },
-            draw: {
-                polygon: { allowIntersection: false, shapeOptions: { color: '#D81B2B' } },
-                rectangle: { shapeOptions: { color: '#D81B2B' } },
-                circle: { shapeOptions: { color: '#D81B2B' } },
-                polyline: false,
-                marker: false,
-                circlemarker: false,
-            }
-        });
-        map.addControl(drawControl);
-
-        const handleCreated = (e: any) => {
-            const layer = e.layer;
-            drawnItems.current.clearLayers();
-            drawnItems.current.addLayer(layer);
-            onShapeDrawn(layer);
-        };
-
-        const handleDeleted = () => {
-            onShapeDeleted();
-        };
-        
-        const handleEdited = (e: any) => {
-            e.layers.eachLayer((layer: L.Layer) => {
-                onShapeDrawn(layer);
-            });
-        };
-
-        map.on(L.Draw.Event.CREATED, handleCreated);
-        map.on(L.Draw.Event.EDITED, handleEdited);
-        map.on(L.Draw.Event.DELETED, handleDeleted);
-
-        return () => {
-            map.off(L.Draw.Event.CREATED, handleCreated);
-            map.off(L.Draw.Event.EDITED, handleEdited);
-            map.off(L.Draw.Event.DELETED, handleDeleted);
-            if (map && map.hasLayer(drawnItems.current)) {
-                map.removeLayer(drawnItems.current);
-            }
-            if (map && (drawControl as any)._map) {
-                 map.removeControl(drawControl);
-            }
-        };
-    }, [map, onShapeDrawn, onShapeDeleted]);
-
-    return null;
-};
 
 interface AllListingsPageProps {
   onBack: () => void;
@@ -116,7 +52,6 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
   const [mapCenter, setMapCenter] = useState<[number, number]>([-12.9777, -38.5016]); // Default to Salvador
   const [userCoordinates, setUserCoordinates] = useState<[number, number] | null>(null);
   const [isLoadingGeo, setIsLoadingGeo] = useState(true);
-  const [drawnShape, setDrawnShape] = useState<L.Layer | null>(null);
 
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(
@@ -185,14 +120,6 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
   
-  const handleShapeDrawn = useCallback((layer: L.Layer) => {
-      setDrawnShape(layer);
-  }, []);
-
-  const handleShapeDeleted = useCallback(() => {
-      setDrawnShape(null);
-  }, []);
-
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setActiveSearchQuery(searchQuery);
@@ -200,24 +127,10 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
   };
 
   const filteredProperties = props.properties.filter(p => {
-    const matchesSearch = activeSearchQuery.trim()
+    return activeSearchQuery.trim()
         ? p.title.toLowerCase().includes(activeSearchQuery.toLowerCase()) ||
           p.address.toLowerCase().includes(activeSearchQuery.toLowerCase())
         : true;
-
-    if (!matchesSearch) return false;
-
-    if (drawnShape) {
-        const point = L.latLng(p.lat, p.lng);
-        if (drawnShape instanceof L.Circle) {
-            return drawnShape.getLatLng().distanceTo(point) <= drawnShape.getRadius();
-        }
-        if (drawnShape instanceof L.Rectangle || drawnShape instanceof L.Polygon) {
-            return drawnShape.getBounds().contains(point);
-        }
-    }
-
-    return true;
   });
 
   return (
@@ -279,12 +192,16 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
                             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
                             url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
                         />
-                        <DrawControl onShapeDrawn={handleShapeDrawn} onShapeDeleted={handleShapeDeleted} />
                         {props.properties.map(property => (
                             <Marker key={property.id} position={[property.lat, property.lng]}>
                                 <Popup>
                                     <div className="w-48">
-                                        <h3 className="font-bold text-base mb-1 truncate">{property.title}</h3>
+                                         <img 
+                                            src={property.images?.[0] || 'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'} 
+                                            alt={property.title}
+                                            className="w-full h-24 object-cover rounded-md mb-2"
+                                        />
+                                        <h3 className="font-bold text-sm mb-1 truncate">{property.title}</h3>
                                         <p className="text-xs text-brand-gray mb-2 truncate">{property.address}</p>
                                         <button 
                                             onClick={() => props.onViewDetails(property.id)}
