@@ -27,6 +27,7 @@ interface PropertyDetailPageProps {
   onNavigateToChatList: () => void;
   // FIX: Add onNavigateToMyAds prop to resolve typing error.
   onNavigateToMyAds: () => void;
+  hasUnreadMessages: boolean;
 }
 
 const currencyConfig = {
@@ -48,7 +49,8 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({
   onNavigateToFavorites,
   onStartChat,
   onNavigateToChatList,
-  onNavigateToMyAds
+  onNavigateToMyAds,
+  hasUnreadMessages
 }) => {
   const { t, language } = useLanguage();
   
@@ -83,6 +85,7 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({
         onNavigateToFavorites={onNavigateToFavorites}
         onNavigateToChatList={onNavigateToChatList}
         onNavigateToMyAds={onNavigateToMyAds}
+        hasUnreadMessages={hasUnreadMessages}
       />
       <main className="container mx-auto px-4 sm:px-6 py-8">
         {/* Breadcrumbs */}

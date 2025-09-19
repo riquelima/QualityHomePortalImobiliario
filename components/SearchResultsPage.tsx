@@ -25,6 +25,7 @@ interface SearchResultsPageProps {
   onNavigateToChatList: () => void;
   // FIX: Add onNavigateToMyAds prop to resolve typing error.
   onNavigateToMyAds: () => void;
+  hasUnreadMessages: boolean;
 }
 
 const SearchResultsPage: React.FC<SearchResultsPageProps> = ({ 
@@ -41,7 +42,8 @@ const SearchResultsPage: React.FC<SearchResultsPageProps> = ({
   onToggleFavorite,
   onNavigateToFavorites,
   onNavigateToChatList,
-  onNavigateToMyAds
+  onNavigateToMyAds,
+  hasUnreadMessages
 }) => {
   const { t } = useLanguage();
 
@@ -58,6 +60,7 @@ const SearchResultsPage: React.FC<SearchResultsPageProps> = ({
         onNavigateToFavorites={onNavigateToFavorites}
         onNavigateToChatList={onNavigateToChatList}
         onNavigateToMyAds={onNavigateToMyAds}
+        hasUnreadMessages={hasUnreadMessages}
       />
       <main className="flex-grow">
         <div className="container mx-auto px-4 sm:px-6 py-8">

@@ -40,6 +40,7 @@ interface PublishJourneyPageProps {
   onNavigateToMyAds: () => void;
   propertyToEdit?: Property | null;
   onRequestModal: (config: ModalRequestConfig) => void;
+  hasUnreadMessages: boolean;
 }
 
 // Define state shapes for props
@@ -505,7 +506,7 @@ const Step3Form: React.FC<Step3FormProps> = ({ media, handleFileChange, handleRe
 };
 
 const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
-  const { onBack, onPublishAdClick, onOpenLoginModal, user, profile, onLogout, onNavigateToFavorites, onAddProperty, onUpdateProperty, onPublishError, onNavigateToChatList, onNavigateToMyAds, propertyToEdit, onRequestModal } = props;
+  const { onBack, onPublishAdClick, onOpenLoginModal, user, profile, onLogout, onNavigateToFavorites, onAddProperty, onUpdateProperty, onPublishError, onNavigateToChatList, onNavigateToMyAds, propertyToEdit, onRequestModal, hasUnreadMessages } = props;
   const { t } = useLanguage();
   const [currentStep, setCurrentStep] = useState(1);
   const [operation, setOperation] = useState('venda');
@@ -909,7 +910,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
 
   return (
     <div className="bg-brand-light-gray min-h-screen">
-      <Header onPublishAdClick={onPublishAdClick} onAccessClick={onOpenLoginModal} user={user} profile={profile} onLogout={onLogout} onNavigateToFavorites={onNavigateToFavorites} onNavigateToChatList={onNavigateToChatList} onNavigateToMyAds={onNavigateToMyAds} />
+      <Header onPublishAdClick={onPublishAdClick} onAccessClick={onOpenLoginModal} user={user} profile={profile} onLogout={onLogout} onNavigateToFavorites={onNavigateToFavorites} onNavigateToChatList={onNavigateToChatList} onNavigateToMyAds={onNavigateToMyAds} hasUnreadMessages={hasUnreadMessages} />
       <div className="container mx-auto px-4 sm:px-6 py-8">
         {/* Stepper */}
         <div className="max-w-3xl mx-auto mb-8">

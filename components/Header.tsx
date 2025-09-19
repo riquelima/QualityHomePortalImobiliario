@@ -30,6 +30,7 @@ interface HeaderProps {
   onNavigateToFavorites: () => void;
   onNavigateToChatList: () => void;
   onNavigateToMyAds: () => void;
+  hasUnreadMessages: boolean;
 }
 
 // Helper function outside the component
@@ -38,7 +39,7 @@ const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
 }
 
-const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, profile, onLogout, onNavigateToFavorites, onNavigateToChatList, onNavigateToMyAds }) => {
+const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, profile, onLogout, onNavigateToFavorites, onNavigateToChatList, onNavigateToMyAds, hasUnreadMessages }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
@@ -227,9 +228,12 @@ const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, 
                           <HeartIcon className="w-5 h-5 mr-3 text-brand-gray" />
                           <span>{t('header.favorites')}</span>
                       </a>
-                      <a href="#" onClick={(e) => { e.preventDefault(); onNavigateToChatList(); setIsUserDropdownOpen(false); }} className="flex items-center px-4 py-2 text-sm text-brand-dark hover:bg-gray-100">
+                      <a href="#" onClick={(e) => { e.preventDefault(); onNavigateToChatList(); setIsUserDropdownOpen(false); }} className="relative flex items-center px-4 py-2 text-sm text-brand-dark hover:bg-gray-100 w-full">
                           <ChatIcon className="w-5 h-5 mr-3 text-brand-gray" />
                           <span>{t('header.chat')}</span>
+                          {hasUnreadMessages && (
+                            <span className="absolute right-4 top-1/2 -translate-y-1/2 w-2 h-2 bg-brand-red rounded-full"></span>
+                          )}
                       </a>
                     </nav>
                     <div className="border-t">
@@ -281,38 +285,38 @@ const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, 
             <CloseIcon className="w-6 h-6" />
           </button>
         </div>
-        <nav className="flex flex-col p-4 space-y-4 text-lg">
+        <nav className="flex flex-col p-4 space-y-2 text-lg">
           <div>
               <button
                   onClick={() => setIsMobileOwnersMenuOpen(prev => !prev)}
-                  className="w-full flex justify-between items-center text-brand-dark hover:text-brand-red transition duration-300"
+                  className="w-full flex justify-between items-center text-brand-dark hover:text-brand-red transition duration-300 py-2"
               >
                   <span>{t('header.nav.owners')}</span>
                   <ChevronDownIcon className={`w-5 h-5 transition-transform duration-300 ${isMobileOwnersMenuOpen ? 'rotate-180' : ''}`} />
               </button>
               {isMobileOwnersMenuOpen && (
-                  <div className="pl-4 mt-3 space-y-4 text-base">
+                  <div className="pl-4 mt-2 space-y-3 text-base">
                       {/* Vender */}
-                      <div className="space-y-2">
+                      <div className="space-y-1">
                           <h3 className="font-bold text-brand-dark">{t('header.ownersDropdown.sell.title')}</h3>
-                          <ul className="space-y-2 pl-2">
-                              <li><a href="#" className="text-brand-gray hover:text-brand-red">{t('header.ownersDropdown.sell.publish')}</a></li>
-                              <li><a href="#" className="text-brand-gray hover:text-brand-red">{t('header.ownersDropdown.sell.guide')}</a></li>
-                              <li><a href="#" className="text-brand-gray hover:text-brand-red">{t('header.ownersDropdown.sell.documents')}</a></li>
+                          <ul className="space-y-1 pl-2">
+                              <li><a href="#" className="text-brand-gray hover:text-brand-red block py-1">{t('header.ownersDropdown.sell.publish')}</a></li>
+                              <li><a href="#" className="text-brand-gray hover:text-brand-red block py-1">{t('header.ownersDropdown.sell.guide')}</a></li>
+                              <li><a href="#" className="text-brand-gray hover:text-brand-red block py-1">{t('header.ownersDropdown.sell.documents')}</a></li>
                           </ul>
                       </div>
                       {/* Colocar para arrendamento */}
-                      <div className="space-y-2">
+                      <div className="space-y-1">
                           <h3 className="font-bold text-brand-dark">{t('header.ownersDropdown.rent.title')}</h3>
-                          <ul className="space-y-2 pl-2">
-                              <li><a href="#" className="text-brand-gray hover:text-brand-red">{t('header.ownersDropdown.rent.publish')}</a></li>
+                          <ul className="space-y-1 pl-2">
+                              <li><a href="#" className="text-brand-gray hover:text-brand-red block py-1">{t('header.ownersDropdown.rent.publish')}</a></li>
                           </ul>
                       </div>
                       {/* Para a tua habitação */}
-                      <div className="space-y-2">
+                      <div className="space-y-1">
                           <h3 className="font-bold text-brand-dark">{t('header.ownersDropdown.forYourHome.title')}</h3>
-                          <ul className="space-y-2 pl-2">
-                              <li><a href="#" className="text-brand-gray hover:text-brand-red">{t('header.ownersDropdown.forYourHome.ownerArea')}</a></li>
+                          <ul className="space-y-1 pl-2">
+                              <li><a href="#" className="text-brand-gray hover:text-brand-red block py-1">{t('header.ownersDropdown.forYourHome.ownerArea')}</a></li>
                           </ul>
                       </div>
                   </div>
@@ -321,46 +325,68 @@ const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, 
           <div>
               <button
                   onClick={() => setIsMobileSearchMenuOpen(prev => !prev)}
-                  className="w-full flex justify-between items-center text-brand-dark hover:text-brand-red transition duration-300"
+                  className="w-full flex justify-between items-center text-brand-dark hover:text-brand-red transition duration-300 py-2"
               >
                   <span>{t('header.nav.search')}</span>
                   <ChevronDownIcon className={`w-5 h-5 transition-transform duration-300 ${isMobileSearchMenuOpen ? 'rotate-180' : ''}`} />
               </button>
               {isMobileSearchMenuOpen && (
-                  <div className="pl-4 mt-3 space-y-4 text-base">
+                  <div className="pl-4 mt-2 space-y-3 text-base">
                       {/* Procurar para comprar */}
-                      <div className="space-y-2">
+                      <div className="space-y-1">
                           <h3 className="font-bold text-brand-dark">{t('header.searchDropdown.buy.title')}</h3>
-                          <ul className="space-y-2 pl-2">
-                              <li><a href="#" className="text-brand-gray hover:text-brand-red">{t('header.searchDropdown.buy.explore')}</a></li>
+                          <ul className="space-y-1 pl-2">
+                              <li><a href="#" className="text-brand-gray hover:text-brand-red block py-1">{t('header.searchDropdown.buy.explore')}</a></li>
                           </ul>
                       </div>
                       {/* Procurar para alugar */}
-                      <div className="space-y-2">
+                      <div className="space-y-1">
                           <h3 className="font-bold text-brand-dark">{t('header.searchDropdown.rent.title')}</h3>
-                          <ul className="space-y-2 pl-2">
-                              <li><a href="#" className="text-brand-gray hover:text-brand-red">{t('header.searchDropdown.rent.explore')}</a></li>
+                          <ul className="space-y-1 pl-2">
+                              <li><a href="#" className="text-brand-gray hover:text-brand-red block py-1">{t('header.searchDropdown.rent.explore')}</a></li>
                           </ul>
                       </div>
                   </div>
               )}
           </div>
-          <hr className="my-4" />
+          <hr className="my-2" />
+
+          {/* User links for mobile */}
+          {user && (
+            <>
+              <button onClick={() => { onNavigateToMyAds(); setIsMenuOpen(false); }} className="w-full text-left flex items-center text-brand-dark hover:text-brand-red transition duration-300 py-2 text-base">
+                  <AdsIcon className="w-6 h-6 mr-3 text-brand-gray" />
+                  <span>{t('header.ads')}</span>
+              </button>
+              <button onClick={() => { onNavigateToFavorites(); setIsMenuOpen(false); }} className="w-full text-left flex items-center text-brand-dark hover:text-brand-red transition duration-300 py-2 text-base">
+                  <HeartIcon className="w-6 h-6 mr-3 text-brand-gray" />
+                  <span>{t('header.favorites')}</span>
+              </button>
+              <button onClick={() => { onNavigateToChatList(); setIsMenuOpen(false); }} className="relative w-full text-left flex items-center text-brand-dark hover:text-brand-red transition duration-300 py-2 text-base">
+                  <ChatIcon className="w-6 h-6 mr-3 text-brand-gray" />
+                  <span>{t('header.chat')}</span>
+                  {hasUnreadMessages && (
+                      <span className="absolute right-2 top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-brand-red rounded-full"></span>
+                  )}
+              </button>
+              <hr className="my-2" />
+            </>
+          )}
           
           {/* Mobile Language Selector */}
           <div>
             <button
                 onClick={() => setIsMobileLangMenuOpen(prev => !prev)}
-                className="w-full flex justify-between items-center text-brand-dark hover:text-brand-red transition duration-300"
+                className="w-full flex justify-between items-center text-brand-dark hover:text-brand-red transition duration-300 py-2"
             >
-                <span className="flex items-center space-x-3">
+                <span className="flex items-center space-x-3 text-base">
                     <CurrentFlag className="w-6 h-auto" />
                     <span>{languageMap[language as keyof typeof languageMap].name}</span>
                 </span>
                 <ChevronDownIcon className={`w-5 h-5 transition-transform duration-300 ${isMobileLangMenuOpen ? 'rotate-180' : ''}`} />
             </button>
             {isMobileLangMenuOpen && (
-                <div className="pl-4 mt-3 space-y-2 text-base">
+                <div className="pl-4 mt-2 space-y-2 text-base">
                     {Object.entries(languageMap).map(([langCode, { name, Flag }]) => (
                         <button
                             key={langCode}
@@ -381,7 +407,7 @@ const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, 
 
           <button 
             onClick={onPublishAdClick}
-            className="w-full text-center px-4 py-2 bg-brand-red text-white rounded-md hover:opacity-90 transition duration-300"
+            className="w-full text-center mt-4 px-4 py-3 bg-brand-red text-white rounded-md hover:opacity-90 transition duration-300 text-base"
           >
             {t('header.publishAd')}
           </button>

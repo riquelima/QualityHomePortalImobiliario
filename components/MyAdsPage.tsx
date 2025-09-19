@@ -19,10 +19,11 @@ interface MyAdsPageProps {
   onViewDetails: (id: number) => void;
   onDeleteProperty: (id: number) => void;
   onEditProperty: (property: Property) => void;
+  hasUnreadMessages: boolean;
 }
 
 const MyAdsPage: React.FC<MyAdsPageProps> = ({
-  onBack, user, profile, onLogout, onPublishAdClick, onAccessClick, onNavigateToFavorites, onNavigateToChatList, onNavigateToMyAds, userProperties, onViewDetails, onDeleteProperty, onEditProperty
+  onBack, user, profile, onLogout, onPublishAdClick, onAccessClick, onNavigateToFavorites, onNavigateToChatList, onNavigateToMyAds, userProperties, onViewDetails, onDeleteProperty, onEditProperty, hasUnreadMessages
 }) => {
   const { t } = useLanguage();
 
@@ -37,6 +38,7 @@ const MyAdsPage: React.FC<MyAdsPageProps> = ({
         onNavigateToFavorites={onNavigateToFavorites}
         onNavigateToChatList={onNavigateToChatList}
         onNavigateToMyAds={onNavigateToMyAds}
+        hasUnreadMessages={hasUnreadMessages}
       />
       <main className="flex-grow">
         <div className="container mx-auto px-4 sm:px-6 py-8">

@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
@@ -201,6 +202,7 @@ const App: React.FC = () => {
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthReady, setIsAuthReady] = useState(false);
+  const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
   const fetchingRef = useRef(false);
 
   const navigateHome = () => setPageState({ page: 'home', userLocation: null });
@@ -334,7 +336,7 @@ const App: React.FC = () => {
         setIsLoading(false);
         fetchingRef.current = false;
     }
-  }, [t, showModal, user?.id]);
+  }, [t, showModal]);
   
   const navigateToPublishJourney = () => setPageState({ page: 'publish-journey', userLocation: null });
 
@@ -397,41 +399,63 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    if (!user) return;
+  
     const channel = supabase
       .channel('public:mensagens_chat')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'mensagens_chat' }, (payload) => {
         const newMessage = payload.new as any;
+  
+        // Set notification for incoming messages
+        if (newMessage.remetente_id !== user.id) {
+          setHasUnreadMessages(true);
+        }
+  
+        // Update chat sessions state
         setChatSessions(prevSessions => {
-            const sessionExists = prevSessions.some(s => s.id === newMessage.sessao_id);
-            if (!sessionExists) return prevSessions;
-
-            return prevSessions.map(session => {
-                if(session.id === newMessage.sessao_id) {
-                    const messageExists = session.mensagens.some(m => m.id === newMessage.id);
-                    if(messageExists) return session;
-
-                    const adaptedMessage: Message = {
-                        id: newMessage.id,
-                        senderId: newMessage.remetente_id,
-                        text: newMessage.conteudo,
-                        timestamp: new Date(newMessage.data_envio),
-                        remetente_id: newMessage.remetente_id,
-                        conteudo: newMessage.conteudo,
-                        data_envio: newMessage.data_envio,
-                    };
-
-                    return { ...session, messages: [...session.messages, adaptedMessage], mensagens: [...session.mensagens, adaptedMessage] };
-                }
-                return session;
-            });
+          const sessionIndex = prevSessions.findIndex(s => s.id === newMessage.sessao_id);
+  
+          // If session is not in state, it might be a new chat. Fetch all data to be safe.
+          if (sessionIndex === -1) {
+            fetchAllData(user);
+            return prevSessions;
+          }
+  
+          // If session exists, update it immutably
+          const updatedSessions = [...prevSessions];
+          const targetSession = { ...updatedSessions[sessionIndex] };
+  
+          // Avoid adding duplicate messages that might come from the subscription
+          const messageExists = targetSession.messages.some(m => m.id === newMessage.id);
+          if (messageExists) {
+            return prevSessions;
+          }
+  
+          const adaptedMessage: Message = {
+            id: newMessage.id,
+            senderId: newMessage.remetente_id,
+            text: newMessage.conteudo,
+            timestamp: new Date(newMessage.data_envio),
+            remetente_id: newMessage.remetente_id,
+            conteudo: newMessage.conteudo,
+            data_envio: newMessage.data_envio,
+          };
+          
+          // Update both message arrays for compatibility
+          targetSession.messages = [...targetSession.messages, adaptedMessage];
+          targetSession.mensagens = [...targetSession.mensagens, adaptedMessage];
+          
+          updatedSessions[sessionIndex] = targetSession;
+  
+          return updatedSessions;
         });
       })
       .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-      }
-  }, [user]);
+  
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, fetchAllData]);
 
   useEffect(() => {
     if (!isAuthReady) return;
@@ -453,7 +477,15 @@ const App: React.FC = () => {
     };
   }, [isAuthReady, user, fetchAllData]);
 
-
+  // Timeout guard to prevent infinite loading state
+  useEffect(() => {
+    if (!isLoading) return;
+    const timeoutId = setTimeout(() => {
+      console.warn("Fetch timeout reached. Forcing loading state to false.");
+      setIsLoading(false);
+    }, 8000); // 8 seconds timeout
+    return () => clearTimeout(timeoutId);
+  }, [isLoading]);
   
   const navigateToMap = (location: { lat: number; lng: number } | null = null) => setPageState({ page: 'map', userLocation: location });
   const navigateToPublish = () => setPageState({ page: 'publish', userLocation: null });
@@ -461,7 +493,10 @@ const App: React.FC = () => {
   const navigateToSearchResults = (query: string) => setPageState({ page: 'searchResults', userLocation: null, searchQuery: query });
   const navigateToPropertyDetail = (id: number) => setPageState({ page: 'propertyDetail', propertyId: id, userLocation: null });
   const navigateToFavorites = () => setPageState({ page: 'favorites', userLocation: null });
-  const navigateToChatList = () => setPageState({ page: 'chatList', userLocation: null });
+  const navigateToChatList = () => {
+    setHasUnreadMessages(false);
+    setPageState({ page: 'chatList', userLocation: null });
+  };
   const navigateToChat = (sessionId: string) => setPageState({ page: 'chat', chatSessionId: sessionId, userLocation: null });
   const navigateToMyAds = () => {
     if (user) {
@@ -648,6 +683,7 @@ const App: React.FC = () => {
                   onNavigateToFavorites={navigateToFavorites}
                   onNavigateToChatList={navigateToChatList}
                   onNavigateToMyAds={navigateToMyAds}
+                  hasUnreadMessages={hasUnreadMessages}
                />;
       case 'publish-journey':
       case 'edit-journey':
@@ -666,6 +702,7 @@ const App: React.FC = () => {
                   onNavigateToMyAds={navigateToMyAds}
                   onPublishError={handlePublishError}
                   onRequestModal={showModal}
+                  hasUnreadMessages={hasUnreadMessages}
                 />;
       case 'searchResults':
         const query = pageState.searchQuery?.toLowerCase() ?? '';
@@ -689,6 +726,7 @@ const App: React.FC = () => {
           onNavigateToFavorites={navigateToFavorites}
           onNavigateToChatList={navigateToChatList}
           onNavigateToMyAds={navigateToMyAds}
+          hasUnreadMessages={hasUnreadMessages}
         />;
       case 'propertyDetail':
         const property = [...properties, ...myAds].find(p => p.id === pageState.propertyId);
@@ -710,6 +748,7 @@ const App: React.FC = () => {
                   onStartChat={handleStartChat}
                   onNavigateToChatList={navigateToChatList}
                   onNavigateToMyAds={navigateToMyAds}
+                  hasUnreadMessages={hasUnreadMessages}
                 />;
       case 'favorites':
           const favoriteProperties = properties.filter(p => favorites.includes(p.id));
@@ -727,6 +766,7 @@ const App: React.FC = () => {
             onNavigateToFavorites={navigateToFavorites}
             onNavigateToChatList={navigateToChatList}
             onNavigateToMyAds={navigateToMyAds}
+            hasUnreadMessages={hasUnreadMessages}
           />;
       case 'chatList':
         if (!user) { navigateHome(); return null; }
@@ -743,6 +783,7 @@ const App: React.FC = () => {
                   properties={properties}
                   onNavigateToChat={navigateToChat}
                   onNavigateToMyAds={navigateToMyAds}
+                  hasUnreadMessages={hasUnreadMessages}
                />;
       case 'chat':
         const session = chatSessions.find(s => s.id === pageState.chatSessionId);
@@ -771,12 +812,13 @@ const App: React.FC = () => {
             onViewDetails={navigateToPropertyDetail}
             onDeleteProperty={handleRequestDeleteProperty}
             onEditProperty={navigateToEditJourney}
+            hasUnreadMessages={hasUnreadMessages}
         />;
       case 'home':
       default:
         return (
           <div className="bg-white font-sans text-brand-dark">
-            <Header onPublishAdClick={navigateToPublish} onAccessClick={() => openLoginModal('default')} user={user} profile={profile} onLogout={handleLogout} onNavigateToFavorites={navigateToFavorites} onNavigateToChatList={navigateToChatList} onNavigateToMyAds={navigateToMyAds} />
+            <Header onPublishAdClick={navigateToPublish} onAccessClick={() => openLoginModal('default')} user={user} profile={profile} onLogout={handleLogout} onNavigateToFavorites={navigateToFavorites} onNavigateToChatList={navigateToChatList} onNavigateToMyAds={navigateToMyAds} hasUnreadMessages={hasUnreadMessages} />
             <main>
               <Hero 
                 onDrawOnMapClick={() => navigateToMap()} 
