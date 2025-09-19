@@ -99,7 +99,7 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
         </section>
         
         <div className="container mx-auto px-4 sm:px-6 mt-8">
-            <div className="h-[400px] md:h-[500px] w-full mb-8 rounded-lg overflow-hidden shadow-md">
+            <div className="h-[400px] md:h-[500px] w-full mb-8 rounded-lg overflow-hidden shadow-md relative z-0">
                 {isLoadingGeo ? (
                     <div className="w-full h-full bg-gray-200 flex items-center justify-center animate-pulse">
                         <p className="text-brand-gray">{t('map.loading')}</p>
