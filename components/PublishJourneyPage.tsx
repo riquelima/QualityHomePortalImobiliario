@@ -297,6 +297,8 @@ interface Step2FormProps {
     handleContinueToPhotos: () => void;
     onGenerateAITitle: () => Promise<void>;
     isAITitleLoading: boolean;
+    onGenerateAIDescription: () => Promise<void>;
+    isAIDescriptionLoading: boolean;
 }
 
 const Step2Form: React.FC<Step2FormProps> = ({
@@ -306,7 +308,9 @@ const Step2Form: React.FC<Step2FormProps> = ({
     decrementCounter,
     handleContinueToPhotos,
     onGenerateAITitle,
-    isAITitleLoading
+    isAITitleLoading,
+    onGenerateAIDescription,
+    isAIDescriptionLoading
 }) => {
     const { t } = useLanguage();
 
@@ -480,7 +484,29 @@ const Step2Form: React.FC<Step2FormProps> = ({
 
             <div>
                 <label htmlFor="description" className="block text-base sm:text-lg font-bold text-brand-navy mb-3">{t('publishJourney.detailsForm.adDescription')}</label>
-                <textarea id="description" value={details.description} onChange={(e) => handleDetailsChange(e.target.value, 'description')} rows={6} placeholder={t('publishJourney.detailsForm.descriptionPlaceholder')} className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red"></textarea>
+                <div className="relative">
+                    <textarea 
+                        id="description" 
+                        value={details.description} 
+                        onChange={(e) => handleDetailsChange(e.target.value, 'description')} 
+                        rows={6} 
+                        placeholder={t('publishJourney.detailsForm.descriptionPlaceholder')} 
+                        className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red pr-12"
+                    ></textarea>
+                    {details.description.trim().length > 0 && (
+                        <button
+                            type="button"
+                            onClick={onGenerateAIDescription}
+                            disabled={isAIDescriptionLoading}
+                            className="absolute top-3 right-3 text-brand-navy hover:text-brand-red disabled:opacity-50 disabled:cursor-wait p-1"
+                            title={t('publishJourney.detailsForm.aiDescriptionButtonLabel')}
+                        >
+                            {isAIDescriptionLoading 
+                                ? <SpinnerIcon className="w-6 h-6 animate-spin text-brand-navy" /> 
+                                : <AIIcon className="w-6 h-6" />}
+                        </button>
+                    )}
+                </div>
             </div>
             
             <div className="text-center">
@@ -585,6 +611,25 @@ const mockAITitleGeneration = (originalTitle: string): Promise<string> => {
     });
 };
 
+const mockAIDescriptionGeneration = (details: DetailsState): Promise<string> => {
+    return new Promise(resolve => {
+        setTimeout(() => {
+            const adjectives = ["Espaçoso", "Aconchegante", "Moderno", "Bem localizado", "Com excelente acabamento"];
+            const highlights = ["ideal para famílias", "perfeito para quem busca conforto", "uma oportunidade única", "pronto para morar"];
+            
+            const randomAdjective = adjectives[Math.floor(Math.random() * adjectives.length)];
+            const randomHighlight = highlights[Math.floor(Math.random() * highlights.length)];
+
+            const baseDescription = details.description ? `Este imóvel se destaca por ser ${details.description.toLowerCase()}.` : '';
+
+            const newDescription = `${randomAdjective} ${details.propertyType[0] || 'imóvel'} com ${details.bedrooms} quarto(s) e ${details.bathrooms} banheiro(s). ${baseDescription} Com uma área de ${details.grossArea}m², é ${randomHighlight}. Não perca essa chance!`;
+            
+            resolve(newDescription);
+        }, 1200);
+    });
+};
+
+
 const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
   const { onBack, onPublishAdClick, onOpenLoginModal, user, profile, onLogout, onNavigateToFavorites, onAddProperty, onUpdateProperty, onPublishError, onNavigateToChatList, onNavigateToMyAds, propertyToEdit, onRequestModal, hasUnreadMessages } = props;
   const { t } = useLanguage();
@@ -621,6 +666,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
   const [media, setMedia] = useState<MediaItem[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAITitleLoading, setIsAITitleLoading] = useState(false);
+  const [isAIDescriptionLoading, setIsAIDescriptionLoading] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -844,15 +890,13 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
 
     setIsAITitleLoading(true);
     try {
-        // Check for API Key. If not present, use the mock function.
         if (!process.env.API_KEY) {
             console.warn("Chave de API do Gemini não configurada. Usando resposta simulada para demonstração.");
             const newTitle = await mockAITitleGeneration(details.title);
             setDetails(prev => ({ ...prev, title: newTitle }));
-            return; // Exit after mock generation
+            return;
         }
 
-        // Proceed with the real API call if key exists
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const prompt = t('publishJourney.detailsForm.aiTitlePrompt', { title: details.title });
 
@@ -872,6 +916,43 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
     }
   }, [details.title, t]);
 
+  const handleGenerateAIDescription = useCallback(async () => {
+    if (!details.description.trim()) return;
+
+    setIsAIDescriptionLoading(true);
+    try {
+        if (!process.env.API_KEY) {
+            console.warn("Chave de API do Gemini não configurada. Usando resposta simulada para descrição.");
+            const newDescription = await mockAIDescriptionGeneration(details);
+            setDetails(prev => ({ ...prev, description: newDescription }));
+            return;
+        }
+
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const prompt = t('publishJourney.detailsForm.aiDescriptionPrompt', { 
+            title: details.title,
+            propertyType: details.propertyType.join(', ') || 'Não especificado',
+            bedrooms: details.bedrooms,
+            bathrooms: details.bathrooms,
+            description: details.description 
+        });
+
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+        });
+
+        const newDescription = response.text.trim();
+        if (newDescription) {
+            setDetails(prev => ({ ...prev, description: newDescription }));
+        }
+    } catch (error) {
+        console.error("Erro ao gerar descrição com IA:", error);
+    } finally {
+        setIsAIDescriptionLoading(false);
+    }
+  }, [details, t]);
+
   const handleFinish = async () => {
     if (!user || !profile) {
       onOpenLoginModal();
@@ -880,12 +961,11 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
 
     setIsSubmitting(true);
     
-    // Separar mídias existentes de novos arquivos
     const existingMedia = media.filter(m => !(m instanceof File)) as { id: number; url: string; tipo: 'imagem' | 'video' }[];
     const newMediaFiles = media.filter(m => m instanceof File) as File[];
 
     try {
-      if (propertyToEdit) { // MODO EDIÇÃO
+      if (propertyToEdit) {
         const propertyDataToUpdate = {
             titulo: details.title,
             descricao: details.description,
@@ -900,7 +980,6 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
             taxa_condominio: parseFloat(details.condoFee) || null,
             situacao_ocupacao: details.saleSituation,
             tipo_operacao: operation,
-            // Campos de endereço
             endereco_completo: verifiedAddress,
             cidade: address.state ? `${address.city}, ${address.state}` : address.city,
             rua: address.street,
@@ -909,7 +988,6 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
             longitude: coordinates?.lng,
         };
 
-        // Step 1: Update property details in the 'imoveis' table
         const { error: updateError } = await supabase
             .from('imoveis')
             .update(propertyDataToUpdate)
@@ -917,12 +995,10 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
         
         if (updateError) throw new Error(`Error updating property details: ${updateError.message}`);
 
-        // Step 2: Handle media updates (deletions and uploads)
         const originalMediaIds = propertyToEdit.midias_imovel?.map(m => m.id) || [];
         const currentMediaIds = existingMedia.map(m => m.id);
         const removedMediaIds = originalMediaIds.filter(id => !currentMediaIds.includes(id));
         
-        // Handle deletions
         if (removedMediaIds.length > 0) {
             const mediaToDelete = propertyToEdit.midias_imovel?.filter(m => removedMediaIds.includes(m.id)) || [];
             const pathsToDelete = mediaToDelete.map(m => {
@@ -936,7 +1012,6 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
             }
         }
 
-        // Handle new uploads sequentially
         if (newMediaFiles.length > 0) {
             const uploadedMediaForDb = [];
             for (const file of newMediaFiles) {
@@ -960,7 +1035,6 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
             }
         }
         
-        // Step 3: Update profile if changed
         if (profile.nome_completo !== contactInfo.name || profile.telefone !== contactInfo.phone) {
              await supabase
                 .from('perfis')
@@ -970,8 +1044,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
 
         await onUpdateProperty();
 
-      } else { // MODO CRIAÇÃO
-        // Step 1: Create the property to get an ID
+      } else {
         const propertyDataToInsert = {
             anunciante_id: user.id,
             titulo: details.title,
@@ -1006,7 +1079,6 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
 
         let uploadedFilePathsForRollback: string[] = [];
         try {
-            // Step 2: Upload media sequentially
             if (newMediaFiles.length > 0) {
                 const mediaToInsert = [];
                 for (const file of newMediaFiles) {
@@ -1026,14 +1098,12 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
                     });
                 }
 
-                // Step 3: Insert media records
                 if (mediaToInsert.length > 0) {
                     const { error: mediaInsertError } = await supabase.from('midias_imovel').insert(mediaToInsert);
                     if (mediaInsertError) throw new Error(`Media DB insert failed: ${mediaInsertError.message}`);
                 }
             }
 
-            // Step 4: Update profile if needed
             if (profile.nome_completo !== contactInfo.name || profile.telefone !== contactInfo.phone) {
                  await supabase
                     .from('perfis')
@@ -1045,12 +1115,11 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
             onBack();
 
         } catch (uploadError: any) {
-            // Full Rollback on any upload/media insert error
             if (uploadedFilePathsForRollback.length > 0) {
                 await supabase.storage.from('midia').remove(uploadedFilePathsForRollback);
             }
             await supabase.from('imoveis').delete().eq('id', newProperty.id);
-            throw uploadError; // Re-throw to be caught by the outer catch
+            throw uploadError;
         }
       }
     } catch (error: any) {
@@ -1066,7 +1135,6 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
     <div className="bg-brand-light-gray min-h-screen">
       <Header onPublishAdClick={onPublishAdClick} onAccessClick={onOpenLoginModal} user={user} profile={profile} onLogout={onLogout} onNavigateToFavorites={onNavigateToFavorites} onNavigateToChatList={onNavigateToChatList} onNavigateToMyAds={onNavigateToMyAds} hasUnreadMessages={hasUnreadMessages} />
       <div className="container mx-auto px-4 sm:px-6 py-8">
-        {/* Stepper */}
         <div className="max-w-3xl mx-auto mb-8">
           <ol className="grid grid-cols-3 text-sm font-medium text-center text-gray-500">
             {[1, 2, 3].map(step => (
@@ -1078,7 +1146,6 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Form Content */}
           <div className="lg:col-span-2 bg-white p-6 sm:p-8 rounded-lg shadow-md">
             <h1 className="text-2xl sm:text-3xl font-bold text-brand-navy mb-8">
               {propertyToEdit ? t('publishJourney.editTitle') : t('publishJourney.title')}
@@ -1122,6 +1189,8 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
                     handleContinueToPhotos={() => setCurrentStep(3)}
                     onGenerateAITitle={handleGenerateAITitle}
                     isAITitleLoading={isAITitleLoading}
+                    onGenerateAIDescription={handleGenerateAIDescription}
+                    isAIDescriptionLoading={isAIDescriptionLoading}
                 />
             )}
             {currentStep === 3 && (
@@ -1137,7 +1206,6 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
             )}
           </div>
 
-          {/* Sidebar */}
           <aside className="lg:col-span-1">
             <div className="sticky top-24 bg-white p-6 rounded-lg shadow-md space-y-6">
               <div>

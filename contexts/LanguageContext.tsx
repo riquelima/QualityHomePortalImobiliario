@@ -1,5 +1,3 @@
-
-
 import React, { createContext, useState, useContext, ReactNode } from 'react';
 
 // Translations are embedded directly to avoid module resolution issues.
@@ -220,6 +218,8 @@ const ptTranslations = {
       "aiTitlePrompt": "Baseado no seguinte título de anúncio imobiliário, crie um mais atraente e chamativo. Mantenha-o conciso e profissional, com no máximo 10 palavras. Título original: '{title}'. Retorne apenas o novo título, sem aspas e sem texto adicional.",
       "aiTitleButtonLabel": "Melhorar com IA",
       "aiTitleError": "Não foi possível gerar um título. Verifique sua conexão ou tente novamente.",
+      "aiDescriptionPrompt": "Com base nos seguintes detalhes: Título: '{title}', Tipo: '{propertyType}', {bedrooms} quarto(s), {bathrooms} banheiro(s), e a descrição inicial '{description}', gere uma descrição de anúncio imobiliário atraente e profissional. Destaque os pontos positivos e use uma linguagem vendedora. Retorne apenas o texto da nova descrição.",
+      "aiDescriptionButtonLabel": "Melhorar descrição com IA",
       "apartmentCharacteristics": "Características do imóvel",
       "propertyType": "Tipo de imóvel (opcional)",
       "apartment": "Apartamento",
@@ -644,6 +644,8 @@ const enTranslations = {
       "aiTitlePrompt": "Based on the following real estate ad title, create a more attractive and compelling one. Keep it concise and professional, with a maximum of 10 words. Original title: '{title}'. Return only the new title, without quotes or additional text.",
       "aiTitleButtonLabel": "Enhance with AI",
       "aiTitleError": "Could not generate a title. Please check your connection or try again.",
+      "aiDescriptionPrompt": "Based on the following details: Title: '{title}', Type: '{propertyType}', {bedrooms} bedroom(s), {bathrooms} bathroom(s), and the initial description '{description}', generate an attractive and professional real estate ad description. Highlight the positive aspects and use persuasive language. Return only the text of the new description.",
+      "aiDescriptionButtonLabel": "Enhance description with AI",
       "apartmentCharacteristics": "Property characteristics",
       "propertyType": "Type of property (optional)",
       "apartment": "Apartment",
@@ -1068,6 +1070,8 @@ const esTranslations = {
       "aiTitlePrompt": "Basado en el siguiente título de anuncio inmobiliario, crea uno más atractivo y llamativo. Mantenlo conciso y profesional, con un máximo de 10 palabras. Título original: '{title}'. Devuelve solo el nuevo título, sin comillas ni texto adicional.",
       "aiTitleButtonLabel": "Mejorar con IA",
       "aiTitleError": "No se pudo generar un título. Comprueba tu conexión o inténtalo de nuevo.",
+      "aiDescriptionPrompt": "Basado en los siguientes detalles: Título: '{title}', Tipo: '{propertyType}', {bedrooms} habitación(es), {bathrooms} baño(s), y la descripción inicial '{description}', genera una descripción de anuncio inmobiliario atractiva y profesional. Destaca los puntos positivos y utiliza un lenguaje vendedor. Devuelve solo el texto de la nueva descripción.",
+      "aiDescriptionButtonLabel": "Mejorar descripción con IA",
       "apartmentCharacteristics": "Características del inmueble",
       "propertyType": "Tipo de inmueble (opcional)",
       "apartment": "Apartamento",
