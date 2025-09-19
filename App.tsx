@@ -304,30 +304,35 @@ const App: React.FC = () => {
 
             if (chatError) console.error('Error fetching chat sessions:', chatError);
             else if (chatData) {
-                const adaptedSessions = chatData.map((s: any) => ({
-                    id: s.session_id,
-                    sessionId: s.session_id,
-                    propertyId: s.imovel_id,
-                    imovel_id: s.imovel_id,
-                    participants: (s.participants || []).reduce((acc: any, p: any) => {
-                        acc[p.id] = { id: p.id, nome_completo: p.nome_completo };
-                        return acc;
-                    }, {}),
-                    messages: (s.messages || []).map((m: any): Message => ({
-                        id: m.id,
-                        senderId: m.remetente_id,
-                        text: m.conteudo,
-                        timestamp: new Date(m.data_envio),
-                        remetente_id: m.remetente_id,
-                        conteudo: m.conteudo,
-                        data_envio: m.data_envio,
-                    })),
-                    mensagens: s.messages || [],
-                    participantes: (s.participants || []).reduce((acc: any, p: any) => {
-                        acc[p.id] = { id: p.id, nome_completo: p.nome_completo };
-                        return acc;
-                    }, {}),
-                }));
+                const adaptedSessions = chatData.map((s: any) => {
+                    const validParticipants = (s.participants || []).filter((p: any) => p && p.id);
+                    const validMessages = (s.messages || []).filter((m: any) => m && m.id && m.data_envio);
+
+                    return {
+                        id: s.session_id,
+                        sessionId: s.session_id,
+                        propertyId: s.imovel_id,
+                        imovel_id: s.imovel_id,
+                        participants: validParticipants.reduce((acc: any, p: any) => {
+                            acc[p.id] = { id: p.id, nome_completo: p.nome_completo };
+                            return acc;
+                        }, {}),
+                        messages: validMessages.map((m: any): Message => ({
+                            id: m.id,
+                            senderId: m.remetente_id,
+                            text: m.conteudo,
+                            timestamp: new Date(m.data_envio),
+                            remetente_id: m.remetente_id,
+                            conteudo: m.conteudo,
+                            data_envio: m.data_envio,
+                        })),
+                        mensagens: validMessages,
+                        participantes: validParticipants.reduce((acc: any, p: any) => {
+                            acc[p.id] = { id: p.id, nome_completo: p.nome_completo };
+                            return acc;
+                        }, {}),
+                    };
+                });
                 setChatSessions(adaptedSessions);
             }
         } else {
