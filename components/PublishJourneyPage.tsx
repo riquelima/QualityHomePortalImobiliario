@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Header from './Header';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -53,7 +54,7 @@ interface AddressState { city: string; street: string; number: string; state: st
 interface ContactInfoState { phone: string; preference: string; name: string; }
 interface DetailsState {
     title: string;
-    propertyType: string[];
+    propertyType: string;
     condition: string;
     grossArea: string;
     netArea: string;
@@ -507,6 +508,21 @@ const TemporadaDetailsForm: React.FC<DetailsFormProps> = ({ details, handleDetai
     );
 };
 
+const RadioGroup: React.FC<{ label: string, options: { value: string, label: string }[], selectedOption: string, onChange: (selected: string) => void }> = ({ label, options, selectedOption, onChange }) => {
+    return (
+        <div>
+            <label className="block text-base sm:text-lg font-bold text-brand-navy mb-3">{label}</label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                {options.map(option => (
+                    <label key={option.value} className="flex items-center space-x-2 cursor-pointer text-sm">
+                        <input type="radio" name="propertyType" value={option.value} checked={selectedOption === option.value} onChange={() => onChange(option.value)} className="h-5 w-5 text-brand-red focus:ring-brand-red border-gray-300" />
+                        <span>{option.label}</span>
+                    </label>
+                ))}
+            </div>
+        </div>
+    );
+};
 
 const CommonDetailsForm: React.FC<DetailsFormProps> = ({ 
     details, handleDetailsChange, incrementCounter, decrementCounter, 
@@ -578,7 +594,7 @@ const CommonDetailsForm: React.FC<DetailsFormProps> = ({
                 </div>
             </div>
 
-            <CheckboxGroup
+            <RadioGroup
                 label={t('publishJourney.detailsForm.propertyType')}
                 options={[
                     { value: 'Apartamento', label: t('publishJourney.detailsForm.apartment') },
@@ -587,7 +603,7 @@ const CommonDetailsForm: React.FC<DetailsFormProps> = ({
                     { value: 'Escritório', label: t('publishJourney.detailsForm.office') },
                     { value: 'Terreno', label: t('publishJourney.detailsForm.land') },
                 ]}
-                selectedOptions={details.propertyType}
+                selectedOption={details.propertyType}
                 onChange={(value) => handleDetailsChange(value, 'propertyType')}
             />
 
@@ -818,9 +834,15 @@ const mockAIDescriptionGeneration = (details: DetailsState): Promise<string> => 
             const randomAdjective = adjectives[Math.floor(Math.random() * adjectives.length)];
             const randomHighlight = highlights[Math.floor(Math.random() * highlights.length)];
 
-            const baseDescription = details.description ? `Este imóvel se destaca por ser ${details.description.toLowerCase()}.` : '';
+            let featuresText = '';
+            if (details.homeFeatures.length > 0 || details.buildingFeatures.length > 0) {
+                const allFeatures = [...details.homeFeatures, ...details.buildingFeatures];
+                featuresText = ` O imóvel se destaca por ter ${allFeatures.slice(0, 3).join(', ').toLowerCase()} e muito mais.`;
+            }
 
-            const newDescription = `${randomAdjective} ${details.propertyType[0] || 'imóvel'} com ${details.bedrooms} quarto(s) e ${details.bathrooms} banheiro(s). ${baseDescription} Com uma área de ${details.grossArea}m², é ${randomHighlight}. Não perca essa chance!`;
+            const baseDescription = details.description ? `\n\n${details.description}` : '';
+
+            const newDescription = `${randomAdjective} ${details.propertyType || 'imóvel'} com ${details.bedrooms} quarto(s) e ${details.bathrooms} banheiro(s). Com uma área de ${details.grossArea}m², é ${randomHighlight}.${featuresText}${baseDescription}\n\nNão perca essa chance! Agende uma visita.`;
             
             resolve(newDescription);
         }, 1200);
@@ -847,7 +869,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
   const [contactInfo, setContactInfo] = useState<ContactInfoState>({ phone: '', preference: 'chat_and_phone', name: '' });
   const [details, setDetails] = useState<DetailsState>({
     title: '',
-    propertyType: [],
+    propertyType: 'Apartamento',
     condition: 'good_condition',
     grossArea: '',
     netArea: '',
@@ -903,7 +925,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
       const price = propertyToEdit.preco;
       setDetails({
         title: propertyToEdit.titulo || '',
-        propertyType: propertyToEdit.tipo_imovel ? [propertyToEdit.tipo_imovel] : [],
+        propertyType: propertyToEdit.tipo_imovel || 'Apartamento',
         condition: 'good_condition', // Assuming default
         grossArea: propertyToEdit.area_bruta?.toString() || '',
         netArea: '', // Not in model
@@ -1147,24 +1169,59 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
   }, [details.title, t]);
 
   const handleGenerateAIDescription = useCallback(async () => {
-    if (!details.description.trim()) return;
-
     setIsAIDescriptionLoading(true);
     try {
+        const detailsForPrompt = [];
+        detailsForPrompt.push(`- Tipo de operação: ${t(`publishJourney.form.operation.${operation}`)}`);
+        detailsForPrompt.push(`- Título do anúncio: ${details.title}`);
+        if (address.city) detailsForPrompt.push(`- Localização: ${address.city}, ${address.state}`);
+        
+        if (details.propertyType) {
+            detailsForPrompt.push(`- Tipo de imóvel: ${details.propertyType}`);
+        }
+        
+        if (details.bedrooms > 0) detailsForPrompt.push(`- Número de quartos: ${details.bedrooms}`);
+        if (details.bathrooms > 0) detailsForPrompt.push(`- Número de banheiros: ${details.bathrooms}`);
+        if (details.grossArea) detailsForPrompt.push(`- Área bruta: ${details.grossArea} m²`);
+        if (details.hasElevator !== null) detailsForPrompt.push(`- Possui elevador: ${details.hasElevator ? t('publishJourney.detailsForm.yes') : t('publishJourney.detailsForm.no')}`);
+
+        if (details.homeFeatures.length > 0) {
+            const translatedFeatures = details.homeFeatures.map(f => t(`publishJourney.detailsForm.${f}`)).join(', ');
+            detailsForPrompt.push(`- Características do imóvel: ${translatedFeatures}`);
+        }
+
+        if (details.buildingFeatures.length > 0) {
+            const translatedFeatures = details.buildingFeatures.map(f => t(`publishJourney.detailsForm.${f}`)).join(', ');
+            detailsForPrompt.push(`- Características do condomínio: ${translatedFeatures}`);
+        }
+        
+        if (operation === 'venda') {
+            if (details.acceptsFinancing !== null) detailsForPrompt.push(`- Aceita financiamento: ${details.acceptsFinancing ? 'Sim' : 'Não'}`);
+            if (details.occupationSituation) detailsForPrompt.push(`- Situação de ocupação: ${t(`publishJourney.detailsForm.${details.occupationSituation}`)}`);
+        } else if (operation === 'aluguel') {
+            if (details.petsAllowed !== null) detailsForPrompt.push(`- Permite animais: ${details.petsAllowed ? 'Sim' : 'Não'}`);
+            if (details.rentalConditions.length > 0) detailsForPrompt.push(`- Condições de aluguel: ${details.rentalConditions.map(c => t(`publishJourney.detailsForm.${c}`)).join(', ')}`);
+        } else if (operation === 'temporada') {
+            if (details.maxGuests) detailsForPrompt.push(`- Máximo de hóspedes: ${details.maxGuests}`);
+        }
+
+        if (details.description.trim()) {
+            detailsForPrompt.push(`- Descrição atual (para ser melhorada e incorporada no novo texto): ${details.description}`);
+        }
+
+        const collectedDetails = detailsForPrompt.join('\n');
+
         if (!process.env.API_KEY) {
             console.warn("Chave de API do Gemini não configurada. Usando resposta simulada para descrição.");
             const newDescription = await mockAIDescriptionGeneration(details);
             setDetails(prev => ({ ...prev, description: newDescription }));
+            setIsAIDescriptionLoading(false);
             return;
         }
 
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const prompt = t('publishJourney.detailsForm.aiDescriptionPrompt', { 
-            title: details.title,
-            propertyType: details.propertyType.join(', ') || 'Não especificado',
-            bedrooms: details.bedrooms,
-            bathrooms: details.bathrooms,
-            description: details.description 
+            details: collectedDetails
         });
 
         const response = await ai.models.generateContent({
@@ -1181,7 +1238,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
     } finally {
         setIsAIDescriptionLoading(false);
     }
-  }, [details, t]);
+  }, [details, t, operation, address]);
 
   const handleFinish = async () => {
     if (!user || !profile) {
@@ -1193,42 +1250,37 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
     setIsSubmitting(true);
 
     try {
-        // Step 1: Upload any new files to Supabase Storage sequentially
         const newMediaFiles = media.filter((m): m is File => m instanceof File);
         const uploadedUrls: { url: string; tipo: 'imagem' | 'video' }[] = [];
 
-        if (newMediaFiles.length > 0) {
-            for (const [index, file] of newMediaFiles.entries()) {
-                const fileExt = file.name.split('.').pop();
-                // Create a more robust and unique file name
-                const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.-_]/g, '');
-                const fileName = `${Date.now()}-${index}-${sanitizedFileName}`;
-                const filePath = `${user.id}/${fileName}`;
+        for (const file of newMediaFiles) {
+            const fileExt = file.name.split('.').pop();
+            const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '');
+            const fileName = `${user.id}-${Date.now()}-${sanitizedFileName}`;
+            const filePath = `${user.id}/${fileName}`;
 
-                const { error: uploadError } = await supabase.storage
-                    .from('midia')
-                    .upload(filePath, file);
+            const { error: uploadError } = await supabase.storage
+                .from('midia')
+                .upload(filePath, file);
 
-                if (uploadError) {
-                    throw new Error(`Falha no upload do arquivo "${file.name}": ${uploadError.message}`);
-                }
-
-                const { data } = supabase.storage
-                    .from('midia')
-                    .getPublicUrl(filePath);
-                
-                if (!data.publicUrl) {
-                    throw new Error(`Não foi possível obter a URL pública do arquivo: ${file.name}`);
-                }
-                
-                uploadedUrls.push({
-                    url: data.publicUrl,
-                    tipo: file.type.startsWith('video') ? 'video' : 'imagem',
-                });
+            if (uploadError) {
+                throw new Error(`Falha no upload do arquivo "${file.name}": ${uploadError.message}`);
             }
+
+            const { data } = supabase.storage
+                .from('midia')
+                .getPublicUrl(filePath);
+            
+            if (!data.publicUrl) {
+                throw new Error(`Não foi possível obter a URL pública do arquivo: ${file.name}`);
+            }
+            
+            uploadedUrls.push({
+                url: data.publicUrl,
+                tipo: file.type.startsWith('video') ? 'video' : 'imagem',
+            });
         }
         
-        // Step 2: Prepare property data
         let propertyData: any = {
             anunciante_id: user.id,
             titulo: details.title,
@@ -1240,7 +1292,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
             latitude: coordinates?.lat,
             longitude: coordinates?.lng,
             tipo_operacao: operation,
-            tipo_imovel: details.propertyType[0] || null,
+            tipo_imovel: details.propertyType || null,
             quartos: details.bedrooms,
             banheiros: details.bathrooms,
             area_bruta: parseIntToNull(details.grossArea),
@@ -1280,9 +1332,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
 
         let finalPropertyId: number;
 
-        // Step 3: Insert or Update the main property data
         if (propertyToEdit) {
-            // UPDATE LOGIC
             finalPropertyId = propertyToEdit.id;
             const { error: updateError } = await supabase
                 .from('imoveis')
@@ -1291,7 +1341,6 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
 
             if (updateError) throw updateError;
 
-            // Step 4a (Update): Clear old media and re-insert all current media
             const { error: deleteMediaError } = await supabase
                 .from('midias_imovel')
                 .delete()
@@ -1300,7 +1349,6 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
             if (deleteMediaError) throw deleteMediaError;
 
         } else {
-            // CREATE LOGIC
             const { data: newProperty, error: propertyError } = await supabase
                 .from('imoveis')
                 .insert(propertyData)
@@ -1313,7 +1361,6 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
             finalPropertyId = newProperty.id;
         }
 
-        // Step 4b (Create & Update): Insert media records
         const existingMediaUrls = media
             .filter((m): m is Media => !(m instanceof File))
             .map(m => ({ url: m.url, tipo: m.tipo }));
@@ -1334,7 +1381,6 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
             if (mediaInsertError) throw mediaInsertError;
         }
 
-        // Step 5: Finalize and navigate
         if (propertyToEdit) {
             await onUpdateProperty();
         } else {
