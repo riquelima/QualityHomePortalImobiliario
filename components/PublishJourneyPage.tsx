@@ -1193,17 +1193,16 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
     setIsSubmitting(true);
 
     try {
-        // Step 1: Upload any new files to Supabase Storage
+        // Step 1: Upload any new files to Supabase Storage sequentially
         const newMediaFiles = media.filter((m): m is File => m instanceof File);
         const uploadedUrls: { url: string; tipo: 'imagem' | 'video' }[] = [];
 
         if (newMediaFiles.length > 0) {
-            // FIX: Added an explicit return type to the async map callback to ensure TypeScript
-            // correctly infers the type of `results` as `{ url: string; tipo: "imagem" | "video"; }[]`
-            // instead of a wider `{ url: any; tipo: string; }[]`.
-            const uploadPromises = newMediaFiles.map(async (file): Promise<{ url: string; tipo: 'imagem' | 'video' }> => {
+            for (const [index, file] of newMediaFiles.entries()) {
                 const fileExt = file.name.split('.').pop();
-                const fileName = `${Date.now()}-${Math.random()}.${fileExt}`;
+                // Create a more robust and unique file name
+                const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.-_]/g, '');
+                const fileName = `${Date.now()}-${index}-${sanitizedFileName}`;
                 const filePath = `${user.id}/${fileName}`;
 
                 const { error: uploadError } = await supabase.storage
@@ -1211,7 +1210,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
                     .upload(filePath, file);
 
                 if (uploadError) {
-                    throw new Error(`Falha no upload do arquivo: ${uploadError.message}`);
+                    throw new Error(`Falha no upload do arquivo "${file.name}": ${uploadError.message}`);
                 }
 
                 const { data } = supabase.storage
@@ -1219,19 +1218,16 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
                     .getPublicUrl(filePath);
                 
                 if (!data.publicUrl) {
-                    throw new Error('Não foi possível obter a URL pública do arquivo.');
+                    throw new Error(`Não foi possível obter a URL pública do arquivo: ${file.name}`);
                 }
-
-                return {
+                
+                uploadedUrls.push({
                     url: data.publicUrl,
                     tipo: file.type.startsWith('video') ? 'video' : 'imagem',
-                };
-            });
-
-            const results = await Promise.all(uploadPromises);
-            uploadedUrls.push(...results);
+                });
+            }
         }
-
+        
         // Step 2: Prepare property data
         let propertyData: any = {
             anunciante_id: user.id,
@@ -1349,6 +1345,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
         const errorMessage = error.message || 'Ocorreu um erro desconhecido ao publicar.';
         console.error('Falha na publicação:', error);
         setPublishError(errorMessage);
+        onPublishError(errorMessage);
     } finally {
         setIsSubmitting(false);
     }
