@@ -336,6 +336,22 @@ const App: React.FC = () => {
       setUser(currentUser);
 
       if (currentUser) {
+        // On initial session load, try to restore page state from sessionStorage
+        if (event === 'INITIAL_SESSION') {
+            try {
+                const savedStateJSON = sessionStorage.getItem('qualityHomePageState');
+                if (savedStateJSON) {
+                    const savedState = JSON.parse(savedStateJSON) as PageState;
+                    if (savedState && typeof savedState.page === 'string') {
+                        setPageState(savedState);
+                    }
+                }
+            } catch (error) {
+                console.error("Could not restore page state:", error);
+                sessionStorage.removeItem('qualityHomePageState'); // Clear corrupted state
+            }
+        }
+
         const { data: userProfile, error } = await supabase
           .from('perfis')
           .select('*')
@@ -368,6 +384,7 @@ const App: React.FC = () => {
         }
       } else {
         setProfile(null);
+        sessionStorage.removeItem('qualityHomePageState'); // Clear state on logout
       }
       setIsAuthReady(true);
     });
@@ -376,6 +393,18 @@ const App: React.FC = () => {
       authListener.subscription.unsubscribe();
     };
   }, [loginIntent]);
+
+  // Save page state to sessionStorage on change for logged-in users
+  useEffect(() => {
+    if (user && isAuthReady) {
+        try {
+            const stateToSave = JSON.stringify(pageState);
+            sessionStorage.setItem('qualityHomePageState', stateToSave);
+        } catch (error) {
+            console.error("Could not save page state:", error);
+        }
+    }
+  }, [pageState, user, isAuthReady]);
   
   useEffect(() => {
     if(isAuthReady) {
