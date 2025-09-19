@@ -32,6 +32,8 @@ interface HeaderProps {
   onNavigateToMyAds: () => void;
   onNavigateToAllListings: () => void;
   hasUnreadMessages: boolean;
+  navigateToGuideToSell: () => void;
+  navigateToDocumentsForSale: () => void;
 }
 
 // Helper function outside the component
@@ -40,7 +42,7 @@ const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
 }
 
-const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, profile, onLogout, onNavigateToFavorites, onNavigateToChatList, onNavigateToMyAds, onNavigateToAllListings, hasUnreadMessages }) => {
+const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, profile, onLogout, onNavigateToFavorites, onNavigateToChatList, onNavigateToMyAds, onNavigateToAllListings, hasUnreadMessages, navigateToGuideToSell, navigateToDocumentsForSale }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
@@ -74,11 +76,6 @@ const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, 
     };
   }, []);
 
-  const handleWIPClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    alert('Página em construção.');
-  };
-
   return (
     <>
       <header className="bg-white shadow-sm sticky top-0 z-40">
@@ -105,8 +102,8 @@ const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, 
                         <h3 className="font-bold text-brand-dark text-base">{t('header.ownersDropdown.sell.title')}</h3>
                         <ul className="space-y-3 text-sm">
                           <li><a href="#" onClick={(e) => { e.preventDefault(); onPublishAdClick(); }} className="text-brand-gray hover:text-brand-red">{t('header.ownersDropdown.sell.publish')}</a></li>
-                          <li><a href="#" onClick={handleWIPClick} className="text-brand-gray hover:text-brand-red">{t('header.ownersDropdown.sell.guide')}</a></li>
-                          <li><a href="#" onClick={handleWIPClick} className="text-brand-gray hover:text-brand-red">{t('header.ownersDropdown.sell.documents')}</a></li>
+                          <li><a href="#" onClick={(e) => { e.preventDefault(); navigateToGuideToSell(); }} className="text-brand-gray hover:text-brand-red">{t('header.ownersDropdown.sell.guide')}</a></li>
+                          <li><a href="#" onClick={(e) => { e.preventDefault(); navigateToDocumentsForSale(); }} className="text-brand-gray hover:text-brand-red">{t('header.ownersDropdown.sell.documents')}</a></li>
                         </ul>
                       </div>
                       {/* Colocar para arrendamento */}
@@ -303,8 +300,8 @@ const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, 
                           <h3 className="font-bold text-brand-dark">{t('header.ownersDropdown.sell.title')}</h3>
                           <ul className="space-y-1 pl-2">
                               <li><a href="#" onClick={(e) => { e.preventDefault(); onPublishAdClick(); setIsMenuOpen(false); }} className="text-brand-gray hover:text-brand-red block py-1">{t('header.ownersDropdown.sell.publish')}</a></li>
-                              <li><a href="#" onClick={handleWIPClick} className="text-brand-gray hover:text-brand-red block py-1">{t('header.ownersDropdown.sell.guide')}</a></li>
-                              <li><a href="#" onClick={handleWIPClick} className="text-brand-gray hover:text-brand-red block py-1">{t('header.ownersDropdown.sell.documents')}</a></li>
+                              <li><a href="#" onClick={(e) => { e.preventDefault(); navigateToGuideToSell(); setIsMenuOpen(false); }} className="text-brand-gray hover:text-brand-red block py-1">{t('header.ownersDropdown.sell.guide')}</a></li>
+                              <li><a href="#" onClick={(e) => { e.preventDefault(); navigateToDocumentsForSale(); setIsMenuOpen(false); }} className="text-brand-gray hover:text-brand-red block py-1">{t('header.ownersDropdown.sell.documents')}</a></li>
                           </ul>
                       </div>
                       {/* Colocar para arrendamento */}

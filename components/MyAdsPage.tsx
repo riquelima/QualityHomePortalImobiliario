@@ -1,3 +1,4 @@
+
 import React from 'react';
 import Header from './Header';
 import type { Property, User, Profile } from '../types';
@@ -21,10 +22,13 @@ interface MyAdsPageProps {
   onEditProperty: (property: Property) => void;
   onNavigateToAllListings: () => void;
   hasUnreadMessages: boolean;
+  // FIX: Added missing props for Header.
+  navigateToGuideToSell: () => void;
+  navigateToDocumentsForSale: () => void;
 }
 
 const MyAdsPage: React.FC<MyAdsPageProps> = ({
-  onBack, user, profile, onLogout, onPublishAdClick, onAccessClick, onNavigateToFavorites, onNavigateToChatList, onNavigateToMyAds, userProperties, onViewDetails, onDeleteProperty, onEditProperty, onNavigateToAllListings, hasUnreadMessages
+  onBack, user, profile, onLogout, onPublishAdClick, onAccessClick, onNavigateToFavorites, onNavigateToChatList, onNavigateToMyAds, userProperties, onViewDetails, onDeleteProperty, onEditProperty, onNavigateToAllListings, hasUnreadMessages, navigateToGuideToSell, navigateToDocumentsForSale
 }) => {
   const { t } = useLanguage();
 
@@ -41,6 +45,8 @@ const MyAdsPage: React.FC<MyAdsPageProps> = ({
         onNavigateToMyAds={onNavigateToMyAds}
         onNavigateToAllListings={onNavigateToAllListings}
         hasUnreadMessages={hasUnreadMessages}
+        navigateToGuideToSell={navigateToGuideToSell}
+        navigateToDocumentsForSale={navigateToDocumentsForSale}
       />
       <main className="flex-grow">
         <div className="container mx-auto px-4 sm:px-6 py-8">

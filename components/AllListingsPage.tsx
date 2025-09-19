@@ -26,6 +26,8 @@ interface AllListingsPageProps {
   hasUnreadMessages: boolean;
   onGeolocationError: () => void;
   onContactClick: (property: Property) => void;
+  navigateToGuideToSell: () => void;
+  navigateToDocumentsForSale: () => void;
 }
 
 const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {

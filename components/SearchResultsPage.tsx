@@ -28,6 +28,9 @@ interface SearchResultsPageProps {
   onNavigateToAllListings: () => void;
   hasUnreadMessages: boolean;
   onContactClick: (property: Property) => void;
+  // FIX: Added missing props for Header.
+  navigateToGuideToSell: () => void;
+  navigateToDocumentsForSale: () => void;
 }
 
 const SearchResultsPage: React.FC<SearchResultsPageProps> = ({ 
@@ -47,7 +50,9 @@ const SearchResultsPage: React.FC<SearchResultsPageProps> = ({
   onNavigateToMyAds,
   onNavigateToAllListings,
   hasUnreadMessages,
-  onContactClick
+  onContactClick,
+  navigateToGuideToSell,
+  navigateToDocumentsForSale
 }) => {
   const { t } = useLanguage();
 
@@ -66,6 +71,8 @@ const SearchResultsPage: React.FC<SearchResultsPageProps> = ({
         onNavigateToMyAds={onNavigateToMyAds}
         onNavigateToAllListings={onNavigateToAllListings}
         hasUnreadMessages={hasUnreadMessages}
+        navigateToGuideToSell={navigateToGuideToSell}
+        navigateToDocumentsForSale={navigateToDocumentsForSale}
       />
       <main className="flex-grow">
         <div className="container mx-auto px-4 sm:px-6 py-8">

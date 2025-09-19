@@ -1,5 +1,4 @@
 
-
 import React from 'react';
 import Header from './Header';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -22,10 +21,15 @@ interface PublishAdPageProps {
   onNavigateToMyAds: () => void;
   onNavigateToAllListings: () => void;
   hasUnreadMessages: boolean;
+  navigateToGuideToSell: () => void;
+  navigateToDocumentsForSale: () => void;
+  // FIX: Added onAccessClick to satisfy HeaderProps requirement.
+  onAccessClick: () => void;
 }
 
-const PublishAdPage: React.FC<PublishAdPageProps> = ({ onBack, onPublishAdClick, onOpenLoginModal, onNavigateToJourney, user, profile, onLogout, onNavigateToFavorites, onNavigateToChatList, onNavigateToMyAds, onNavigateToAllListings, hasUnreadMessages }) => {
+const PublishAdPage: React.FC<PublishAdPageProps> = (props) => {
   const { t } = useLanguage();
+  const { user, onNavigateToJourney, onOpenLoginModal } = props;
 
   const handlePublishClick = () => {
     if (user) {
@@ -37,13 +41,11 @@ const PublishAdPage: React.FC<PublishAdPageProps> = ({ onBack, onPublishAdClick,
 
   return (
     <div className="bg-brand-light-gray min-h-screen">
-       {/* FIX: Pass profile prop to Header. */}
-       {/* FIX: Pass onNavigateToMyAds prop to Header. */}
-       <Header onPublishAdClick={onPublishAdClick} onAccessClick={onOpenLoginModal} user={user} profile={profile} onLogout={onLogout} onNavigateToFavorites={onNavigateToFavorites} onNavigateToChatList={onNavigateToChatList} onNavigateToMyAds={onNavigateToMyAds} onNavigateToAllListings={onNavigateToAllListings} hasUnreadMessages={hasUnreadMessages} />
+       <Header {...props} />
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumbs */}
         <div className="text-sm mb-6">
-          <span onClick={onBack} className="text-brand-red hover:underline cursor-pointer">
+          <span onClick={props.onBack} className="text-brand-red hover:underline cursor-pointer">
             {t('publishAdPage.breadcrumbHome')}
           </span>
           <span className="text-brand-gray mx-2">&gt;</span>

@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, ReactNode } from 'react';
 
 // Translations are embedded directly to avoid module resolution issues.
@@ -439,6 +438,36 @@ const ptTranslations = {
     "fetchError": "Não foi possível carregar os anúncios. Por favor, tente recarregar a página.",
     "editSuccessMessage": "Anúncio atualizado com sucesso!",
     "errorDetails": "Detalhes do erro"
+  },
+  "documentsForSalePage": {
+    "title": "Documentos Necessários para a Venda",
+    "intro": "A venda de um imóvel envolve uma série de documentos para garantir a segurança jurídica da transação. Aqui está uma lista geral dos documentos normalmente exigidos:",
+    "seller": {
+      "title": "Documentos do Vendedor (e cônjuge, se houver)",
+      "doc1": "Documento de identidade (RG e CPF)",
+      "doc2": "Comprovante de estado civil (Certidão de Nascimento ou Casamento)",
+      "doc3": "Comprovante de endereço",
+      "doc4": "Certidões negativas de débitos (federais, estaduais, municipais e trabalhistas)",
+      "doc5": "Pacto antenupcial, se houver"
+    },
+    "buyer": {
+      "title": "Documentos do Comprador (e cônjuge, se houver)",
+      "doc1": "Documento de identidade (RG e CPF)",
+      "doc2": "Comprovante de estado civil",
+      "doc3": "Comprovante de endereço"
+    },
+    "property": {
+      "title": "Documentos do Imóvel",
+      "doc1": "Matrícula atualizada do imóvel (emitida pelo Cartório de Registro de Imóveis)",
+      "doc2": "Certidão de Ônus Reais (para verificar se há pendências como hipotecas ou penhoras)",
+      "doc3": "Certidão negativa de débitos de IPTU (emitida pela prefeitura)",
+      "doc4": "Declaração de quitação de débitos condominiais (se aplicável)",
+      "doc5": "Planta do imóvel aprovada pela prefeitura (opcional, mas recomendado)"
+    },
+    "disclaimer": {
+      "title": "Aviso Importante",
+      "text": "Esta é uma lista de referência. A documentação exata pode variar dependendo da localização do imóvel e das particularidades da negociação. Recomendamos sempre a consulta a um advogado ou corretor de imóveis."
+    }
   },
   "footer": {
     "text": "Quality Home Portal Imobiliário. Todos os direitos reservados."
@@ -890,6 +919,36 @@ const enTranslations = {
     "editSuccessMessage": "Ad updated successfully!",
     "errorDetails": "Error details"
   },
+  "documentsForSalePage": {
+    "title": "Necessary Documents for Sale",
+    "intro": "The sale of a property involves a series of documents to ensure the legal security of the transaction. Here is a general list of the documents typically required:",
+    "seller": {
+      "title": "Seller's Documents (and spouse, if any)",
+      "doc1": "Identity document (ID and Taxpayer Number)",
+      "doc2": "Proof of marital status (Birth or Marriage Certificate)",
+      "doc3": "Proof of address",
+      "doc4": "Certificates of no debt (federal, state, municipal, and labor)",
+      "doc5": "Prenuptial agreement, if any"
+    },
+    "buyer": {
+      "title": "Buyer's Documents (and spouse, if any)",
+      "doc1": "Identity document (ID and Taxpayer Number)",
+      "doc2": "Proof of marital status",
+      "doc3": "Proof of address"
+    },
+    "property": {
+      "title": "Property Documents",
+      "doc1": "Updated property registration (issued by the Property Registry Office)",
+      "doc2": "Certificate of Liens (to check for issues like mortgages or liens)",
+      "doc3": "Certificate of no property tax debt (issued by the city hall)",
+      "doc4": "Declaration of condominium fee payment (if applicable)",
+      "doc5": "City-approved floor plan (optional, but recommended)"
+    },
+    "disclaimer": {
+      "title": "Important Notice",
+      "text": "This is a reference list. The exact documentation may vary depending on the property's location and the specifics of the negotiation. We always recommend consulting a lawyer or real estate agent."
+    }
+  },
   "footer": {
     "text": "Quality Home Real Estate Portal. All rights reserved."
   }
@@ -1339,6 +1398,36 @@ const esTranslations = {
     "fetchError": "No se pudieron cargar los anuncios. Por favor, intenta recargar la página.",
     "editSuccessMessage": "¡Anuncio actualizado con éxito!",
     "errorDetails": "Detalles del error"
+  },
+  "documentsForSalePage": {
+    "title": "Documentos Necesarios para la Venta",
+    "intro": "La venta de un inmueble implica una serie de documentos para garantizar la seguridad jurídica de la transacción. A continuación, se presenta una lista general de los documentos que se suelen exigir:",
+    "seller": {
+      "title": "Documentos del Vendedor (y cónyuge, si corresponde)",
+      "doc1": "Documento de identidad (DNI y NIF/CIF)",
+      "doc2": "Justificante de estado civil (Certificado de Nacimiento o Matrimonio)",
+      "doc3": "Justificante de domicilio",
+      "doc4": "Certificados de estar al corriente de pago (federales, estatales, municipales y laborales)",
+      "doc5": "Capitulaciones matrimoniales, si las hubiera"
+    },
+    "buyer": {
+      "title": "Documentos del Comprador (y cónyuge, si corresponde)",
+      "doc1": "Documento de identidad (DNI y NIF/CIF)",
+      "doc2": "Justificante de estado civil",
+      "doc3": "Justificante de domicilio"
+    },
+    "property": {
+      "title": "Documentos del Inmueble",
+      "doc1": "Nota Simple o Certificación Registral actualizada del inmueble (expedida por el Registro de la Propiedad)",
+      "doc2": "Certificado de cargas y gravámenes (para verificar si existen hipotecas o embargos)",
+      "doc3": "Certificado de estar al corriente de pago del IBI (expedido por el ayuntamiento)",
+      "doc4": "Declaración de estar al corriente de los gastos de comunidad (si procede)",
+      "doc5": "Plano de la vivienda aprobado por el ayuntamiento (opcional, pero recomendado)"
+    },
+    "disclaimer": {
+      "title": "Aviso Importante",
+      "text": "Esta es una lista de referencia. La documentación exacta puede variar en función de la ubicación del inmueble y de las particularidades de la negociación. Recomendamos siempre consultar a un abogado o a un agente inmobiliario."
+    }
   },
   "footer": {
     "text": "Quality Home Portal Inmobiliario. Todos los derechos reservados."

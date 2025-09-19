@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import Header from './Header';
 import type { Property, User, Profile } from '../types';
@@ -29,6 +30,9 @@ interface PropertyDetailPageProps {
   onNavigateToMyAds: () => void;
   onNavigateToAllListings: () => void;
   hasUnreadMessages: boolean;
+  // FIX: Added missing props for Header.
+  navigateToGuideToSell: () => void;
+  navigateToDocumentsForSale: () => void;
 }
 
 const currencyConfig = {
@@ -52,7 +56,9 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({
   onNavigateToChatList,
   onNavigateToMyAds,
   onNavigateToAllListings,
-  hasUnreadMessages
+  hasUnreadMessages,
+  navigateToGuideToSell,
+  navigateToDocumentsForSale
 }) => {
   const { t, language } = useLanguage();
   
@@ -89,6 +95,8 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({
         onNavigateToMyAds={onNavigateToMyAds}
         onNavigateToAllListings={onNavigateToAllListings}
         hasUnreadMessages={hasUnreadMessages}
+        navigateToGuideToSell={navigateToGuideToSell}
+        navigateToDocumentsForSale={navigateToDocumentsForSale}
       />
       <main className="container mx-auto px-4 sm:px-6 py-8">
         {/* Breadcrumbs */}
