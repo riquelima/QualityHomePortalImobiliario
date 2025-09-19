@@ -874,6 +874,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
   const [availableDates, setAvailableDates] = useState<string[]>([]);
   const [media, setMedia] = useState<MediaItem[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [publishError, setPublishError] = useState<string | null>(null);
   const [isAITitleLoading, setIsAITitleLoading] = useState(false);
   const [isAIDescriptionLoading, setIsAIDescriptionLoading] = useState(false);
 
@@ -1185,6 +1186,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
       return;
     }
   
+    setPublishError(null); // Limpa erros anteriores a cada nova tentativa
     setIsSubmitting(true);
   
     try {
@@ -1247,9 +1249,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
             .update(propertyData)
             .eq('id', propertyToEdit.id);
         
-        if (updateError) throw new Error(`Erro ao atualizar detalhes do imóvel: ${updateError.message}`);
-  
-        // ... (resto da lógica de mídia e perfil)
+        if (updateError) throw updateError;
         
         await onUpdateProperty();
   
@@ -1261,18 +1261,17 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
           .select()
           .single();
   
-        if (propertyError) throw new Error(`Falha na criação do imóvel: ${propertyError.message}`);
-  
-        // ... (lógica de upload de mídia e atualização de perfil)
+        if (propertyError) throw propertyError;
   
         await onAddProperty(newProperty as Property);
         onBack();
       }
     } catch (error: any) {
+      const errorMessage = error.message || 'Ocorreu um erro desconhecido.';
       console.error('Falha na publicação:', error);
-      onPublishError(error.message);
+      setPublishError(errorMessage); // Define o erro para ser exibido na tela
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false); // Garante que o estado de carregamento seja desativado
     }
   };
 
@@ -1283,10 +1282,8 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
         incrementCounter,
         decrementCounter,
         handleContinueToPhotos,
-        // FIX: Pass the correct function for the onGenerateAITitle prop.
         onGenerateAITitle: handleGenerateAITitle,
         isAITitleLoading,
-        // FIX: Pass the correct function for the onGenerateAIDescription prop.
         onGenerateAIDescription: handleGenerateAIDescription,
         isAIDescriptionLoading,
         availableDates,
@@ -1385,15 +1382,23 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
             )}
             {currentStep === 2 && renderDetailsForm()}
             {currentStep === 3 && (
-                <Step3Form
-                    media={media}
-                    handleFileChange={handleFileChange}
-                    handleRemoveMedia={handleRemoveMedia}
-                    handleBackToDetails={() => setCurrentStep(2)}
-                    handleFinish={handleFinish}
-                    isSubmitting={isSubmitting}
-                    isEditing={!!propertyToEdit}
-                />
+                <>
+                    <Step3Form
+                        media={media}
+                        handleFileChange={handleFileChange}
+                        handleRemoveMedia={handleRemoveMedia}
+                        handleBackToDetails={() => setCurrentStep(2)}
+                        handleFinish={handleFinish}
+                        isSubmitting={isSubmitting}
+                        isEditing={!!propertyToEdit}
+                    />
+                    {publishError && (
+                        <div className="mt-6 p-4 bg-red-100 border-l-4 border-red-500 text-red-800 rounded-md" role="alert">
+                            <p className="font-bold">{t('systemModal.errorTitle')}</p>
+                            <p className="text-sm">{publishError}</p>
+                        </div>
+                    )}
+                </>
             )}
           </div>
 
