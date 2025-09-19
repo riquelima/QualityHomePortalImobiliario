@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import CloseIcon from './icons/CloseIcon';
@@ -8,12 +9,14 @@ import { supabase } from '../supabaseClient';
 interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
+  loginIntent: 'default' | 'publish';
 }
 
-const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
+const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, loginIntent }) => {
   const { t } = useLanguage();
 
   const handleGoogleLogin = async () => {
+    localStorage.setItem('loginIntent', loginIntent);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -22,6 +25,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
     });
     if (error) {
       console.error('Error logging in with Google:', error.message);
+      localStorage.removeItem('loginIntent');
     }
   };
   

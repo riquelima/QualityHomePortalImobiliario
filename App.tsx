@@ -203,6 +203,8 @@ const App: React.FC = () => {
   const [isAuthReady, setIsAuthReady] = useState(false);
   const fetchingRef = useRef(false);
 
+  const navigateHome = () => setPageState({ page: 'home', userLocation: null });
+
   const showModal = useCallback((config: Omit<ModalConfig, 'isOpen'>) => {
     setModalConfig({ ...config, isOpen: true });
   }, []);
@@ -333,6 +335,8 @@ const App: React.FC = () => {
         fetchingRef.current = false;
     }
   }, [t, showModal, user?.id]);
+  
+  const navigateToPublishJourney = () => setPageState({ page: 'publish-journey', userLocation: null });
 
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -362,9 +366,13 @@ const App: React.FC = () => {
           setProfile(userProfile);
         }
 
-        if (loginIntent === 'publish') {
-          navigateToPublishJourney();
-          setLoginIntent('default');
+        const savedIntent = localStorage.getItem('loginIntent');
+        if (event === 'SIGNED_IN' && savedIntent === 'publish') {
+            navigateToPublishJourney();
+            localStorage.removeItem('loginIntent');
+        } else if (loginIntent === 'publish') {
+            navigateToPublishJourney();
+            setLoginIntent('default');
         }
       } else {
         setProfile(null);
@@ -446,10 +454,10 @@ const App: React.FC = () => {
   }, [isAuthReady, user, fetchAllData]);
 
 
-  const navigateHome = () => setPageState({ page: 'home', userLocation: null });
+  
   const navigateToMap = (location: { lat: number; lng: number } | null = null) => setPageState({ page: 'map', userLocation: location });
   const navigateToPublish = () => setPageState({ page: 'publish', userLocation: null });
-  const navigateToPublishJourney = () => setPageState({ page: 'publish-journey', userLocation: null });
+  
   const navigateToSearchResults = (query: string) => setPageState({ page: 'searchResults', userLocation: null, searchQuery: query });
   const navigateToPropertyDetail = (id: number) => setPageState({ page: 'propertyDetail', propertyId: id, userLocation: null });
   const navigateToFavorites = () => setPageState({ page: 'favorites', userLocation: null });
@@ -476,7 +484,11 @@ const App: React.FC = () => {
   const closeGeoErrorModal = () => setIsGeoErrorModalOpen(false);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+        console.error('Error signing out:', error.message);
+    }
+    navigateHome();
   };
 
   const toggleFavorite = async (propertyId: number) => {
@@ -793,7 +805,7 @@ const App: React.FC = () => {
   return (
     <>
       {renderCurrentPage()}
-      <LoginModal isOpen={isLoginModalOpen} onClose={closeLoginModal} />
+      <LoginModal isOpen={isLoginModalOpen} onClose={closeLoginModal} loginIntent={loginIntent} />
       <GeolocationErrorModal isOpen={isGeoErrorModalOpen} onClose={closeGeoErrorModal} />
       <SystemModal
         {...modalConfig}
