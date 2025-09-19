@@ -70,7 +70,8 @@ const ptTranslations = {
   },
   "listings": {
     "title": "Imóveis em Destaque",
-    "description": "Explore nossa seleção exclusiva de imóveis que combinam luxo, conforto e localização privilegiada."
+    "description": "Explore nossa seleção exclusiva de imóveis que combinam luxo, conforto e localização privilegiada.",
+    "noResults": "Nenhum imóvel encontrado no momento."
   },
   "propertyCard": {
     "bedrooms": "Quartos",
@@ -490,7 +491,8 @@ const enTranslations = {
   },
   "listings": {
     "title": "Featured Properties",
-    "description": "Explore our exclusive selection of properties that combine luxury, comfort, and prime location."
+    "description": "Explore our exclusive selection of properties that combine luxury, comfort, and prime location.",
+    "noResults": "No properties found at the moment."
   },
   "propertyCard": {
     "bedrooms": "Beds",
@@ -910,7 +912,8 @@ const esTranslations = {
   },
   "listings": {
     "title": "Inmuebles Destacados",
-    "description": "Explora nuestra selección exclusiva de inmuebles que combinan lujo, confort y una ubicación privilegiada."
+    "description": "Explora nuestra selección exclusiva de inmuebles que combinan lujo, confort y una ubicación privilegiada.",
+    "noResults": "No se encontraron propiedades por el momento."
   },
   "propertyCard": {
     "bedrooms": "Hab.",

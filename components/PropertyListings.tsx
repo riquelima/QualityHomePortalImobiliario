@@ -48,7 +48,7 @@ const PropertyListings: React.FC<PropertyListingsProps> = ({ properties, onViewD
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
           {isLoading ? (
             Array.from({ length: 6 }).map((_, index) => <SkeletonCard key={index} />)
-          ) : (
+          ) : properties.length > 0 ? (
             properties.map((property) => (
               <PropertyCard 
                 key={property.id} 
@@ -58,6 +58,10 @@ const PropertyListings: React.FC<PropertyListingsProps> = ({ properties, onViewD
                 onToggleFavorite={onToggleFavorite}
               />
             ))
+          ) : (
+             <div className="md:col-span-2 lg:col-span-3 text-center py-16">
+                <p className="text-brand-gray text-lg">{t('listings.noResults')}</p>
+             </div>
           )}
         </div>
       </div>
