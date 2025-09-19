@@ -65,6 +65,16 @@ export interface Property {
   situacao_ocupacao?: string;
   taxa_condominio?: number;
   possui_elevador?: boolean;
+
+  // Novos campos para formulários específicos
+  valor_iptu?: number;
+  aceita_financiamento?: boolean;
+  condicoes_aluguel?: string[];
+  permite_animais?: boolean;
+  minimo_diarias?: number;
+  maximo_hospedes?: number;
+  taxa_limpeza?: number;
+  datas_disponiveis?: string[]; // Array de datas no formato 'YYYY-MM-DD'
 }
 
 export interface Message {

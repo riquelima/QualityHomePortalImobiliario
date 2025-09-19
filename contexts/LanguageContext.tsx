@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useContext, ReactNode } from 'react';
 
 // Translations are embedded directly to avoid module resolution issues.
@@ -179,7 +180,10 @@ const ptTranslations = {
         "label": "Escolha o tipo de imóvel"
       },
       "operation": {
-        "label": "Operação"
+        "label": "Operação",
+        "sell": "Vender",
+        "rent": "Alugar",
+        "season": "Temporada"
       },
       "location": {
         "label": "Localização do imóvel",
@@ -260,19 +264,39 @@ const ptTranslations = {
       "sauna": "Sauna",
       "espacoGourmet": "Espaço gourmet",
       "showMoreDetails": "Mostrar mais detalhes",
-      "propertyPrice": "Preço do imóvel",
-      "price": "Preço",
-      "condoFee": "Valor do condomínio (opcional)",
-      "currency": {
-        "price": "reais",
-        "fee": "reais/mês"
-      },
-      "saleSituation": "Situação de ocupação do imóvel",
-      "rentedWithTenants": "Alugado (com inquilinos)",
-      "withoutTenants": "Desocupado (sem inquilinos)",
       "adDescription": "Descrição do anúncio",
       "descriptionPlaceholder": "Escreva aqui a descrição do anúncio. Mais tarde, você poderá adicionar outros idiomas.",
-      "continueToPhotosButton": "Continuar para fotos"
+      "continueToPhotosButton": "Continuar para fotos",
+      "sellTitle": "Detalhes para Venda",
+      "rentTitle": "Detalhes para Aluguel",
+      "seasonTitle": "Detalhes para Temporada",
+      "salePrice": "Preço de Venda",
+      "iptuAnnual": "Valor do IPTU (anual, opcional)",
+      "acceptsFinancing": "Aceita financiamento?",
+      "occupationSituation": "Situação de ocupação do imóvel",
+      "rented": "Alugado (com inquilinos)",
+      "vacant": "Desocupado (sem inquilinos)",
+      "monthlyRent": "Valor do Aluguel (mensal)",
+      "condoFee": "Valor do condomínio (opcional)",
+      "iptuMonthly": "Valor do IPTU (mensal, opcional)",
+      "rentalConditions": "Condições de aluguel",
+      "deposit": "Caução",
+      "guarantor": "Fiador",
+      "insurance": "Seguro Fiança",
+      "petsAllowed": "Permite animais?",
+      "dailyRate": "Valor da Diária",
+      "minStay": "Mínimo de diárias",
+      "maxGuests": "Máximo de hóspedes",
+      "cleaningFee": "Taxa de limpeza (opcional)",
+      "availability": "Disponibilidade",
+      "currency": {
+        "reais": "reais",
+        "reaisMonth": "reais/mês"
+      },
+      "calendar": {
+        "prev": "Anterior",
+        "next": "Próximo"
+      }
     },
     "photosForm": {
       "title": "Adicione fotos, plantas e vídeos ao seu anúncio",
@@ -606,7 +630,10 @@ const enTranslations = {
         "label": "Choose the property type"
       },
       "operation": {
-        "label": "Operation"
+        "label": "Operation",
+        "sell": "Sell",
+        "rent": "Rent",
+        "season": "Season"
       },
       "location": {
         "label": "Property location",
@@ -687,19 +714,39 @@ const enTranslations = {
       "sauna": "Sauna",
       "espacoGourmet": "Gourmet Area",
       "showMoreDetails": "Indicate more details",
-      "propertyPrice": "Property price",
-      "price": "Price",
-      "condoFee": "Condominium fees (optional)",
-      "currency": {
-        "price": "dollars",
-        "fee": "dollars/month"
-      },
-      "saleSituation": "In what situation will the property be sold?",
-      "rentedWithTenants": "Rented, with tenants",
-      "withoutTenants": "Without tenants",
       "adDescription": "Ad description",
       "descriptionPlaceholder": "Write the description in English here. Later, you can add other languages.",
-      "continueToPhotosButton": "Continue and import photos"
+      "continueToPhotosButton": "Continue and import photos",
+      "sellTitle": "Details for Sale",
+      "rentTitle": "Details for Rent",
+      "seasonTitle": "Details for Seasonal Rent",
+      "salePrice": "Sale Price",
+      "iptuAnnual": "Property Tax (annual, optional)",
+      "acceptsFinancing": "Accepts financing?",
+      "occupationSituation": "Property occupation status",
+      "rented": "Rented (with tenants)",
+      "vacant": "Vacant (no tenants)",
+      "monthlyRent": "Monthly Rent",
+      "condoFee": "Condo fee (optional)",
+      "iptuMonthly": "Property Tax (monthly, optional)",
+      "rentalConditions": "Rental conditions",
+      "deposit": "Deposit",
+      "guarantor": "Guarantor",
+      "insurance": "Rental Insurance",
+      "petsAllowed": "Pets allowed?",
+      "dailyRate": "Daily Rate",
+      "minStay": "Minimum stay (days)",
+      "maxGuests": "Maximum guests",
+      "cleaningFee": "Cleaning fee (optional)",
+      "availability": "Availability",
+      "currency": {
+        "reais": "dollars",
+        "reaisMonth": "dollars/month"
+      },
+      "calendar": {
+        "prev": "Prev",
+        "next": "Next"
+      }
     },
     "photosForm": {
       "title": "Add photos, floor plans, and videos to your ad",
@@ -1033,7 +1080,10 @@ const esTranslations = {
         "label": "Elige el tipo de inmueble"
       },
       "operation": {
-        "label": "Operación"
+        "label": "Operación",
+        "sell": "Vender",
+        "rent": "Alquilar",
+        "season": "Temporada"
       },
       "location": {
         "label": "Ubicación del inmueble",
@@ -1114,19 +1164,39 @@ const esTranslations = {
       "sauna": "Sauna",
       "espacoGourmet": "Espacio gourmet",
       "showMoreDetails": "Indicar más detalles",
-      "propertyPrice": "Precio del inmueble",
-      "price": "Precio",
-      "condoFee": "Gastos de comunidad (opcional)",
-      "currency": {
-        "price": "euros",
-        "fee": "euros/mes"
-      },
-      "saleSituation": "¿En qué situación se venderá el inmueble?",
-      "rentedWithTenants": "Alquilado, con inquilinos",
-      "withoutTenants": "Sin inquilinos",
       "adDescription": "Descripción del anuncio",
       "descriptionPlaceholder": "Escribe aquí la descripción en español. Más tarde, podrás añadir otros idiomas.",
-      "continueToPhotosButton": "Continuar e importar fotos"
+      "continueToPhotosButton": "Continuar e importar fotos",
+      "sellTitle": "Detalles para Venta",
+      "rentTitle": "Detalles para Alquiler",
+      "seasonTitle": "Detalles para Alquiler por Temporada",
+      "salePrice": "Precio de Venta",
+      "iptuAnnual": "IBI (anual, opcional)",
+      "acceptsFinancing": "¿Acepta financiación?",
+      "occupationSituation": "Situación de ocupación del inmueble",
+      "rented": "Alquilado (con inquilinos)",
+      "vacant": "Libre (sin inquilinos)",
+      "monthlyRent": "Alquiler Mensual",
+      "condoFee": "Gastos de comunidad (opcional)",
+      "iptuMonthly": "IBI (mensual, opcional)",
+      "rentalConditions": "Condiciones del alquiler",
+      "deposit": "Fianza",
+      "guarantor": "Aval",
+      "insurance": "Seguro de impago",
+      "petsAllowed": "¿Se admiten mascotas?",
+      "dailyRate": "Precio por Noche",
+      "minStay": "Estancia mínima (días)",
+      "maxGuests": "Número máximo de huéspedes",
+      "cleaningFee": "Tasa de limpieza (opcional)",
+      "availability": "Disponibilidad",
+      "currency": {
+        "reais": "euros",
+        "reaisMonth": "euros/mes"
+      },
+      "calendar": {
+        "prev": "Ant",
+        "next": "Sig"
+      }
     },
     "photosForm": {
         "title": "Añadir fotos, planos y vídeos a tu anuncio",

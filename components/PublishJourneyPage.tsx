@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Header from './Header';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -62,10 +63,23 @@ interface DetailsState {
     hasElevator: boolean | null;
     homeFeatures: string[];
     buildingFeatures: string[];
-    price: string;
-    condoFee: string;
-    saleSituation: string;
     description: string;
+    // Venda
+    salePrice: string;
+    iptuAnnual: string;
+    acceptsFinancing: boolean | null;
+    occupationSituation: string;
+    // Aluguel
+    monthlyRent: string;
+    condoFee: string;
+    iptuMonthly: string;
+    rentalConditions: string[];
+    petsAllowed: boolean | null;
+    // Temporada
+    dailyRate: string;
+    minStay: string;
+    maxGuests: string;
+    cleaningFee: string;
 }
 
 // Props for Step1Form
@@ -143,15 +157,15 @@ const Step1Form: React.FC<Step1FormProps> = ({
                 <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
                 <label className="flex items-center space-x-2 cursor-pointer">
                     <input type="radio" name="operation" value="venda" checked={operation === 'venda'} onChange={() => setOperation('venda')} className="h-5 w-5 text-brand-red focus:ring-brand-red border-gray-300" />
-                    <span>Vender</span>
+                    <span>{t('publishJourney.form.operation.sell')}</span>
                 </label>
                 <label className="flex items-center space-x-2 cursor-pointer">
                     <input type="radio" name="operation" value="aluguel" checked={operation === 'aluguel'} onChange={() => setOperation('aluguel')} className="h-5 w-5 text-brand-red focus:ring-brand-red border-gray-300" />
-                    <span>Alugar</span>
+                    <span>{t('publishJourney.form.operation.rent')}</span>
                 </label>
                 <label className="flex items-center space-x-2 cursor-pointer">
                     <input type="radio" name="operation" value="temporada" checked={operation === 'temporada'} onChange={() => setOperation('temporada')} className="h-5 w-5 text-brand-red focus:ring-brand-red border-gray-300" />
-                    <span>Temporada</span>
+                    <span>{t('publishJourney.form.operation.season')}</span>
                 </label>
                 </div>
             </div>
@@ -290,7 +304,7 @@ const Step1Form: React.FC<Step1FormProps> = ({
     );
 };
 
-interface Step2FormProps {
+interface DetailsFormProps {
     details: DetailsState;
     handleDetailsChange: (value: any, name: string) => void;
     incrementCounter: (field: 'bedrooms' | 'bathrooms') => void;
@@ -300,18 +314,204 @@ interface Step2FormProps {
     isAITitleLoading: boolean;
     onGenerateAIDescription: () => Promise<void>;
     isAIDescriptionLoading: boolean;
+    availableDates: string[];
+    setAvailableDates: (dates: string[]) => void;
 }
 
-const Step2Form: React.FC<Step2FormProps> = ({
-    details,
-    handleDetailsChange,
-    incrementCounter,
-    decrementCounter,
-    handleContinueToPhotos,
-    onGenerateAITitle,
-    isAITitleLoading,
-    onGenerateAIDescription,
-    isAIDescriptionLoading
+const VendaDetailsForm: React.FC<DetailsFormProps> = ({ details, handleDetailsChange, ...commonProps }) => {
+    const { t } = useLanguage();
+    return (
+        <>
+            <h2 className="text-xl font-bold text-brand-navy">{t('publishJourney.detailsForm.sellTitle')}</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                 <div>
+                    <label htmlFor="salePrice" className="block text-base sm:text-lg font-bold text-brand-navy mb-3">{t('publishJourney.detailsForm.salePrice')}</label>
+                    <div className="relative"><input type="number" id="salePrice" value={details.salePrice} onChange={(e) => handleDetailsChange(e.target.value, 'salePrice')} className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" /><span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray">{t('publishJourney.detailsForm.currency.reais')}</span></div>
+                </div>
+                <div>
+                    <label htmlFor="iptuAnnual" className="block text-base sm:text-lg font-bold text-brand-navy mb-3">{t('publishJourney.detailsForm.iptuAnnual')}</label>
+                    <div className="relative"><input type="number" id="iptuAnnual" value={details.iptuAnnual} onChange={(e) => handleDetailsChange(e.target.value, 'iptuAnnual')} className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" /><span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray">{t('publishJourney.detailsForm.currency.reais')}</span></div>
+                </div>
+            </div>
+            <div>
+                 <label className="block text-base sm:text-lg font-bold text-brand-navy mb-3">{t('publishJourney.detailsForm.acceptsFinancing')}</label>
+                <div className="flex items-center space-x-6">
+                    <label className="flex items-center space-x-2 cursor-pointer"><input type="radio" name="acceptsFinancing" value="yes" checked={details.acceptsFinancing === true} onChange={() => handleDetailsChange(true, 'acceptsFinancing')} className="h-5 w-5 text-brand-red focus:ring-brand-red border-gray-300"/><span>{t('publishJourney.detailsForm.yes')}</span></label>
+                    <label className="flex items-center space-x-2 cursor-pointer"><input type="radio" name="acceptsFinancing" value="no" checked={details.acceptsFinancing === false} onChange={() => handleDetailsChange(false, 'acceptsFinancing')} className="h-5 w-5 text-brand-red focus:ring-brand-red border-gray-300"/><span>{t('publishJourney.detailsForm.no')}</span></label>
+                </div>
+            </div>
+            <div>
+                 <label className="block text-base sm:text-lg font-bold text-brand-navy mb-3">{t('publishJourney.detailsForm.occupationSituation')}</label>
+                <div className="flex items-center space-x-6">
+                    <label className="flex items-center space-x-2 cursor-pointer"><input type="radio" name="occupationSituation" value="rented" checked={details.occupationSituation === 'rented'} onChange={(e) => handleDetailsChange(e.target.value, 'occupationSituation')} className="h-5 w-5 text-brand-red focus:ring-brand-red border-gray-300"/><span>{t('publishJourney.detailsForm.rented')}</span></label>
+                    <label className="flex items-center space-x-2 cursor-pointer"><input type="radio" name="occupationSituation" value="vacant" checked={details.occupationSituation === 'vacant'} onChange={(e) => handleDetailsChange(e.target.value, 'occupationSituation')} className="h-5 w-5 text-brand-red focus:ring-brand-red border-gray-300"/><span>{t('publishJourney.detailsForm.vacant')}</span></label>
+                </div>
+            </div>
+        </>
+    );
+};
+
+const AluguelDetailsForm: React.FC<DetailsFormProps> = ({ details, handleDetailsChange, ...commonProps }) => {
+    const { t } = useLanguage();
+    const rentalConditionsOptions = [
+        { value: 'deposit', label: t('publishJourney.detailsForm.deposit') },
+        { value: 'guarantor', label: t('publishJourney.detailsForm.guarantor') },
+        { value: 'insurance', label: t('publishJourney.detailsForm.insurance') },
+    ];
+
+    const handleCheckboxChange = (value: string) => {
+        const newSelection = details.rentalConditions.includes(value)
+            ? details.rentalConditions.filter(item => item !== value)
+            : [...details.rentalConditions, value];
+        handleDetailsChange(newSelection, 'rentalConditions');
+    };
+
+    return (
+        <>
+            <h2 className="text-xl font-bold text-brand-navy">{t('publishJourney.detailsForm.rentTitle')}</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <label htmlFor="monthlyRent" className="block text-base sm:text-lg font-bold text-brand-navy mb-3">{t('publishJourney.detailsForm.monthlyRent')}</label>
+                    <div className="relative"><input type="number" id="monthlyRent" value={details.monthlyRent} onChange={(e) => handleDetailsChange(e.target.value, 'monthlyRent')} className="w-full p-3 border border-gray-300 rounded-md" /><span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray">{t('publishJourney.detailsForm.currency.reaisMonth')}</span></div>
+                </div>
+                <div>
+                    <label htmlFor="condoFee" className="block text-base sm:text-lg font-bold text-brand-navy mb-3">{t('publishJourney.detailsForm.condoFee')}</label>
+                    <div className="relative"><input type="number" id="condoFee" value={details.condoFee} onChange={(e) => handleDetailsChange(e.target.value, 'condoFee')} className="w-full p-3 border border-gray-300 rounded-md" /><span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray">{t('publishJourney.detailsForm.currency.reaisMonth')}</span></div>
+                </div>
+                <div>
+                    <label htmlFor="iptuMonthly" className="block text-base sm:text-lg font-bold text-brand-navy mb-3">{t('publishJourney.detailsForm.iptuMonthly')}</label>
+                    <div className="relative"><input type="number" id="iptuMonthly" value={details.iptuMonthly} onChange={(e) => handleDetailsChange(e.target.value, 'iptuMonthly')} className="w-full p-3 border border-gray-300 rounded-md" /><span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray">{t('publishJourney.detailsForm.currency.reaisMonth')}</span></div>
+                </div>
+            </div>
+            <div>
+                <label className="block text-base sm:text-lg font-bold text-brand-navy mb-3">{t('publishJourney.detailsForm.rentalConditions')}</label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    {rentalConditionsOptions.map(option => (
+                        <label key={option.value} className="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" value={option.value} checked={details.rentalConditions.includes(option.value)} onChange={() => handleCheckboxChange(option.value)} className="h-5 w-5 text-brand-red focus:ring-brand-red border-gray-300 rounded" />
+                            <span>{option.label}</span>
+                        </label>
+                    ))}
+                </div>
+            </div>
+             <div>
+                 <label className="block text-base sm:text-lg font-bold text-brand-navy mb-3">{t('publishJourney.detailsForm.petsAllowed')}</label>
+                <div className="flex items-center space-x-6">
+                    <label className="flex items-center space-x-2 cursor-pointer"><input type="radio" name="petsAllowed" value="yes" checked={details.petsAllowed === true} onChange={() => handleDetailsChange(true, 'petsAllowed')} className="h-5 w-5 text-brand-red focus:ring-brand-red border-gray-300"/><span>{t('publishJourney.detailsForm.yes')}</span></label>
+                    <label className="flex items-center space-x-2 cursor-pointer"><input type="radio" name="petsAllowed" value="no" checked={details.petsAllowed === false} onChange={() => handleDetailsChange(false, 'petsAllowed')} className="h-5 w-5 text-brand-red focus:ring-brand-red border-gray-300"/><span>{t('publishJourney.detailsForm.no')}</span></label>
+                </div>
+            </div>
+        </>
+    );
+};
+
+const CalendarWidget: React.FC<{ selectedDates: string[]; onDateChange: (dates: string[]) => void; }> = ({ selectedDates, onDateChange }) => {
+    const { t } = useLanguage();
+    const [currentDate, setCurrentDate] = useState(new Date());
+
+    const handleDateClick = (date: Date) => {
+        const dateString = date.toISOString().split('T')[0];
+        const isSelected = selectedDates.includes(dateString);
+        let newDates;
+        if (isSelected) {
+            newDates = selectedDates.filter(d => d !== dateString);
+        } else {
+            newDates = [...selectedDates, dateString];
+        }
+        onDateChange(newDates.sort());
+    };
+
+    const renderCalendar = () => {
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        const daysInMonth = lastDay.getDate();
+        const startDayOfWeek = firstDay.getDay();
+
+        const dates = [];
+        for (let i = 0; i < startDayOfWeek; i++) {
+            dates.push(<div key={`empty-${i}`} className="w-10 h-10"></div>);
+        }
+
+        for (let i = 1; i <= daysInMonth; i++) {
+            const date = new Date(year, month, i);
+            const dateString = date.toISOString().split('T')[0];
+            const isSelected = selectedDates.includes(dateString);
+            const isPast = date < new Date() && date.toDateString() !== new Date().toDateString();
+
+            dates.push(
+                <button
+                    type="button"
+                    key={i}
+                    onClick={() => !isPast && handleDateClick(date)}
+                    disabled={isPast}
+                    className={`w-10 h-10 rounded-full transition-colors duration-200 flex items-center justify-center
+                        ${isPast ? 'text-gray-400 cursor-not-allowed' : ''}
+                        ${!isPast && isSelected ? 'bg-brand-red text-white font-bold' : ''}
+                        ${!isPast && !isSelected ? 'hover:bg-red-100' : ''}
+                    `}
+                >
+                    {i}
+                </button>
+            );
+        }
+
+        return dates;
+    };
+    
+    return (
+        <div className="bg-gray-50 p-4 rounded-lg border">
+            <div className="flex justify-between items-center mb-4">
+                <button type="button" onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1))} className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">&lt; {t('publishJourney.detailsForm.calendar.prev')}</button>
+                <span className="font-bold text-lg text-brand-navy">{new Intl.DateTimeFormat(t('language'), { month: 'long', year: 'numeric' }).format(currentDate)}</span>
+                <button type="button" onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1))} className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">{t('publishJourney.detailsForm.calendar.next')} &gt;</button>
+            </div>
+            <div className="grid grid-cols-7 gap-1 text-center font-semibold text-sm text-brand-gray mb-2">
+                <span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span>
+            </div>
+            <div className="grid grid-cols-7 gap-1">
+                {renderCalendar()}
+            </div>
+        </div>
+    );
+};
+
+const TemporadaDetailsForm: React.FC<DetailsFormProps> = ({ details, handleDetailsChange, availableDates, setAvailableDates, ...commonProps }) => {
+    const { t } = useLanguage();
+    return (
+        <>
+            <h2 className="text-xl font-bold text-brand-navy">{t('publishJourney.detailsForm.seasonTitle')}</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                    <label htmlFor="dailyRate" className="block text-base sm:text-lg font-bold text-brand-navy mb-3">{t('publishJourney.detailsForm.dailyRate')}</label>
+                    <div className="relative"><input type="number" id="dailyRate" value={details.dailyRate} onChange={(e) => handleDetailsChange(e.target.value, 'dailyRate')} className="w-full p-3 border border-gray-300 rounded-md" /><span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray">{t('publishJourney.detailsForm.currency.reais')}</span></div>
+                </div>
+                <div>
+                    <label htmlFor="cleaningFee" className="block text-base sm:text-lg font-bold text-brand-navy mb-3">{t('publishJourney.detailsForm.cleaningFee')}</label>
+                    <div className="relative"><input type="number" id="cleaningFee" value={details.cleaningFee} onChange={(e) => handleDetailsChange(e.target.value, 'cleaningFee')} className="w-full p-3 border border-gray-300 rounded-md" /><span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray">{t('publishJourney.detailsForm.currency.reais')}</span></div>
+                </div>
+                 <div>
+                    <label htmlFor="minStay" className="block text-base sm:text-lg font-bold text-brand-navy mb-3">{t('publishJourney.detailsForm.minStay')}</label>
+                    <input type="number" id="minStay" value={details.minStay} onChange={(e) => handleDetailsChange(e.target.value, 'minStay')} className="w-full p-3 border border-gray-300 rounded-md" />
+                </div>
+                 <div>
+                    <label htmlFor="maxGuests" className="block text-base sm:text-lg font-bold text-brand-navy mb-3">{t('publishJourney.detailsForm.maxGuests')}</label>
+                    <input type="number" id="maxGuests" value={details.maxGuests} onChange={(e) => handleDetailsChange(e.target.value, 'maxGuests')} className="w-full p-3 border border-gray-300 rounded-md" />
+                </div>
+            </div>
+             <div>
+                 <label className="block text-base sm:text-lg font-bold text-brand-navy mb-3">{t('publishJourney.detailsForm.availability')}</label>
+                 <CalendarWidget selectedDates={availableDates} onDateChange={setAvailableDates} />
+            </div>
+        </>
+    );
+};
+
+
+const CommonDetailsForm: React.FC<DetailsFormProps> = ({ 
+    details, handleDetailsChange, incrementCounter, decrementCounter, 
+    onGenerateAITitle, isAITitleLoading, onGenerateAIDescription, isAIDescriptionLoading 
 }) => {
     const { t } = useLanguage();
 
@@ -326,9 +526,9 @@ const Step2Form: React.FC<Step2FormProps> = ({
         return (
             <div>
                 <label className="block text-base sm:text-lg font-bold text-brand-navy mb-3">{label}</label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                     {options.map(option => (
-                        <label key={option.value} className="flex items-center space-x-2 cursor-pointer">
+                        <label key={option.value} className="flex items-center space-x-2 cursor-pointer text-sm">
                             <input type="checkbox" value={option.value} checked={selectedOptions.includes(option.value)} onChange={() => handleCheckboxChange(option.value)} className="h-5 w-5 text-brand-red focus:ring-brand-red border-gray-300 rounded" />
                             <span>{option.label}</span>
                         </label>
@@ -351,7 +551,6 @@ const Step2Form: React.FC<Step2FormProps> = ({
 
     return (
         <div className="space-y-8">
-            <h2 className="text-xl font-bold text-brand-navy">{t('publishJourney.detailsForm.title')}</h2>
             <div>
                 <label htmlFor="adTitle" className="block text-base sm:text-lg font-bold text-brand-navy mb-3">{t('publishJourney.detailsForm.adTitle')}</label>
                  <div className="relative">
@@ -394,13 +593,6 @@ const Step2Form: React.FC<Step2FormProps> = ({
             />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div>
-                    <label className="block text-base sm:text-lg font-bold text-brand-navy mb-3">{t('publishJourney.detailsForm.condition')}</label>
-                    <div className="flex items-center space-x-6">
-                        <label className="flex items-center space-x-2 cursor-pointer"><input type="radio" name="condition" value="for_renovation" checked={details.condition === 'for_renovation'} onChange={(e) => handleDetailsChange(e.target.value, 'condition')} className="h-5 w-5 text-brand-red focus:ring-brand-red border-gray-300"/><span>{t('publishJourney.detailsForm.forRenovation')}</span></label>
-                        <label className="flex items-center space-x-2 cursor-pointer"><input type="radio" name="condition" value="good_condition" checked={details.condition === 'good_condition'} onChange={(e) => handleDetailsChange(e.target.value, 'condition')} className="h-5 w-5 text-brand-red focus:ring-brand-red border-gray-300"/><span>{t('publishJourney.detailsForm.goodCondition')}</span></label>
-                    </div>
-                </div>
                 <div className="grid grid-cols-2 gap-4">
                     <div>
                         <label htmlFor="grossArea" className="block text-base sm:text-lg font-bold text-brand-navy mb-3">{t('publishJourney.detailsForm.grossArea')}</label>
@@ -460,29 +652,7 @@ const Step2Form: React.FC<Step2FormProps> = ({
                 selectedOptions={details.buildingFeatures}
                 onChange={(value) => handleDetailsChange(value, 'buildingFeatures')}
             />
-
-            <div>
-                <h2 className="text-xl font-bold text-brand-navy mb-4">{t('publishJourney.detailsForm.propertyPrice')}</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label htmlFor="price" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.price')}</label>
-                        <div className="relative"><input type="number" id="price" value={details.price} onChange={(e) => handleDetailsChange(e.target.value, 'price')} className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" /><span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray">{t('publishJourney.detailsForm.currency.price')}</span></div>
-                    </div>
-                     <div>
-                        <label htmlFor="condoFee" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.condoFee')}</label>
-                        <div className="relative"><input type="number" id="condoFee" value={details.condoFee} onChange={(e) => handleDetailsChange(e.target.value, 'condoFee')} className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" /><span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray">{t('publishJourney.detailsForm.currency.fee')}</span></div>
-                    </div>
-                </div>
-            </div>
-
-             <div>
-                 <label className="block text-base sm:text-lg font-bold text-brand-navy mb-3">{t('publishJourney.detailsForm.saleSituation')}</label>
-                <div className="flex items-center space-x-6">
-                    <label className="flex items-center space-x-2 cursor-pointer"><input type="radio" name="saleSituation" value="rented" checked={details.saleSituation === 'rented'} onChange={(e) => handleDetailsChange(e.target.value, 'saleSituation')} className="h-5 w-5 text-brand-red focus:ring-brand-red border-gray-300"/><span>{t('publishJourney.detailsForm.rentedWithTenants')}</span></label>
-                    <label className="flex items-center space-x-2 cursor-pointer"><input type="radio" name="saleSituation" value="vacant" checked={details.saleSituation === 'vacant'} onChange={(e) => handleDetailsChange(e.target.value, 'saleSituation')} className="h-5 w-5 text-brand-red focus:ring-brand-red border-gray-300"/><span>{t('publishJourney.detailsForm.withoutTenants')}</span></label>
-                </div>
-            </div>
-
+            
             <div>
                 <label htmlFor="description" className="block text-base sm:text-lg font-bold text-brand-navy mb-3">{t('publishJourney.detailsForm.adDescription')}</label>
                 <div className="relative">
@@ -508,12 +678,6 @@ const Step2Form: React.FC<Step2FormProps> = ({
                         </button>
                     )}
                 </div>
-            </div>
-            
-            <div className="text-center">
-                <button type="button" onClick={handleContinueToPhotos} className="w-full max-w-xs mx-auto px-6 py-3 bg-[#93005a] text-white font-bold rounded-md hover:opacity-90 transition-opacity">
-                    {t('publishJourney.detailsForm.continueToPhotosButton')}
-                </button>
             </div>
         </div>
     );
@@ -659,11 +823,22 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
     hasElevator: null,
     homeFeatures: [],
     buildingFeatures: [],
-    price: '',
+    description: '',
+    salePrice: '',
+    iptuAnnual: '',
+    acceptsFinancing: null,
+    occupationSituation: 'vacant',
+    monthlyRent: '',
     condoFee: '',
-    saleSituation: 'vacant',
-    description: ''
+    iptuMonthly: '',
+    rentalConditions: [],
+    petsAllowed: null,
+    dailyRate: '',
+    minStay: '',
+    maxGuests: '',
+    cleaningFee: ''
   });
+  const [availableDates, setAvailableDates] = useState<string[]>([]);
   const [media, setMedia] = useState<MediaItem[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAITitleLoading, setIsAITitleLoading] = useState(false);
@@ -690,6 +865,8 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
         preference: 'chat_and_phone', // Assuming a default, not stored in DB
         name: propertyToEdit.owner?.nome_completo || '',
       });
+      
+      const price = propertyToEdit.preco?.toString() || '';
       setDetails({
         title: propertyToEdit.titulo || '',
         propertyType: propertyToEdit.tipo_imovel ? [propertyToEdit.tipo_imovel] : [],
@@ -701,12 +878,22 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
         hasElevator: propertyToEdit.possui_elevador ?? null,
         homeFeatures: propertyToEdit.caracteristicas_imovel || [],
         buildingFeatures: propertyToEdit.caracteristicas_condominio || [],
-        price: propertyToEdit.preco?.toString() || '',
-        condoFee: propertyToEdit.taxa_condominio?.toString() || '',
-        // FIX: Renamed 'situacao_ocupacao' to 'saleSituation' to match the DetailsState interface.
-        saleSituation: propertyToEdit.situacao_ocupacao || 'vacant',
         description: propertyToEdit.descricao || '',
+        salePrice: propertyToEdit.tipo_operacao === 'venda' ? price : '',
+        iptuAnnual: propertyToEdit.tipo_operacao === 'venda' ? propertyToEdit.valor_iptu?.toString() || '' : '',
+        acceptsFinancing: propertyToEdit.aceita_financiamento ?? null,
+        occupationSituation: propertyToEdit.situacao_ocupacao || 'vacant',
+        monthlyRent: propertyToEdit.tipo_operacao === 'aluguel' ? price : '',
+        condoFee: propertyToEdit.taxa_condominio?.toString() || '',
+        iptuMonthly: propertyToEdit.tipo_operacao === 'aluguel' ? propertyToEdit.valor_iptu?.toString() || '' : '',
+        rentalConditions: propertyToEdit.condicoes_aluguel || [],
+        petsAllowed: propertyToEdit.permite_animais ?? null,
+        dailyRate: propertyToEdit.tipo_operacao === 'temporada' ? price : '',
+        minStay: propertyToEdit.minimo_diarias?.toString() || '',
+        maxGuests: propertyToEdit.maximo_hospedes?.toString() || '',
+        cleaningFee: propertyToEdit.taxa_limpeza?.toString() || '',
       });
+      setAvailableDates(propertyToEdit.datas_disponiveis || []);
       setMedia(propertyToEdit.midias_imovel || []);
       setIsAddressVerified(true);
       setCurrentStep(1); // Start at step 1 for editing
@@ -965,33 +1152,60 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
     const existingMedia = media.filter(m => !(m instanceof File)) as { id: number; url: string; tipo: 'imagem' | 'video' }[];
     const newMediaFiles = media.filter(m => m instanceof File) as File[];
 
+    let propertyData: Partial<Property> = {
+        anunciante_id: user.id,
+        titulo: details.title,
+        descricao: details.description,
+        endereco_completo: verifiedAddress,
+        cidade: address.state ? `${address.city}, ${address.state}` : address.city,
+        rua: address.street,
+        numero: address.number,
+        latitude: coordinates?.lat,
+        longitude: coordinates?.lng,
+        tipo_operacao: operation,
+        tipo_imovel: details.propertyType[0] || null,
+        quartos: details.bedrooms,
+        banheiros: details.bathrooms,
+        area_bruta: parseInt(details.grossArea, 10) || 0,
+        possui_elevador: details.hasElevator,
+        caracteristicas_imovel: details.homeFeatures,
+        caracteristicas_condominio: details.buildingFeatures,
+        status: 'ativo',
+    };
+
+    if (operation === 'venda') {
+        propertyData = {
+            ...propertyData,
+            preco: parseFloat(details.salePrice) || 0,
+            valor_iptu: parseFloat(details.iptuAnnual) || undefined,
+            aceita_financiamento: details.acceptsFinancing,
+            situacao_ocupacao: details.occupationSituation,
+        };
+    } else if (operation === 'aluguel') {
+        propertyData = {
+            ...propertyData,
+            preco: parseFloat(details.monthlyRent) || 0,
+            taxa_condominio: parseFloat(details.condoFee) || undefined,
+            valor_iptu: parseFloat(details.iptuMonthly) || undefined,
+            condicoes_aluguel: details.rentalConditions,
+            permite_animais: details.petsAllowed,
+        };
+    } else if (operation === 'temporada') {
+        propertyData = {
+            ...propertyData,
+            preco: parseFloat(details.dailyRate) || 0,
+            minimo_diarias: parseInt(details.minStay, 10) || undefined,
+            maximo_hospedes: parseInt(details.maxGuests, 10) || undefined,
+            taxa_limpeza: parseFloat(details.cleaningFee) || undefined,
+            datas_disponiveis: availableDates,
+        };
+    }
+
     try {
       if (propertyToEdit) {
-        const propertyDataToUpdate = {
-            titulo: details.title,
-            descricao: details.description,
-            preco: parseFloat(details.price) || 0,
-            quartos: details.bedrooms,
-            banheiros: details.bathrooms,
-            area_bruta: parseInt(details.grossArea, 10) || 0,
-            tipo_imovel: details.propertyType.length > 0 ? details.propertyType[0] : null,
-            caracteristicas_imovel: details.homeFeatures,
-            caracteristicas_condominio: details.buildingFeatures,
-            possui_elevador: details.hasElevator,
-            taxa_condominio: parseFloat(details.condoFee) || null,
-            situacao_ocupacao: details.saleSituation,
-            tipo_operacao: operation,
-            endereco_completo: verifiedAddress,
-            cidade: address.state ? `${address.city}, ${address.state}` : address.city,
-            rua: address.street,
-            numero: address.number,
-            latitude: coordinates?.lat,
-            longitude: coordinates?.lng,
-        };
-
         const { error: updateError } = await supabase
             .from('imoveis')
-            .update(propertyDataToUpdate)
+            .update(propertyData)
             .eq('id', propertyToEdit.id);
         
         if (updateError) throw new Error(`Error updating property details: ${updateError.message}`);
@@ -1046,33 +1260,9 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
         await onUpdateProperty();
 
       } else {
-        const propertyDataToInsert = {
-            anunciante_id: user.id,
-            titulo: details.title,
-            descricao: details.description,
-            endereco_completo: verifiedAddress,
-            cidade: address.state ? `${address.city}, ${address.state}` : address.city,
-            rua: address.street,
-            numero: address.number,
-            latitude: coordinates?.lat,
-            longitude: coordinates?.lng,
-            preco: parseFloat(details.price) || 0,
-            tipo_operacao: operation,
-            tipo_imovel: details.propertyType[0] || null,
-            quartos: details.bedrooms,
-            banheiros: details.bathrooms,
-            area_bruta: parseInt(details.grossArea, 10) || 0,
-            possui_elevador: details.hasElevator,
-            caracteristicas_imovel: details.homeFeatures,
-            caracteristicas_condominio: details.buildingFeatures,
-            taxa_condominio: parseFloat(details.condoFee) || null,
-            situacao_ocupacao: details.saleSituation,
-            status: 'ativo',
-        };
-
         const { data: newProperty, error: propertyError } = await supabase
           .from('imoveis')
-          .insert(propertyDataToInsert)
+          .insert(propertyData)
           .select()
           .single();
 
@@ -1129,6 +1319,52 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const renderDetailsForm = () => {
+    const commonProps = {
+        details,
+        handleDetailsChange,
+        incrementCounter,
+        decrementCounter,
+        handleContinueToPhotos,
+        // FIX: Pass the correct function for the onGenerateAITitle prop.
+        onGenerateAITitle: handleGenerateAITitle,
+        isAITitleLoading,
+        // FIX: Pass the correct function for the onGenerateAIDescription prop.
+        onGenerateAIDescription: handleGenerateAIDescription,
+        isAIDescriptionLoading,
+        availableDates,
+        setAvailableDates
+    };
+
+    let SpecificForm;
+    switch (operation) {
+        case 'venda':
+            SpecificForm = <VendaDetailsForm {...commonProps} />;
+            break;
+        case 'aluguel':
+            SpecificForm = <AluguelDetailsForm {...commonProps} />;
+            break;
+        case 'temporada':
+            SpecificForm = <TemporadaDetailsForm {...commonProps} />;
+            break;
+        default:
+            SpecificForm = <VendaDetailsForm {...commonProps} />;
+    }
+
+    return (
+        <div className="space-y-8">
+            <CommonDetailsForm {...commonProps} />
+            <hr className="my-8"/>
+            {SpecificForm}
+            <div className="text-center mt-8">
+                <button type="button" onClick={handleContinueToPhotos} className="w-full max-w-xs mx-auto px-6 py-3 bg-[#93005a] text-white font-bold rounded-md hover:opacity-90 transition-opacity">
+                    {t('publishJourney.detailsForm.continueToPhotosButton')}
+                </button>
+            </div>
+        </div>
+    );
   };
 
 
@@ -1192,19 +1428,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
                     handlePreferenceChange={handlePreferenceChange}
                 />
             )}
-            {currentStep === 2 && (
-                <Step2Form 
-                    details={details}
-                    handleDetailsChange={handleDetailsChange}
-                    incrementCounter={incrementCounter}
-                    decrementCounter={decrementCounter}
-                    handleContinueToPhotos={() => setCurrentStep(3)}
-                    onGenerateAITitle={handleGenerateAITitle}
-                    isAITitleLoading={isAITitleLoading}
-                    onGenerateAIDescription={handleGenerateAIDescription}
-                    isAIDescriptionLoading={isAIDescriptionLoading}
-                />
-            )}
+            {currentStep === 2 && renderDetailsForm()}
             {currentStep === 3 && (
                 <Step3Form
                     media={media}
