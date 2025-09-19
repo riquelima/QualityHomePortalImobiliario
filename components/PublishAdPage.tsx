@@ -20,10 +20,11 @@ interface PublishAdPageProps {
   onNavigateToChatList: () => void;
   // FIX: Add onNavigateToMyAds prop to resolve typing error.
   onNavigateToMyAds: () => void;
+  onNavigateToAllListings: () => void;
   hasUnreadMessages: boolean;
 }
 
-const PublishAdPage: React.FC<PublishAdPageProps> = ({ onBack, onPublishAdClick, onOpenLoginModal, onNavigateToJourney, user, profile, onLogout, onNavigateToFavorites, onNavigateToChatList, onNavigateToMyAds, hasUnreadMessages }) => {
+const PublishAdPage: React.FC<PublishAdPageProps> = ({ onBack, onPublishAdClick, onOpenLoginModal, onNavigateToJourney, user, profile, onLogout, onNavigateToFavorites, onNavigateToChatList, onNavigateToMyAds, onNavigateToAllListings, hasUnreadMessages }) => {
   const { t } = useLanguage();
 
   const handlePublishClick = () => {
@@ -38,7 +39,7 @@ const PublishAdPage: React.FC<PublishAdPageProps> = ({ onBack, onPublishAdClick,
     <div className="bg-brand-light-gray min-h-screen">
        {/* FIX: Pass profile prop to Header. */}
        {/* FIX: Pass onNavigateToMyAds prop to Header. */}
-       <Header onPublishAdClick={onPublishAdClick} onAccessClick={onOpenLoginModal} user={user} profile={profile} onLogout={onLogout} onNavigateToFavorites={onNavigateToFavorites} onNavigateToChatList={onNavigateToChatList} onNavigateToMyAds={onNavigateToMyAds} hasUnreadMessages={hasUnreadMessages} />
+       <Header onPublishAdClick={onPublishAdClick} onAccessClick={onOpenLoginModal} user={user} profile={profile} onLogout={onLogout} onNavigateToFavorites={onNavigateToFavorites} onNavigateToChatList={onNavigateToChatList} onNavigateToMyAds={onNavigateToMyAds} onNavigateToAllListings={onNavigateToAllListings} hasUnreadMessages={hasUnreadMessages} />
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumbs */}
         <div className="text-sm mb-6">

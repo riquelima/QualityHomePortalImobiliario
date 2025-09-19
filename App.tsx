@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
@@ -17,12 +18,13 @@ import ChatListPage from './components/ChatListPage';
 import ChatPage from './components/ChatPage';
 import MyAdsPage from './components/MyAdsPage';
 import SystemModal from './components/SystemModal';
+import AllListingsPage from './components/AllListingsPage';
 import { useLanguage } from './contexts/LanguageContext';
 import { supabase } from './supabaseClient';
 import type { User, Property, ChatSession, Message, Profile, Media } from './types';
 
 interface PageState {
-  page: 'home' | 'map' | 'publish' | 'publish-journey' | 'searchResults' | 'propertyDetail' | 'favorites' | 'chatList' | 'chat' | 'myAds' | 'edit-journey';
+  page: 'home' | 'map' | 'publish' | 'publish-journey' | 'searchResults' | 'propertyDetail' | 'favorites' | 'chatList' | 'chat' | 'myAds' | 'edit-journey' | 'allListings';
   userLocation: { lat: number; lng: number } | null;
   searchQuery?: string;
   propertyId?: number;
@@ -499,6 +501,7 @@ const App: React.FC = () => {
   const navigateToEditJourney = (property: Property) => {
     setPageState({ page: 'edit-journey', userLocation: null, propertyToEdit: property });
   };
+  const navigateToAllListings = () => setPageState({ page: 'allListings', userLocation: null });
 
   const openLoginModal = (intent: 'default' | 'publish' = 'default') => {
     setLoginIntent(intent);
@@ -665,7 +668,7 @@ const App: React.FC = () => {
       case 'publish':
         return <PublishAdPage 
                   onBack={navigateHome} 
-                  onPublishAdClick={navigateToPublish}
+                  onPublishAdClick={navigateToPublishJourney}
                   onOpenLoginModal={() => openLoginModal('publish')} 
                   onNavigateToJourney={navigateToPublishJourney}
                   user={user}
@@ -674,6 +677,7 @@ const App: React.FC = () => {
                   onNavigateToFavorites={navigateToFavorites}
                   onNavigateToChatList={navigateToChatList}
                   onNavigateToMyAds={navigateToMyAds}
+                  onNavigateToAllListings={navigateToAllListings}
                   hasUnreadMessages={hasUnreadMessages}
                />;
       case 'publish-journey':
@@ -681,7 +685,7 @@ const App: React.FC = () => {
         return <PublishJourneyPage
                   propertyToEdit={pageState.page === 'edit-journey' ? pageState.propertyToEdit : null}
                   onBack={navigateHome}
-                  onPublishAdClick={navigateToPublish}
+                  onPublishAdClick={navigateToPublishJourney}
                   onOpenLoginModal={() => openLoginModal('default')}
                   user={user}
                   profile={profile}
@@ -693,6 +697,7 @@ const App: React.FC = () => {
                   onNavigateToMyAds={navigateToMyAds}
                   onPublishError={handlePublishError}
                   onRequestModal={showModal}
+                  onNavigateToAllListings={navigateToAllListings}
                   hasUnreadMessages={hasUnreadMessages}
                 />;
       case 'searchResults':
@@ -706,7 +711,7 @@ const App: React.FC = () => {
           onBack={navigateHome}
           searchQuery={pageState.searchQuery ?? ''}
           properties={filteredProperties}
-          onPublishAdClick={navigateToPublish}
+          onPublishAdClick={navigateToPublishJourney}
           onAccessClick={() => openLoginModal('default')}
           user={user}
           profile={profile}
@@ -717,6 +722,7 @@ const App: React.FC = () => {
           onNavigateToFavorites={navigateToFavorites}
           onNavigateToChatList={navigateToChatList}
           onNavigateToMyAds={navigateToMyAds}
+          onNavigateToAllListings={navigateToAllListings}
           hasUnreadMessages={hasUnreadMessages}
         />;
       case 'propertyDetail':
@@ -728,7 +734,7 @@ const App: React.FC = () => {
         return <PropertyDetailPage 
                   property={property}
                   onBack={() => window.history.back()}
-                  onPublishAdClick={navigateToPublish} 
+                  onPublishAdClick={navigateToPublishJourney} 
                   onAccessClick={() => openLoginModal('default')} 
                   user={user} 
                   profile={profile}
@@ -739,6 +745,7 @@ const App: React.FC = () => {
                   onStartChat={handleStartChat}
                   onNavigateToChatList={navigateToChatList}
                   onNavigateToMyAds={navigateToMyAds}
+                  onNavigateToAllListings={navigateToAllListings}
                   hasUnreadMessages={hasUnreadMessages}
                 />;
       case 'favorites':
@@ -746,7 +753,7 @@ const App: React.FC = () => {
           return <FavoritesPage
             onBack={navigateHome}
             properties={favoriteProperties}
-            onPublishAdClick={navigateToPublish}
+            onPublishAdClick={navigateToPublishJourney}
             onAccessClick={() => openLoginModal('default')}
             user={user}
             profile={profile}
@@ -757,6 +764,7 @@ const App: React.FC = () => {
             onNavigateToFavorites={navigateToFavorites}
             onNavigateToChatList={navigateToChatList}
             onNavigateToMyAds={navigateToMyAds}
+            onNavigateToAllListings={navigateToAllListings}
             hasUnreadMessages={hasUnreadMessages}
           />;
       case 'chatList':
@@ -766,7 +774,7 @@ const App: React.FC = () => {
                   user={user}
                   profile={profile}
                   onLogout={handleLogout}
-                  onPublishAdClick={navigateToPublish}
+                  onPublishAdClick={navigateToPublishJourney}
                   onAccessClick={() => openLoginModal('default')}
                   onNavigateToFavorites={navigateToFavorites}
                   onNavigateToChatList={navigateToChatList}
@@ -774,6 +782,7 @@ const App: React.FC = () => {
                   properties={properties}
                   onNavigateToChat={navigateToChat}
                   onNavigateToMyAds={navigateToMyAds}
+                  onNavigateToAllListings={navigateToAllListings}
                   hasUnreadMessages={hasUnreadMessages}
                />;
       case 'chat':
@@ -803,13 +812,44 @@ const App: React.FC = () => {
             onViewDetails={navigateToPropertyDetail}
             onDeleteProperty={handleRequestDeleteProperty}
             onEditProperty={navigateToEditJourney}
+            onNavigateToAllListings={navigateToAllListings}
             hasUnreadMessages={hasUnreadMessages}
+        />;
+      case 'allListings':
+        return <AllListingsPage
+          onBack={navigateHome}
+          properties={properties}
+          onPublishAdClick={navigateToPublishJourney}
+          onAccessClick={() => openLoginModal('default')}
+          user={user}
+          profile={profile}
+          onLogout={handleLogout}
+          onViewDetails={navigateToPropertyDetail}
+          favorites={favorites}
+          onToggleFavorite={toggleFavorite}
+          onNavigateToFavorites={navigateToFavorites}
+          onNavigateToChatList={navigateToChatList}
+          onNavigateToMyAds={navigateToMyAds}
+          onSearchSubmit={navigateToSearchResults}
+          onNavigateToAllListings={navigateToAllListings}
+          hasUnreadMessages={hasUnreadMessages}
         />;
       case 'home':
       default:
         return (
           <div className="bg-white font-sans text-brand-dark">
-            <Header onPublishAdClick={navigateToPublish} onAccessClick={() => openLoginModal('default')} user={user} profile={profile} onLogout={handleLogout} onNavigateToFavorites={navigateToFavorites} onNavigateToChatList={navigateToChatList} onNavigateToMyAds={navigateToMyAds} hasUnreadMessages={hasUnreadMessages} />
+            <Header 
+              onPublishAdClick={navigateToPublishJourney} 
+              onAccessClick={() => openLoginModal('default')} 
+              user={user} 
+              profile={profile} 
+              onLogout={handleLogout} 
+              onNavigateToFavorites={navigateToFavorites} 
+              onNavigateToChatList={navigateToChatList} 
+              onNavigateToMyAds={navigateToMyAds} 
+              onNavigateToAllListings={navigateToAllListings} 
+              hasUnreadMessages={hasUnreadMessages} 
+            />
             <main>
               <Hero 
                 onDrawOnMapClick={() => navigateToMap()} 

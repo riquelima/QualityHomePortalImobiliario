@@ -44,6 +44,7 @@ interface PublishJourneyPageProps {
   onNavigateToMyAds: () => void;
   propertyToEdit?: Property | null;
   onRequestModal: (config: ModalRequestConfig) => void;
+  onNavigateToAllListings: () => void;
   hasUnreadMessages: boolean;
 }
 
@@ -631,7 +632,7 @@ const mockAIDescriptionGeneration = (details: DetailsState): Promise<string> => 
 
 
 const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
-  const { onBack, onPublishAdClick, onOpenLoginModal, user, profile, onLogout, onNavigateToFavorites, onAddProperty, onUpdateProperty, onPublishError, onNavigateToChatList, onNavigateToMyAds, propertyToEdit, onRequestModal, hasUnreadMessages } = props;
+  const { onBack, onPublishAdClick, onOpenLoginModal, user, profile, onLogout, onNavigateToFavorites, onAddProperty, onUpdateProperty, onPublishError, onNavigateToChatList, onNavigateToMyAds, propertyToEdit, onRequestModal, onNavigateToAllListings, hasUnreadMessages } = props;
   const { t } = useLanguage();
   const [currentStep, setCurrentStep] = useState(1);
   const [operation, setOperation] = useState('venda');
@@ -1133,7 +1134,18 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
 
   return (
     <div className="bg-brand-light-gray min-h-screen">
-      <Header onPublishAdClick={onPublishAdClick} onAccessClick={onOpenLoginModal} user={user} profile={profile} onLogout={onLogout} onNavigateToFavorites={onNavigateToFavorites} onNavigateToChatList={onNavigateToChatList} onNavigateToMyAds={onNavigateToMyAds} hasUnreadMessages={hasUnreadMessages} />
+      <Header 
+        onPublishAdClick={onPublishAdClick} 
+        onAccessClick={onOpenLoginModal} 
+        user={user} 
+        profile={profile} 
+        onLogout={onLogout} 
+        onNavigateToFavorites={onNavigateToFavorites} 
+        onNavigateToChatList={onNavigateToChatList} 
+        onNavigateToMyAds={onNavigateToMyAds} 
+        onNavigateToAllListings={onNavigateToAllListings} 
+        hasUnreadMessages={hasUnreadMessages} 
+      />
       <div className="container mx-auto px-4 sm:px-6 py-8">
         <div className="max-w-3xl mx-auto mb-8">
           <ol className="grid grid-cols-3 text-sm font-medium text-center text-gray-500">

@@ -30,6 +30,7 @@ interface HeaderProps {
   onNavigateToFavorites: () => void;
   onNavigateToChatList: () => void;
   onNavigateToMyAds: () => void;
+  onNavigateToAllListings: () => void;
   hasUnreadMessages: boolean;
 }
 
@@ -39,7 +40,7 @@ const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
 }
 
-const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, profile, onLogout, onNavigateToFavorites, onNavigateToChatList, onNavigateToMyAds, hasUnreadMessages }) => {
+const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, profile, onLogout, onNavigateToFavorites, onNavigateToChatList, onNavigateToMyAds, onNavigateToAllListings, hasUnreadMessages }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
@@ -98,7 +99,7 @@ const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, 
                       <div className="space-y-4">
                         <h3 className="font-bold text-brand-dark text-base">{t('header.ownersDropdown.sell.title')}</h3>
                         <ul className="space-y-3 text-sm">
-                          <li><a href="#" className="text-brand-gray hover:text-brand-red">{t('header.ownersDropdown.sell.publish')}</a></li>
+                          <li><a href="#" onClick={(e) => { e.preventDefault(); onPublishAdClick(); }} className="text-brand-gray hover:text-brand-red">{t('header.ownersDropdown.sell.publish')}</a></li>
                           <li><a href="#" className="text-brand-gray hover:text-brand-red">{t('header.ownersDropdown.sell.guide')}</a></li>
                           <li><a href="#" className="text-brand-gray hover:text-brand-red">{t('header.ownersDropdown.sell.documents')}</a></li>
                         </ul>
@@ -107,14 +108,14 @@ const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, 
                       <div className="space-y-4">
                         <h3 className="font-bold text-brand-dark text-base">{t('header.ownersDropdown.rent.title')}</h3>
                         <ul className="space-y-3 text-sm">
-                          <li><a href="#" className="text-brand-gray hover:text-brand-red">{t('header.ownersDropdown.rent.publish')}</a></li>
+                          <li><a href="#" onClick={(e) => { e.preventDefault(); onPublishAdClick(); }} className="text-brand-gray hover:text-brand-red">{t('header.ownersDropdown.rent.publish')}</a></li>
                         </ul>
                       </div>
                       {/* Para a tua habitação */}
                       <div className="space-y-4">
                         <h3 className="font-bold text-brand-dark text-base">{t('header.ownersDropdown.forYourHome.title')}</h3>
                         <ul className="space-y-3 text-sm">
-                          <li><a href="#" className="text-brand-gray hover:text-brand-red">{t('header.ownersDropdown.forYourHome.ownerArea')}</a></li>
+                          <li><a href="#" onClick={(e) => { e.preventDefault(); onAccessClick(); }} className="text-brand-gray hover:text-brand-red">{t('header.ownersDropdown.forYourHome.ownerArea')}</a></li>
                         </ul>
                       </div>
                     </div>
@@ -134,14 +135,14 @@ const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, 
                       <div className="space-y-4">
                         <h3 className="font-bold text-brand-dark text-base">{t('header.searchDropdown.buy.title')}</h3>
                         <ul className="space-y-3 text-sm">
-                          <li><a href="#" className="text-brand-gray hover:text-brand-red">{t('header.searchDropdown.buy.explore')}</a></li>
+                          <li><a href="#" onClick={(e) => { e.preventDefault(); onNavigateToAllListings(); }} className="text-brand-gray hover:text-brand-red">{t('header.searchDropdown.buy.explore')}</a></li>
                         </ul>
                       </div>
                       {/* Procurar para arrendar */}
                       <div className="space-y-4">
                         <h3 className="font-bold text-brand-dark text-base">{t('header.searchDropdown.rent.title')}</h3>
                         <ul className="space-y-3 text-sm">
-                          <li><a href="#" className="text-brand-gray hover:text-brand-red">{t('header.searchDropdown.rent.explore')}</a></li>
+                          <li><a href="#" onClick={(e) => { e.preventDefault(); onNavigateToAllListings(); }} className="text-brand-gray hover:text-brand-red">{t('header.searchDropdown.rent.explore')}</a></li>
                         </ul>
                       </div>
                     </div>
@@ -300,7 +301,7 @@ const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, 
                       <div className="space-y-1">
                           <h3 className="font-bold text-brand-dark">{t('header.ownersDropdown.sell.title')}</h3>
                           <ul className="space-y-1 pl-2">
-                              <li><a href="#" className="text-brand-gray hover:text-brand-red block py-1">{t('header.ownersDropdown.sell.publish')}</a></li>
+                              <li><a href="#" onClick={(e) => { e.preventDefault(); onPublishAdClick(); setIsMenuOpen(false); }} className="text-brand-gray hover:text-brand-red block py-1">{t('header.ownersDropdown.sell.publish')}</a></li>
                               <li><a href="#" className="text-brand-gray hover:text-brand-red block py-1">{t('header.ownersDropdown.sell.guide')}</a></li>
                               <li><a href="#" className="text-brand-gray hover:text-brand-red block py-1">{t('header.ownersDropdown.sell.documents')}</a></li>
                           </ul>
@@ -309,14 +310,14 @@ const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, 
                       <div className="space-y-1">
                           <h3 className="font-bold text-brand-dark">{t('header.ownersDropdown.rent.title')}</h3>
                           <ul className="space-y-1 pl-2">
-                              <li><a href="#" className="text-brand-gray hover:text-brand-red block py-1">{t('header.ownersDropdown.rent.publish')}</a></li>
+                              <li><a href="#" onClick={(e) => { e.preventDefault(); onPublishAdClick(); setIsMenuOpen(false); }} className="text-brand-gray hover:text-brand-red block py-1">{t('header.ownersDropdown.rent.publish')}</a></li>
                           </ul>
                       </div>
                       {/* Para a tua habitação */}
                       <div className="space-y-1">
                           <h3 className="font-bold text-brand-dark">{t('header.ownersDropdown.forYourHome.title')}</h3>
                           <ul className="space-y-1 pl-2">
-                              <li><a href="#" className="text-brand-gray hover:text-brand-red block py-1">{t('header.ownersDropdown.forYourHome.ownerArea')}</a></li>
+                              <li><a href="#" onClick={(e) => { e.preventDefault(); onAccessClick(); setIsMenuOpen(false); }} className="text-brand-gray hover:text-brand-red block py-1">{t('header.ownersDropdown.forYourHome.ownerArea')}</a></li>
                           </ul>
                       </div>
                   </div>
@@ -336,14 +337,14 @@ const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, 
                       <div className="space-y-1">
                           <h3 className="font-bold text-brand-dark">{t('header.searchDropdown.buy.title')}</h3>
                           <ul className="space-y-1 pl-2">
-                              <li><a href="#" className="text-brand-gray hover:text-brand-red block py-1">{t('header.searchDropdown.buy.explore')}</a></li>
+                              <li><a href="#" onClick={(e) => { e.preventDefault(); onNavigateToAllListings(); setIsMenuOpen(false); }} className="text-brand-gray hover:text-brand-red block py-1">{t('header.searchDropdown.buy.explore')}</a></li>
                           </ul>
                       </div>
                       {/* Procurar para alugar */}
                       <div className="space-y-1">
                           <h3 className="font-bold text-brand-dark">{t('header.searchDropdown.rent.title')}</h3>
                           <ul className="space-y-1 pl-2">
-                              <li><a href="#" className="text-brand-gray hover:text-brand-red block py-1">{t('header.searchDropdown.rent.explore')}</a></li>
+                              <li><a href="#" onClick={(e) => { e.preventDefault(); onNavigateToAllListings(); setIsMenuOpen(false); }} className="text-brand-gray hover:text-brand-red block py-1">{t('header.searchDropdown.rent.explore')}</a></li>
                           </ul>
                       </div>
                   </div>

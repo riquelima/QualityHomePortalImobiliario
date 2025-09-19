@@ -22,11 +22,12 @@ interface ChatListPageProps {
   onNavigateToChat: (sessionId: string) => void;
   // FIX: Add onNavigateToMyAds prop to resolve typing error.
   onNavigateToMyAds: () => void;
+  onNavigateToAllListings: () => void;
   hasUnreadMessages: boolean;
 }
 
 const ChatListPage: React.FC<ChatListPageProps> = ({
-  onBack, user, profile, onLogout, onPublishAdClick, onAccessClick, onNavigateToFavorites, onNavigateToChatList, chatSessions, properties, onNavigateToChat, onNavigateToMyAds, hasUnreadMessages
+  onBack, user, profile, onLogout, onPublishAdClick, onAccessClick, onNavigateToFavorites, onNavigateToChatList, chatSessions, properties, onNavigateToChat, onNavigateToMyAds, onNavigateToAllListings, hasUnreadMessages
 }) => {
   const { t } = useLanguage();
 
@@ -53,6 +54,7 @@ const ChatListPage: React.FC<ChatListPageProps> = ({
         onNavigateToFavorites={onNavigateToFavorites}
         onNavigateToChatList={onNavigateToChatList}
         onNavigateToMyAds={onNavigateToMyAds}
+        onNavigateToAllListings={onNavigateToAllListings}
         hasUnreadMessages={hasUnreadMessages}
       />
       <main className="flex-grow">

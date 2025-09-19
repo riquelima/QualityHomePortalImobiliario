@@ -24,6 +24,7 @@ interface FavoritesPageProps {
   onNavigateToChatList: () => void;
   // FIX: Add onNavigateToMyAds prop to resolve typing error.
   onNavigateToMyAds: () => void;
+  onNavigateToAllListings: () => void;
   hasUnreadMessages: boolean;
 }
 
@@ -41,6 +42,7 @@ const FavoritesPage: React.FC<FavoritesPageProps> = ({
   onNavigateToFavorites,
   onNavigateToChatList,
   onNavigateToMyAds,
+  onNavigateToAllListings,
   hasUnreadMessages
 }) => {
   const { t } = useLanguage();
@@ -58,6 +60,7 @@ const FavoritesPage: React.FC<FavoritesPageProps> = ({
         onNavigateToFavorites={onNavigateToFavorites}
         onNavigateToChatList={onNavigateToChatList}
         onNavigateToMyAds={onNavigateToMyAds}
+        onNavigateToAllListings={onNavigateToAllListings}
         hasUnreadMessages={hasUnreadMessages}
       />
       <main className="flex-grow">
