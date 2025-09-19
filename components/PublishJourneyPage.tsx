@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Header from './Header';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -38,7 +37,7 @@ interface PublishJourneyPageProps {
   profile: Profile | null;
   onLogout: () => void;
   onNavigateToFavorites: () => void;
-  onAddProperty: (propertyData: Property) => void;
+  onAddProperty: (propertyData: Property) => Promise<void>;
   onUpdateProperty: () => Promise<void>;
   onPublishError: (message: string) => void;
   onNavigateToChatList: () => void;
@@ -1179,6 +1178,16 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
     }
 
     setIsSubmitting(true);
+
+    const parseCurrency = (value: string): number | undefined => {
+        const parsed = parseFloat(unformatCurrency(value));
+        return isNaN(parsed) ? undefined : parsed;
+    };
+
+    const parseOptionalInt = (value: string): number | undefined => {
+        const parsed = parseInt(value, 10);
+        return isNaN(parsed) ? undefined : parsed;
+    };
     
     const existingMedia = media.filter(m => !(m instanceof File)) as { id: number; url: string; tipo: 'imagem' | 'video' }[];
     const newMediaFiles = media.filter(m => m instanceof File) as File[];
@@ -1194,10 +1203,10 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
         latitude: coordinates?.lat,
         longitude: coordinates?.lng,
         tipo_operacao: operation,
-        tipo_imovel: details.propertyType[0] || null,
+        tipo_imovel: details.propertyType[0] || undefined,
         quartos: details.bedrooms,
         banheiros: details.bathrooms,
-        area_bruta: parseInt(details.grossArea, 10) || 0,
+        area_bruta: parseOptionalInt(details.grossArea) ?? 0,
         possui_elevador: details.hasElevator,
         caracteristicas_imovel: details.homeFeatures,
         caracteristicas_condominio: details.buildingFeatures,
@@ -1207,27 +1216,27 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
     if (operation === 'venda') {
         propertyData = {
             ...propertyData,
-            preco: parseFloat(unformatCurrency(details.salePrice)) || 0,
-            valor_iptu: parseFloat(unformatCurrency(details.iptuAnnual)) || undefined,
+            preco: parseCurrency(details.salePrice) ?? 0,
+            valor_iptu: parseCurrency(details.iptuAnnual),
             aceita_financiamento: details.acceptsFinancing,
             situacao_ocupacao: details.occupationSituation,
         };
     } else if (operation === 'aluguel') {
         propertyData = {
             ...propertyData,
-            preco: parseFloat(unformatCurrency(details.monthlyRent)) || 0,
-            taxa_condominio: parseFloat(unformatCurrency(details.condoFee)) || undefined,
-            valor_iptu: parseFloat(unformatCurrency(details.iptuMonthly)) || undefined,
+            preco: parseCurrency(details.monthlyRent) ?? 0,
+            taxa_condominio: parseCurrency(details.condoFee),
+            valor_iptu: parseCurrency(details.iptuMonthly),
             condicoes_aluguel: details.rentalConditions,
             permite_animais: details.petsAllowed,
         };
     } else if (operation === 'temporada') {
         propertyData = {
             ...propertyData,
-            preco: parseFloat(unformatCurrency(details.dailyRate)) || 0,
-            minimo_diarias: parseInt(details.minStay, 10) || undefined,
-            maximo_hospedes: parseInt(details.maxGuests, 10) || undefined,
-            taxa_limpeza: parseFloat(unformatCurrency(details.cleaningFee)) || undefined,
+            preco: parseCurrency(details.dailyRate) ?? 0,
+            minimo_diarias: parseOptionalInt(details.minStay),
+            maximo_hospedes: parseOptionalInt(details.maxGuests),
+            taxa_limpeza: parseCurrency(details.cleaningFee),
             datas_disponiveis: availableDates,
         };
     }
@@ -1333,7 +1342,7 @@ const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
                     .eq('id', user.id);
             }
             
-            onAddProperty(newProperty as Property);
+            await onAddProperty(newProperty as Property);
             onBack();
 
         } catch (uploadError: any) {

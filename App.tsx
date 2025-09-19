@@ -1,7 +1,3 @@
-
-
-
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
@@ -538,9 +534,9 @@ const App: React.FC = () => {
     }
   };
 
-  const handleAddProperty = useCallback((newProperty: Property) => {
+  const handleAddProperty = useCallback(async (newProperty: Property) => {
     if (user) {
-        fetchAllData(user);
+        await fetchAllData(user);
     }
     showModal({
         type: 'success',
