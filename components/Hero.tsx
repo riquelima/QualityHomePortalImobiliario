@@ -34,8 +34,10 @@ const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe, onGeoloca
     setIsLoadingTitle(true);
 
     const generateTitle = async () => {
-      // FIX: Use environment variable for API key as per guidelines.
-      if (!process.env.API_KEY) {
+      // API Key is hardcoded as requested by the user.
+      const apiKey = "AIzaSyCsX9l10XCu3TtSCU1BSx-qOYrwUKYw2xk";
+
+      if (!apiKey) {
         console.error("API Key for Gemini is not configured.");
         if (!isCancelled) {
           setIsLoadingTitle(false);
@@ -44,8 +46,8 @@ const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe, onGeoloca
       }
 
       try {
-        // FIX: Initialize GoogleGenAI with the API key from environment variables.
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        // Initialize GoogleGenAI with the provided API key.
+        const ai = new GoogleGenAI({ apiKey: apiKey });
         const prompt = t('hero.geminiPrompt');
         
         const response = await ai.models.generateContent({
