@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
@@ -743,6 +744,8 @@ const App: React.FC = () => {
                   onUpdateProperty={handleUpdateProperty}
                   onPublishError={handlePublishError}
                   onRequestModal={showModal}
+                  // FIX: Pass the onOpenLoginModal prop to satisfy the PublishJourneyPageProps interface.
+                  onOpenLoginModal={openLoginModal}
                   {...headerProps}
                 />;
       case 'searchResults':

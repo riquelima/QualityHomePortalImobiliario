@@ -1,4 +1,5 @@
 
+
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Header from './Header';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -49,6 +50,8 @@ interface PublishJourneyPageProps {
   hasUnreadMessages: boolean;
   navigateToGuideToSell: () => void;
   navigateToDocumentsForSale: () => void;
+  // FIX: Added onAccessClick to satisfy HeaderProps requirement.
+  onAccessClick: () => void;
 }
 
 // Define state shapes for props
@@ -408,7 +411,7 @@ const AluguelDetailsForm: React.FC<DetailsFormProps> = ({ details, handleDetails
 };
 
 const CalendarWidget: React.FC<{ selectedDates: string[]; onDateChange: (dates: string[]) => void; }> = ({ selectedDates, onDateChange }) => {
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
     const [currentDate, setCurrentDate] = useState(new Date());
 
     const handleDateClick = (date: Date) => {
@@ -466,7 +469,7 @@ const CalendarWidget: React.FC<{ selectedDates: string[]; onDateChange: (dates: 
         <div className="bg-gray-50 p-4 rounded-lg border">
             <div className="flex justify-between items-center mb-4">
                 <button type="button" onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1))} className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">&lt; {t('publishJourney.detailsForm.calendar.prev')}</button>
-                <span className="font-bold text-lg text-brand-navy">{new Intl.DateTimeFormat(t('language'), { month: 'long', year: 'numeric' }).format(currentDate)}</span>
+                <span className="font-bold text-lg text-brand-navy">{new Intl.DateTimeFormat(language, { month: 'long', year: 'numeric' }).format(currentDate)}</span>
                 <button type="button" onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1))} className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">{t('publishJourney.detailsForm.calendar.next')} &gt;</button>
             </div>
             <div className="grid grid-cols-7 gap-1 text-center font-semibold text-sm text-brand-gray mb-2">

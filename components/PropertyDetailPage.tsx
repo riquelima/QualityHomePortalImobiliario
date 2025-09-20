@@ -150,7 +150,7 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({
                   {property.situacao_ocupacao && (
                     <div>
                       <p className="text-sm font-semibold text-brand-navy">{t('propertyDetail.occupationStatus')}</p>
-                      <p className="text-brand-gray">{t(`publishJourney.detailsForm.${property.situacao_ocupacao === 'rented' ? 'rentedWithTenants' : 'withoutTenants'}`)}</p>
+                      <p className="text-brand-gray">{t(`publishJourney.detailsForm.${(property.situacao_ocupacao === 'alugado' || property.situacao_ocupacao === 'rented') ? 'rented' : 'vacant'}`)}</p>
                     </div>
                   )}
                   {property.possui_elevador !== null && property.possui_elevador !== undefined && (
