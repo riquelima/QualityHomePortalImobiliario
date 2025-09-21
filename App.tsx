@@ -543,6 +543,14 @@ const App: React.FC = () => {
     setIsLoginModalOpen(true);
   }
   const closeLoginModal = () => setIsLoginModalOpen(false);
+
+  const handlePublishClick = () => {
+    if (user) {
+      navigateToPublishJourney();
+    } else {
+      openLoginModal('publish');
+    }
+  };
   
   const openGeoErrorModal = () => setIsGeoErrorModalOpen(true);
   const closeGeoErrorModal = () => setIsGeoErrorModalOpen(false);
@@ -702,7 +710,7 @@ const App: React.FC = () => {
 
   const renderCurrentPage = () => {
     const headerProps = {
-      onPublishAdClick: navigateToPublishJourney,
+      onPublishAdClick: handlePublishClick,
       onAccessClick: () => openLoginModal('default'),
       user,
       profile,
@@ -730,7 +738,7 @@ const App: React.FC = () => {
       case 'publish':
         return <PublishAdPage 
                   onBack={navigateHome} 
-                  onPublishAdClick={navigateToPublishJourney}
+                  onPublishAdClick={handlePublishClick}
                   onOpenLoginModal={() => openLoginModal('publish')} 
                   onNavigateToJourney={navigateToPublishJourney}
                   {...headerProps}

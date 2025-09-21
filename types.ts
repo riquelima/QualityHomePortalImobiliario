@@ -75,6 +75,8 @@ export interface Property {
   maximo_hospedes?: number;
   taxa_limpeza?: number;
   datas_disponiveis?: string[]; // Array de datas no formato 'YYYY-MM-DD'
+  // FIX: Added missing property 'area_util' used in PublishJourneyPage.tsx.
+  area_util?: number;
 }
 
 export interface Message {
