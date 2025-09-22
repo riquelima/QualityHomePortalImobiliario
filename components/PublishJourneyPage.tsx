@@ -170,6 +170,7 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
     const [isLocationPermissionModalOpen, setIsLocationPermissionModalOpen] = useState(!propertyToEdit);
     const [isLocationConfirmationModalOpen, setLocationConfirmationModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isVerifyingAddress, setIsVerifyingAddress] = useState(false);
     const [isGeneratingTitle, setIsGeneratingTitle] = useState(false);
     const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
 
@@ -263,14 +264,36 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
     
     const handleAddressSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        
+        setIsVerifyingAddress(true);
+
         const fullAddress = `${formData.street}, ${formData.number}, ${formData.city}, Brasil`;
-        // Simulating geocoding
-        // In a real app, you would use a Geocoding service API here.
-        console.log(`Geocoding: ${fullAddress}`);
-        const mockCoordinates = { lat: -12.97, lng: -38.50 }; // Mocked coordinates for Salvador
-        setFormData(prev => ({ ...prev, coordinates: mockCoordinates }));
-        setLocationConfirmationModalOpen(true);
+        
+        try {
+            const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(fullAddress)}&format=json&limit=1`);
+            const data = await response.json();
+            
+            if (data && data.length > 0) {
+                const { lat, lon } = data[0];
+                const coordinates = { lat: parseFloat(lat), lng: parseFloat(lon) };
+                setFormData(prev => ({ ...prev, coordinates }));
+                setLocationConfirmationModalOpen(true);
+            } else {
+                 props.onRequestModal({
+                    type: 'error',
+                    title: 'Endereço não encontrado',
+                    message: 'Não foi possível localizar o endereço fornecido. Por favor, verifique os dados e tente novamente.',
+                });
+            }
+        } catch (error) {
+            console.error("Erro de geocodificação:", error);
+            props.onRequestModal({
+                type: 'error',
+                title: t('systemModal.errorTitle'),
+                message: 'Ocorreu um erro ao tentar verificar o endereço. Por favor, tente novamente.',
+            });
+        } finally {
+            setIsVerifyingAddress(false);
+        }
     };
     
     const handleConfirmLocation = (coords: { lat: number, lng: number }) => {
@@ -600,8 +623,15 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                                                     <input type="text" id="number" name="number" value={formData.number} onChange={handleFormChange} required className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" />
                                                 </div>
                                             </div>
-                                            <button type="submit" className="mt-6 w-full bg-brand-red text-white font-bold py-3 px-4 rounded-md hover:opacity-90 transition-opacity">
-                                                {t('publishJourney.form.submitButton')}
+                                            <button type="submit" disabled={isVerifyingAddress} className="mt-6 w-full bg-brand-red text-white font-bold py-3 px-4 rounded-md hover:opacity-90 transition-opacity flex justify-center items-center disabled:opacity-75 disabled:cursor-wait">
+                                                {isVerifyingAddress ? (
+                                                    <>
+                                                        <SpinnerIcon className="w-5 h-5 animate-spin mr-2" />
+                                                        <span>Verificando...</span>
+                                                    </>
+                                                ) : (
+                                                    t('publishJourney.form.submitButton')
+                                                )}
                                             </button>
                                         </form>
                                     ) : (
