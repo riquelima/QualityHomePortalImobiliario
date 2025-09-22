@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import Header from './Header';
 import type { Property, User, Profile } from '../types';
@@ -33,6 +34,7 @@ interface PropertyDetailPageProps {
   // FIX: Added missing props for Header.
   navigateToGuideToSell: () => void;
   navigateToDocumentsForSale: () => void;
+  navigateHome: () => void;
 }
 
 const currencyConfig = {
@@ -58,7 +60,8 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({
   onNavigateToAllListings,
   hasUnreadMessages,
   navigateToGuideToSell,
-  navigateToDocumentsForSale
+  navigateToDocumentsForSale,
+  navigateHome
 }) => {
   const { t, language } = useLanguage();
   
@@ -84,6 +87,7 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({
     <>
     <div className="bg-brand-light-gray min-h-screen">
       {/* FIX: Pass onNavigateToMyAds prop to Header. */}
+      {/* FIX: Pass navigateHome prop to Header. */}
       <Header
         onPublishAdClick={onPublishAdClick}
         onAccessClick={onAccessClick}
@@ -97,6 +101,7 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({
         hasUnreadMessages={hasUnreadMessages}
         navigateToGuideToSell={navigateToGuideToSell}
         navigateToDocumentsForSale={navigateToDocumentsForSale}
+        navigateHome={navigateHome}
       />
       <main className="container mx-auto px-4 sm:px-6 py-8">
         {/* Breadcrumbs */}

@@ -17,6 +17,8 @@ interface GuideToSellPageProps {
   hasUnreadMessages: boolean;
   navigateToGuideToSell: () => void;
   navigateToDocumentsForSale: () => void;
+  // FIX: Add missing navigateHome prop for Header.
+  navigateHome: () => void;
 }
 
 const GuideToSellPage: React.FC<GuideToSellPageProps> = (props) => {

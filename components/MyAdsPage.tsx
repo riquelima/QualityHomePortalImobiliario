@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import Header from './Header';
 import type { Property, User, Profile } from '../types';
@@ -25,15 +26,17 @@ interface MyAdsPageProps {
   // FIX: Added missing props for Header.
   navigateToGuideToSell: () => void;
   navigateToDocumentsForSale: () => void;
+  navigateHome: () => void;
 }
 
 const MyAdsPage: React.FC<MyAdsPageProps> = ({
-  onBack, user, profile, onLogout, onPublishAdClick, onAccessClick, onNavigateToFavorites, onNavigateToChatList, onNavigateToMyAds, userProperties, onViewDetails, onDeleteProperty, onEditProperty, onNavigateToAllListings, hasUnreadMessages, navigateToGuideToSell, navigateToDocumentsForSale
+  onBack, user, profile, onLogout, onPublishAdClick, onAccessClick, onNavigateToFavorites, onNavigateToChatList, onNavigateToMyAds, userProperties, onViewDetails, onDeleteProperty, onEditProperty, onNavigateToAllListings, hasUnreadMessages, navigateToGuideToSell, navigateToDocumentsForSale, navigateHome
 }) => {
   const { t } = useLanguage();
 
   return (
     <div className="bg-brand-light-gray min-h-screen flex flex-col">
+      {/* FIX: Pass navigateHome prop to Header. */}
       <Header
         onPublishAdClick={onPublishAdClick}
         onAccessClick={onAccessClick}
@@ -47,6 +50,7 @@ const MyAdsPage: React.FC<MyAdsPageProps> = ({
         hasUnreadMessages={hasUnreadMessages}
         navigateToGuideToSell={navigateToGuideToSell}
         navigateToDocumentsForSale={navigateToDocumentsForSale}
+        navigateHome={navigateHome}
       />
       <main className="flex-grow">
         <div className="container mx-auto px-4 sm:px-6 py-8">

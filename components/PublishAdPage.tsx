@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import Header from './Header';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -23,6 +24,7 @@ interface PublishAdPageProps {
   hasUnreadMessages: boolean;
   navigateToGuideToSell: () => void;
   navigateToDocumentsForSale: () => void;
+  navigateHome: () => void;
   // FIX: Added onAccessClick to satisfy HeaderProps requirement.
   onAccessClick: () => void;
 }

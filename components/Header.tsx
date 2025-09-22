@@ -34,6 +34,7 @@ interface HeaderProps {
   hasUnreadMessages: boolean;
   navigateToGuideToSell: () => void;
   navigateToDocumentsForSale: () => void;
+  navigateHome: () => void;
 }
 
 // Helper function outside the component
@@ -42,7 +43,7 @@ const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
 }
 
-const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, profile, onLogout, onNavigateToFavorites, onNavigateToChatList, onNavigateToMyAds, onNavigateToAllListings, hasUnreadMessages, navigateToGuideToSell, navigateToDocumentsForSale }) => {
+const Header: React.FC<HeaderProps> = ({ navigateHome, onPublishAdClick, onAccessClick, user, profile, onLogout, onNavigateToFavorites, onNavigateToChatList, onNavigateToMyAds, onNavigateToAllListings, hasUnreadMessages, navigateToGuideToSell, navigateToDocumentsForSale }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
@@ -81,7 +82,7 @@ const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, 
       <header className="bg-white shadow-sm sticky top-0 z-40">
         <nav className="container mx-auto px-4 sm:px-6 py-3 flex justify-between items-center relative">
           {/* Logo */}
-          <a href="#" onClick={(e) => { e.preventDefault(); window.location.reload(); }} className="absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 transform transition-transform duration-300 hover:scale-105 z-10">
+          <a href="#" onClick={(e) => { e.preventDefault(); navigateHome(); }} className="absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 transform transition-transform duration-300 hover:scale-105 z-10">
             <img src="https://i.imgur.com/FuxDdyF.png" alt="Quality Home Logo" className="h-16 sm:h-20" />
           </a>
 
@@ -284,38 +285,38 @@ const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, 
             <CloseIcon className="w-6 h-6" />
           </button>
         </div>
-        <nav className="flex flex-col p-4 space-y-2 text-lg">
+        <nav className="flex flex-col p-4 space-y-2">
           <div>
               <button
                   onClick={() => setIsMobileOwnersMenuOpen(prev => !prev)}
-                  className="w-full flex justify-between items-center text-brand-dark hover:text-brand-red transition duration-300 py-2"
+                  className="w-full flex justify-between items-center text-brand-dark hover:text-brand-red transition duration-300 p-3"
               >
-                  <span>{t('header.nav.owners')}</span>
+                  <span className="text-lg">{t('header.nav.owners')}</span>
                   <ChevronDownIcon className={`w-5 h-5 transition-transform duration-300 ${isMobileOwnersMenuOpen ? 'rotate-180' : ''}`} />
               </button>
               {isMobileOwnersMenuOpen && (
-                  <div className="pl-4 mt-2 space-y-3 text-base">
+                  <div className="pl-4 mt-2 space-y-3">
                       {/* Vender */}
                       <div className="space-y-1">
-                          <h3 className="font-bold text-brand-dark">{t('header.ownersDropdown.sell.title')}</h3>
-                          <ul className="space-y-1 pl-2">
-                              <li><a href="#" onClick={(e) => { e.preventDefault(); onPublishAdClick(); setIsMenuOpen(false); }} className="text-brand-gray hover:text-brand-red block py-1">{t('header.ownersDropdown.sell.publish')}</a></li>
-                              <li><a href="#" onClick={(e) => { e.preventDefault(); navigateToGuideToSell(); setIsMenuOpen(false); }} className="text-brand-gray hover:text-brand-red block py-1">{t('header.ownersDropdown.sell.guide')}</a></li>
-                              <li><a href="#" onClick={(e) => { e.preventDefault(); navigateToDocumentsForSale(); setIsMenuOpen(false); }} className="text-brand-gray hover:text-brand-red block py-1">{t('header.ownersDropdown.sell.documents')}</a></li>
+                          <h3 className="font-bold text-brand-dark text-md">{t('header.ownersDropdown.sell.title')}</h3>
+                          <ul className="space-y-1 pl-2 text-md">
+                              <li><a href="#" onClick={(e) => { e.preventDefault(); onPublishAdClick(); setIsMenuOpen(false); }} className="text-brand-gray hover:text-brand-red block py-3">{t('header.ownersDropdown.sell.publish')}</a></li>
+                              <li><a href="#" onClick={(e) => { e.preventDefault(); navigateToGuideToSell(); setIsMenuOpen(false); }} className="text-brand-gray hover:text-brand-red block py-3">{t('header.ownersDropdown.sell.guide')}</a></li>
+                              <li><a href="#" onClick={(e) => { e.preventDefault(); navigateToDocumentsForSale(); setIsMenuOpen(false); }} className="text-brand-gray hover:text-brand-red block py-3">{t('header.ownersDropdown.sell.documents')}</a></li>
                           </ul>
                       </div>
                       {/* Colocar para arrendamento */}
                       <div className="space-y-1">
-                          <h3 className="font-bold text-brand-dark">{t('header.ownersDropdown.rent.title')}</h3>
-                          <ul className="space-y-1 pl-2">
-                              <li><a href="#" onClick={(e) => { e.preventDefault(); onPublishAdClick(); setIsMenuOpen(false); }} className="text-brand-gray hover:text-brand-red block py-1">{t('header.ownersDropdown.rent.publish')}</a></li>
+                          <h3 className="font-bold text-brand-dark text-md">{t('header.ownersDropdown.rent.title')}</h3>
+                          <ul className="space-y-1 pl-2 text-md">
+                              <li><a href="#" onClick={(e) => { e.preventDefault(); onPublishAdClick(); setIsMenuOpen(false); }} className="text-brand-gray hover:text-brand-red block py-3">{t('header.ownersDropdown.rent.publish')}</a></li>
                           </ul>
                       </div>
                       {/* Para a tua habitação */}
                       <div className="space-y-1">
-                          <h3 className="font-bold text-brand-dark">{t('header.ownersDropdown.forYourHome.title')}</h3>
-                          <ul className="space-y-1 pl-2">
-                              <li><a href="#" onClick={(e) => { e.preventDefault(); onNavigateToMyAds(); setIsMenuOpen(false); }} className="text-brand-gray hover:text-brand-red block py-1">{t('header.ownersDropdown.forYourHome.ownerArea')}</a></li>
+                          <h3 className="font-bold text-brand-dark text-md">{t('header.ownersDropdown.forYourHome.title')}</h3>
+                          <ul className="space-y-1 pl-2 text-md">
+                              <li><a href="#" onClick={(e) => { e.preventDefault(); onNavigateToMyAds(); setIsMenuOpen(false); }} className="text-brand-gray hover:text-brand-red block py-3">{t('header.ownersDropdown.forYourHome.ownerArea')}</a></li>
                           </ul>
                       </div>
                   </div>
@@ -324,25 +325,25 @@ const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, 
           <div>
               <button
                   onClick={() => setIsMobileSearchMenuOpen(prev => !prev)}
-                  className="w-full flex justify-between items-center text-brand-dark hover:text-brand-red transition duration-300 py-2"
+                  className="w-full flex justify-between items-center text-brand-dark hover:text-brand-red transition duration-300 p-3"
               >
-                  <span>{t('header.nav.search')}</span>
+                  <span className="text-lg">{t('header.nav.search')}</span>
                   <ChevronDownIcon className={`w-5 h-5 transition-transform duration-300 ${isMobileSearchMenuOpen ? 'rotate-180' : ''}`} />
               </button>
               {isMobileSearchMenuOpen && (
-                  <div className="pl-4 mt-2 space-y-3 text-base">
+                  <div className="pl-4 mt-2 space-y-3">
                       {/* Procurar para comprar */}
                       <div className="space-y-1">
-                          <h3 className="font-bold text-brand-dark">{t('header.searchDropdown.buy.title')}</h3>
-                          <ul className="space-y-1 pl-2">
-                              <li><a href="#" onClick={(e) => { e.preventDefault(); onNavigateToAllListings(); setIsMenuOpen(false); }} className="text-brand-gray hover:text-brand-red block py-1">{t('header.searchDropdown.buy.explore')}</a></li>
+                          <h3 className="font-bold text-brand-dark text-md">{t('header.searchDropdown.buy.title')}</h3>
+                          <ul className="space-y-1 pl-2 text-md">
+                              <li><a href="#" onClick={(e) => { e.preventDefault(); onNavigateToAllListings(); setIsMenuOpen(false); }} className="text-brand-gray hover:text-brand-red block py-3">{t('header.searchDropdown.buy.explore')}</a></li>
                           </ul>
                       </div>
                       {/* Procurar para alugar */}
                       <div className="space-y-1">
-                          <h3 className="font-bold text-brand-dark">{t('header.searchDropdown.rent.title')}</h3>
-                          <ul className="space-y-1 pl-2">
-                              <li><a href="#" onClick={(e) => { e.preventDefault(); onNavigateToAllListings(); setIsMenuOpen(false); }} className="text-brand-gray hover:text-brand-red block py-1">{t('header.searchDropdown.rent.explore')}</a></li>
+                          <h3 className="font-bold text-brand-dark text-md">{t('header.searchDropdown.rent.title')}</h3>
+                          <ul className="space-y-1 pl-2 text-md">
+                              <li><a href="#" onClick={(e) => { e.preventDefault(); onNavigateToAllListings(); setIsMenuOpen(false); }} className="text-brand-gray hover:text-brand-red block py-3">{t('header.searchDropdown.rent.explore')}</a></li>
                           </ul>
                       </div>
                   </div>
@@ -353,15 +354,15 @@ const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, 
           {/* User links for mobile */}
           {user && (
             <>
-              <button onClick={() => { onNavigateToMyAds(); setIsMenuOpen(false); }} className="w-full text-left flex items-center text-brand-dark hover:text-brand-red transition duration-300 py-2 text-base">
+              <button onClick={() => { onNavigateToMyAds(); setIsMenuOpen(false); }} className="w-full text-left flex items-center text-brand-dark hover:text-brand-red transition duration-300 p-3 text-lg">
                   <AdsIcon className="w-6 h-6 mr-3 text-brand-gray" />
                   <span>{t('header.ads')}</span>
               </button>
-              <button onClick={() => { onNavigateToFavorites(); setIsMenuOpen(false); }} className="w-full text-left flex items-center text-brand-dark hover:text-brand-red transition duration-300 py-2 text-base">
+              <button onClick={() => { onNavigateToFavorites(); setIsMenuOpen(false); }} className="w-full text-left flex items-center text-brand-dark hover:text-brand-red transition duration-300 p-3 text-lg">
                   <HeartIcon className="w-6 h-6 mr-3 text-brand-gray" />
                   <span>{t('header.favorites')}</span>
               </button>
-              <button onClick={() => { onNavigateToChatList(); setIsMenuOpen(false); }} className="relative w-full text-left flex items-center text-brand-dark hover:text-brand-red transition duration-300 py-2 text-base">
+              <button onClick={() => { onNavigateToChatList(); setIsMenuOpen(false); }} className="relative w-full text-left flex items-center text-brand-dark hover:text-brand-red transition duration-300 p-3 text-lg">
                   <ChatIcon className="w-6 h-6 mr-3 text-brand-gray" />
                   <span>{t('header.chat')}</span>
                   {hasUnreadMessages && (
@@ -376,16 +377,16 @@ const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, 
           <div>
             <button
                 onClick={() => setIsMobileLangMenuOpen(prev => !prev)}
-                className="w-full flex justify-between items-center text-brand-dark hover:text-brand-red transition duration-300 py-2"
+                className="w-full flex justify-between items-center text-brand-dark hover:text-brand-red transition duration-300 p-3"
             >
-                <span className="flex items-center space-x-3 text-base">
+                <span className="flex items-center space-x-3 text-lg">
                     <CurrentFlag className="w-6 h-auto" />
                     <span>{languageMap[language as keyof typeof languageMap].name}</span>
                 </span>
                 <ChevronDownIcon className={`w-5 h-5 transition-transform duration-300 ${isMobileLangMenuOpen ? 'rotate-180' : ''}`} />
             </button>
             {isMobileLangMenuOpen && (
-                <div className="pl-4 mt-2 space-y-2 text-base">
+                <div className="pl-4 mt-2 space-y-2 text-lg">
                     {Object.entries(languageMap).map(([langCode, { name, Flag }]) => (
                         <button
                             key={langCode}
@@ -406,7 +407,7 @@ const Header: React.FC<HeaderProps> = ({ onPublishAdClick, onAccessClick, user, 
 
           <button 
             onClick={onPublishAdClick}
-            className="w-full text-center mt-4 px-4 py-3 bg-brand-red text-white rounded-md hover:opacity-90 transition duration-300 text-base"
+            className="w-full text-center mt-4 px-4 py-3 bg-brand-red text-white rounded-md hover:opacity-90 transition duration-300 text-lg"
           >
             {t('header.publishAd')}
           </button>

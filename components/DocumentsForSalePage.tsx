@@ -17,6 +17,8 @@ interface DocumentsForSalePageProps {
   hasUnreadMessages: boolean;
   navigateToGuideToSell: () => void;
   navigateToDocumentsForSale: () => void;
+  // FIX: Add missing navigateHome prop for Header.
+  navigateHome: () => void;
 }
 
 const DocumentSection: React.FC<{ title: string; items: string[] }> = ({ title, items }) => (

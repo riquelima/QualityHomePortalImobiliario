@@ -146,7 +146,7 @@ const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe, onGeoloca
         </h1>
         
         <div className="bg-white p-2 rounded-lg">
-          <div className="flex border-b mb-4">
+          <div className="flex flex-wrap border-b mb-4">
             <button 
               onClick={() => setActiveTab('comprar')}
               className={`px-4 sm:px-6 py-2 text-base sm:text-lg font-medium transition-colors duration-300 ${activeTab === 'comprar' ? 'border-b-4 border-brand-red text-brand-dark' : 'text-brand-gray'}`}

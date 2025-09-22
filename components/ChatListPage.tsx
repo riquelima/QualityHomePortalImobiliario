@@ -27,10 +27,11 @@ interface ChatListPageProps {
   // FIX: Added missing props for Header.
   navigateToGuideToSell: () => void;
   navigateToDocumentsForSale: () => void;
+  navigateHome: () => void;
 }
 
 const ChatListPage: React.FC<ChatListPageProps> = ({
-  onBack, user, profile, onLogout, onPublishAdClick, onAccessClick, onNavigateToFavorites, onNavigateToChatList, chatSessions, properties, onNavigateToChat, onNavigateToMyAds, onNavigateToAllListings, hasUnreadMessages, navigateToGuideToSell, navigateToDocumentsForSale
+  onBack, user, profile, onLogout, onPublishAdClick, onAccessClick, onNavigateToFavorites, onNavigateToChatList, chatSessions, properties, onNavigateToChat, onNavigateToMyAds, onNavigateToAllListings, hasUnreadMessages, navigateToGuideToSell, navigateToDocumentsForSale, navigateHome
 }) => {
   const { t } = useLanguage();
 
@@ -48,6 +49,7 @@ const ChatListPage: React.FC<ChatListPageProps> = ({
     <div className="bg-brand-light-gray min-h-screen flex flex-col">
       {/* FIX: Pass profile prop to Header. */}
       {/* FIX: Pass onNavigateToMyAds prop to Header. */}
+      {/* FIX: Pass navigateHome prop to Header. */}
       <Header
         onPublishAdClick={onPublishAdClick}
         onAccessClick={onAccessClick}
@@ -61,6 +63,7 @@ const ChatListPage: React.FC<ChatListPageProps> = ({
         hasUnreadMessages={hasUnreadMessages}
         navigateToGuideToSell={navigateToGuideToSell}
         navigateToDocumentsForSale={navigateToDocumentsForSale}
+        navigateHome={navigateHome}
       />
       <main className="flex-grow">
         <div className="container mx-auto px-4 sm:px-6 py-8">

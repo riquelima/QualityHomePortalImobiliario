@@ -50,6 +50,7 @@ interface PublishJourneyPageProps {
   hasUnreadMessages: boolean;
   navigateToGuideToSell: () => void;
   navigateToDocumentsForSale: () => void;
+  navigateHome: () => void;
   onAccessClick: () => void;
 }
 
@@ -103,7 +104,7 @@ const Stepper: React.FC<{ currentStep: number, setStep: (step: number) => void }
     ];
 
     return (
-        <div className="flex items-start mb-12">
+        <div className="flex items-start justify-between w-full mb-12">
             {steps.map((step, index) => {
                 const stepNumber = index + 1;
                 const isActive = stepNumber === currentStep;
@@ -112,8 +113,9 @@ const Stepper: React.FC<{ currentStep: number, setStep: (step: number) => void }
                 return (
                     <React.Fragment key={stepNumber}>
                         <div 
-                            className={`flex flex-col items-center text-center w-24 ${isCompleted ? 'cursor-pointer' : ''}`}
+                            className={`flex flex-col items-center text-center px-2 ${isCompleted ? 'cursor-pointer' : ''}`}
                             onClick={isCompleted ? () => setStep(stepNumber) : undefined}
+                            style={{ minWidth: '60px' }}
                         >
                             <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg mb-2 transition-colors duration-300 ${isActive || isCompleted ? 'bg-brand-red text-white' : 'bg-gray-300 text-brand-dark'}`}>
                                 {isCompleted ? <CheckIcon className="w-6 h-6" /> : stepNumber}
@@ -121,7 +123,7 @@ const Stepper: React.FC<{ currentStep: number, setStep: (step: number) => void }
                             <p className={`text-xs sm:text-sm font-medium transition-colors duration-300 ${isActive ? 'text-brand-red' : 'text-brand-gray'}`}>{step.label}</p>
                         </div>
                         {index < steps.length - 1 && (
-                            <div className={`flex-1 h-0.5 mt-5 mx-2 transition-colors duration-300 ${isCompleted ? 'bg-brand-red' : 'bg-gray-300'}`} />
+                            <div className={`flex-1 h-0.5 mt-5 transition-colors duration-300 ${isCompleted ? 'bg-brand-red' : 'bg-gray-300'}`} />
                         )}
                     </React.Fragment>
                 );
@@ -216,81 +218,59 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
         }
     }, [propertyToEdit, profile]);
 
-    const handleLocationPermission = (allowed: boolean) => {
-        setIsLocationPermissionModalOpen(false);
-        if (allowed && navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                async (position) => {
-                    const { latitude, longitude } = position.coords;
-                    try {
-                        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&accept-language=pt-BR`);
-                        const data = await response.json();
-                        if (data.address) {
-                            const city = data.address.city || data.address.town || data.address.village || data.address.city_district;
-                            const state = data.address.state;
-                            if (city && state) {
-                                setFormData(prev => ({ ...prev, city: `${city}, ${state}` }));
-                            }
-                        }
-                    } catch (error) { console.error("Error reverse geocoding:", error); }
-                },
-                (error) => { console.error("Geolocation error:", error); }
-            );
-        }
+    const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
     };
     
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-        const { id, value } = e.target;
-        setFormData(prev => ({ ...prev, [id]: value }));
-    };
-
-    const handleCounterChange = (field: 'bedrooms' | 'bathrooms', delta: number) => {
-        setFormData(prev => ({
-            ...prev,
-            [field]: Math.max(0, prev[field] + delta)
-        }));
-    };
-
-    const handleCheckboxChange = (group: 'homeFeatures' | 'buildingFeatures' | 'rentalConditions', value: string) => {
+    const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>, category: 'homeFeatures' | 'buildingFeatures' | 'rentalConditions') => {
+        const { value, checked } = e.target;
         setFormData(prev => {
-            const currentValues = prev[group];
-            const newValues = currentValues.includes(value)
-                ? currentValues.filter(v => v !== value)
-                : [...currentValues, value];
-            return { ...prev, [group]: newValues };
+            const currentFeatures = prev[category];
+            if (checked) {
+                return { ...prev, [category]: [...currentFeatures, value] };
+            } else {
+                return { ...prev, [category]: currentFeatures.filter(item => item !== value) };
+            }
         });
     };
-
-    const handleVerifyAddress = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsSubmitting(true);
-        try {
-            const query = `${formData.street}, ${formData.number}, ${formData.city}`;
-            const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1&accept-language=pt-BR`);
-            const data = await response.json();
-            if (data && data.length > 0) {
-                const { lat, lon } = data[0];
-                setFormData(prev => ({ ...prev, coordinates: { lat: parseFloat(lat), lng: parseFloat(lon) } }));
-                setLocationConfirmationModalOpen(true);
-            } else {
-                props.onRequestModal({type: 'error', title: 'Endereço não encontrado', message: 'Não foi possível localizar o endereço. Verifique os dados e tente novamente.'});
-            }
-        } catch (error) {
-             props.onRequestModal({type: 'error', title: 'Erro de Conexão', message: 'Não foi possível verificar o endereço. Tente novamente mais tarde.'});
-        }
-        setIsSubmitting(false);
+    
+    const handleRadioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        let finalValue: boolean | string | null = value;
+        if (value === 'true') finalValue = true;
+        if (value === 'false') finalValue = false;
+        if (value === 'null') finalValue = null;
+        setFormData(prev => ({ ...prev, [name]: finalValue }));
     };
 
-    const handleConfirmAddress = (coords: { lat: number, lng: number }) => {
+    const handleNumberChange = (field: 'bedrooms' | 'bathrooms', delta: number) => {
+        setFormData(prev => ({ ...prev, [field]: Math.max(0, prev[field] + delta) }));
+    };
+    
+    const handleAddressSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        
+        const fullAddress = `${formData.street}, ${formData.number}, ${formData.city}, Brasil`;
+        // Simulating geocoding
+        // In a real app, you would use a Geocoding service API here.
+        console.log(`Geocoding: ${fullAddress}`);
+        const mockCoordinates = { lat: -12.97, lng: -38.50 }; // Mocked coordinates for Salvador
+        setFormData(prev => ({ ...prev, coordinates: mockCoordinates }));
+        setLocationConfirmationModalOpen(true);
+    };
+    
+    const handleConfirmLocation = (coords: { lat: number, lng: number }) => {
+        const fullAddress = `${formData.street}, ${formData.number}, ${formData.city}`;
         setFormData(prev => ({
             ...prev,
             coordinates: coords,
             isAddressVerified: true,
-            verifiedAddress: `${prev.street}, ${prev.number}, ${prev.city}`
+            verifiedAddress: fullAddress
         }));
         setLocationConfirmationModalOpen(false);
     };
-    
+
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
             const newFiles = Array.from(e.target.files);
@@ -298,70 +278,45 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
         }
     };
     
-    const handleRemoveFile = (fileToRemove: MediaItem) => {
-        if ('id' in fileToRemove && fileToRemove.type === 'existing') {
+    const removeFile = (fileToRemove: MediaItem) => {
+        // FIX: Use 'id' as a more robust type guard to differentiate between existing Media and new File objects.
+        if ('id' in fileToRemove) { // It's an existing Media object
+            setFiles(prev => prev.filter(f => f !== fileToRemove));
             setFilesToRemove(prev => [...prev, fileToRemove.id]);
+        } else { // It's a new File
+            setFiles(prev => prev.filter(f => f !== fileToRemove));
         }
-        setFiles(prev => prev.filter(f => f !== fileToRemove));
     };
 
-    const handleNextStep = (currentStep: number) => {
-        if (currentStep === 1) {
-            if (!formData.isAddressVerified) {
-                 props.onRequestModal({type: 'error', title: 'Endereço não verificado', message: 'Por favor, verifique o endereço do imóvel para continuar.'});
-                 return;
-            }
-            if (!formData.contactName || !formData.contactPhone) {
-                props.onRequestModal({type: 'error', title: 'Campos obrigatórios', message: 'Por favor, preencha seu nome e telefone.'});
-                return;
-            }
-        }
-        if (currentStep === 2) {
-             if (formData.title.trim().length < 10) {
-                props.onRequestModal({type: 'error', title: t('systemModal.errorTitle'), message: 'O título do anúncio deve ter pelo menos 10 caracteres.'});
-                return;
-            }
-        }
-        setStep(currentStep + 1);
-        window.scrollTo(0, 0);
-    };
-    
-    const handlePrevStep = (currentStep: number) => {
-        setStep(currentStep - 1);
-        window.scrollTo(0, 0);
-    }
-    
-    const handlePublish = async () => {
-        if (!user || !formData.coordinates) {
-            onPublishError("Usuário não autenticado ou endereço inválido.");
+    const handleSubmitJourney = async () => {
+        if (!user) {
+            onPublishError("Usuário não autenticado.");
             return;
         }
         setIsSubmitting(true);
 
         try {
-            // 1. Upload new files to storage
-            const uploadedMediaUrls: { url: string, tipo: 'imagem' | 'video' }[] = [];
-            for (const file of files) {
-                if (file instanceof File) {
-                    const fileExt = file.name.split('.').pop();
-                    const fileName = `${Math.random()}.${fileExt}`;
-                    const filePath = `${user.id}/${Date.now()}-${fileName}`;
+            // 1. Upload new files to Supabase Storage
+            const newFilesToUpload = files.filter(f => 'name' in f) as File[];
+            const uploadedUrls: { url: string, type: 'imagem' | 'video' }[] = [];
 
-                    const { error: uploadError } = await supabase.storage
-                        .from('midia')
-                        .upload(filePath, file);
+            for (const file of newFilesToUpload) {
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+                const { error: uploadError } = await supabase.storage
+                    .from('imoveis-midia')
+                    .upload(fileName, file);
 
-                    if (uploadError) throw uploadError;
-
-                    const { data: { publicUrl } } = supabase.storage
-                        .from('midia')
-                        .getPublicUrl(filePath);
-                    
-                    uploadedMediaUrls.push({ url: publicUrl, tipo: file.type.startsWith('video') ? 'video' : 'imagem' });
-                }
+                if (uploadError) throw new Error(`Erro no upload do arquivo ${file.name}: ${uploadError.message}`);
+                
+                const { data } = supabase.storage.from('imoveis-midia').getPublicUrl(fileName);
+                uploadedUrls.push({
+                    url: data.publicUrl,
+                    type: file.type.startsWith('video') ? 'video' : 'imagem'
+                });
             }
-
-            // 2. Prepare property data for Supabase
+            
+            // 2. Prepare property data for Supabase table
             const propertyData = {
                 anunciante_id: user.id,
                 titulo: formData.title,
@@ -370,462 +325,599 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                 cidade: formData.city,
                 rua: formData.street,
                 numero: formData.number,
-                latitude: formData.coordinates.lat,
-                longitude: formData.coordinates.lng,
-                tipo_operacao: formData.operation,
+                latitude: formData.coordinates?.lat,
+                longitude: formData.coordinates?.lng,
                 tipo_imovel: formData.detailsPropertyType,
+                tipo_operacao: formData.operation,
+                preco: Number(formData.salePrice || formData.monthlyRent || formData.dailyRate),
                 quartos: formData.bedrooms,
                 banheiros: formData.bathrooms,
-                area_bruta: parseInt(formData.grossArea) || null,
-                area_util: parseInt(formData.netArea) || null,
+                area_bruta: Number(formData.grossArea),
+                area_util: formData.netArea ? Number(formData.netArea) : null,
                 possui_elevador: formData.hasElevator,
+                taxa_condominio: formData.condoFee ? Number(formData.condoFee) : null,
+                valor_iptu: formData.iptuAnnual || formData.iptuMonthly ? Number(formData.iptuAnnual || formData.iptuMonthly) : null,
                 caracteristicas_imovel: formData.homeFeatures,
                 caracteristicas_condominio: formData.buildingFeatures,
                 situacao_ocupacao: formData.occupationSituation,
-                taxa_condominio: parseFloat(formData.condoFee) || null,
-                preco: 0, // Set price based on operation
-                valor_iptu: null as number | null,
                 aceita_financiamento: formData.acceptsFinancing,
                 condicoes_aluguel: formData.rentalConditions,
                 permite_animais: formData.petsAllowed,
-                minimo_diarias: parseInt(formData.minStay) || null,
-                maximo_hospedes: parseInt(formData.maxGuests) || null,
-                taxa_limpeza: parseFloat(formData.cleaningFee) || null,
+                minimo_diarias: formData.minStay ? Number(formData.minStay) : null,
+                maximo_hospedes: formData.maxGuests ? Number(formData.maxGuests) : null,
+                taxa_limpeza: formData.cleaningFee ? Number(formData.cleaningFee) : null,
                 datas_disponiveis: formData.availableDates,
+                status: 'ativo'
             };
 
-            if (formData.operation === 'venda') {
-                propertyData.preco = parseFloat(formData.salePrice) || 0;
-                propertyData.valor_iptu = parseFloat(formData.iptuAnnual) || null;
-            } else if (formData.operation === 'aluguel') {
-                propertyData.preco = parseFloat(formData.monthlyRent) || 0;
-                propertyData.valor_iptu = parseFloat(formData.iptuMonthly) || null;
-            } else if (formData.operation === 'temporada') {
-                propertyData.preco = parseFloat(formData.dailyRate) || 0;
-            }
-
+            let propertyId: number;
 
             if (propertyToEdit) {
-                // UPDATE LOGIC
-                const { data: updatedProperty, error: updateError } = await supabase
+                 // UPDATE existing property
+                const { data: updatedProperty, error } = await supabase
                     .from('imoveis')
-                    .update({ ...propertyData, data_atualizacao: new Date().toISOString() })
+                    .update(propertyData)
                     .eq('id', propertyToEdit.id)
                     .select('id')
                     .single();
-                
-                if (updateError) throw updateError;
-                const propertyId = updatedProperty.id;
+                if (error) throw error;
+                propertyId = updatedProperty.id;
 
-                // Remove deleted media
+                // Handle media removal
                 if (filesToRemove.length > 0) {
-                    const { error: deleteMediaError } = await supabase.from('midias_imovel').delete().in('id', filesToRemove);
-                    if (deleteMediaError) console.error("Error deleting media:", deleteMediaError);
+                    const { error: deleteMediaError } = await supabase
+                        .from('midias_imovel')
+                        .delete()
+                        .in('id', filesToRemove);
+                    if (deleteMediaError) console.error("Error removing media:", deleteMediaError);
                 }
-
-                // Add new media
-                if (uploadedMediaUrls.length > 0) {
-                    const newMediaData = uploadedMediaUrls.map(media => ({
-                        imovel_id: propertyId,
-                        url: media.url,
-                        tipo: media.tipo
-                    }));
-                    const { error: insertMediaError } = await supabase.from('midias_imovel').insert(newMediaData);
-                    if (insertMediaError) throw insertMediaError;
-                }
-                
-                await onUpdateProperty();
-
             } else {
-                // INSERT LOGIC
-                const { data: newProperty, error: insertError } = await supabase
+                 // INSERT new property
+                const { data: newProperty, error } = await supabase
                     .from('imoveis')
                     .insert(propertyData)
                     .select('id')
                     .single();
-
-                if (insertError) throw insertError;
-                const propertyId = newProperty.id;
-                
-                if (uploadedMediaUrls.length > 0) {
-                     const newMediaData = uploadedMediaUrls.map(media => ({
-                        imovel_id: propertyId,
-                        url: media.url,
-                        tipo: media.tipo
-                    }));
-                    const { error: insertMediaError } = await supabase.from('midias_imovel').insert(newMediaData);
-                    if (insertMediaError) throw insertMediaError;
-                }
-
-                await onAddProperty(propertyData as unknown as Property);
+                if (error) throw error;
+                propertyId = newProperty.id;
             }
+
+            // 3. Insert new media URLs into midias_imovel table
+            if (uploadedUrls.length > 0) {
+                const mediaToInsert = uploadedUrls.map(media => ({
+                    imovel_id: propertyId,
+                    url: media.url,
+                    tipo: media.type
+                }));
+                const { error: mediaError } = await supabase.from('midias_imovel').insert(mediaToInsert);
+                if (mediaError) throw new Error(`Erro ao salvar mídias: ${mediaError.message}`);
+            }
+
+            // 4. Update profile if phone number was added/changed
+            if (formData.contactPhone && formData.contactPhone !== profile?.telefone) {
+                const { error: profileError } = await supabase
+                    .from('perfis')
+                    .update({ telefone: formData.contactPhone })
+                    .eq('id', user.id);
+                if (profileError) console.error("Could not update profile phone:", profileError);
+            }
+
+            if (propertyToEdit) {
+                await onUpdateProperty();
+            } else {
+                await onAddProperty(propertyData as any);
+            }
+            
         } catch (error: any) {
-            console.error("Publish error:", error);
-            onPublishError(error.message || "Ocorreu um erro desconhecido.");
+            console.error("Erro ao publicar anúncio:", error);
+            onPublishError(error.message);
         } finally {
             setIsSubmitting(false);
         }
     };
     
-    const handleGenerateAITitle = async () => {
+    // AI Title Generation
+    const generateAITitle = useCallback(async () => {
         if (!formData.title.trim()) return;
         setIsGeneratingTitle(true);
         try {
             if (typeof process === 'undefined' || !process.env.API_KEY) {
-                console.warn("Chave de API do Gemini não configurada para título. Usando simulação.");
-                const newTitle = await mockAITitleGeneration(formData.title);
-                setFormData(prev => ({...prev, title: newTitle}));
+                console.warn("Chave de API do Gemini não configurada. Usando título simulado.");
+                const text = await mockAITitleGeneration(formData.title);
+                setFormData(prev => ({ ...prev, title: text }));
                 return;
             }
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             const prompt = t('publishJourney.detailsForm.aiTitlePrompt', { title: formData.title });
             
             const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
-                contents: prompt,
+              model: 'gemini-2.5-flash',
+              contents: prompt,
             });
 
-            const newTitle = response.text.trim().replace(/["']/g, "");
-            if (newTitle) {
-                setFormData(prev => ({...prev, title: newTitle}));
+            const text = response.text.trim();
+            if (text) {
+                setFormData(prev => ({ ...prev, title: text.replace(/["']/g, "") }));
             }
         } catch (error) {
-            console.error("AI Title generation error:", error);
-            props.onRequestModal({type: 'error', title: t('systemModal.errorTitle'), message: t('publishJourney.detailsForm.aiTitleError')});
+            console.error("Erro ao gerar título com IA:", error);
+            onPublishError(t('publishJourney.detailsForm.aiTitleError'));
         } finally {
             setIsGeneratingTitle(false);
         }
-    };
+    }, [formData.title, t, onPublishError]);
 
-    const handleGenerateAIDescription = async () => {
+    // AI Description Generation
+    const generateAIDescription = useCallback(async () => {
         setIsGeneratingDescription(true);
+        const details = `
+            - Tipo: ${formData.detailsPropertyType}
+            - Operação: ${formData.operation}
+            - Área Bruta: ${formData.grossArea} m²
+            - Quartos: ${formData.bedrooms}
+            - Banheiros: ${formData.bathrooms}
+            - Tem Elevador: ${formData.hasElevator ? 'Sim' : 'Não'}
+            - Características do Imóvel: ${formData.homeFeatures.join(', ')}
+            - Características do Condomínio: ${formData.buildingFeatures.join(', ')}
+            - Descrição atual (para inspiração): ${formData.description}
+        `;
+        
         try {
             if (typeof process === 'undefined' || !process.env.API_KEY) {
-                console.warn("Chave de API do Gemini não configurada para descrição. Usando simulação.");
-                const newDescription = await mockAIDescriptionGeneration(formData);
-                setFormData(prev => ({...prev, description: newDescription}));
+                console.warn("Chave de API do Gemini não configurada. Usando descrição simulada.");
+                const text = await mockAIDescriptionGeneration(formData);
+                setFormData(prev => ({ ...prev, description: text }));
                 return;
             }
+
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
-            const details = `
-                - Tipo: ${formData.detailsPropertyType} para ${formData.operation}
-                - Área Bruta: ${formData.grossArea} m²
-                - Quartos: ${formData.bedrooms}
-                - Banheiros: ${formData.bathrooms}
-                - Elevador: ${formData.hasElevator ? 'Sim' : 'Não'}
-                - Características do Imóvel: ${formData.homeFeatures.join(', ')}
-                - Características do Condomínio: ${formData.buildingFeatures.join(', ')}
-            `;
             const prompt = t('publishJourney.detailsForm.aiDescriptionPrompt', { details });
-            
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
-                contents: prompt,
-            });
 
-            const newDescription = response.text.trim();
-            if (newDescription) {
-                 setFormData(prev => ({...prev, description: newDescription}));
+            const response = await ai.models.generateContent({
+              model: 'gemini-2.5-flash',
+              contents: prompt,
+            });
+            const text = response.text.trim();
+            if (text) {
+                setFormData(prev => ({ ...prev, description: text }));
             }
         } catch (error) {
-            console.error("AI Description generation error:", error);
-            props.onRequestModal({type: 'error', title: t('systemModal.errorTitle'), message: t('publishJourney.detailsForm.aiDescriptionError')});
+            console.error("Erro ao gerar descrição com IA:", error);
+            onPublishError(t('publishJourney.detailsForm.aiDescriptionError'));
         } finally {
             setIsGeneratingDescription(false);
         }
-    };
-
-    const renderStep1 = () => (
-        <form onSubmit={formData.isAddressVerified ? (e) => { e.preventDefault(); handleNextStep(1); } : handleVerifyAddress}>
-            {!formData.isAddressVerified ? (
-                <div className="space-y-6">
-                    <div>
-                        <label className="block text-base sm:text-lg font-bold text-brand-navy mb-3">{t('publishJourney.form.propertyType.label')}</label>
-                        <select id="propertyType" value={formData.propertyType} onChange={handleChange} className="w-full md:w-1/2 p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red">
-                            <option>Apartamento</option> <option>Casa</option> <option>Terreno</option> <option>Escritório</option> <option>Quarto</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label className="block text-base sm:text-lg font-bold text-brand-navy mb-3">{t('publishJourney.form.operation.label')}</label>
-                        <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-                           {['venda', 'aluguel', 'temporada'].map(op => (
-                               <label key={op} className="flex items-center space-x-2 cursor-pointer">
-                                   <input type="radio" name="operation" value={op} checked={formData.operation === op} onChange={(e) => setFormData(p => ({...p, operation: e.target.value}))} className="h-5 w-5 text-brand-red focus:ring-brand-red border-gray-300" />
-                                   <span>{t(`publishJourney.form.operation.${op === 'venda' ? 'sell' : op === 'aluguel' ? 'rent' : 'season'}`)}</span>
-                               </label>
-                           ))}
-                        </div>
-                    </div>
-                    <div>
-                        <label className="block text-base sm:text-lg font-bold text-brand-navy mb-3">{t('publishJourney.form.location.label')}</label>
-                        <div className="space-y-4">
-                            <div><label htmlFor="city" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.form.location.city')}</label><input type="text" id="city" value={formData.city} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-md" required /></div>
-                            <div><label htmlFor="street" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.form.location.street')}</label><input type="text" id="street" value={formData.street} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-md" required /></div>
-                            <div><label htmlFor="number" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.form.location.number')}</label><input type="text" id="number" value={formData.number} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-md" required /></div>
-                        </div>
-                    </div>
-                    <div><button type="submit" disabled={isSubmitting} className="px-6 py-3 bg-gray-300 text-brand-dark font-bold rounded-md hover:bg-gray-400 disabled:opacity-50">{isSubmitting ? 'Verificando...' : t('publishJourney.form.submitButton')}</button></div>
-                </div>
-            ) : (
-                <div className="space-y-6">
-                    <div>
-                        <label className="block text-base font-bold text-brand-navy mb-2">{t('publishJourney.verifiedAddress.label')}</label>
-                        <div className="bg-green-50 p-4 border border-green-200 rounded-md flex justify-between items-center"><div className="flex items-center"><VerifiedIcon className="w-6 h-6 text-green-600 mr-3" /><p className="text-brand-dark">{formData.verifiedAddress}</p></div><button type="button" onClick={() => setFormData(p => ({ ...p, isAddressVerified: false }))} className="text-brand-red hover:underline font-medium text-sm">{t('publishJourney.verifiedAddress.edit')}</button></div>
-                    </div>
-                    <div className="space-y-6">
-                        <h2 className="text-xl font-bold text-brand-navy pt-4 border-t">{t('publishJourney.contactDetails.title')}</h2>
-                        <div><label className="block text-sm font-medium text-brand-dark">{t('publishJourney.contactDetails.emailLabel')}</label><div className="mt-1 p-3 bg-gray-100 border rounded-md text-brand-gray">{user?.email}</div><p className="text-xs text-brand-gray mt-1">{t('publishJourney.contactDetails.emailDescription')}</p></div>
-                        <div><label htmlFor="contactPhone" className="block text-sm font-medium text-brand-dark">{t('publishJourney.contactDetails.phoneLabel')}</label><input type="tel" id="contactPhone" value={formData.contactPhone} onChange={handleChange} className="mt-1 w-full p-3 border border-gray-300 rounded-md" placeholder={t('publishJourney.contactDetails.phonePlaceholder')} required/></div>
-                        <div><label htmlFor="contactName" className="block text-sm font-medium text-brand-dark">{t('publishJourney.contactDetails.nameLabel')}</label><input type="text" id="contactName" value={formData.contactName} onChange={handleChange} className="mt-1 w-full p-3 border border-gray-300 rounded-md" required /><p className="text-xs text-brand-gray mt-1">{t('publishJourney.contactDetails.nameDescription')}</p></div>
-                        <div>
-                            <label className="block text-sm font-medium text-brand-dark mb-2">{t('publishJourney.contactDetails.preferenceLabel')}</label>
-                            <div className="space-y-3">
-                                <div className="bg-gray-50 p-3 rounded-md border"><label className="flex items-center space-x-3"><input type="radio" name="contactPreference" value="prefChatAndPhone" checked={formData.contactPreference === 'prefChatAndPhone'} onChange={handleChange} className="h-5 w-5 text-brand-red"/><div><p className="font-medium">{t('publishJourney.contactDetails.prefChatAndPhone')}</p><p className="text-xs text-brand-gray">{t('publishJourney.contactDetails.prefChatAndPhoneDesc')}</p></div></label></div>
-                                <div className="bg-gray-50 p-3 rounded-md border"><label className="flex items-center space-x-3"><input type="radio" name="contactPreference" value="prefChatOnly" checked={formData.contactPreference === 'prefChatOnly'} onChange={handleChange} className="h-5 w-5 text-brand-red"/><div><p className="font-medium">{t('publishJourney.contactDetails.prefChatOnly')}</p><p className="text-xs text-brand-gray">{t('publishJourney.contactDetails.prefChatOnlyDesc')}</p></div></label></div>
-                                <div className="bg-gray-50 p-3 rounded-md border"><label className="flex items-center space-x-3"><input type="radio" name="contactPreference" value="prefPhoneOnly" checked={formData.contactPreference === 'prefPhoneOnly'} onChange={handleChange} className="h-5 w-5 text-brand-red"/><p className="font-medium">{t('publishJourney.contactDetails.prefPhoneOnly')}</p></label></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="text-center pt-6"><button type="submit" className="w-full max-w-xs mx-auto px-6 py-3 bg-[#93005a] text-white font-bold rounded-md hover:opacity-90">{t('publishJourney.contactDetails.continueButton')}</button></div>
-                </div>
-            )}
-        </form>
-    );
-
-    const renderStep2 = () => (
-        <form onSubmit={(e) => { e.preventDefault(); handleNextStep(2); }} className="space-y-8">
-            <h2 className="text-xl font-bold text-brand-navy">{t('publishJourney.detailsForm.title')}</h2>
-            
-            <div>
-                <label htmlFor="title" className="block text-base sm:text-lg font-bold text-brand-navy mb-3">{t('publishJourney.detailsForm.adTitle')}</label>
-                <div className="relative">
-                    <input type="text" id="title" value={formData.title} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-md pr-12" minLength={10} placeholder={t('publishJourney.detailsForm.adTitlePlaceholder')} required/>
-                    <button type="button" onClick={handleGenerateAITitle} disabled={isGeneratingTitle} className="absolute top-1/2 right-3 -translate-y-1/2 text-brand-navy hover:text-brand-red disabled:opacity-50" title={t('publishJourney.detailsForm.aiTitleButtonLabel')}>
-                        {isGeneratingTitle ? <SpinnerIcon className="w-6 h-6 animate-spin"/> : <AIIcon className="w-6 h-6"/>}
-                    </button>
-                </div>
-            </div>
-
-            <div>
-                 <label className="block text-base sm:text-lg font-bold text-brand-navy mb-3">{t('publishJourney.detailsForm.propertyType')}</label>
-                <select id="detailsPropertyType" value={formData.detailsPropertyType} onChange={handleChange} className="w-full md:w-1/2 p-3 border border-gray-300 rounded-md">
-                    <option>{t('publishJourney.detailsForm.apartment')}</option> <option>{t('publishJourney.detailsForm.house')}</option> <option>{t('publishJourney.detailsForm.room')}</option> <option>{t('publishJourney.detailsForm.office')}</option> <option>{t('publishJourney.detailsForm.land')}</option>
-                </select>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-                <div>
-                    <label htmlFor="grossArea" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.grossArea')}</label>
-                    <div className="relative"><input type="number" id="grossArea" value={formData.grossArea} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-md" /><span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray">m²</span></div>
-                </div>
-                <div>
-                    <label htmlFor="netArea" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.netArea')}</label>
-                    <div className="relative"><input type="number" id="netArea" value={formData.netArea} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-md" /><span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray">m²</span></div>
-                </div>
-            </div>
-
-             <div className="grid grid-cols-2 gap-8">
-                <div>
-                    <label className="block text-sm font-medium text-brand-dark mb-2">{t('publishJourney.detailsForm.bedrooms')}</label>
-                    <div className="flex items-center space-x-3"><button type="button" onClick={() => handleCounterChange('bedrooms', -1)} className="p-2 border rounded-full"><MinusIcon className="w-5 h-5"/></button><span className="text-xl font-bold w-8 text-center">{formData.bedrooms}</span><button type="button" onClick={() => handleCounterChange('bedrooms', 1)} className="p-2 border rounded-full"><PlusIcon className="w-5 h-5"/></button></div>
-                </div>
-                 <div>
-                    <label className="block text-sm font-medium text-brand-dark mb-2">{t('publishJourney.detailsForm.bathrooms')}</label>
-                    <div className="flex items-center space-x-3"><button type="button" onClick={() => handleCounterChange('bathrooms', -1)} className="p-2 border rounded-full"><MinusIcon className="w-5 h-5"/></button><span className="text-xl font-bold w-8 text-center">{formData.bathrooms}</span><button type="button" onClick={() => handleCounterChange('bathrooms', 1)} className="p-2 border rounded-full"><PlusIcon className="w-5 h-5"/></button></div>
-                </div>
-            </div>
-
-            <div>
-                <label className="block text-sm font-medium text-brand-dark mb-2">{t('publishJourney.detailsForm.hasElevator')}</label>
-                <div className="flex space-x-4"><label className="flex items-center"><input type="radio" name="hasElevator" onChange={() => setFormData(p => ({ ...p, hasElevator: true }))} checked={formData.hasElevator === true} className="h-4 w-4 mr-2"/> {t('publishJourney.detailsForm.yes')}</label><label className="flex items-center"><input type="radio" name="hasElevator" onChange={() => setFormData(p => ({ ...p, hasElevator: false }))} checked={formData.hasElevator === false} className="h-4 w-4 mr-2"/> {t('publishJourney.detailsForm.no')}</label></div>
-            </div>
-            
-            {/* Other features checkboxes */}
-            <div className="space-y-6">
-                <h3 className="text-lg font-bold text-brand-navy border-t pt-6">{t('publishJourney.detailsForm.otherHomeFeatures')}</h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {['builtInWardrobes', 'airConditioning', 'terrace', 'balcony', 'garage', 'mobiliado', 'cozinhaEquipada', 'suite', 'escritorio'].map(feature => (
-                        <label key={feature} className="flex items-center"><input type="checkbox" checked={formData.homeFeatures.includes(feature)} onChange={() => handleCheckboxChange('homeFeatures', feature)} className="h-4 w-4 mr-2"/> {t(`publishJourney.detailsForm.${feature}`)}</label>
-                    ))}
-                </div>
-                <h3 className="text-lg font-bold text-brand-navy border-t pt-6">{t('publishJourney.detailsForm.otherBuildingFeatures')}</h3>
-                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {['pool', 'greenArea', 'portaria24h', 'academia', 'salaoDeFestas', 'churrasqueira', 'parqueInfantil', 'quadraEsportiva', 'sauna', 'espacoGourmet'].map(feature => (
-                        <label key={feature} className="flex items-center"><input type="checkbox" checked={formData.buildingFeatures.includes(feature)} onChange={() => handleCheckboxChange('buildingFeatures', feature)} className="h-4 w-4 mr-2"/> {t(`publishJourney.detailsForm.${feature}`)}</label>
-                    ))}
-                </div>
-            </div>
-
-            <div>
-                <label htmlFor="description" className="block text-base sm:text-lg font-bold text-brand-navy mb-3">{t('publishJourney.detailsForm.adDescription')}</label>
-                <div className="relative">
-                    <textarea id="description" value={formData.description} onChange={handleChange} rows={5} className="w-full p-3 border rounded-md" placeholder={t('publishJourney.detailsForm.descriptionPlaceholder')}></textarea>
-                    <button type="button" onClick={handleGenerateAIDescription} disabled={isGeneratingDescription} className="absolute top-3 right-3 text-brand-navy hover:text-brand-red disabled:opacity-50" title={t('publishJourney.detailsForm.aiDescriptionButtonLabel')}>
-                        {isGeneratingDescription ? <SpinnerIcon className="w-6 h-6 animate-spin"/> : <AIIcon className="w-6 h-6"/>}
-                    </button>
-                </div>
-            </div>
-
-            <div className="border-t pt-8 space-y-6">
-                {formData.operation === 'venda' && ( /* Venda fields */
-                    <div className="space-y-6">
-                        <h3 className="text-xl font-bold text-brand-navy">{t('publishJourney.detailsForm.sellTitle')}</h3>
-                        <div className="grid grid-cols-2 gap-4">
-                             <div><label htmlFor="salePrice" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.salePrice')}</label><div className="relative"><input type="text" inputMode="numeric" id="salePrice" value={formData.salePrice} onChange={handleChange} className="w-full p-3 border rounded-md"/><span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray">{t('publishJourney.detailsForm.currency.reais')}</span></div></div>
-                             <div><label htmlFor="iptuAnnual" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.iptuAnnual')}</label><div className="relative"><input type="text" inputMode="numeric" id="iptuAnnual" value={formData.iptuAnnual} onChange={handleChange} className="w-full p-3 border rounded-md"/><span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray">{t('publishJourney.detailsForm.currency.reais')}</span></div></div>
-                        </div>
-                        <div><label className="block text-sm font-medium text-brand-dark mb-2">{t('publishJourney.detailsForm.acceptsFinancing')}</label><div className="flex space-x-4"><label className="flex items-center"><input type="radio" name="acceptsFinancing" onChange={() => setFormData(p => ({...p, acceptsFinancing: true}))} checked={formData.acceptsFinancing === true}/> {t('publishJourney.detailsForm.yes')}</label><label className="flex items-center"><input type="radio" name="acceptsFinancing" onChange={() => setFormData(p => ({...p, acceptsFinancing: false}))} checked={formData.acceptsFinancing === false}/> {t('publishJourney.detailsForm.no')}</label></div></div>
-                        <div><label className="block text-sm font-medium text-brand-dark mb-2">{t('publishJourney.detailsForm.occupationSituation')}</label><div className="flex space-x-4"><label className="flex items-center"><input type="radio" name="occupationSituation" value="rented" checked={formData.occupationSituation === 'rented'} onChange={handleChange}/> {t('publishJourney.detailsForm.rented')}</label><label className="flex items-center"><input type="radio" name="occupationSituation" value="vacant" checked={formData.occupationSituation === 'vacant'} onChange={handleChange}/> {t('publishJourney.detailsForm.vacant')}</label></div></div>
-                    </div>
-                )}
-                {formData.operation === 'aluguel' && ( /* Aluguel fields */
-                    <div className="space-y-6">
-                        <h3 className="text-xl font-bold text-brand-navy">{t('publishJourney.detailsForm.rentTitle')}</h3>
-                         <div className="grid grid-cols-3 gap-4">
-                             <div><label htmlFor="monthlyRent" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.monthlyRent')}</label><div className="relative"><input type="text" inputMode="numeric" id="monthlyRent" value={formData.monthlyRent} onChange={handleChange} className="w-full p-3 border rounded-md"/><span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray">{t('publishJourney.detailsForm.currency.reaisMonth')}</span></div></div>
-                             <div><label htmlFor="condoFee" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.condoFee')}</label><div className="relative"><input type="text" inputMode="numeric" id="condoFee" value={formData.condoFee} onChange={handleChange} className="w-full p-3 border rounded-md"/><span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray">{t('publishJourney.detailsForm.currency.reaisMonth')}</span></div></div>
-                             <div><label htmlFor="iptuMonthly" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.iptuMonthly')}</label><div className="relative"><input type="text" inputMode="numeric" id="iptuMonthly" value={formData.iptuMonthly} onChange={handleChange} className="w-full p-3 border rounded-md"/><span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray">{t('publishJourney.detailsForm.currency.reaisMonth')}</span></div></div>
-                        </div>
-                        <div><label className="block text-sm font-medium text-brand-dark mb-2">{t('publishJourney.detailsForm.rentalConditions')}</label><div className="grid grid-cols-3 gap-2">{['deposit', 'guarantor', 'insurance'].map(cond => <label key={cond} className="flex items-center"><input type="checkbox" checked={formData.rentalConditions.includes(cond)} onChange={() => handleCheckboxChange('rentalConditions', cond)}/> {t(`publishJourney.detailsForm.${cond}`)}</label>)}</div></div>
-                        <div><label className="block text-sm font-medium text-brand-dark mb-2">{t('publishJourney.detailsForm.petsAllowed')}</label><div className="flex space-x-4"><label className="flex items-center"><input type="radio" name="petsAllowed" onChange={() => setFormData(p => ({...p, petsAllowed: true}))} checked={formData.petsAllowed === true}/> {t('publishJourney.detailsForm.yes')}</label><label className="flex items-center"><input type="radio" name="petsAllowed" onChange={() => setFormData(p => ({...p, petsAllowed: false}))} checked={formData.petsAllowed === false}/> {t('publishJourney.detailsForm.no')}</label></div></div>
-                    </div>
-                )}
-                 {formData.operation === 'temporada' && ( /* Temporada fields */
-                    <div className="space-y-6">
-                        <h3 className="text-xl font-bold text-brand-navy">{t('publishJourney.detailsForm.seasonTitle')}</h3>
-                        <div className="grid grid-cols-2 gap-4">
-                             <div><label htmlFor="dailyRate" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.dailyRate')}</label><div className="relative"><input type="text" inputMode="numeric" id="dailyRate" value={formData.dailyRate} onChange={handleChange} className="w-full p-3 border rounded-md"/><span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray">{t('publishJourney.detailsForm.currency.reais')}</span></div></div>
-                             <div><label htmlFor="cleaningFee" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.cleaningFee')}</label><div className="relative"><input type="text" inputMode="numeric" id="cleaningFee" value={formData.cleaningFee} onChange={handleChange} className="w-full p-3 border rounded-md"/><span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray">{t('publishJourney.detailsForm.currency.reais')}</span></div></div>
-                             <div><label htmlFor="minStay" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.minStay')}</label><input type="number" id="minStay" value={formData.minStay} onChange={handleChange} className="w-full p-3 border rounded-md"/></div>
-                             <div><label htmlFor="maxGuests" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.maxGuests')}</label><input type="number" id="maxGuests" value={formData.maxGuests} onChange={handleChange} className="w-full p-3 border rounded-md"/></div>
-                        </div>
-                        {/* Calendar would go here if needed */}
-                    </div>
-                )}
-            </div>
-
-            <div className="flex justify-between items-center pt-8">
-                <button type="button" onClick={() => handlePrevStep(2)} className="text-brand-dark hover:underline">{t('publishJourney.photosForm.backButton')}</button>
-                <button type="submit" className="px-6 py-3 bg-[#93005a] text-white font-bold rounded-md hover:opacity-90">{t('publishJourney.detailsForm.continueToPhotosButton')}</button>
-            </div>
-        </form>
-    );
-
-    const renderStep3 = () => (
-        <div className="space-y-8">
-            <h2 className="text-xl sm:text-2xl font-bold text-brand-navy mb-4">{t('publishJourney.photosForm.title')}</h2>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-gray-50">
-                <input type="file" multiple onChange={handleFileChange} className="hidden" id="file-upload" accept="image/*,video/*"/>
-                <label htmlFor="file-upload" className="cursor-pointer">
-                    <p className="text-brand-gray mb-4">{t('publishJourney.photosForm.dragAndDrop')}</p>
-                    <span className="px-6 py-3 bg-gray-200 text-brand-dark font-bold rounded-md hover:bg-gray-300">{t('publishJourney.photosForm.addButton')}</span>
-                </label>
-                <p className="text-xs text-brand-gray mt-4">{t('publishJourney.photosForm.limitsInfo')}</p>
-            </div>
-            {files.length > 0 && (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                    {files.map((file, index) => {
-                        let url: string;
-                        let type: 'imagem' | 'video';
-                        let key: string | number;
-
-                        if (file instanceof File) {
-                            url = URL.createObjectURL(file);
-                            type = file.type.startsWith('image') ? 'imagem' : 'video';
-                            key = file.name + index;
-                        } else {
-                            url = file.url;
-                            type = file.tipo;
-                            key = file.id;
-                        }
-                        
-                        return (
-                            <div key={key} className="relative group aspect-w-1 aspect-h-1 bg-gray-100 rounded-lg overflow-hidden">
-                                {type === 'imagem' ? <img src={url} alt={`preview ${index}`} className="w-full h-full object-cover"/> : <video src={url} className="w-full h-full object-cover"/>}
-                                <button onClick={() => handleRemoveFile(file)} className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 opacity-0 group-hover:opacity-100"><CloseIcon className="w-4 h-4"/></button>
-                            </div>
-                        )
-                    })}
-                </div>
-            )}
-             <div className="bg-blue-50 border-l-4 border-blue-400 p-6 rounded-md space-y-4">
-                <h3 className="text-lg font-bold text-brand-navy">{t('publishJourney.photosForm.rememberTitle')}</h3>
-                <ul className="list-disc list-inside space-y-2 text-brand-dark">
-                    <li>{t('publishJourney.photosForm.tip1')}</li>
-                    <li>{t('publishJourney.photosForm.tip2')}</li>
-                    <li>{t('publishJourney.photosForm.tip3')}</li>
-                </ul>
-            </div>
-            <div className="flex flex-col sm:flex-row justify-between items-center pt-8 gap-4">
-                <button type="button" onClick={() => handlePrevStep(3)} className="text-brand-dark hover:underline">{t('publishJourney.photosForm.backButton')}</button>
-                <button onClick={handlePublish} disabled={isSubmitting} className="w-full sm:w-auto px-8 py-4 bg-[#93005a] text-white font-bold rounded-md hover:opacity-90 disabled:opacity-50">
-                    {isSubmitting 
-                        ? (propertyToEdit ? t('publishJourney.photosForm.updatingButton') : t('publishJourney.photosForm.publishingButton'))
-                        : (propertyToEdit ? t('publishJourney.photosForm.updateButton') : t('publishJourney.photosForm.publishButton'))
-                    }
-                </button>
-            </div>
-        </div>
-    );
-
+    }, [formData, t, onPublishError]);
 
     return (
         <div className="bg-brand-light-gray min-h-screen">
             <Header {...props} />
-            <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <div className="flex flex-col lg:flex-row gap-12">
-                    <div className="lg:w-2/3">
-                        <h1 className="text-2xl sm:text-3xl font-bold text-brand-navy mb-8">{propertyToEdit ? t('publishJourney.editTitle') : t('publishJourney.title')}</h1>
-                        <Stepper currentStep={step} setStep={setStep} />
+            <div className="container mx-auto px-4 sm:px-6 py-8">
+                <div className="text-sm mb-6">
+                    <span onClick={props.onBack} className="text-brand-red hover:underline cursor-pointer">
+                        {t('publishAdPage.breadcrumbHome')}
+                    </span>
+                    <span className="text-brand-gray mx-2">&gt;</span>
+                    <span className="text-brand-dark font-medium">{propertyToEdit ? t('publishJourney.editTitle') : t('publishJourney.title')}</span>
+                </div>
+                
+                <div className="lg:grid lg:grid-cols-3 lg:gap-12">
+                    {/* Main Content */}
+                    <div className="lg:col-span-2">
                         <div className="bg-white p-6 sm:p-8 rounded-lg shadow-md">
-                           {step === 1 && renderStep1()}
-                           {step === 2 && renderStep2()}
-                           {step === 3 && renderStep3()}
+                            <Stepper currentStep={step} setStep={setStep} />
+                            
+                            {/* Step 1: Basic Data */}
+                            {step === 1 && (
+                                <div>
+                                    {/* Location Form */}
+                                    {!formData.isAddressVerified ? (
+                                        <form onSubmit={handleAddressSubmit}>
+                                            <h2 className="text-xl font-bold text-brand-navy mb-4">{t('publishJourney.form.propertyType.label')}</h2>
+                                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-8">
+                                                {['Apartamento', 'Casa', 'Quarto', 'Escritório', 'Terreno'].map(type => (
+                                                    <button key={type} type="button" onClick={() => setFormData(p => ({...p, propertyType: type}))} className={`p-4 border rounded-lg text-center transition-colors ${formData.propertyType === type ? 'bg-brand-red text-white border-brand-red' : 'bg-white hover:border-brand-dark'}`}>
+                                                        <span className="font-medium text-sm">{t(`publishJourney.detailsForm.${type.toLowerCase()}`)}</span>
+                                                    </button>
+                                                ))}
+                                            </div>
+
+                                            <h2 className="text-xl font-bold text-brand-navy mb-4">{t('publishJourney.form.operation.label')}</h2>
+                                            <div className="grid grid-cols-3 gap-2 mb-8">
+                                                <button type="button" onClick={() => setFormData(p => ({...p, operation: 'venda'}))} className={`p-4 border rounded-lg text-center transition-colors ${formData.operation === 'venda' ? 'bg-brand-red text-white border-brand-red' : 'bg-white hover:border-brand-dark'}`}>
+                                                    <span className="font-medium">{t('publishJourney.form.operation.sell')}</span>
+                                                </button>
+                                                 <button type="button" onClick={() => setFormData(p => ({...p, operation: 'aluguel'}))} className={`p-4 border rounded-lg text-center transition-colors ${formData.operation === 'aluguel' ? 'bg-brand-red text-white border-brand-red' : 'bg-white hover:border-brand-dark'}`}>
+                                                    <span className="font-medium">{t('publishJourney.form.operation.rent')}</span>
+                                                </button>
+                                                <button type="button" onClick={() => setFormData(p => ({...p, operation: 'temporada'}))} className={`p-4 border rounded-lg text-center transition-colors ${formData.operation === 'temporada' ? 'bg-brand-red text-white border-brand-red' : 'bg-white hover:border-brand-dark'}`}>
+                                                    <span className="font-medium">{t('publishJourney.form.operation.season')}</span>
+                                                </button>
+                                            </div>
+
+                                            <h2 className="text-xl font-bold text-brand-navy mb-4">{t('publishJourney.form.location.label')}</h2>
+                                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                                <div className="sm:col-span-3">
+                                                    <label htmlFor="city" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.form.location.city')}</label>
+                                                    <input type="text" id="city" name="city" value={formData.city} onChange={handleFormChange} required className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" />
+                                                </div>
+                                                <div className="sm:col-span-2">
+                                                    <label htmlFor="street" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.form.location.street')}</label>
+                                                    <input type="text" id="street" name="street" value={formData.street} onChange={handleFormChange} required className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" />
+                                                </div>
+                                                <div>
+                                                    <label htmlFor="number" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.form.location.number')}</label>
+                                                    <input type="text" id="number" name="number" value={formData.number} onChange={handleFormChange} required className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" />
+                                                </div>
+                                            </div>
+                                            <button type="submit" className="mt-6 w-full bg-brand-red text-white font-bold py-3 px-4 rounded-md hover:opacity-90 transition-opacity">
+                                                {t('publishJourney.form.submitButton')}
+                                            </button>
+                                        </form>
+                                    ) : (
+                                        /* Verified Address & Contact Form */
+                                        <div>
+                                            <div className="mb-8">
+                                                <label className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.verifiedAddress.label')}</label>
+                                                <div className="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-md">
+                                                    <div className="flex items-center">
+                                                        <VerifiedIcon className="w-6 h-6 text-green-500 mr-3" />
+                                                        <span className="font-medium text-green-800">{formData.verifiedAddress}</span>
+                                                    </div>
+                                                    <button onClick={() => setFormData(p => ({...p, isAddressVerified: false}))} className="text-sm font-medium text-brand-red hover:underline">
+                                                        {t('publishJourney.verifiedAddress.edit')}
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <h2 className="text-xl font-bold text-brand-navy mb-4">{t('publishJourney.contactDetails.title')}</h2>
+                                            {/* Contact Details Form */}
+                                            <div className="space-y-4">
+                                                <div>
+                                                    <label className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.contactDetails.emailLabel')}</label>
+                                                    <p className="text-brand-dark">{user?.email}</p>
+                                                    <p className="text-xs text-brand-gray">{t('publishJourney.contactDetails.emailDescription')}</p>
+                                                    <button className="text-xs text-brand-red hover:underline mt-1">{t('publishJourney.contactDetails.changeAccount')}</button>
+                                                </div>
+                                                 <div>
+                                                    <label htmlFor="contactPhone" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.contactDetails.phoneLabel')}</label>
+                                                    <input type="tel" id="contactPhone" name="contactPhone" value={formData.contactPhone} onChange={handleFormChange} placeholder={t('publishJourney.contactDetails.phonePlaceholder')} required className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" />
+                                                </div>
+                                                <div>
+                                                    <label htmlFor="contactName" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.contactDetails.nameLabel')}</label>
+                                                    <input type="text" id="contactName" name="contactName" value={formData.contactName} onChange={handleFormChange} required className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" />
+                                                     <p className="text-xs text-brand-gray mt-1">{t('publishJourney.contactDetails.nameDescription')}</p>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-brand-dark mb-2">{t('publishJourney.contactDetails.preferenceLabel')}</label>
+                                                    <div className="space-y-3">
+                                                        <label className="flex items-start p-3 border rounded-md cursor-pointer has-[:checked]:border-brand-red has-[:checked]:bg-red-50">
+                                                            <input type="radio" name="contactPreference" value="prefChatAndPhone" checked={formData.contactPreference === 'prefChatAndPhone'} onChange={handleRadioChange} className="mt-1" />
+                                                            <div className="ml-3">
+                                                                <p className="font-medium">{t('publishJourney.contactDetails.prefChatAndPhone')}</p>
+                                                                <p className="text-xs text-brand-gray">{t('publishJourney.contactDetails.prefChatAndPhoneDesc')}</p>
+                                                            </div>
+                                                        </label>
+                                                        <label className="flex items-start p-3 border rounded-md cursor-pointer has-[:checked]:border-brand-red has-[:checked]:bg-red-50">
+                                                            <input type="radio" name="contactPreference" value="prefChatOnly" checked={formData.contactPreference === 'prefChatOnly'} onChange={handleRadioChange} className="mt-1" />
+                                                             <div className="ml-3">
+                                                                <p className="font-medium">{t('publishJourney.contactDetails.prefChatOnly')}</p>
+                                                                <p className="text-xs text-brand-gray">{t('publishJourney.contactDetails.prefChatOnlyDesc')}</p>
+                                                            </div>
+                                                        </label>
+                                                        <label className="flex items-start p-3 border rounded-md cursor-pointer has-[:checked]:border-brand-red has-[:checked]:bg-red-50">
+                                                            <input type="radio" name="contactPreference" value="prefPhoneOnly" checked={formData.contactPreference === 'prefPhoneOnly'} onChange={handleRadioChange} className="mt-1" />
+                                                             <div className="ml-3">
+                                                                <p className="font-medium">{t('publishJourney.contactDetails.prefPhoneOnly')}</p>
+                                                            </div>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <button onClick={() => setStep(2)} className="mt-8 w-full bg-brand-red text-white font-bold py-3 px-4 rounded-md hover:opacity-90 transition-opacity">
+                                                {t('publishJourney.contactDetails.continueButton')}
+                                            </button>
+                                            <p className="text-xs text-center mt-2 text-brand-gray">{t('publishJourney.contactDetails.nextStepInfo')}</p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Step 2: Details */}
+                            {step === 2 && (
+                                <div>
+                                    {/* Details Form content */}
+                                    <h2 className="text-2xl font-bold text-brand-navy mb-2">{t('publishJourney.detailsForm.title')}</h2>
+                                    <p className="text-brand-gray mb-6">{t(`publishJourney.detailsForm.${formData.operation}Title`)}</p>
+
+                                    {/* Title */}
+                                    <div className="mb-4">
+                                        <label htmlFor="title" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.adTitle')}</label>
+                                        <div className="relative">
+                                            <input type="text" id="title" name="title" value={formData.title} onChange={handleFormChange} placeholder={t('publishJourney.detailsForm.adTitlePlaceholder')} required className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red pr-28" />
+                                            <button 
+                                                type="button" 
+                                                onClick={generateAITitle} 
+                                                disabled={isGeneratingTitle || !formData.title.trim()}
+                                                className="absolute right-1 top-1/2 -translate-y-1/2 bg-blue-100 text-blue-700 text-xs font-semibold px-2 py-1 rounded-md flex items-center hover:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            >
+                                                {isGeneratingTitle ? <SpinnerIcon className="w-4 h-4 animate-spin mr-1" /> : <AIIcon className="w-4 h-4 mr-1"/>}
+                                                {t('publishJourney.detailsForm.aiTitleButtonLabel')}
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Price and Financials */}
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                                        {formData.operation === 'venda' && (
+                                            <>
+                                            <div>
+                                                <label htmlFor="salePrice" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.salePrice')}</label>
+                                                <div className="relative">
+                                                    <input type="number" id="salePrice" name="salePrice" value={formData.salePrice} onChange={handleFormChange} required className="w-full pl-4 pr-16 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" />
+                                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray text-sm">{t('publishJourney.detailsForm.currency.reais')}</span>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label htmlFor="iptuAnnual" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.iptuAnnual')}</label>
+                                                <input type="number" id="iptuAnnual" name="iptuAnnual" value={formData.iptuAnnual} onChange={handleFormChange} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" />
+                                            </div>
+                                            <div className="sm:col-span-2">
+                                                <p className="text-sm font-medium text-brand-dark mb-2">{t('publishJourney.detailsForm.acceptsFinancing')}</p>
+                                                <div className="flex gap-4">
+                                                    <label className="flex items-center"><input type="radio" name="acceptsFinancing" value="true" checked={formData.acceptsFinancing === true} onChange={handleRadioChange} className="mr-2"/>{t('publishJourney.detailsForm.yes')}</label>
+                                                    <label className="flex items-center"><input type="radio" name="acceptsFinancing" value="false" checked={formData.acceptsFinancing === false} onChange={handleRadioChange} className="mr-2"/>{t('publishJourney.detailsForm.no')}</label>
+                                                </div>
+                                            </div>
+                                            </>
+                                        )}
+                                        {formData.operation === 'aluguel' && (
+                                            <>
+                                            <div>
+                                                <label htmlFor="monthlyRent" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.monthlyRent')}</label>
+                                                 <div className="relative">
+                                                    <input type="number" id="monthlyRent" name="monthlyRent" value={formData.monthlyRent} onChange={handleFormChange} required className="w-full pl-4 pr-24 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" />
+                                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray text-sm">{t('publishJourney.detailsForm.currency.reaisMonth')}</span>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label htmlFor="condoFee" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.condoFee')}</label>
+                                                <input type="number" id="condoFee" name="condoFee" value={formData.condoFee} onChange={handleFormChange} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" />
+                                            </div>
+                                            </>
+                                        )}
+                                         {formData.operation === 'temporada' && (
+                                            <>
+                                            <div>
+                                                <label htmlFor="dailyRate" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.dailyRate')}</label>
+                                                 <div className="relative">
+                                                    <input type="number" id="dailyRate" name="dailyRate" value={formData.dailyRate} onChange={handleFormChange} required className="w-full pl-4 pr-16 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" />
+                                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray text-sm">{t('publishJourney.detailsForm.currency.reais')}</span>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label htmlFor="cleaningFee" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.cleaningFee')}</label>
+                                                <input type="number" id="cleaningFee" name="cleaningFee" value={formData.cleaningFee} onChange={handleFormChange} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" />
+                                            </div>
+                                            </>
+                                        )}
+                                    </div>
+
+                                    {/* Characteristics */}
+                                    <h3 className="text-xl font-bold text-brand-navy mb-4 border-t pt-6">{t('publishJourney.detailsForm.apartmentCharacteristics')}</h3>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                                        <div>
+                                            <label htmlFor="detailsPropertyType" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.propertyType')}</label>
+                                            <select id="detailsPropertyType" name="detailsPropertyType" value={formData.detailsPropertyType} onChange={handleFormChange} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red">
+                                                {['Apartamento', 'Casa', 'Quarto', 'Escritório', 'Terreno'].map(type => (
+                                                     <option key={type} value={type}>{t(`publishJourney.detailsForm.${type.toLowerCase()}`)}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label htmlFor="grossArea" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.grossArea')}</label>
+                                            <input type="number" id="grossArea" name="grossArea" value={formData.grossArea} onChange={handleFormChange} required className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" />
+                                        </div>
+                                        <div>
+                                            <label htmlFor="netArea" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.netArea')}</label>
+                                            <input type="number" id="netArea" name="netArea" value={formData.netArea} onChange={handleFormChange} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" />
+                                        </div>
+                                         <div>
+                                            <label className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.bedrooms')}</label>
+                                            <div className="flex items-center border border-gray-300 rounded-md">
+                                                <button type="button" onClick={() => handleNumberChange('bedrooms', -1)} className="p-2 text-brand-dark"><MinusIcon className="w-5 h-5"/></button>
+                                                <input type="number" name="bedrooms" value={formData.bedrooms} onChange={handleFormChange} className="w-full text-center border-l border-r px-2 py-1.5 focus:outline-none" />
+                                                <button type="button" onClick={() => handleNumberChange('bedrooms', 1)} className="p-2 text-brand-dark"><PlusIcon className="w-5 h-5"/></button>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.bathrooms')}</label>
+                                             <div className="flex items-center border border-gray-300 rounded-md">
+                                                <button type="button" onClick={() => handleNumberChange('bathrooms', -1)} className="p-2 text-brand-dark"><MinusIcon className="w-5 h-5"/></button>
+                                                <input type="number" name="bathrooms" value={formData.bathrooms} onChange={handleFormChange} className="w-full text-center border-l border-r px-2 py-1.5 focus:outline-none" />
+                                                <button type="button" onClick={() => handleNumberChange('bathrooms', 1)} className="p-2 text-brand-dark"><PlusIcon className="w-5 h-5"/></button>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-medium text-brand-dark mb-2">{t('publishJourney.detailsForm.hasElevator')}</p>
+                                            <div className="flex gap-4">
+                                                <label className="flex items-center"><input type="radio" name="hasElevator" value="true" checked={formData.hasElevator === true} onChange={handleRadioChange} className="mr-2"/>{t('publishJourney.detailsForm.yes')}</label>
+                                                <label className="flex items-center"><input type="radio" name="hasElevator" value="false" checked={formData.hasElevator === false} onChange={handleRadioChange} className="mr-2"/>{t('publishJourney.detailsForm.no')}</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    {/* More Features */}
+                                    <div className="mb-6">
+                                        <h4 className="text-lg font-semibold text-brand-navy mb-3">{t('publishJourney.detailsForm.otherHomeFeatures')}</h4>
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                            {['builtInWardrobes', 'airConditioning', 'terrace', 'balcony', 'garage', 'mobiliado', 'cozinhaEquipada', 'suite', 'escritorio'].map(feature => (
+                                                <label key={feature} className="flex items-center">
+                                                    <input type="checkbox" value={feature} checked={formData.homeFeatures.includes(feature)} onChange={(e) => handleCheckboxChange(e, 'homeFeatures')} className="mr-2 h-4 w-4 rounded border-gray-300 text-brand-red focus:ring-brand-red" />
+                                                    <span className="text-sm">{t(`publishJourney.detailsForm.${feature}`)}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className="mb-6">
+                                        <h4 className="text-lg font-semibold text-brand-navy mb-3">{t('publishJourney.detailsForm.otherBuildingFeatures')}</h4>
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                             {['pool', 'greenArea', 'portaria24h', 'academia', 'salaoDeFestas', 'churrasqueira', 'parqueInfantil', 'quadraEsportiva', 'sauna', 'espacoGourmet'].map(feature => (
+                                                <label key={feature} className="flex items-center">
+                                                    <input type="checkbox" value={feature} checked={formData.buildingFeatures.includes(feature)} onChange={(e) => handleCheckboxChange(e, 'buildingFeatures')} className="mr-2 h-4 w-4 rounded border-gray-300 text-brand-red focus:ring-brand-red" />
+                                                    <span className="text-sm">{t(`publishJourney.detailsForm.${feature}`)}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Description */}
+                                    <div className="mb-4">
+                                        <label htmlFor="description" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.adDescription')}</label>
+                                        <div className="relative">
+                                            <textarea id="description" name="description" value={formData.description} onChange={handleFormChange} rows={6} placeholder={t('publishJourney.detailsForm.descriptionPlaceholder')} required className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red"></textarea>
+                                            <button 
+                                                type="button" 
+                                                onClick={generateAIDescription} 
+                                                disabled={isGeneratingDescription}
+                                                className="absolute bottom-2 right-2 bg-blue-100 text-blue-700 text-xs font-semibold px-2 py-1 rounded-md flex items-center hover:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            >
+                                                {isGeneratingDescription ? <SpinnerIcon className="w-4 h-4 animate-spin mr-1" /> : <AIIcon className="w-4 h-4 mr-1"/>}
+                                                {t('publishJourney.detailsForm.aiDescriptionButtonLabel')}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <button onClick={() => setStep(3)} className="mt-6 w-full bg-brand-red text-white font-bold py-3 px-4 rounded-md hover:opacity-90 transition-opacity">
+                                        {t('publishJourney.detailsForm.continueToPhotosButton')}
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* Step 3: Photos */}
+                            {step === 3 && (
+                                <div>
+                                    <h2 className="text-2xl font-bold text-brand-navy mb-2">{t('publishJourney.photosForm.title')}</h2>
+                                    <div className="mt-4 p-6 border-2 border-dashed border-gray-300 rounded-lg text-center">
+                                        <PhotoIcon className="mx-auto h-12 w-12 text-gray-400" />
+                                        <p className="mt-2 text-sm text-brand-gray">{t('publishJourney.photosForm.dragAndDrop')}</p>
+                                        <label htmlFor="file-upload" className="relative cursor-pointer bg-brand-red text-white font-semibold py-2 px-4 rounded-md hover:opacity-90 transition-opacity inline-block mt-4">
+                                            <span>{t('publishJourney.photosForm.addButton')}</span>
+                                            <input id="file-upload" name="file-upload" type="file" className="sr-only" multiple onChange={handleFileChange} accept="image/*,video/*" />
+                                        </label>
+                                        <p className="mt-2 text-xs text-brand-gray">{t('publishJourney.photosForm.limitsInfo')}</p>
+                                    </div>
+
+                                    {/* File Previews */}
+                                    {files.length > 0 && (
+                                        <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                                            {files.map((file, index) => {
+                                                // FIX: Use a more robust type guard ('id' in file) to differentiate between existing Media and new File objects.
+                                                // This resolves TypeScript errors where properties like 'url' and 'tipo' were not found on the union type 'MediaItem'.
+                                                const isExisting = 'id' in file;
+                                                const url = isExisting ? file.url : URL.createObjectURL(file);
+                                                const fileType = isExisting ? file.tipo : file.type;
+
+                                                return (
+                                                    <div key={index} className="relative group aspect-w-1 aspect-h-1">
+                                                        {fileType.startsWith('video') ? (
+                                                            <video src={url} className="w-full h-full object-cover rounded-md shadow-sm" controls />
+                                                        ) : (
+                                                            <img src={url} alt={`Preview ${index}`} className="w-full h-full object-cover rounded-md shadow-sm" />
+                                                        )}
+                                                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all flex items-center justify-center">
+                                                             <button onClick={() => removeFile(file)} className="absolute top-1 right-1 bg-white/70 text-brand-red rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity" aria-label={t('publishJourney.photosForm.removeFile')}>
+                                                                <CloseIcon className="w-4 h-4"/>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                )
+                                            })}
+                                        </div>
+                                    )}
+
+                                    {/* Tips */}
+                                    <div className="mt-8 p-4 bg-blue-50 rounded-lg">
+                                        <h4 className="font-bold text-blue-800 mb-2">{t('publishJourney.photosForm.rememberTitle')}</h4>
+                                        <ul className="list-disc list-inside text-sm text-blue-700 space-y-1">
+                                            <li>{t('publishJourney.photosForm.tip1')}</li>
+                                            <li>{t('publishJourney.photosForm.tip2')}</li>
+                                            <li>{t('publishJourney.photosForm.tip3')}</li>
+                                        </ul>
+                                    </div>
+
+                                    <div className="mt-8 flex flex-col sm:flex-row gap-4">
+                                        <button onClick={() => setStep(2)} className="flex-1 order-2 sm:order-1 text-center bg-gray-200 text-brand-dark font-bold py-3 px-4 rounded-md hover:bg-gray-300 transition-opacity">
+                                            {t('publishJourney.photosForm.backButton')}
+                                        </button>
+                                         <button onClick={handleSubmitJourney} disabled={isSubmitting} className="flex-1 order-1 sm:order-2 bg-brand-red text-white font-bold py-3 px-4 rounded-md hover:opacity-90 transition-opacity disabled:bg-gray-400 disabled:cursor-wait flex items-center justify-center">
+                                            {isSubmitting && <SpinnerIcon className="w-5 h-5 animate-spin mr-2" />}
+                                            {isSubmitting
+                                                ? (propertyToEdit ? t('publishJourney.photosForm.updatingButton') : t('publishJourney.photosForm.publishingButton'))
+                                                : (propertyToEdit ? t('publishJourney.photosForm.updateButton') : t('publishJourney.photosForm.publishButton'))
+                                            }
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
                         </div>
                     </div>
-                    <aside className="lg:w-1/3">
-                        <div className="sticky top-24 bg-white p-6 rounded-lg shadow-md space-y-6">
-                             <h2 className="text-xl font-bold text-brand-navy">{t('publishJourney.sidebar.title')}</h2>
-                            <p className="text-sm text-brand-gray">{t('publishJourney.sidebar.p1')}</p>
-                            <p className="text-sm text-brand-gray">{t('publishJourney.sidebar.p2')}</p>
-                            <p className="text-sm text-brand-gray">{t('publishJourney.sidebar.p3')}</p>
-                            <p className="text-sm text-brand-gray">{t('publishJourney.sidebar.p4')}</p>
-                            <ul className="list-disc list-inside text-sm text-brand-gray space-y-1">
-                                <li>{t('publishJourney.sidebar.case1')}</li>
-                                <li>{t('publishJourney.sidebar.case2')}</li>
-                                <li>{t('publishJourney.sidebar.case3')}</li>
-                                <li>{t('publishJourney.sidebar.case4')}</li>
-                            </ul>
-                            <div className="border-t pt-6 space-y-4">
-                               <div className="flex items-start space-x-3"><BoltIcon className="w-6 h-6 text-brand-red flex-shrink-0 mt-1" /><div><h3 className="font-bold text-brand-dark">{t('publishJourney.sidebar.quickSell.title')}</h3><a href="#" onClick={(e) => {e.preventDefault();}} className="text-sm text-brand-red hover:underline">{t('publishJourney.sidebar.quickSell.link')}</a></div></div>
-                               <div className="flex items-start space-x-3"><BriefcaseIcon className="w-6 h-6 text-brand-red flex-shrink-0 mt-1" /><div><h3 className="font-bold text-brand-dark">{t('publishJourney.sidebar.professional.title')}</h3><a href="#" onClick={(e) => {e.preventDefault();}} className="text-sm text-brand-red hover:underline">{t('publishJourney.sidebar.professional.link')}</a></div></div>
+                    
+                    {/* Sidebar */}
+                    <div className="hidden lg:block lg:col-span-1 mt-8 lg:mt-0">
+                        <div className="sticky top-24 space-y-6">
+                            <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-brand-red">
+                                <h3 className="font-bold text-brand-navy mb-3">{t('publishJourney.sidebar.title')}</h3>
+                                <div className="text-sm text-brand-gray space-y-3">
+                                    <p>{t('publishJourney.sidebar.p1')}</p>
+                                    <p>{t('publishJourney.sidebar.p2')}</p>
+                                    <p>{t('publishJourney.sidebar.p3')}</p>
+                                </div>
+                            </div>
+                            <div className="bg-white p-6 rounded-lg shadow-md">
+                                 <div className="text-sm text-brand-gray space-y-3">
+                                    <p>{t('publishJourney.sidebar.p4')}</p>
+                                    <ul className="list-disc list-inside space-y-1 pl-2">
+                                        <li>{t('publishJourney.sidebar.case1')}</li>
+                                        <li>{t('publishJourney.sidebar.case2')}</li>
+                                        <li>{t('publishJourney.sidebar.case3')}</li>
+                                        <li>{t('publishJourney.sidebar.case4')}</li>
+                                    </ul>
+                                </div>
+                            </div>
+                             <div className="bg-white p-6 rounded-lg shadow-md text-center">
+                                <BoltIcon className="w-8 h-8 mx-auto text-yellow-500 mb-2"/>
+                                <h3 className="font-bold text-brand-navy mb-2">{t('publishJourney.sidebar.quickSell.title')}</h3>
+                                <a href="#" className="text-sm text-brand-red font-medium hover:underline">{t('publishJourney.sidebar.quickSell.link')}</a>
+                            </div>
+                            <div className="bg-white p-6 rounded-lg shadow-md text-center">
+                                <BriefcaseIcon className="w-8 h-8 mx-auto text-brand-navy mb-2"/>
+                                <h3 className="font-bold text-brand-navy mb-2">{t('publishJourney.sidebar.professional.title')}</h3>
+                                <a href="#" className="text-sm text-brand-red font-medium hover:underline">{t('publishJourney.sidebar.professional.link')}</a>
                             </div>
                         </div>
-                    </aside>
-                </div>
-            </div>
-            {isLocationPermissionModalOpen && (
-                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
-                    <div className="bg-white rounded-lg shadow-xl w-11/12 max-w-md p-6 sm:p-8 m-4">
-                        <div className="text-center">
-                            <WarningIcon className="w-12 h-12 text-yellow-400 mx-auto mb-4" />
-                            <h2 className="text-xl font-bold text-brand-navy mb-2">{t('publishJourney.locationPermissionModal.title')}</h2>
-                            <p className="text-brand-gray mb-6">{t('publishJourney.locationPermissionModal.message')}</p>
-                        </div>
-                        <div className="flex gap-4">
-                            <button onClick={() => handleLocationPermission(false)} className="flex-1 px-4 py-2 bg-gray-200 text-brand-dark font-semibold rounded-md hover:bg-gray-300">Cancelar</button>
-                            <button onClick={() => handleLocationPermission(true)} className="flex-1 px-4 py-2 bg-brand-red text-white font-semibold rounded-md hover:opacity-90">Confirmar</button>
-                        </div>
                     </div>
                 </div>
-            )}
-            <LocationConfirmationModal 
+            </div>
+            
+            <LocationConfirmationModal
                 isOpen={isLocationConfirmationModalOpen}
                 onClose={() => setLocationConfirmationModalOpen(false)}
-                onConfirm={handleConfirmAddress}
+                onConfirm={handleConfirmLocation}
                 initialCoordinates={formData.coordinates}
             />
+
+            {isLocationPermissionModalOpen && (
+                 <div className="fixed bottom-4 right-4 z-50 bg-white shadow-2xl rounded-lg p-6 max-w-sm w-11/12">
+                     <h3 className="font-bold text-brand-navy mb-2">{t('publishJourney.locationPermissionModal.title')}</h3>
+                     <p className="text-sm text-brand-gray mb-4">{t('publishJourney.locationPermissionModal.message')}</p>
+                     <div className="flex gap-3">
+                         <button onClick={() => setIsLocationPermissionModalOpen(false)} className="flex-1 text-sm bg-gray-200 text-brand-dark font-semibold py-2 px-4 rounded-md hover:bg-gray-300">Não, obrigado</button>
+                         <button onClick={() => setIsLocationPermissionModalOpen(false)} className="flex-1 text-sm bg-brand-red text-white font-semibold py-2 px-4 rounded-md hover:opacity-90">Aceitar</button>
+                     </div>
+                 </div>
+            )}
         </div>
     );
 };

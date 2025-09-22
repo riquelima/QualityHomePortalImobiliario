@@ -28,6 +28,7 @@ interface AllListingsPageProps {
   onContactClick: (property: Property) => void;
   navigateToGuideToSell: () => void;
   navigateToDocumentsForSale: () => void;
+  navigateHome: () => void;
 }
 
 const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
@@ -78,8 +79,8 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
             <img src="https://i.imgur.com/FuxDdyF.png" alt="Quality Home Logo" className="h-24 mx-auto mb-4" />
             <h1 className="text-3xl sm:text-4xl font-bold text-brand-navy mb-4">{t('header.searchDropdown.buy.explore')}</h1>
             <form onSubmit={handleSearchSubmit} className="max-w-2xl mx-auto">
-              <div className="relative flex items-center gap-2">
-                <div className="relative flex-grow">
+              <div className="relative flex flex-col sm:flex-row items-center gap-2">
+                <div className="relative flex-grow w-full">
                     <SearchIcon className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2 z-10" />
                     <input
                       type="text"
@@ -92,7 +93,7 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
                 </div>
                 <button 
                     type="submit"
-                    className="bg-brand-red hover:opacity-90 text-white font-bold py-3 px-8 rounded-full transition duration-300"
+                    className="w-full sm:w-auto bg-brand-red hover:opacity-90 text-white font-bold py-3 px-8 rounded-full transition duration-300"
                 >
                     {t('hero.searchButton')}
                 </button>

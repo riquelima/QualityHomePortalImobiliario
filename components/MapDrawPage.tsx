@@ -236,7 +236,7 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewD
                 <span className="text-brand-gray mx-2">&gt;</span>
                 <span className="text-brand-dark font-medium">{userLocation ? t('map.breadcrumbs.proximitySearch') : t('map.breadcrumbs.drawOnMap')}</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-brand-navy">
+            <h1 className="text-2xl sm:text-3xl font-bold text-brand-navy">
               {userLocation ? t('map.title.proximity') : t('map.title.draw')}
             </h1>
         </div>

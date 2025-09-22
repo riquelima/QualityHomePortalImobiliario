@@ -31,6 +31,7 @@ interface SearchResultsPageProps {
   // FIX: Added missing props for Header.
   navigateToGuideToSell: () => void;
   navigateToDocumentsForSale: () => void;
+  navigateHome: () => void;
 }
 
 const SearchResultsPage: React.FC<SearchResultsPageProps> = ({ 
@@ -52,7 +53,8 @@ const SearchResultsPage: React.FC<SearchResultsPageProps> = ({
   hasUnreadMessages,
   onContactClick,
   navigateToGuideToSell,
-  navigateToDocumentsForSale
+  navigateToDocumentsForSale,
+  navigateHome
 }) => {
   const { t } = useLanguage();
 
@@ -60,6 +62,7 @@ const SearchResultsPage: React.FC<SearchResultsPageProps> = ({
     <div className="bg-brand-light-gray min-h-screen flex flex-col">
       {/* FIX: Pass profile prop to Header. */}
       {/* FIX: Pass onNavigateToMyAds prop to Header. */}
+      {/* FIX: Pass navigateHome prop to Header. */}
       <Header 
         onPublishAdClick={onPublishAdClick} 
         onAccessClick={onAccessClick} 
@@ -73,6 +76,7 @@ const SearchResultsPage: React.FC<SearchResultsPageProps> = ({
         hasUnreadMessages={hasUnreadMessages}
         navigateToGuideToSell={navigateToGuideToSell}
         navigateToDocumentsForSale={navigateToDocumentsForSale}
+        navigateHome={navigateHome}
       />
       <main className="flex-grow">
         <div className="container mx-auto px-4 sm:px-6 py-8">

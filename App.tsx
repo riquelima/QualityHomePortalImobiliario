@@ -710,6 +710,7 @@ const App: React.FC = () => {
 
   const renderCurrentPage = () => {
     const headerProps = {
+      navigateHome,
       onPublishAdClick: handlePublishClick,
       onAccessClick: () => openLoginModal('default'),
       user,
