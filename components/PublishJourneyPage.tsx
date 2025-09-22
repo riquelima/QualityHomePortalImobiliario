@@ -496,6 +496,43 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
         }
     }, [formData, t, onPublishError]);
 
+    const handleAcceptLocation = () => {
+        setIsLocationPermissionModalOpen(false);
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    const { latitude, longitude } = position.coords;
+                    try {
+                        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`);
+                        const data = await response.json();
+                        if (data && data.address) {
+                            const city = data.address.city || data.address.town || data.address.village;
+                            const stateName = data.address.state;
+                            const stateMap: { [key: string]: string } = {
+                                'Acre': 'AC', 'Alagoas': 'AL', 'Amapá': 'AP', 'Amazonas': 'AM', 'Bahia': 'BA',
+                                'Ceará': 'CE', 'Distrito Federal': 'DF', 'Espírito Santo': 'ES', 'Goiás': 'GO',
+                                'Maranhão': 'MA', 'Mato Grosso': 'MT', 'Mato Grosso do Sul': 'MS', 'Minas Gerais': 'MG',
+                                'Pará': 'PA', 'Paraíba': 'PB', 'Paraná': 'PR', 'Pernambuco': 'PE', 'Piauí': 'PI',
+                                'Rio de Janeiro': 'RJ', 'Rio Grande do Norte': 'RN', 'Rio Grande do Sul': 'RS',
+                                'Rondônia': 'RO', 'Roraima': 'RR', 'Santa Catarina': 'SC', 'São Paulo': 'SP',
+                                'Sergipe': 'SE', 'Tocantins': 'TO'
+                            };
+                            const stateAbbr = stateMap[stateName] || stateName;
+                            if (city && stateAbbr) {
+                                setFormData(prev => ({ ...prev, city: `${city}, ${stateAbbr}` }));
+                            }
+                        }
+                    } catch (error) {
+                        console.error("Erro na geocodificação reversa:", error);
+                    }
+                },
+                (error) => {
+                    console.error("Erro de geolocalização:", error);
+                }
+            );
+        }
+    };
+
     return (
         <div className="bg-brand-light-gray min-h-screen">
             <Header {...props} />
@@ -921,7 +958,7 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                      <p className="text-sm text-brand-gray mb-4">{t('publishJourney.locationPermissionModal.message')}</p>
                      <div className="flex gap-3">
                          <button onClick={() => setIsLocationPermissionModalOpen(false)} className="flex-1 text-sm bg-gray-200 text-brand-dark font-semibold py-2 px-4 rounded-md hover:bg-gray-300">Não, obrigado</button>
-                         <button onClick={() => setIsLocationPermissionModalOpen(false)} className="flex-1 text-sm bg-brand-red text-white font-semibold py-2 px-4 rounded-md hover:opacity-90">Aceitar</button>
+                         <button onClick={handleAcceptLocation} className="flex-1 text-sm bg-brand-red text-white font-semibold py-2 px-4 rounded-md hover:opacity-90">Aceitar</button>
                      </div>
                  </div>
             )}

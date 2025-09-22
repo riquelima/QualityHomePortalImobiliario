@@ -581,27 +581,27 @@ const App: React.FC = () => {
   };
 
   const handleAddProperty = useCallback(async (newProperty: Property) => {
-    if (user) {
-        await fetchAllData(user);
-    }
     showModal({
         type: 'success',
         title: t('systemModal.successTitle'),
         message: t('confirmationModal.message'),
     });
     navigateHome();
+    if (user) {
+        fetchAllData(user);
+    }
   }, [user, fetchAllData, t, showModal, navigateHome]);
 
   const handleUpdateProperty = useCallback(async () => {
-    if (user) {
-        await fetchAllData(user);
-    }
     showModal({
         type: 'success',
         title: t('systemModal.successTitle'),
         message: t('systemModal.editSuccessMessage'),
     });
     navigateHome();
+    if (user) {
+        fetchAllData(user);
+    }
   }, [user, fetchAllData, t, showModal, navigateHome]);
 
   const handlePublishError = useCallback((message: string) => {
