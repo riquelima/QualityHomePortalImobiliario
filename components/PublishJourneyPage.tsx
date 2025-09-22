@@ -181,6 +181,12 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
         { key: 'land', value: 'Terreno' }
     ];
 
+    const operationTitleKeyMap = {
+        venda: 'sell',
+        aluguel: 'rent',
+        temporada: 'season'
+    };
+
     useEffect(() => {
         if (propertyToEdit) {
             setFormData({
@@ -311,12 +317,12 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                 const fileExt = file.name.split('.').pop();
                 const fileName = `${user.id}/${Date.now()}.${fileExt}`;
                 const { error: uploadError } = await supabase.storage
-                    .from('imoveis-midia')
+                    .from('midia')
                     .upload(fileName, file);
 
                 if (uploadError) throw new Error(`Erro no upload do arquivo ${file.name}: ${uploadError.message}`);
                 
-                const { data } = supabase.storage.from('imoveis-midia').getPublicUrl(fileName);
+                const { data } = supabase.storage.from('midia').getPublicUrl(fileName);
                 uploadedUrls.push({
                     url: data.publicUrl,
                     type: file.type.startsWith('video') ? 'video' : 'imagem'
@@ -672,7 +678,7 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                                 <div>
                                     {/* Details Form content */}
                                     <h2 className="text-2xl font-bold text-brand-navy mb-2">{t('publishJourney.detailsForm.title')}</h2>
-                                    <p className="text-brand-gray mb-6">{t(`publishJourney.detailsForm.${formData.operation}Title`)}</p>
+                                    <p className="text-brand-gray mb-6">{t(`publishJourney.detailsForm.${operationTitleKeyMap[formData.operation as keyof typeof operationTitleKeyMap]}Title`)}</p>
 
                                     {/* Title */}
                                     <div className="mb-4">
