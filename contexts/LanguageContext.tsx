@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useContext, ReactNode } from 'react';
 
 // Translations are embedded directly to avoid module resolution issues.
@@ -224,6 +225,7 @@ const ptTranslations = {
       "aiTitleError": "Não foi possível gerar um título. Verifique sua conexão ou tente novamente.",
       "aiDescriptionPrompt": "Você é um corretor de imóveis especialista em marketing. Sua tarefa é criar uma descrição de anúncio irresistível em português do Brasil. Use as informações detalhadas fornecidas abaixo para criar um texto corrido, profissional e convidativo. Incorpore os detalhes de forma natural na descrição, transformando a lista de características em uma narrativa que vende. Não repita a lista de características. O objetivo é fazer o leitor se imaginar no imóvel. Seja criativo e foque nos benefícios que cada característica oferece.\n\n**Regras importantes:**\n- **Incorpore todos os detalhes fornecidos.** Mencione o número de quartos, banheiros, área e características especiais.\n- **Não liste as características.** Descreva-as como parte de uma história (ex: 'relaxe na varanda espaçosa' em vez de 'característica: varanda').\n- **Não inclua o preço.**\n- **Não repita o título do anúncio.**\n- O texto final deve ter entre 2 e 4 parágrafos.\n\n**Informações do Imóvel:**\n{details}",
       "aiDescriptionButtonLabel": "Melhorar descrição com IA",
+      "aiDescriptionError": "Não foi possível gerar uma descrição. Verifique sua conexão ou tente novamente.",
       "apartmentCharacteristics": "Características do imóvel",
       "propertyType": "Tipo de imóvel (opcional)",
       "apartment": "Apartamento",
@@ -704,6 +706,7 @@ const enTranslations = {
       "aiTitleError": "Could not generate a title. Please check your connection or try again.",
       "aiDescriptionPrompt": "You are an expert real estate marketing agent. Your task is to create an irresistible property listing description in English. Use the detailed information provided below to write a flowing, professional, and inviting text. Naturally incorporate the details into the description, turning the list of features into a compelling narrative. Do not just list the features. The goal is to make the reader imagine themselves in the property. Be creative and focus on the benefits each feature offers.\n\n**Important Rules:**\n- **Incorporate all provided details.** Mention the number of bedrooms, bathrooms, area, and special features.\n- **Do not list features.** Describe them as part of a story (e.g., 'relax on the spacious balcony' instead of 'feature: balcony').\n- **Do not include the price.**\n- **Do not repeat the ad title.**\n- The final text should be between 2 and 4 paragraphs.\n\n**Property Information:**\n{details}",
       "aiDescriptionButtonLabel": "Enhance description with AI",
+      "aiDescriptionError": "Could not generate a description. Please check your connection or try again.",
       "apartmentCharacteristics": "Property characteristics",
       "propertyType": "Type of property (optional)",
       "apartment": "Apartment",
@@ -1184,6 +1187,7 @@ const esTranslations = {
       "aiTitleError": "No se pudo generar un título. Comprueba tu conexión o inténtalo de nuevo.",
       "aiDescriptionPrompt": "Eres un agente inmobiliario experto en marketing. Tu tarea es crear una descripción de anuncio irresistible en español. Utiliza la información detallada proporcionada a continuación para escribir un texto fluido, profesional y atractivo. Incorpora los detalles de forma natural en la descripción, convirtiendo la lista de características en una narrativa convincente. No te limites a enumerar las características. El objetivo es que el lector se imagine en la propiedad. Sé creativo y céntrate en los beneficios que ofrece cada característica.\n\n**Reglas importantes:**\n- **Incorpora todos los detalles proporcionados.** Menciona el número de habitaciones, baños, superficie y características especiales.\n- **No enumeres las características.** Descríbelas como parte de una historia (ej: 'relájate en el espacioso balcón' en lugar de 'característica: balcón').\n- **No incluyas el precio.**\n- **No repitas el título del anuncio.**\n- El texto final debe tener entre 2 y 4 párrafos.\n\n**Información del Inmueble:**\n{details}",
       "aiDescriptionButtonLabel": "Mejorar descripción con IA",
+      "aiDescriptionError": "No se pudo generar una descripción. Comprueba tu conexión o inténtalo de nuevo.",
       "apartmentCharacteristics": "Características del inmueble",
       "propertyType": "Tipo de inmueble (opcional)",
       "apartment": "Apartamento",

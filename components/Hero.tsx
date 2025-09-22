@@ -52,7 +52,7 @@ const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe, onGeoloca
 
     const generateTitle = async () => {
       try {
-        if (!process.env.API_KEY) {
+        if (typeof process === 'undefined' || !process.env.API_KEY) {
             console.warn("Chave de API do Gemini não configurada. Usando slogan simulado para demonstração.");
             const text = await mockHeroTitleGeneration();
             if (!isCancelled) {

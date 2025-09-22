@@ -1,4 +1,5 @@
 
+
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Header from './Header';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -50,6 +51,47 @@ interface PublishJourneyPageProps {
   navigateToGuideToSell: () => void;
   navigateToDocumentsForSale: () => void;
   onAccessClick: () => void;
+}
+
+// Helper function for mock AI title generation
+const mockAITitleGeneration = (baseTitle: string): Promise<string> => {
+    return new Promise(resolve => {
+        setTimeout(() => {
+            if (!baseTitle) {
+                resolve("Título de Anúncio Incrível Gerado por IA");
+                return;
+            }
+            const enhancements = ["Oportunidade Única", "Seu Novo Lar dos Sonhos", "Localização Perfeita", "Viva com Estilo e Conforto", "Imperdível na Região"];
+            const randomEnhancement = enhancements[Math.floor(Math.random() * enhancements.length)];
+            resolve(`${baseTitle} - ${randomEnhancement}`);
+        }, 800);
+    });
+};
+
+// Helper function for mock AI description generation
+const mockAIDescriptionGeneration = (formData: any): Promise<string> => {
+     return new Promise(resolve => {
+        setTimeout(() => {
+            const { detailsPropertyType, grossArea, bedrooms, bathrooms, description, homeFeatures } = formData;
+            
+            let generatedText = `Descubra este incrível ${detailsPropertyType.toLowerCase()} com ${grossArea}m², ideal para quem busca conforto e praticidade. O imóvel conta com ${bedrooms} quarto(s) e ${bathrooms} banheiro(s), oferecendo o espaço perfeito para sua família.\n\n`;
+            
+            if (homeFeatures.includes('balcony')) {
+                generatedText += "Desfrute de momentos relaxantes na varanda, apreciando a vista da cidade. ";
+            }
+             if (homeFeatures.includes('suite')) {
+                generatedText += "A suíte principal é um verdadeiro refúgio de tranquilidade e privacidade. ";
+            }
+
+            if (description && description.trim()) {
+                generatedText += `\n${description.trim()}\n\n`;
+            }
+
+            generatedText += "Não perca a chance de conhecer seu novo lar. Agende uma visita! (Descrição de demonstração gerada por IA).";
+            
+            resolve(generatedText);
+        }, 1200);
+    });
 }
 
 const Stepper: React.FC<{ currentStep: number, setStep: (step: number) => void }> = ({ currentStep, setStep }) => {
@@ -306,13 +348,13 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                     const filePath = `${user.id}/${Date.now()}-${fileName}`;
 
                     const { error: uploadError } = await supabase.storage
-                        .from('midias_imoveis')
+                        .from('midia')
                         .upload(filePath, file);
 
                     if (uploadError) throw uploadError;
 
                     const { data: { publicUrl } } = supabase.storage
-                        .from('midias_imoveis')
+                        .from('midia')
                         .getPublicUrl(filePath);
                     
                     uploadedMediaUrls.push({ url: publicUrl, tipo: file.type.startsWith('video') ? 'video' : 'imagem' });
@@ -429,8 +471,11 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
         if (!formData.title.trim()) return;
         setIsGeneratingTitle(true);
         try {
-            if (!process.env.API_KEY) {
-                throw new Error("API Key not found.");
+            if (typeof process === 'undefined' || !process.env.API_KEY) {
+                console.warn("Chave de API do Gemini não configurada para título. Usando simulação.");
+                const newTitle = await mockAITitleGeneration(formData.title);
+                setFormData(prev => ({...prev, title: newTitle}));
+                return;
             }
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             const prompt = t('publishJourney.detailsForm.aiTitlePrompt', { title: formData.title });
@@ -455,8 +500,11 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
     const handleGenerateAIDescription = async () => {
         setIsGeneratingDescription(true);
         try {
-            if (!process.env.API_KEY) {
-                throw new Error("API Key not found.");
+            if (typeof process === 'undefined' || !process.env.API_KEY) {
+                console.warn("Chave de API do Gemini não configurada para descrição. Usando simulação.");
+                const newDescription = await mockAIDescriptionGeneration(formData);
+                setFormData(prev => ({...prev, description: newDescription}));
+                return;
             }
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
@@ -482,7 +530,7 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
             }
         } catch (error) {
             console.error("AI Description generation error:", error);
-            props.onRequestModal({type: 'error', title: t('systemModal.errorTitle'), message: 'Failed to generate AI description.'});
+            props.onRequestModal({type: 'error', title: t('systemModal.errorTitle'), message: t('publishJourney.detailsForm.aiDescriptionError')});
         } finally {
             setIsGeneratingDescription(false);
         }
@@ -678,23 +726,18 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
             {files.length > 0 && (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                     {files.map((file, index) => {
-                        // FIX: Use an if/else block with a type guard to correctly narrow the type of 'file'.
-                        // This resolves errors where properties like 'url' or 'tipo' were accessed on the 'File' type,
-                        // and URL.createObjectURL was called with a non-Blob type, by ensuring type safety.
-                        const isExisting = 'type' in file && file.type === 'existing';
-                        
                         let url: string;
                         let type: 'imagem' | 'video';
                         let key: string | number;
 
-                        if (isExisting) {
-                            url = file.url;
-                            type = file.tipo;
-                            key = file.id;
-                        } else {
+                        if (file instanceof File) {
                             url = URL.createObjectURL(file);
                             type = file.type.startsWith('image') ? 'imagem' : 'video';
                             key = file.name + index;
+                        } else {
+                            url = file.url;
+                            type = file.tipo;
+                            key = file.id;
                         }
                         
                         return (
