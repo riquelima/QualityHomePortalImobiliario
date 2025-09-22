@@ -211,7 +211,7 @@ const App: React.FC = () => {
   const fetchingRef = useRef(false);
   const [contactModalProperty, setContactModalProperty] = useState<Property | null>(null);
 
-  const navigateHome = () => setPageState({ page: 'home', userLocation: null });
+  const navigateHome = useCallback(() => setPageState({ page: 'home', userLocation: null }), []);
 
   const showModal = useCallback((config: Omit<ModalConfig, 'isOpen'>) => {
     setModalConfig({ ...config, isOpen: true });
@@ -582,8 +582,6 @@ const App: React.FC = () => {
 
   const handleAddProperty = useCallback(async (newProperty: Property) => {
     if (user) {
-        // Aguarda a busca de dados ser concluída para garantir que a UI
-        // tenha os dados mais recentes antes de exibir a confirmação.
         await fetchAllData(user);
     }
     showModal({
@@ -591,7 +589,8 @@ const App: React.FC = () => {
         title: t('systemModal.successTitle'),
         message: t('confirmationModal.message'),
     });
-  }, [user, fetchAllData, t, showModal]);
+    navigateHome();
+  }, [user, fetchAllData, t, showModal, navigateHome]);
 
   const handleUpdateProperty = useCallback(async () => {
     if (user) {
@@ -603,7 +602,7 @@ const App: React.FC = () => {
         message: t('systemModal.editSuccessMessage'),
     });
     navigateHome();
-  }, [user, fetchAllData, t, showModal]);
+  }, [user, fetchAllData, t, showModal, navigateHome]);
 
   const handlePublishError = useCallback((message: string) => {
     showModal({
@@ -650,7 +649,7 @@ const App: React.FC = () => {
         message: t('myAdsPage.deleteConfirm'),
         onConfirm: () => confirmDeleteProperty(propertyId),
     });
-  }, [t, user, fetchAllData, showModal]);
+  }, [t, showModal]);
   
   const handleStartChat = async (property: Property) => {
     if (!user || !property.anunciante_id) {

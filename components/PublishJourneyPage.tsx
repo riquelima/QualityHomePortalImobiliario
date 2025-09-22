@@ -173,6 +173,13 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
     const [isGeneratingTitle, setIsGeneratingTitle] = useState(false);
     const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
 
+    const propertyTypes = [
+        { key: 'apartment', value: 'Apartamento' },
+        { key: 'house', value: 'Casa' },
+        { key: 'room', value: 'Quarto' },
+        { key: 'office', value: 'Escritório' },
+        { key: 'land', value: 'Terreno' }
+    ];
 
     useEffect(() => {
         if (propertyToEdit) {
@@ -514,10 +521,10 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                                     {!formData.isAddressVerified ? (
                                         <form onSubmit={handleAddressSubmit}>
                                             <h2 className="text-xl font-bold text-brand-navy mb-4">{t('publishJourney.form.propertyType.label')}</h2>
-                                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-8">
-                                                {['Apartamento', 'Casa', 'Quarto', 'Escritório', 'Terreno'].map(type => (
-                                                    <button key={type} type="button" onClick={() => setFormData(p => ({...p, propertyType: type}))} className={`p-4 border rounded-lg text-center transition-colors ${formData.propertyType === type ? 'bg-brand-red text-white border-brand-red' : 'bg-white hover:border-brand-dark'}`}>
-                                                        <span className="font-medium text-sm">{t(`publishJourney.detailsForm.${type.toLowerCase()}`)}</span>
+                                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 mb-8">
+                                                {propertyTypes.map(item => (
+                                                    <button key={item.key} type="button" onClick={() => setFormData(p => ({...p, propertyType: item.value, detailsPropertyType: item.value}))} className={`p-4 border rounded-lg text-center transition-colors ${formData.propertyType === item.value ? 'bg-brand-red text-white border-brand-red' : 'bg-white hover:border-brand-dark'}`}>
+                                                        <span className="font-medium text-sm">{t(`publishJourney.detailsForm.${item.key}`)}</span>
                                                     </button>
                                                 ))}
                                             </div>
@@ -709,8 +716,8 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                                         <div>
                                             <label htmlFor="detailsPropertyType" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.propertyType')}</label>
                                             <select id="detailsPropertyType" name="detailsPropertyType" value={formData.detailsPropertyType} onChange={handleFormChange} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red">
-                                                {['Apartamento', 'Casa', 'Quarto', 'Escritório', 'Terreno'].map(type => (
-                                                     <option key={type} value={type}>{t(`publishJourney.detailsForm.${type.toLowerCase()}`)}</option>
+                                                {propertyTypes.map(item => (
+                                                     <option key={item.key} value={item.value}>{t(`publishJourney.detailsForm.${item.key}`)}</option>
                                                 ))}
                                             </select>
                                         </div>
