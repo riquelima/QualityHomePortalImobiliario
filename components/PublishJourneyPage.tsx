@@ -95,6 +95,22 @@ const mockAIDescriptionGeneration = (formData: any): Promise<string> => {
     });
 }
 
+const formatPrice = (price: number | null | undefined): string => {
+    if (price === null || price === undefined || isNaN(price)) return '';
+    return new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL',
+    }).format(price);
+};
+
+const unformatCurrencyForSubmission = (value: string): number | null => {
+    if (!value || typeof value !== 'string') return null;
+    const numberString = value.replace(/[R$\s.]/g, '').replace(',', '.');
+    const numberValue = parseFloat(numberString);
+    return isNaN(numberValue) ? null : numberValue;
+};
+
+
 const Stepper: React.FC<{ currentStep: number, setStep: (step: number) => void }> = ({ currentStep, setStep }) => {
     const { t } = useLanguage();
     const steps = [
@@ -212,25 +228,48 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                 homeFeatures: propertyToEdit.caracteristicas_imovel || [],
                 buildingFeatures: propertyToEdit.caracteristicas_condominio || [],
                 description: propertyToEdit.descricao,
-                salePrice: propertyToEdit.tipo_operacao === 'venda' ? String(propertyToEdit.preco) : '',
-                iptuAnnual: propertyToEdit.tipo_operacao === 'venda' ? String(propertyToEdit.valor_iptu || '') : '',
+                salePrice: propertyToEdit.tipo_operacao === 'venda' ? formatPrice(propertyToEdit.preco) : '',
+                iptuAnnual: propertyToEdit.tipo_operacao === 'venda' ? formatPrice(propertyToEdit.valor_iptu) : '',
                 acceptsFinancing: propertyToEdit.aceita_financiamento ?? null,
                 occupationSituation: propertyToEdit.situacao_ocupacao || 'vacant',
-                monthlyRent: propertyToEdit.tipo_operacao === 'aluguel' ? String(propertyToEdit.preco) : '',
-                condoFee: String(propertyToEdit.taxa_condominio || ''),
-                iptuMonthly: propertyToEdit.tipo_operacao === 'aluguel' ? String(propertyToEdit.valor_iptu || '') : '',
+                monthlyRent: propertyToEdit.tipo_operacao === 'aluguel' ? formatPrice(propertyToEdit.preco) : '',
+                condoFee: formatPrice(propertyToEdit.taxa_condominio),
+                iptuMonthly: propertyToEdit.tipo_operacao === 'aluguel' ? formatPrice(propertyToEdit.valor_iptu) : '',
                 rentalConditions: propertyToEdit.condicoes_aluguel || [],
                 petsAllowed: propertyToEdit.permite_animais ?? null,
-                dailyRate: propertyToEdit.tipo_operacao === 'temporada' ? String(propertyToEdit.preco) : '',
+                dailyRate: propertyToEdit.tipo_operacao === 'temporada' ? formatPrice(propertyToEdit.preco) : '',
                 minStay: String(propertyToEdit.minimo_diarias || '1'),
                 maxGuests: String(propertyToEdit.maximo_hospedes || '2'),
-                cleaningFee: String(propertyToEdit.taxa_limpeza || ''),
+                cleaningFee: formatPrice(propertyToEdit.taxa_limpeza),
                 availableDates: propertyToEdit.datas_disponiveis || [],
             });
             const existingMedia = (propertyToEdit.midias_imovel || []).map(m => ({ ...m, type: 'existing' as const }));
             setFiles(existingMedia);
         }
     }, [propertyToEdit, profile]);
+    
+    const handleCurrencyChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        let rawValue = value.replace(/\D/g, '');
+
+        if (!rawValue) {
+            setFormData(prev => ({ ...prev, [name]: '' }));
+            return;
+        }
+        
+        if (rawValue.length > 15) {
+            rawValue = rawValue.substring(0, 15);
+        }
+        
+        const numericValue = parseFloat(rawValue) / 100;
+        
+        const formattedValue = new Intl.NumberFormat('pt-BR', {
+            style: 'currency',
+            currency: 'BRL',
+        }).format(numericValue);
+
+        setFormData(prev => ({ ...prev, [name]: formattedValue }));
+    }, []);
 
     const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
@@ -365,14 +404,14 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                 longitude: formData.coordinates?.lng,
                 tipo_imovel: formData.detailsPropertyType,
                 tipo_operacao: formData.operation,
-                preco: Number(formData.salePrice || formData.monthlyRent || formData.dailyRate),
+                preco: unformatCurrencyForSubmission(formData.salePrice || formData.monthlyRent || formData.dailyRate) || 0,
                 quartos: formData.bedrooms,
                 banheiros: formData.bathrooms,
                 area_bruta: Number(formData.grossArea),
                 area_util: formData.netArea ? Number(formData.netArea) : null,
                 possui_elevador: formData.hasElevator,
-                taxa_condominio: formData.condoFee ? Number(formData.condoFee) : null,
-                valor_iptu: formData.iptuAnnual || formData.iptuMonthly ? Number(formData.iptuAnnual || formData.iptuMonthly) : null,
+                taxa_condominio: unformatCurrencyForSubmission(formData.condoFee),
+                valor_iptu: unformatCurrencyForSubmission(formData.iptuAnnual || formData.iptuMonthly),
                 caracteristicas_imovel: formData.homeFeatures,
                 caracteristicas_condominio: formData.buildingFeatures,
                 situacao_ocupacao: formData.occupationSituation,
@@ -381,7 +420,7 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                 permite_animais: formData.petsAllowed,
                 minimo_diarias: formData.minStay ? Number(formData.minStay) : null,
                 maximo_hospedes: formData.maxGuests ? Number(formData.maxGuests) : null,
-                taxa_limpeza: formData.cleaningFee ? Number(formData.cleaningFee) : null,
+                taxa_limpeza: unformatCurrencyForSubmission(formData.cleaningFee),
                 datas_disponiveis: formData.availableDates,
                 status: 'ativo'
             };
@@ -733,14 +772,11 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                                             <>
                                             <div>
                                                 <label htmlFor="salePrice" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.salePrice')}</label>
-                                                <div className="relative">
-                                                    <input type="number" id="salePrice" name="salePrice" value={formData.salePrice} onChange={handleFormChange} required className="w-full pl-4 pr-16 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" />
-                                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray text-sm">{t('publishJourney.detailsForm.currency.reais')}</span>
-                                                </div>
+                                                <input type="text" inputMode="decimal" id="salePrice" name="salePrice" value={formData.salePrice} onChange={handleCurrencyChange} required className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" />
                                             </div>
                                             <div>
                                                 <label htmlFor="iptuAnnual" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.iptuAnnual')}</label>
-                                                <input type="number" id="iptuAnnual" name="iptuAnnual" value={formData.iptuAnnual} onChange={handleFormChange} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" />
+                                                <input type="text" inputMode="decimal" id="iptuAnnual" name="iptuAnnual" value={formData.iptuAnnual} onChange={handleCurrencyChange} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" />
                                             </div>
                                             <div className="sm:col-span-2">
                                                 <p className="text-sm font-medium text-brand-dark mb-2">{t('publishJourney.detailsForm.acceptsFinancing')}</p>
@@ -755,14 +791,11 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                                             <>
                                             <div>
                                                 <label htmlFor="monthlyRent" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.monthlyRent')}</label>
-                                                 <div className="relative">
-                                                    <input type="number" id="monthlyRent" name="monthlyRent" value={formData.monthlyRent} onChange={handleFormChange} required className="w-full pl-4 pr-24 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" />
-                                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray text-sm">{t('publishJourney.detailsForm.currency.reaisMonth')}</span>
-                                                </div>
+                                                <input type="text" inputMode="decimal" id="monthlyRent" name="monthlyRent" value={formData.monthlyRent} onChange={handleCurrencyChange} required className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" />
                                             </div>
                                             <div>
                                                 <label htmlFor="condoFee" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.condoFee')}</label>
-                                                <input type="number" id="condoFee" name="condoFee" value={formData.condoFee} onChange={handleFormChange} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" />
+                                                <input type="text" inputMode="decimal" id="condoFee" name="condoFee" value={formData.condoFee} onChange={handleCurrencyChange} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" />
                                             </div>
                                             </>
                                         )}
@@ -770,14 +803,11 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                                             <>
                                             <div>
                                                 <label htmlFor="dailyRate" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.dailyRate')}</label>
-                                                 <div className="relative">
-                                                    <input type="number" id="dailyRate" name="dailyRate" value={formData.dailyRate} onChange={handleFormChange} required className="w-full pl-4 pr-16 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" />
-                                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray text-sm">{t('publishJourney.detailsForm.currency.reais')}</span>
-                                                </div>
+                                                <input type="text" inputMode="decimal" id="dailyRate" name="dailyRate" value={formData.dailyRate} onChange={handleCurrencyChange} required className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" />
                                             </div>
                                             <div>
                                                 <label htmlFor="cleaningFee" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.cleaningFee')}</label>
-                                                <input type="number" id="cleaningFee" name="cleaningFee" value={formData.cleaningFee} onChange={handleFormChange} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" />
+                                                <input type="text" inputMode="decimal" id="cleaningFee" name="cleaningFee" value={formData.cleaningFee} onChange={handleCurrencyChange} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" />
                                             </div>
                                             </>
                                         )}
