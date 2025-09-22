@@ -1,5 +1,5 @@
-import React, 'react';
-import { useState, useRef, useEffect, useCallback } from 'react';
+
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Header from './Header';
 import { useLanguage } from '../contexts/LanguageContext';
 import type { User, Property, Profile, Media } from '../types';
@@ -424,6 +424,69 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
             setIsSubmitting(false);
         }
     };
+    
+    const handleGenerateAITitle = async () => {
+        if (!formData.title.trim()) return;
+        setIsGeneratingTitle(true);
+        try {
+            if (!process.env.API_KEY) {
+                throw new Error("API Key not found.");
+            }
+            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+            const prompt = t('publishJourney.detailsForm.aiTitlePrompt', { title: formData.title });
+            
+            const response = await ai.models.generateContent({
+                model: 'gemini-2.5-flash',
+                contents: prompt,
+            });
+
+            const newTitle = response.text.trim().replace(/["']/g, "");
+            if (newTitle) {
+                setFormData(prev => ({...prev, title: newTitle}));
+            }
+        } catch (error) {
+            console.error("AI Title generation error:", error);
+            props.onRequestModal({type: 'error', title: t('systemModal.errorTitle'), message: t('publishJourney.detailsForm.aiTitleError')});
+        } finally {
+            setIsGeneratingTitle(false);
+        }
+    };
+
+    const handleGenerateAIDescription = async () => {
+        setIsGeneratingDescription(true);
+        try {
+            if (!process.env.API_KEY) {
+                throw new Error("API Key not found.");
+            }
+            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
+            const details = `
+                - Tipo: ${formData.detailsPropertyType} para ${formData.operation}
+                - Área Bruta: ${formData.grossArea} m²
+                - Quartos: ${formData.bedrooms}
+                - Banheiros: ${formData.bathrooms}
+                - Elevador: ${formData.hasElevator ? 'Sim' : 'Não'}
+                - Características do Imóvel: ${formData.homeFeatures.join(', ')}
+                - Características do Condomínio: ${formData.buildingFeatures.join(', ')}
+            `;
+            const prompt = t('publishJourney.detailsForm.aiDescriptionPrompt', { details });
+            
+            const response = await ai.models.generateContent({
+                model: 'gemini-2.5-flash',
+                contents: prompt,
+            });
+
+            const newDescription = response.text.trim();
+            if (newDescription) {
+                 setFormData(prev => ({...prev, description: newDescription}));
+            }
+        } catch (error) {
+            console.error("AI Description generation error:", error);
+            props.onRequestModal({type: 'error', title: t('systemModal.errorTitle'), message: 'Failed to generate AI description.'});
+        } finally {
+            setIsGeneratingDescription(false);
+        }
+    };
 
     const renderStep1 = () => (
         <form onSubmit={formData.isAddressVerified ? (e) => { e.preventDefault(); handleNextStep(1); } : handleVerifyAddress}>
@@ -481,10 +544,187 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
             )}
         </form>
     );
-    
-    // Simplified Step 2 & 3 renderers for brevity, but they should contain the full form logic
-    const renderStep2 = () => { /* ... Full Step 2 form ... */ return (<div>Step 2 form goes here</div>)};
-    const renderStep3 = () => { /* ... Full Step 3 form ... */ return (<div>Step 3 form goes here</div>)};
+
+    const renderStep2 = () => (
+        <form onSubmit={(e) => { e.preventDefault(); handleNextStep(2); }} className="space-y-8">
+            <h2 className="text-xl font-bold text-brand-navy">{t('publishJourney.detailsForm.title')}</h2>
+            
+            <div>
+                <label htmlFor="title" className="block text-base sm:text-lg font-bold text-brand-navy mb-3">{t('publishJourney.detailsForm.adTitle')}</label>
+                <div className="relative">
+                    <input type="text" id="title" value={formData.title} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-md pr-12" minLength={10} placeholder={t('publishJourney.detailsForm.adTitlePlaceholder')} required/>
+                    <button type="button" onClick={handleGenerateAITitle} disabled={isGeneratingTitle} className="absolute top-1/2 right-3 -translate-y-1/2 text-brand-navy hover:text-brand-red disabled:opacity-50" title={t('publishJourney.detailsForm.aiTitleButtonLabel')}>
+                        {isGeneratingTitle ? <SpinnerIcon className="w-6 h-6 animate-spin"/> : <AIIcon className="w-6 h-6"/>}
+                    </button>
+                </div>
+            </div>
+
+            <div>
+                 <label className="block text-base sm:text-lg font-bold text-brand-navy mb-3">{t('publishJourney.detailsForm.propertyType')}</label>
+                <select id="detailsPropertyType" value={formData.detailsPropertyType} onChange={handleChange} className="w-full md:w-1/2 p-3 border border-gray-300 rounded-md">
+                    <option>{t('publishJourney.detailsForm.apartment')}</option> <option>{t('publishJourney.detailsForm.house')}</option> <option>{t('publishJourney.detailsForm.room')}</option> <option>{t('publishJourney.detailsForm.office')}</option> <option>{t('publishJourney.detailsForm.land')}</option>
+                </select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+                <div>
+                    <label htmlFor="grossArea" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.grossArea')}</label>
+                    <div className="relative"><input type="number" id="grossArea" value={formData.grossArea} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-md" /><span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray">m²</span></div>
+                </div>
+                <div>
+                    <label htmlFor="netArea" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.netArea')}</label>
+                    <div className="relative"><input type="number" id="netArea" value={formData.netArea} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-md" /><span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray">m²</span></div>
+                </div>
+            </div>
+
+             <div className="grid grid-cols-2 gap-8">
+                <div>
+                    <label className="block text-sm font-medium text-brand-dark mb-2">{t('publishJourney.detailsForm.bedrooms')}</label>
+                    <div className="flex items-center space-x-3"><button type="button" onClick={() => handleCounterChange('bedrooms', -1)} className="p-2 border rounded-full"><MinusIcon className="w-5 h-5"/></button><span className="text-xl font-bold w-8 text-center">{formData.bedrooms}</span><button type="button" onClick={() => handleCounterChange('bedrooms', 1)} className="p-2 border rounded-full"><PlusIcon className="w-5 h-5"/></button></div>
+                </div>
+                 <div>
+                    <label className="block text-sm font-medium text-brand-dark mb-2">{t('publishJourney.detailsForm.bathrooms')}</label>
+                    <div className="flex items-center space-x-3"><button type="button" onClick={() => handleCounterChange('bathrooms', -1)} className="p-2 border rounded-full"><MinusIcon className="w-5 h-5"/></button><span className="text-xl font-bold w-8 text-center">{formData.bathrooms}</span><button type="button" onClick={() => handleCounterChange('bathrooms', 1)} className="p-2 border rounded-full"><PlusIcon className="w-5 h-5"/></button></div>
+                </div>
+            </div>
+
+            <div>
+                <label className="block text-sm font-medium text-brand-dark mb-2">{t('publishJourney.detailsForm.hasElevator')}</label>
+                <div className="flex space-x-4"><label className="flex items-center"><input type="radio" name="hasElevator" onChange={() => setFormData(p => ({ ...p, hasElevator: true }))} checked={formData.hasElevator === true} className="h-4 w-4 mr-2"/> {t('publishJourney.detailsForm.yes')}</label><label className="flex items-center"><input type="radio" name="hasElevator" onChange={() => setFormData(p => ({ ...p, hasElevator: false }))} checked={formData.hasElevator === false} className="h-4 w-4 mr-2"/> {t('publishJourney.detailsForm.no')}</label></div>
+            </div>
+            
+            {/* Other features checkboxes */}
+            <div className="space-y-6">
+                <h3 className="text-lg font-bold text-brand-navy border-t pt-6">{t('publishJourney.detailsForm.otherHomeFeatures')}</h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {['builtInWardrobes', 'airConditioning', 'terrace', 'balcony', 'garage', 'mobiliado', 'cozinhaEquipada', 'suite', 'escritorio'].map(feature => (
+                        <label key={feature} className="flex items-center"><input type="checkbox" checked={formData.homeFeatures.includes(feature)} onChange={() => handleCheckboxChange('homeFeatures', feature)} className="h-4 w-4 mr-2"/> {t(`publishJourney.detailsForm.${feature}`)}</label>
+                    ))}
+                </div>
+                <h3 className="text-lg font-bold text-brand-navy border-t pt-6">{t('publishJourney.detailsForm.otherBuildingFeatures')}</h3>
+                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {['pool', 'greenArea', 'portaria24h', 'academia', 'salaoDeFestas', 'churrasqueira', 'parqueInfantil', 'quadraEsportiva', 'sauna', 'espacoGourmet'].map(feature => (
+                        <label key={feature} className="flex items-center"><input type="checkbox" checked={formData.buildingFeatures.includes(feature)} onChange={() => handleCheckboxChange('buildingFeatures', feature)} className="h-4 w-4 mr-2"/> {t(`publishJourney.detailsForm.${feature}`)}</label>
+                    ))}
+                </div>
+            </div>
+
+            <div>
+                <label htmlFor="description" className="block text-base sm:text-lg font-bold text-brand-navy mb-3">{t('publishJourney.detailsForm.adDescription')}</label>
+                <div className="relative">
+                    <textarea id="description" value={formData.description} onChange={handleChange} rows={5} className="w-full p-3 border rounded-md" placeholder={t('publishJourney.detailsForm.descriptionPlaceholder')}></textarea>
+                    <button type="button" onClick={handleGenerateAIDescription} disabled={isGeneratingDescription} className="absolute top-3 right-3 text-brand-navy hover:text-brand-red disabled:opacity-50" title={t('publishJourney.detailsForm.aiDescriptionButtonLabel')}>
+                        {isGeneratingDescription ? <SpinnerIcon className="w-6 h-6 animate-spin"/> : <AIIcon className="w-6 h-6"/>}
+                    </button>
+                </div>
+            </div>
+
+            <div className="border-t pt-8 space-y-6">
+                {formData.operation === 'venda' && ( /* Venda fields */
+                    <div className="space-y-6">
+                        <h3 className="text-xl font-bold text-brand-navy">{t('publishJourney.detailsForm.sellTitle')}</h3>
+                        <div className="grid grid-cols-2 gap-4">
+                             <div><label htmlFor="salePrice" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.salePrice')}</label><div className="relative"><input type="text" inputMode="numeric" id="salePrice" value={formData.salePrice} onChange={handleChange} className="w-full p-3 border rounded-md"/><span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray">{t('publishJourney.detailsForm.currency.reais')}</span></div></div>
+                             <div><label htmlFor="iptuAnnual" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.iptuAnnual')}</label><div className="relative"><input type="text" inputMode="numeric" id="iptuAnnual" value={formData.iptuAnnual} onChange={handleChange} className="w-full p-3 border rounded-md"/><span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray">{t('publishJourney.detailsForm.currency.reais')}</span></div></div>
+                        </div>
+                        <div><label className="block text-sm font-medium text-brand-dark mb-2">{t('publishJourney.detailsForm.acceptsFinancing')}</label><div className="flex space-x-4"><label className="flex items-center"><input type="radio" name="acceptsFinancing" onChange={() => setFormData(p => ({...p, acceptsFinancing: true}))} checked={formData.acceptsFinancing === true}/> {t('publishJourney.detailsForm.yes')}</label><label className="flex items-center"><input type="radio" name="acceptsFinancing" onChange={() => setFormData(p => ({...p, acceptsFinancing: false}))} checked={formData.acceptsFinancing === false}/> {t('publishJourney.detailsForm.no')}</label></div></div>
+                        <div><label className="block text-sm font-medium text-brand-dark mb-2">{t('publishJourney.detailsForm.occupationSituation')}</label><div className="flex space-x-4"><label className="flex items-center"><input type="radio" name="occupationSituation" value="rented" checked={formData.occupationSituation === 'rented'} onChange={handleChange}/> {t('publishJourney.detailsForm.rented')}</label><label className="flex items-center"><input type="radio" name="occupationSituation" value="vacant" checked={formData.occupationSituation === 'vacant'} onChange={handleChange}/> {t('publishJourney.detailsForm.vacant')}</label></div></div>
+                    </div>
+                )}
+                {formData.operation === 'aluguel' && ( /* Aluguel fields */
+                    <div className="space-y-6">
+                        <h3 className="text-xl font-bold text-brand-navy">{t('publishJourney.detailsForm.rentTitle')}</h3>
+                         <div className="grid grid-cols-3 gap-4">
+                             <div><label htmlFor="monthlyRent" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.monthlyRent')}</label><div className="relative"><input type="text" inputMode="numeric" id="monthlyRent" value={formData.monthlyRent} onChange={handleChange} className="w-full p-3 border rounded-md"/><span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray">{t('publishJourney.detailsForm.currency.reaisMonth')}</span></div></div>
+                             <div><label htmlFor="condoFee" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.condoFee')}</label><div className="relative"><input type="text" inputMode="numeric" id="condoFee" value={formData.condoFee} onChange={handleChange} className="w-full p-3 border rounded-md"/><span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray">{t('publishJourney.detailsForm.currency.reaisMonth')}</span></div></div>
+                             <div><label htmlFor="iptuMonthly" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.iptuMonthly')}</label><div className="relative"><input type="text" inputMode="numeric" id="iptuMonthly" value={formData.iptuMonthly} onChange={handleChange} className="w-full p-3 border rounded-md"/><span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray">{t('publishJourney.detailsForm.currency.reaisMonth')}</span></div></div>
+                        </div>
+                        <div><label className="block text-sm font-medium text-brand-dark mb-2">{t('publishJourney.detailsForm.rentalConditions')}</label><div className="grid grid-cols-3 gap-2">{['deposit', 'guarantor', 'insurance'].map(cond => <label key={cond} className="flex items-center"><input type="checkbox" checked={formData.rentalConditions.includes(cond)} onChange={() => handleCheckboxChange('rentalConditions', cond)}/> {t(`publishJourney.detailsForm.${cond}`)}</label>)}</div></div>
+                        <div><label className="block text-sm font-medium text-brand-dark mb-2">{t('publishJourney.detailsForm.petsAllowed')}</label><div className="flex space-x-4"><label className="flex items-center"><input type="radio" name="petsAllowed" onChange={() => setFormData(p => ({...p, petsAllowed: true}))} checked={formData.petsAllowed === true}/> {t('publishJourney.detailsForm.yes')}</label><label className="flex items-center"><input type="radio" name="petsAllowed" onChange={() => setFormData(p => ({...p, petsAllowed: false}))} checked={formData.petsAllowed === false}/> {t('publishJourney.detailsForm.no')}</label></div></div>
+                    </div>
+                )}
+                 {formData.operation === 'temporada' && ( /* Temporada fields */
+                    <div className="space-y-6">
+                        <h3 className="text-xl font-bold text-brand-navy">{t('publishJourney.detailsForm.seasonTitle')}</h3>
+                        <div className="grid grid-cols-2 gap-4">
+                             <div><label htmlFor="dailyRate" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.dailyRate')}</label><div className="relative"><input type="text" inputMode="numeric" id="dailyRate" value={formData.dailyRate} onChange={handleChange} className="w-full p-3 border rounded-md"/><span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray">{t('publishJourney.detailsForm.currency.reais')}</span></div></div>
+                             <div><label htmlFor="cleaningFee" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.cleaningFee')}</label><div className="relative"><input type="text" inputMode="numeric" id="cleaningFee" value={formData.cleaningFee} onChange={handleChange} className="w-full p-3 border rounded-md"/><span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray">{t('publishJourney.detailsForm.currency.reais')}</span></div></div>
+                             <div><label htmlFor="minStay" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.minStay')}</label><input type="number" id="minStay" value={formData.minStay} onChange={handleChange} className="w-full p-3 border rounded-md"/></div>
+                             <div><label htmlFor="maxGuests" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.maxGuests')}</label><input type="number" id="maxGuests" value={formData.maxGuests} onChange={handleChange} className="w-full p-3 border rounded-md"/></div>
+                        </div>
+                        {/* Calendar would go here if needed */}
+                    </div>
+                )}
+            </div>
+
+            <div className="flex justify-between items-center pt-8">
+                <button type="button" onClick={() => handlePrevStep(2)} className="text-brand-dark hover:underline">{t('publishJourney.photosForm.backButton')}</button>
+                <button type="submit" className="px-6 py-3 bg-[#93005a] text-white font-bold rounded-md hover:opacity-90">{t('publishJourney.detailsForm.continueToPhotosButton')}</button>
+            </div>
+        </form>
+    );
+
+    const renderStep3 = () => (
+        <div className="space-y-8">
+            <h2 className="text-xl sm:text-2xl font-bold text-brand-navy mb-4">{t('publishJourney.photosForm.title')}</h2>
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-gray-50">
+                <input type="file" multiple onChange={handleFileChange} className="hidden" id="file-upload" accept="image/*,video/*"/>
+                <label htmlFor="file-upload" className="cursor-pointer">
+                    <p className="text-brand-gray mb-4">{t('publishJourney.photosForm.dragAndDrop')}</p>
+                    <span className="px-6 py-3 bg-gray-200 text-brand-dark font-bold rounded-md hover:bg-gray-300">{t('publishJourney.photosForm.addButton')}</span>
+                </label>
+                <p className="text-xs text-brand-gray mt-4">{t('publishJourney.photosForm.limitsInfo')}</p>
+            </div>
+            {files.length > 0 && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                    {files.map((file, index) => {
+                        // FIX: Use an if/else block with a type guard to correctly narrow the type of 'file'.
+                        // This resolves errors where properties like 'url' or 'tipo' were accessed on the 'File' type,
+                        // and URL.createObjectURL was called with a non-Blob type, by ensuring type safety.
+                        const isExisting = 'type' in file && file.type === 'existing';
+                        
+                        let url: string;
+                        let type: 'imagem' | 'video';
+                        let key: string | number;
+
+                        if (isExisting) {
+                            url = file.url;
+                            type = file.tipo;
+                            key = file.id;
+                        } else {
+                            url = URL.createObjectURL(file);
+                            type = file.type.startsWith('image') ? 'imagem' : 'video';
+                            key = file.name + index;
+                        }
+                        
+                        return (
+                            <div key={key} className="relative group aspect-w-1 aspect-h-1 bg-gray-100 rounded-lg overflow-hidden">
+                                {type === 'imagem' ? <img src={url} alt={`preview ${index}`} className="w-full h-full object-cover"/> : <video src={url} className="w-full h-full object-cover"/>}
+                                <button onClick={() => handleRemoveFile(file)} className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 opacity-0 group-hover:opacity-100"><CloseIcon className="w-4 h-4"/></button>
+                            </div>
+                        )
+                    })}
+                </div>
+            )}
+             <div className="bg-blue-50 border-l-4 border-blue-400 p-6 rounded-md space-y-4">
+                <h3 className="text-lg font-bold text-brand-navy">{t('publishJourney.photosForm.rememberTitle')}</h3>
+                <ul className="list-disc list-inside space-y-2 text-brand-dark">
+                    <li>{t('publishJourney.photosForm.tip1')}</li>
+                    <li>{t('publishJourney.photosForm.tip2')}</li>
+                    <li>{t('publishJourney.photosForm.tip3')}</li>
+                </ul>
+            </div>
+            <div className="flex flex-col sm:flex-row justify-between items-center pt-8 gap-4">
+                <button type="button" onClick={() => handlePrevStep(3)} className="text-brand-dark hover:underline">{t('publishJourney.photosForm.backButton')}</button>
+                <button onClick={handlePublish} disabled={isSubmitting} className="w-full sm:w-auto px-8 py-4 bg-[#93005a] text-white font-bold rounded-md hover:opacity-90 disabled:opacity-50">
+                    {isSubmitting 
+                        ? (propertyToEdit ? t('publishJourney.photosForm.updatingButton') : t('publishJourney.photosForm.publishingButton'))
+                        : (propertyToEdit ? t('publishJourney.photosForm.updateButton') : t('publishJourney.photosForm.publishButton'))
+                    }
+                </button>
+            </div>
+        </div>
+    );
 
 
     return (
