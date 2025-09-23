@@ -1,9 +1,9 @@
 
 
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
-import InfoSection from './components/InfoSection';
 import PropertyListings from './components/PropertyListings';
 import MapDrawPage from './components/MapDrawPage';
 import PublishAdPage from './components/PublishAdPage';
@@ -25,9 +25,15 @@ import DocumentsForSalePage from './components/DocumentsForSalePage';
 import { useLanguage } from './contexts/LanguageContext';
 import { supabase } from './supabaseClient';
 import type { User, Property, ChatSession, Message, Profile, Media } from './types';
+import BottomNav from './components/BottomNav';
+import SplashScreen from './components/SplashScreen';
+
+type MainPage = 'home' | 'favorites' | 'myAds' | 'chatList' | 'publish';
+type OverlayPage = 'map' | 'publish-journey' | 'searchResults' | 'propertyDetail' | 'chat' | 'edit-journey' | 'allListings' | 'guideToSell' | 'documentsForSale';
+
 
 interface PageState {
-  page: 'home' | 'map' | 'publish' | 'publish-journey' | 'searchResults' | 'propertyDetail' | 'favorites' | 'chatList' | 'chat' | 'myAds' | 'edit-journey' | 'allListings' | 'guideToSell' | 'documentsForSale';
+  page: MainPage | OverlayPage;
   userLocation: { lat: number; lng: number } | null;
   searchQuery?: string;
   propertyId?: number;
@@ -193,6 +199,7 @@ const seedDatabase = async () => {
 
 
 const App: React.FC = () => {
+  const [isSplashing, setIsSplashing] = useState(true);
   const [pageState, setPageState] = useState<PageState>({ page: 'home', userLocation: null });
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isGeoErrorModalOpen, setIsGeoErrorModalOpen] = useState(false);
@@ -232,11 +239,10 @@ const App: React.FC = () => {
             .from('imoveis')
             .select(`
                 *,
-                midias_imovel ( url, tipo ),
+                midias_imovel ( id, url, tipo ),
                 perfis:anunciante_id ( id, nome_completo, telefone, url_foto_perfil )
             `);
 
-        // Apply filter: active properties for everyone, plus own properties for logged-in users.
         if (currentUser) {
             query = query.or(`status.eq.ativo,anunciante_id.eq.${currentUser.id}`);
         } else {
@@ -246,7 +252,6 @@ const App: React.FC = () => {
         const { data: propertiesData, error } = await query;
         if (error) throw error;
 
-        // The query is now unified, so no de-duplication is needed.
         const uniquePropertiesData = propertiesData || [];
 
         const adaptedProperties = uniquePropertiesData.map((db:any): Property => ({
@@ -343,7 +348,6 @@ const App: React.FC = () => {
       setUser(currentUser);
 
       if (currentUser) {
-        // On initial session load, try to restore page state from sessionStorage
         if (event === 'INITIAL_SESSION') {
             try {
                 const savedStateJSON = sessionStorage.getItem('qualityHomePageState');
@@ -355,7 +359,7 @@ const App: React.FC = () => {
                 }
             } catch (error) {
                 console.error("Could not restore page state:", error);
-                sessionStorage.removeItem('qualityHomePageState'); // Clear corrupted state
+                sessionStorage.removeItem('qualityHomePageState');
             }
         }
 
@@ -391,7 +395,7 @@ const App: React.FC = () => {
         }
       } else {
         setProfile(null);
-        sessionStorage.removeItem('qualityHomePageState'); // Clear state on logout
+        sessionStorage.removeItem('qualityHomePageState');
       }
       setIsAuthReady(true);
     });
@@ -401,7 +405,6 @@ const App: React.FC = () => {
     };
   }, [loginIntent]);
 
-  // Save page state to sessionStorage on change for logged-in users
   useEffect(() => {
     if (user && isAuthReady) {
         try {
@@ -432,26 +435,21 @@ const App: React.FC = () => {
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'mensagens_chat' }, (payload) => {
         const newMessage = payload.new as any;
   
-        // Set notification for incoming messages
         if (newMessage.remetente_id !== user.id) {
           setHasUnreadMessages(true);
         }
   
-        // Update chat sessions state
         setChatSessions(prevSessions => {
           const sessionIndex = prevSessions.findIndex(s => s.id === newMessage.sessao_id);
   
-          // If session is not in state, it might be a new chat. Fetch all data to be safe.
           if (sessionIndex === -1) {
             fetchAllData(user);
             return prevSessions;
           }
   
-          // If session exists, update it immutably
           const updatedSessions = [...prevSessions];
           const targetSession = { ...updatedSessions[sessionIndex] };
   
-          // Avoid adding duplicate messages that might come from the subscription
           const messageExists = targetSession.messages.some(m => m.id === newMessage.id);
           if (messageExists) {
             return prevSessions;
@@ -467,7 +465,6 @@ const App: React.FC = () => {
             data_envio: newMessage.data_envio,
           };
           
-          // Update both message arrays for compatibility
           targetSession.messages = [...targetSession.messages, adaptedMessage];
           targetSession.mensagens = [...targetSession.mensagens, adaptedMessage];
           
@@ -503,30 +500,35 @@ const App: React.FC = () => {
     };
   }, [isAuthReady, user, fetchAllData]);
 
-  // Timeout guard to prevent infinite loading state
   useEffect(() => {
     if (!isLoading) return;
     const timeoutId = setTimeout(() => {
       console.warn("Fetch timeout reached. Forcing loading state to false.");
       setIsLoading(false);
-    }, 8000); // 8 seconds timeout
+    }, 8000);
     return () => clearTimeout(timeoutId);
   }, [isLoading]);
   
   const navigateToMap = (location: { lat: number; lng: number } | null = null) => setPageState({ page: 'map', userLocation: location });
-  const navigateToPublish = () => setPageState({ page: 'publish', userLocation: null });
+  const navigateToPublish = () => {
+    if (user) {
+      navigateToPublishJourney();
+    } else {
+      openLoginModal('publish');
+    }
+  };
   
   const navigateToSearchResults = (query: string) => setPageState({ page: 'searchResults', userLocation: null, searchQuery: query });
   const navigateToPropertyDetail = (id: number) => setPageState({ page: 'propertyDetail', propertyId: id, userLocation: null });
-  const navigateToFavorites = () => setPageState({ page: 'favorites', userLocation: null });
+  const navigateToFavorites = () => setPageState(prev => ({ ...prev, page: 'favorites' }));
   const navigateToChatList = () => {
     setHasUnreadMessages(false);
-    setPageState({ page: 'chatList', userLocation: null });
+    setPageState(prev => ({ ...prev, page: 'chatList' }));
   };
   const navigateToChat = (sessionId: string) => setPageState({ page: 'chat', chatSessionId: sessionId, userLocation: null });
   const navigateToMyAds = () => {
     if (user) {
-      setPageState({ page: 'myAds', userLocation: null });
+      setPageState(prev => ({ ...prev, page: 'myAds' }));
     } else {
       openLoginModal();
     }
@@ -543,14 +545,6 @@ const App: React.FC = () => {
     setIsLoginModalOpen(true);
   }
   const closeLoginModal = () => setIsLoginModalOpen(false);
-
-  const handlePublishClick = () => {
-    if (user) {
-      navigateToPublishJourney();
-    } else {
-      openLoginModal('publish');
-    }
-  };
   
   const openGeoErrorModal = () => setIsGeoErrorModalOpen(true);
   const closeGeoErrorModal = () => setIsGeoErrorModalOpen(false);
@@ -613,7 +607,6 @@ const App: React.FC = () => {
   }, [t, showModal]);
 
   const confirmDeleteProperty = async (propertyId: number) => {
-    // Primeiro, deletar mídias associadas para evitar violação de chave estrangeira
     const { error: mediaError } = await supabase
         .from('midias_imovel')
         .delete()
@@ -625,7 +618,6 @@ const App: React.FC = () => {
         return;
     }
     
-    // Depois, deletar o imóvel
     const { error: propertyError } = await supabase
         .from('imoveis')
         .delete()
@@ -707,23 +699,26 @@ const App: React.FC = () => {
   };
   const closeContactModal = () => setContactModalProperty(null);
 
-  const renderCurrentPage = () => {
-    const headerProps = {
-      navigateHome,
-      onPublishAdClick: handlePublishClick,
-      onAccessClick: () => openLoginModal('default'),
-      user,
-      profile,
-      onLogout: handleLogout,
-      onNavigateToFavorites: navigateToFavorites,
-      onNavigateToChatList: navigateToChatList,
-      onNavigateToMyAds: navigateToMyAds,
-      onNavigateToAllListings: navigateToAllListings,
-      hasUnreadMessages,
-      navigateToGuideToSell,
-      navigateToDocumentsForSale,
-    };
+  const mainPages: (MainPage | OverlayPage)[] = ['home', 'favorites', 'myAds', 'chatList', 'publish'];
+  const isOverlayPage = !mainPages.includes(pageState.page);
 
+  const renderOverlayPage = () => {
+    const commonProps = {
+        user,
+        profile,
+        onLogout: handleLogout,
+        onNavigateToFavorites: navigateToFavorites,
+        onNavigateToChatList: navigateToChatList,
+        onNavigateToMyAds: navigateToMyAds,
+        onNavigateToAllListings: navigateToAllListings,
+        hasUnreadMessages,
+        navigateToGuideToSell,
+        navigateToDocumentsForSale,
+        navigateHome,
+        onPublishAdClick: navigateToPublish,
+        onAccessClick: () => openLoginModal('default'),
+    };
+      
     switch (pageState.page) {
       case 'map':
         return <MapDrawPage 
@@ -735,14 +730,6 @@ const App: React.FC = () => {
                   properties={properties}
                   onContactClick={openContactModal}
                />;
-      case 'publish':
-        return <PublishAdPage 
-                  onBack={navigateHome} 
-                  onPublishAdClick={handlePublishClick}
-                  onOpenLoginModal={() => openLoginModal('publish')} 
-                  onNavigateToJourney={navigateToPublishJourney}
-                  {...headerProps}
-               />;
       case 'publish-journey':
       case 'edit-journey':
         return <PublishJourneyPage
@@ -752,9 +739,8 @@ const App: React.FC = () => {
                   onUpdateProperty={handleUpdateProperty}
                   onPublishError={handlePublishError}
                   onRequestModal={showModal}
-                  // FIX: Pass the onOpenLoginModal prop to satisfy the PublishJourneyPageProps interface.
                   onOpenLoginModal={openLoginModal}
-                  {...headerProps}
+                  {...commonProps}
                 />;
       case 'searchResults':
         const query = pageState.searchQuery?.toLowerCase() ?? '';
@@ -771,7 +757,7 @@ const App: React.FC = () => {
           favorites={favorites}
           onToggleFavorite={toggleFavorite}
           onContactClick={openContactModal}
-          {...headerProps}
+          {...commonProps}
         />;
       case 'propertyDetail':
         const property = [...properties, ...myAds].find(p => p.id === pageState.propertyId);
@@ -785,32 +771,13 @@ const App: React.FC = () => {
                   isFavorite={favorites.includes(property.id)}
                   onToggleFavorite={toggleFavorite}
                   onStartChat={handleStartChat}
-                  {...headerProps}
+                  {...commonProps}
                 />;
-      case 'favorites':
-          const favoriteProperties = properties.filter(p => favorites.includes(p.id));
-          return <FavoritesPage
-            onBack={navigateHome}
-            properties={favoriteProperties}
-            onViewDetails={navigateToPropertyDetail}
-            favorites={favorites}
-            onToggleFavorite={toggleFavorite}
-            onContactClick={openContactModal}
-            {...headerProps}
-          />;
-      case 'chatList':
-        if (!user) { navigateHome(); return null; }
-        return <ChatListPage
-                  onBack={navigateHome}
-                  chatSessions={chatSessions.filter(s => s.participantes[user.id])}
-                  properties={properties}
-                  onNavigateToChat={navigateToChat}
-                  {...headerProps}
-               />;
+      
       case 'chat':
         const session = chatSessions.find(s => s.id === pageState.chatSessionId);
         const propertyForChat = properties.find(p => p.id === session?.imovel_id);
-        if (!session || !user || !propertyForChat) { navigateHome(); return null; }
+        if (!session || !user || !propertyForChat) { navigateToChatList(); return null; }
         return <ChatPage
                   onBack={navigateToChatList}
                   user={user}
@@ -818,16 +785,6 @@ const App: React.FC = () => {
                   property={propertyForChat}
                   onSendMessage={handleSendMessage}
                />;
-      case 'myAds':
-        if (!user) { navigateHome(); return null; }
-        return <MyAdsPage
-            onBack={navigateHome}
-            userProperties={myAds}
-            onViewDetails={navigateToPropertyDetail}
-            onDeleteProperty={handleRequestDeleteProperty}
-            onEditProperty={navigateToEditJourney}
-            {...headerProps}
-        />;
       case 'allListings':
         return <AllListingsPage
           onBack={navigateHome}
@@ -838,52 +795,130 @@ const App: React.FC = () => {
           onSearchSubmit={navigateToSearchResults}
           onGeolocationError={openGeoErrorModal}
           onContactClick={openContactModal}
-          {...headerProps}
+          {...commonProps}
         />;
        case 'guideToSell':
         return <GuideToSellPage
           onBack={navigateHome}
-          {...headerProps}
+          {...commonProps}
         />;
       case 'documentsForSale':
         return <DocumentsForSalePage
           onBack={navigateHome}
-          {...headerProps}
+          {...commonProps}
         />;
-      case 'home':
       default:
-        return (
-          <div className="bg-white font-sans text-brand-dark">
-            <Header {...headerProps} />
-            <main>
-              <Hero 
-                onDrawOnMapClick={() => navigateToMap()} 
-                onSearchNearMe={(location) => navigateToMap(location)}
-                onGeolocationError={openGeoErrorModal}
-                onSearchSubmit={navigateToSearchResults}
-              />
-              <PropertyListings 
-                properties={properties}
-                onViewDetails={navigateToPropertyDetail} 
-                favorites={favorites}
-                onToggleFavorite={toggleFavorite}
-                isLoading={isLoading}
-                onContactClick={openContactModal}
-              />
-            </main>
-            <footer className="bg-brand-light-gray text-brand-gray py-8 text-center mt-20">
-              <div className="container mx-auto">
-                <p>&copy; {new Date().getFullYear()} {t('footer.text')}</p>
-              </div>
-            </footer>
-          </div>
-        );
+        return null;
     }
   };
 
+  const renderMainContent = () => {
+     const commonProps = {
+        user,
+        profile,
+        onLogout: handleLogout,
+        onNavigateToFavorites: navigateToFavorites,
+        onNavigateToChatList: navigateToChatList,
+        onNavigateToMyAds: navigateToMyAds,
+        onNavigateToAllListings: navigateToAllListings,
+        hasUnreadMessages,
+        navigateToGuideToSell,
+        navigateToDocumentsForSale,
+        navigateHome,
+        onPublishAdClick: navigateToPublish,
+        onAccessClick: () => openLoginModal('default'),
+    };
+    
+    switch(pageState.page) {
+        case 'home':
+            return (
+                <>
+                    <Header {...commonProps} />
+                    <main className="pb-24">
+                      <Hero 
+                        onDrawOnMapClick={() => navigateToMap()} 
+                        onSearchNearMe={(location) => navigateToMap(location)}
+                        onGeolocationError={openGeoErrorModal}
+                        onSearchSubmit={navigateToSearchResults}
+                      />
+                      <PropertyListings 
+                        properties={properties}
+                        onViewDetails={navigateToPropertyDetail} 
+                        favorites={favorites}
+                        onToggleFavorite={toggleFavorite}
+                        isLoading={isLoading}
+                        onContactClick={openContactModal}
+                      />
+                    </main>
+                </>
+            );
+        case 'favorites':
+            const favoriteProperties = properties.filter(p => favorites.includes(p.id));
+            return <FavoritesPage
+                onBack={navigateHome}
+                properties={favoriteProperties}
+                onViewDetails={navigateToPropertyDetail}
+                favorites={favorites}
+                onToggleFavorite={toggleFavorite}
+                onContactClick={openContactModal}
+                {...commonProps}
+              />;
+        case 'myAds':
+             if (!user) { navigateHome(); return null; }
+            return <MyAdsPage
+                onBack={navigateHome}
+                userProperties={myAds}
+                onViewDetails={navigateToPropertyDetail}
+                onDeleteProperty={handleRequestDeleteProperty}
+                onEditProperty={navigateToEditJourney}
+                {...commonProps}
+            />;
+        case 'chatList':
+            if (!user) { navigateHome(); return null; }
+            return <ChatListPage
+                  onBack={navigateHome}
+                  chatSessions={chatSessions.filter(s => s.participantes[user.id])}
+                  properties={properties}
+                  onNavigateToChat={navigateToChat}
+                  {...commonProps}
+               />;
+        case 'publish':
+            return <PublishAdPage 
+                onBack={navigateHome} 
+                onOpenLoginModal={() => openLoginModal('publish')} 
+                onNavigateToJourney={navigateToPublishJourney}
+                {...commonProps}
+            />;
+        default:
+          return null;
+    }
+  };
+
+  if (isSplashing) {
+    return <SplashScreen onFinished={() => setIsSplashing(false)} />;
+  }
+
   return (
     <>
-      {renderCurrentPage()}
+      {isOverlayPage ? renderOverlayPage() : 
+        (
+            <div className="bg-white font-sans text-brand-dark">
+                {renderMainContent()}
+                <BottomNav 
+                    activeView={pageState.page as MainPage}
+                    onNavigate={(page) => {
+                       if (page === 'publish') {
+                           navigateToPublish();
+                       } else {
+                           setPageState(prev => ({ ...prev, page: page as MainPage }))
+                       }
+                    }}
+                    hasUnreadMessages={hasUnreadMessages}
+                />
+            </div>
+        )
+      }
+
       <LoginModal isOpen={isLoginModalOpen} onClose={closeLoginModal} loginIntent={loginIntent} />
       <GeolocationErrorModal isOpen={isGeoErrorModalOpen} onClose={closeGeoErrorModal} />
       <SystemModal
