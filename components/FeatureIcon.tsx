@@ -1,4 +1,3 @@
-// FIX: Added React import to resolve JSX namespace error.
 import React from 'react';
 
 interface FeatureIconProps {
