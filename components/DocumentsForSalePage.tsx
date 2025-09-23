@@ -2,6 +2,7 @@ import React from 'react';
 import Header from './Header';
 import { useLanguage } from '../contexts/LanguageContext';
 import type { User, Profile } from '../types';
+import ArrowLeftIcon from './icons/ArrowLeftIcon';
 
 interface DocumentsForSalePageProps {
   onBack: () => void;
@@ -17,8 +18,9 @@ interface DocumentsForSalePageProps {
   hasUnreadMessages: boolean;
   navigateToGuideToSell: () => void;
   navigateToDocumentsForSale: () => void;
-  // FIX: Add missing navigateHome prop for Header.
   navigateHome: () => void;
+  // FIX: Added onSearchSubmit prop to pass to Header component.
+  onSearchSubmit: (query: string) => void;
 }
 
 const DocumentSection: React.FC<{ title: string; items: string[] }> = ({ title, items }) => (
@@ -62,11 +64,10 @@ const DocumentsForSalePage: React.FC<DocumentsForSalePageProps> = (props) => {
       <Header {...props} />
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="text-sm mb-6">
-          <span onClick={props.onBack} className="text-brand-red hover:underline cursor-pointer">
+           <button onClick={props.onBack} className="text-brand-red hover:underline cursor-pointer flex items-center">
+            <ArrowLeftIcon className="w-4 h-4 mr-1" />
             {t('publishAdPage.breadcrumbHome')}
-          </span>
-          <span className="text-brand-gray mx-2">&gt;</span>
-          <span className="text-brand-dark font-medium">{t('documentsForSalePage.title')}</span>
+          </button>
         </div>
 
         <div className="bg-white p-6 sm:p-8 md:p-12 rounded-lg shadow-lg">

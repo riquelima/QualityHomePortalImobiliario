@@ -1,12 +1,10 @@
-
-
 import React from 'react';
 import Header from './Header';
 import PropertyCard from './PropertyCard';
-// FIX: Import Profile type.
 import type { Property, User, Profile } from '../types';
 import { useLanguage } from '../contexts/LanguageContext';
 import SearchIcon from './icons/SearchIcon';
+import ArrowLeftIcon from './icons/ArrowLeftIcon';
 
 interface SearchResultsPageProps {
   onBack: () => void;
@@ -15,7 +13,6 @@ interface SearchResultsPageProps {
   onPublishAdClick: () => void;
   onAccessClick: () => void;
   user: User | null;
-  // FIX: Added profile prop to be passed to Header.
   profile: Profile | null;
   onLogout: () => void;
   onViewDetails: (id: number) => void;
@@ -23,70 +20,32 @@ interface SearchResultsPageProps {
   onToggleFavorite: (id: number) => void;
   onNavigateToFavorites: () => void;
   onNavigateToChatList: () => void;
-  // FIX: Add onNavigateToMyAds prop to resolve typing error.
   onNavigateToMyAds: () => void;
   onNavigateToAllListings: () => void;
   hasUnreadMessages: boolean;
   onContactClick: (property: Property) => void;
-  // FIX: Added missing props for Header.
   navigateToGuideToSell: () => void;
   navigateToDocumentsForSale: () => void;
   navigateHome: () => void;
+  // FIX: Added onSearchSubmit prop to pass to Header component.
+  onSearchSubmit: (query: string) => void;
 }
 
-const SearchResultsPage: React.FC<SearchResultsPageProps> = ({ 
-  onBack, 
-  searchQuery, 
-  properties, 
-  onPublishAdClick, 
-  onAccessClick, 
-  user,
-  profile,
-  onLogout,
-  onViewDetails,
-  favorites,
-  onToggleFavorite,
-  onNavigateToFavorites,
-  onNavigateToChatList,
-  onNavigateToMyAds,
-  onNavigateToAllListings,
-  hasUnreadMessages,
-  onContactClick,
-  navigateToGuideToSell,
-  navigateToDocumentsForSale,
-  navigateHome
-}) => {
+const SearchResultsPage: React.FC<SearchResultsPageProps> = (props) => {
   const { t } = useLanguage();
+  const { onBack, searchQuery, properties, onViewDetails, favorites, onToggleFavorite, onContactClick } = props;
 
   return (
     <div className="bg-brand-light-gray min-h-screen flex flex-col">
-      {/* FIX: Pass profile prop to Header. */}
-      {/* FIX: Pass onNavigateToMyAds prop to Header. */}
-      {/* FIX: Pass navigateHome prop to Header. */}
-      <Header 
-        onPublishAdClick={onPublishAdClick} 
-        onAccessClick={onAccessClick} 
-        user={user} 
-        profile={profile}
-        onLogout={onLogout} 
-        onNavigateToFavorites={onNavigateToFavorites}
-        onNavigateToChatList={onNavigateToChatList}
-        onNavigateToMyAds={onNavigateToMyAds}
-        onNavigateToAllListings={onNavigateToAllListings}
-        hasUnreadMessages={hasUnreadMessages}
-        navigateToGuideToSell={navigateToGuideToSell}
-        navigateToDocumentsForSale={navigateToDocumentsForSale}
-        navigateHome={navigateHome}
-      />
+      <Header {...props} />
       <main className="flex-grow">
         <div className="container mx-auto px-4 sm:px-6 py-8">
           {/* Breadcrumbs */}
           <div className="text-sm mb-6">
-            <span onClick={onBack} className="text-brand-red hover:underline cursor-pointer">
+            <button onClick={onBack} className="text-brand-red hover:underline cursor-pointer flex items-center">
+              <ArrowLeftIcon className="w-4 h-4 mr-1" />
               {t('map.breadcrumbs.home')}
-            </span>
-            <span className="text-brand-gray mx-2">&gt;</span>
-            <span className="text-brand-dark font-medium">{t('searchResults.breadcrumb')}</span>
+            </button>
           </div>
 
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-brand-navy mb-2">

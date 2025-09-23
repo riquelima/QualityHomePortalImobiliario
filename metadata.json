@@ -1,6 +1,6 @@
 {
-  "name": "Quality Home Portal Imobiliário_v1_FINAL",
-  "description": "Um portal imobiliário moderno e premium, inspirado no design do Idealista, para corretores e clientes.",
+  "name": "QualityHome_ModeloLayout_2",
+  "description": "Modelo de UX 2",
   "requestFramePermissions": [
     "geolocation"
   ]

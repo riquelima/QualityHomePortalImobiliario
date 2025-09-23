@@ -1,10 +1,7 @@
-
-
 import React from 'react';
 import Header from './Header';
 import { useLanguage } from '../contexts/LanguageContext';
 import CheckIcon from './icons/CheckIcon';
-// FIX: Import Profile type.
 import type { User, Profile } from '../types';
 
 interface PublishAdPageProps {
@@ -13,20 +10,19 @@ interface PublishAdPageProps {
   onOpenLoginModal: () => void;
   onNavigateToJourney: () => void;
   user: User | null;
-  // FIX: Added profile prop to be passed to Header.
   profile: Profile | null;
   onLogout: () => void;
   onNavigateToFavorites: () => void;
   onNavigateToChatList: () => void;
-  // FIX: Add onNavigateToMyAds prop to resolve typing error.
   onNavigateToMyAds: () => void;
   onNavigateToAllListings: () => void;
   hasUnreadMessages: boolean;
   navigateToGuideToSell: () => void;
   navigateToDocumentsForSale: () => void;
   navigateHome: () => void;
-  // FIX: Added onAccessClick to satisfy HeaderProps requirement.
   onAccessClick: () => void;
+  // FIX: Added onSearchSubmit prop to pass to Header component.
+  onSearchSubmit: (query: string) => void;
 }
 
 const PublishAdPage: React.FC<PublishAdPageProps> = (props) => {
@@ -45,15 +41,6 @@ const PublishAdPage: React.FC<PublishAdPageProps> = (props) => {
     <div className="bg-brand-light-gray min-h-screen">
        <Header {...props} />
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Breadcrumbs */}
-        <div className="text-sm mb-6">
-          <span onClick={props.onBack} className="text-brand-red hover:underline cursor-pointer">
-            {t('publishAdPage.breadcrumbHome')}
-          </span>
-          <span className="text-brand-gray mx-2">&gt;</span>
-          <span className="text-brand-dark font-medium">{t('publishAdPage.breadcrumbPublish')}</span>
-        </div>
-
         {/* Main Card */}
         <div className="bg-white p-6 sm:p-8 md:p-12 rounded-lg shadow-lg mb-12 flex flex-col md:flex-row items-center">
           <div className="md:w-3/5">

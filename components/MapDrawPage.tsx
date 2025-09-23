@@ -1,5 +1,3 @@
-
-
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, CircleMarker } from 'react-leaflet';
 import L from 'leaflet';
@@ -9,6 +7,7 @@ import PropertyCard from './PropertyCard';
 import { useLanguage } from '../contexts/LanguageContext';
 import DrawIcon from './icons/DrawIcon';
 import CloseIcon from './icons/CloseIcon';
+import ArrowLeftIcon from './icons/ArrowLeftIcon';
 
 interface MapDrawPageProps {
   onBack: () => void;
@@ -229,18 +228,13 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewD
       </MapContainer>
 
       {/* UI Overlay */}
-      <div className="absolute top-0 left-0 w-full p-4 md:p-6 z-[1000] bg-gradient-to-b from-white/80 to-transparent pointer-events-none">
-         <div className="container mx-auto pointer-events-auto">
-            <div className="text-sm mb-4">
-                <span onClick={onBack} className="text-brand-red hover:underline cursor-pointer">{t('map.breadcrumbs.home')}</span>
-                <span className="text-brand-gray mx-2">&gt;</span>
-                <span className="text-brand-dark font-medium">{userLocation ? t('map.breadcrumbs.proximitySearch') : t('map.breadcrumbs.drawOnMap')}</span>
+       <div className="absolute top-0 left-0 right-0 p-4 z-[1000] pointer-events-none">
+            <div className="flex items-center justify-start pointer-events-auto">
+                <button onClick={onBack} className="bg-white/70 backdrop-blur-sm p-2 rounded-full text-brand-dark hover:bg-white transition-colors duration-200 shadow-md">
+                    <ArrowLeftIcon className="w-6 h-6"/>
+                </button>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-brand-navy">
-              {userLocation ? t('map.title.proximity') : t('map.title.draw')}
-            </h1>
         </div>
-      </div>
 
       {!userLocation && (
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[1000]">
