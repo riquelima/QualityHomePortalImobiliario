@@ -1,13 +1,14 @@
+
+
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap, CircleMarker } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet-draw';
+import { GoogleMap, useJsApiLoader, Marker, InfoWindow, Circle, DrawingManager } from '@react-google-maps/api';
 import type { Property } from '../types';
 import PropertyCard from './PropertyCard';
 import { useLanguage } from '../contexts/LanguageContext';
 import DrawIcon from './icons/DrawIcon';
 import CloseIcon from './icons/CloseIcon';
-import ArrowLeftIcon from './icons/ArrowLeftIcon';
+import SpinnerIcon from './icons/SpinnerIcon';
+
 
 interface MapDrawPageProps {
   onBack: () => void;
@@ -19,240 +20,238 @@ interface MapDrawPageProps {
   onContactClick: (property: Property) => void;
 }
 
-// Interface for properties with a calculated distance for sorting
 interface PropertyWithDistance extends Property {
   distance: number;
 }
 
-// Componente para atualizar a visão do mapa e limpar camadas
-const MapUpdater: React.FC<{ 
-  userLocation: { lat: number, lng: number } | null, 
-  onPropertiesFound: (props: PropertyWithDistance[]) => void,
-  properties: Property[],
-}> = ({ userLocation, onPropertiesFound, properties }) => {
-  const map = useMap();
-  const { t } = useLanguage();
+const GOOGLE_MAPS_API_KEY = 'AIzaSyDukeY7JJI9UkHIFbsCZOrjPDRukqvUOfA';
 
-  useEffect(() => {
-    map.invalidateSize(); 
-
-    if (userLocation) {
-      map.setView([userLocation.lat, userLocation.lng], 14);
-      const searchRadius = 5000; // 5km
-      const userLatLng = L.latLng(userLocation.lat, userLocation.lng);
-      const foundProperties: PropertyWithDistance[] = properties
-        .map(prop => ({ ...prop, distance: userLatLng.distanceTo(L.latLng(prop.lat, prop.lng)) }))
-        .filter(prop => prop.distance <= searchRadius)
-        .sort((a, b) => a.distance - b.distance);
-      onPropertiesFound(foundProperties);
-    } else {
-      map.setView([-12.9777, -38.5016], 13);
-      onPropertiesFound([]);
-    }
-  }, [userLocation, map, onPropertiesFound, t, properties]);
-
-  return null;
+const containerStyle = {
+  width: '100%',
+  height: '100%',
 };
 
-// Componente para gerenciar a lógica de desenho do Leaflet
-const DrawingManager: React.FC<{
-    onDrawCreated: (layer: L.Layer) => void;
-    drawingState: 'idle' | 'drawing' | 'drawn';
-    setDrawingState: (state: 'idle' | 'drawing' | 'drawn') => void;
-    featureGroupRef: React.MutableRefObject<L.FeatureGroup | null>;
-}> = ({ onDrawCreated, drawingState, setDrawingState, featureGroupRef }) => {
-    const map = useMap();
-    // FIX: Use 'any' type for drawHandlerRef as L.Draw.Circle is not available without @types/leaflet-draw.
-    const drawHandlerRef = useRef<any | null>(null);
-    const isDrawingCancelledRef = useRef(true);
-
-    // Configura o feature group e o listener de criação
-    useEffect(() => {
-        if (!featureGroupRef.current) {
-            featureGroupRef.current = new L.FeatureGroup();
-            map.addLayer(featureGroupRef.current);
-        }
-
-        const handleCreated = (e: any) => {
-            isDrawingCancelledRef.current = false;
-            onDrawCreated(e.layer);
-        };
-        
-        // FIX: Use string event name 'draw:created' as L.Draw.Event is not available without @types/leaflet-draw.
-        map.on('draw:created', handleCreated);
-
-        return () => {
-            // FIX: Use string event name 'draw:created' as L.Draw.Event is not available without @types/leaflet-draw.
-            map.off('draw:created', handleCreated);
-        };
-    }, [map, onDrawCreated, featureGroupRef]);
-
-    // Gerencia o processo de desenho com base no estado
-    useEffect(() => {
-        if (drawingState === 'drawing') {
-            isDrawingCancelledRef.current = true; // Reseta para a nova sessão de desenho
-
-            // FIX: Cast map to 'any' to resolve TypeScript error with leaflet-draw.
-            // The useMap() hook from react-leaflet returns a type that is not fully
-            // compatible with the type expected by leaflet-draw's constructor.
-            // FIX: Use (L as any).Draw.Circle to construct the circle drawer as L.Draw is not available without @types/leaflet-draw.
-            const newDrawHandler = new (L as any).Draw.Circle(map as any, {
-                shapeOptions: {
-                    color: '#D81B2B',
-                    fillColor: '#D81B2B',
-                    fillOpacity: 0.2,
-                },
-                showRadius: false,
-                metric: true,
-            });
-            drawHandlerRef.current = newDrawHandler;
-            newDrawHandler.enable();
-
-            const onDrawStop = () => {
-                if (isDrawingCancelledRef.current) {
-                    setDrawingState('idle'); // Foi um cancelamento
-                }
-            };
-
-            map.on('draw:drawstop', onDrawStop);
-
-            return () => {
-                map.off('draw:drawstop', onDrawStop);
-                if (drawHandlerRef.current && drawHandlerRef.current.enabled()) {
-                    drawHandlerRef.current.disable();
-                }
-            };
-        } else if (drawHandlerRef.current && drawHandlerRef.current.enabled()) {
-            drawHandlerRef.current.disable();
-        }
-    }, [drawingState, map, setDrawingState]);
-
-    return null;
-};
-
+const libraries: ('drawing' | 'places' | 'visualization')[] = ['drawing', 'visualization'];
 
 const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewDetails, favorites, onToggleFavorite, properties, onContactClick }) => {
+  const { t } = useLanguage();
+  // FIX: Replace google.maps.Map with any to resolve missing namespace error.
+  const [map, setMap] = useState<any | null>(null);
   const [propertiesInZone, setPropertiesInZone] = useState<PropertyWithDistance[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const { t } = useLanguage();
-  const [drawingState, setDrawingState] = useState<'idle' | 'drawing' | 'drawn'>('idle');
-  const featureGroupRef = useRef<L.FeatureGroup | null>(null);
+  const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
+  const [isDrawing, setIsDrawing] = useState(false);
+  // FIX: Replace google.maps.LatLngLiteral with any to resolve missing namespace error.
+  const [drawnCircle, setDrawnCircle] = useState<{center: any, radius: number} | null>(null);
 
-  const handleDrawCreated = useCallback((layer: L.Layer) => {
-    if (featureGroupRef.current) {
-        featureGroupRef.current.clearLayers();
-        featureGroupRef.current.addLayer(layer);
+  const { isLoaded, loadError } = useJsApiLoader({
+    id: 'google-map-script-draw-page',
+    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
+    libraries,
+  });
+
+  // FIX: Replace google.maps.Map with any to resolve missing namespace error.
+  const onLoad = useCallback(function callback(mapInstance: any) {
+    setMap(mapInstance);
+  }, []);
+
+  const onUnmount = useCallback(function callback() {
+    setMap(null);
+  }, []);
+
+  const onMarkerClick = useCallback((property: Property) => {
+    setSelectedProperty(property);
+  }, []);
+
+  const onInfoWindowClose = useCallback(() => {
+    setSelectedProperty(null);
+  }, []);
+
+  // Effect for userLocation search
+  useEffect(() => {
+    // FIX: Access google.maps through window object to resolve missing namespace error.
+    if (isLoaded && userLocation && (window as any).google?.maps?.geometry) {
+      const searchRadius = 5000; // 5km
+      // FIX: Access google.maps through window object to resolve missing namespace error.
+      const userLatLng = new (window as any).google.maps.LatLng(userLocation.lat, userLocation.lng);
+      
+      const foundProperties: PropertyWithDistance[] = properties
+        .map(prop => {
+          // FIX: Access google.maps through window object to resolve missing namespace error.
+          const propLatLng = new (window as any).google.maps.LatLng(prop.lat, prop.lng);
+          // FIX: Access google.maps through window object to resolve missing namespace error.
+          const distance = (window as any).google.maps.geometry.spherical.computeDistanceBetween(userLatLng, propLatLng);
+          return { ...prop, distance };
+        })
+        .filter(prop => prop.distance <= searchRadius)
+        .sort((a, b) => a.distance - b.distance);
+      
+      setPropertiesInZone(foundProperties);
+      setIsSidebarOpen(foundProperties.length > 0);
     }
-    
-    if (layer instanceof L.Circle) {
-        const drawnLatLng = layer.getLatLng();
-        const drawnRadius = layer.getRadius();
+  }, [isLoaded, userLocation, properties]);
+  
+  // FIX: Replace google.maps.Circle with any to resolve missing namespace error.
+  const onCircleComplete = (circle: any) => {
+    const radius = circle.getRadius();
+    const center = circle.getCenter();
+    setIsDrawing(false);
 
-        const foundProperties = properties.filter(prop => {
-            const propLatLng = L.latLng(prop.lat, prop.lng);
-            const distance = drawnLatLng.distanceTo(propLatLng);
-            return distance <= drawnRadius;
-        });
-
-        const foundPropertiesWithDistance = foundProperties.map(prop => {
-          const propLatLng = L.latLng(prop.lat, prop.lng);
-          return { ...prop, distance: drawnLatLng.distanceTo(propLatLng) };
-        }).sort((a, b) => a.distance - b.distance);
-
-        setPropertiesInZone(foundPropertiesWithDistance);
-        setIsSidebarOpen(foundProperties.length > 0);
-        setDrawingState('drawn');
-    } else {
-        setDrawingState('idle');
+    // FIX: Access google.maps through window object to resolve missing namespace error.
+    if (center && radius && (window as any).google?.maps?.geometry) {
+      setDrawnCircle({ center: center.toJSON(), radius });
+      const foundProperties: PropertyWithDistance[] = properties.map(prop => {
+        // FIX: Access google.maps through window object to resolve missing namespace error.
+        const propLatLng = new (window as any).google.maps.LatLng(prop.lat, prop.lng);
+        // FIX: Access google.maps through window object to resolve missing namespace error.
+        const distance = (window as any).google.maps.geometry.spherical.computeDistanceBetween(center, propLatLng);
+        return { ...prop, distance };
+      }).filter(prop => prop.distance <= radius)
+        .sort((a, b) => a.distance - b.distance);
+        
+      setPropertiesInZone(foundProperties);
+      setIsSidebarOpen(foundProperties.length > 0);
     }
-  }, [properties]);
+    // Disable drawing mode after one circle is drawn
+    if (map) {
+      circle.setMap(null); // The DrawingManager adds the circle, we want to control it via state
+    }
+  };
+  
+  const handleStartDrawing = () => {
+    handleClearDrawing();
+    setIsDrawing(true);
+  }
 
   const handleClearDrawing = useCallback(() => {
-      if(featureGroupRef.current) {
-        featureGroupRef.current.clearLayers();
-      }
-      setPropertiesInZone([]);
-      setIsSidebarOpen(false);
-      setDrawingState('idle');
-  }, []);
-  
-  const handlePropertiesFound = useCallback((props: PropertyWithDistance[]) => {
-      setPropertiesInZone(props);
-      setIsSidebarOpen(props.length > 0);
+    setDrawnCircle(null);
+    setPropertiesInZone([]);
+    setIsSidebarOpen(false);
+    setIsDrawing(false);
   }, []);
 
-  return (
-    <div className="fixed inset-0 bg-white z-[100]">
-      <MapContainer 
-        center={userLocation ? [userLocation.lat, userLocation.lng] : [-12.9777, -38.5016]} 
-        zoom={13} 
-        zoomControl={false}
-        scrollWheelZoom={true}
-        style={{ height: '100%', width: '100%' }}
-        placeholder={<div className="w-full h-full flex items-center justify-center bg-gray-100"><p>{t('map.loading')}</p></div>}
+  const renderMap = () => {
+    if (loadError) return <div className="w-full h-full flex items-center justify-center bg-gray-100"><p>Error loading maps</p></div>;
+    if (!isLoaded) return <div className="w-full h-full flex items-center justify-center bg-gray-100"><SpinnerIcon className="w-12 h-12 animate-spin text-brand-gray" /></div>;
+
+    return (
+      <GoogleMap
+        mapContainerStyle={containerStyle}
+        center={userLocation || { lat: -12.9777, lng: -38.5016 }}
+        zoom={13}
+        onLoad={onLoad}
+        onUnmount={onUnmount}
+        options={{
+          fullscreenControl: false,
+          streetViewControl: false,
+          mapTypeControl: false,
+          zoomControl: true,
+        }}
       >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-        />
+        {/* Markers */}
+        {properties.map(prop => (
+          <Marker 
+            key={prop.id} 
+            position={{ lat: prop.lat, lng: prop.lng }}
+            onClick={() => onMarkerClick(prop)}
+          />
+        ))}
+
+        {/* User Location Marker */}
+        {/* FIX: Access google.maps through window object to resolve missing namespace error. */}
+        {userLocation && <Marker position={userLocation} icon={{ path: (window as any).google.maps.SymbolPath.CIRCLE, scale: 8, fillColor: '#4285F4', fillOpacity: 1, strokeColor: 'white', strokeWeight: 2 }} />}
+
+        {/* InfoWindow */}
+        {selectedProperty && (
+          <InfoWindow
+            position={{ lat: selectedProperty.lat, lng: selectedProperty.lng }}
+            onCloseClick={onInfoWindowClose}
+          >
+             <div className="w-48">
+                 <h3 className="font-bold text-sm mb-1 truncate">{selectedProperty.title}</h3>
+                 <button 
+                     onClick={() => onViewDetails(selectedProperty.id)}
+                     className="w-full bg-brand-red text-white text-xs font-bold py-1 px-2 rounded hover:opacity-90"
+                 >
+                     {t('propertyCard.details')}
+                 </button>
+             </div>
+          </InfoWindow>
+        )}
         
-        <MapUpdater userLocation={userLocation} onPropertiesFound={handlePropertiesFound} properties={properties} />
-        
-        {!userLocation && (
+        {/* Drawing Manager */}
+        {!userLocation && isDrawing && (
           <DrawingManager
-            onDrawCreated={handleDrawCreated}
-            drawingState={drawingState}
-            setDrawingState={setDrawingState}
-            featureGroupRef={featureGroupRef}
+            onCircleComplete={onCircleComplete}
+            options={{
+              drawingControl: false,
+              // FIX: Access google.maps through window object to resolve missing namespace error.
+              drawingMode: (window as any).google.maps.drawing.OverlayType.CIRCLE,
+              circleOptions: {
+                fillColor: '#D81B2B',
+                fillOpacity: 0.2,
+                strokeColor: '#D81B2B',
+                strokeWeight: 2,
+                clickable: false,
+                editable: false,
+                zIndex: 1,
+              },
+            }}
           />
         )}
         
-        {properties.map(prop => (
-          <Marker key={prop.id} position={[prop.lat, prop.lng]}>
-            <Popup>
-              <b>{prop.title}</b><br/>{prop.address}
-            </Popup>
-          </Marker>
-        ))}
-
-        {userLocation && (
-            <CircleMarker 
-                center={[userLocation.lat, userLocation.lng]}
-                radius={8}
-                pathOptions={{ fillColor: '#4285F4', color: '#fff', weight: 2, opacity: 1, fillOpacity: 0.9 }}
-            >
-                 <Popup>{t('map.userLocationPopup')}</Popup>
-            </CircleMarker>
+        {/* Drawn Circle from state */}
+        {drawnCircle && (
+          <Circle
+            center={drawnCircle.center}
+            radius={drawnCircle.radius}
+            options={{
+              fillColor: '#D81B2B',
+              fillOpacity: 0.2,
+              strokeColor: '#D81B2B',
+              strokeWeight: 2,
+            }}
+          />
         )}
-        
-      </MapContainer>
+      </GoogleMap>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 bg-white z-[100]">
+      {renderMap()}
 
       {/* UI Overlay */}
-       <div className="absolute top-0 left-0 right-0 p-4 z-[1000] pointer-events-none">
-            <div className="flex items-center justify-start pointer-events-auto">
-                <button onClick={onBack} className="bg-white/70 backdrop-blur-sm p-2 rounded-full text-brand-dark hover:bg-white transition-colors duration-200 shadow-md">
-                    <ArrowLeftIcon className="w-6 h-6"/>
-                </button>
+      <div className="absolute top-0 left-0 w-full p-4 md:p-6 z-[1000] bg-gradient-to-b from-white/80 to-transparent pointer-events-none">
+         <div className="container mx-auto pointer-events-auto">
+            <div className="text-sm mb-4">
+                <span onClick={onBack} className="text-brand-red hover:underline cursor-pointer">{t('map.breadcrumbs.home')}</span>
+                <span className="text-brand-gray mx-2">&gt;</span>
+                <span className="text-brand-dark font-medium">{userLocation ? t('map.breadcrumbs.proximitySearch') : t('map.breadcrumbs.drawOnMap')}</span>
             </div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-brand-navy">
+              {userLocation ? t('map.title.proximity') : t('map.title.draw')}
+            </h1>
         </div>
+      </div>
 
       {!userLocation && (
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[1000]">
-            {drawingState === 'idle' && (
+            {!isDrawing && !drawnCircle && (
                 <button
-                    onClick={() => setDrawingState('drawing')}
+                    onClick={handleStartDrawing}
                     className="bg-brand-red hover:opacity-90 text-white font-bold py-3 px-6 rounded-full shadow-2xl transition duration-300 flex items-center space-x-2"
                 >
                     <DrawIcon className="w-5 h-5" />
                     <span>{t('map.drawButton')}</span>
                 </button>
             )}
-            {drawingState === 'drawing' && (
+            {isDrawing && (
                 <div className="bg-white text-brand-dark font-bold py-3 px-6 rounded-full shadow-2xl animate-pulse">
                     <span>{t('map.drawingInProgress')}</span>
                 </div>
             )}
-            {drawingState === 'drawn' && (
+            {drawnCircle && (
                 <button
                     onClick={handleClearDrawing}
                     className="bg-brand-dark hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-full shadow-2xl transition duration-300 flex items-center space-x-2"

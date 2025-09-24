@@ -7,76 +7,13 @@
     <title>Quality Home Portal Imobiliário</title>
     
     <style>
-      @keyframes slide-up {
-        from {
-          transform: translateY(100%);
-        }
-        to {
-          transform: translateY(0);
-        }
-      }
-
-      .animate-slide-up {
-        animation: slide-up 0.3s ease-out forwards;
-      }
-      
-      @keyframes slide-in-right {
-        from { transform: translateX(100%); }
-        to { transform: translateX(0); }
-      }
-      @keyframes slide-out-left {
-        from { transform: translateX(0); }
-        to { transform: translateX(-30%); }
-      }
-      @keyframes slide-in-left {
-        from { transform: translateX(-30%); }
-        to { transform: translateX(0); }
-      }
-      @keyframes slide-out-right {
-        from { transform: translateX(0); }
-        to { transform: translateX(100%); }
-      }
-
-      .page-enter {
-        animation: slide-in-right 0.35s ease-out forwards;
-      }
-      .page-exit {
-        animation: slide-out-left 0.35s ease-out forwards;
-        z-index: 0 !important;
-      }
-      .page-enter-back {
-        animation: slide-in-left 0.35s ease-out forwards;
-      }
-      .page-exit-back {
-        animation: slide-out-right 0.35s ease-out forwards;
-      }
-
-      @keyframes logo-splash {
-        0% {
-          opacity: 0;
-          transform: scale(0.8);
-        }
-        50% {
-          opacity: 1;
-          transform: scale(1.05);
-        }
-        100% {
-            opacity: 1;
-            transform: scale(1);
-        }
-      }
-
-      .animate-logo-splash {
-        animation: logo-splash 1s ease-out forwards;
-      }
+      /* Custom styles can go here if needed in the future */
     </style>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" crossorigin=""/>
     <script>
       tailwind.config = {
         theme: {
@@ -108,13 +45,12 @@
     "react-dom": "https://esm.sh/react-dom@18.2.0",
     "react-dom/": "https://esm.sh/react-dom@18.2.0/",
     "@google/genai": "https://esm.sh/@google/genai",
-    "react-leaflet": "https://esm.sh/react-leaflet@4.2.1",
-    "leaflet": "https://esm.sh/leaflet@1.9.4",
-    "leaflet-draw": "https://esm.sh/leaflet-draw@1.0.4",
+    "@react-google-maps/api": "https://esm.sh/@react-google-maps/api@2.19.2",
     "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
   }
 }
 </script>
+<link rel="stylesheet" href="/index.css">
 </head>
   <body>
     <div id="root"></div>

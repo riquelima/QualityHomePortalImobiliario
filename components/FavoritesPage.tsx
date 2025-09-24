@@ -1,6 +1,9 @@
+
+
 import React from 'react';
 import Header from './Header';
 import PropertyCard from './PropertyCard';
+// FIX: Import Profile type.
 import type { Property, User, Profile } from '../types';
 import { useLanguage } from '../contexts/LanguageContext';
 import HeartIcon from './icons/HeartIcon';
@@ -11,6 +14,7 @@ interface FavoritesPageProps {
   onPublishAdClick: () => void;
   onAccessClick: () => void;
   user: User | null;
+  // FIX: Added profile prop to be passed to Header.
   profile: Profile | null;
   onLogout: () => void;
   onViewDetails: (id: number) => void;
@@ -18,26 +22,71 @@ interface FavoritesPageProps {
   onToggleFavorite: (id: number) => void;
   onNavigateToFavorites: () => void;
   onNavigateToChatList: () => void;
+  // FIX: Add onNavigateToMyAds prop to resolve typing error.
   onNavigateToMyAds: () => void;
   onNavigateToAllListings: () => void;
   hasUnreadMessages: boolean;
   onContactClick: (property: Property) => void;
+  // FIX: Added missing props for Header.
   navigateToGuideToSell: () => void;
   navigateToDocumentsForSale: () => void;
   navigateHome: () => void;
-  // FIX: Added onSearchSubmit prop to pass to Header component.
-  onSearchSubmit: (query: string) => void;
 }
 
-const FavoritesPage: React.FC<FavoritesPageProps> = (props) => {
+const FavoritesPage: React.FC<FavoritesPageProps> = ({
+  onBack,
+  properties,
+  onPublishAdClick,
+  onAccessClick,
+  user,
+  profile,
+  onLogout,
+  onViewDetails,
+  favorites,
+  onToggleFavorite,
+  onNavigateToFavorites,
+  onNavigateToChatList,
+  onNavigateToMyAds,
+  onNavigateToAllListings,
+  hasUnreadMessages,
+  onContactClick,
+  navigateToGuideToSell,
+  navigateToDocumentsForSale,
+  navigateHome
+}) => {
   const { t } = useLanguage();
-  const { properties, onViewDetails, favorites, onToggleFavorite, onContactClick } = props;
 
   return (
     <div className="bg-brand-light-gray min-h-screen flex flex-col">
-      <Header {...props} />
-      <main className="flex-grow pb-24">
+      {/* FIX: Pass profile prop to Header. */}
+      {/* FIX: Pass onNavigateToMyAds prop to Header. */}
+      {/* FIX: Pass navigateHome prop to Header. */}
+      <Header
+        onPublishAdClick={onPublishAdClick}
+        onAccessClick={onAccessClick}
+        user={user}
+        profile={profile}
+        onLogout={onLogout}
+        onNavigateToFavorites={onNavigateToFavorites}
+        onNavigateToChatList={onNavigateToChatList}
+        onNavigateToMyAds={onNavigateToMyAds}
+        onNavigateToAllListings={onNavigateToAllListings}
+        hasUnreadMessages={hasUnreadMessages}
+        navigateToGuideToSell={navigateToGuideToSell}
+        navigateToDocumentsForSale={navigateToDocumentsForSale}
+        navigateHome={navigateHome}
+      />
+      <main className="flex-grow">
         <div className="container mx-auto px-4 sm:px-6 py-8">
+          {/* Breadcrumbs */}
+          <div className="text-sm mb-6">
+            <span onClick={onBack} className="text-brand-red hover:underline cursor-pointer">
+              {t('map.breadcrumbs.home')}
+            </span>
+            <span className="text-brand-gray mx-2">&gt;</span>
+            <span className="text-brand-dark font-medium">{t('favoritesPage.breadcrumb')}</span>
+          </div>
+
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-brand-navy mb-8">
             {t('favoritesPage.title')}
           </h1>
@@ -64,6 +113,11 @@ const FavoritesPage: React.FC<FavoritesPageProps> = (props) => {
           )}
         </div>
       </main>
+      <footer className="bg-brand-light-gray text-brand-gray py-8 text-center mt-12">
+        <div className="container mx-auto">
+          <p>&copy; {new Date().getFullYear()} {t('footer.text')}</p>
+        </div>
+      </footer>
     </div>
   );
 };

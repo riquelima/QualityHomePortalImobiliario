@@ -1,5 +1,4 @@
 
-
 import React from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import CloseIcon from './icons/CloseIcon';
@@ -36,7 +35,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, loginIntent })
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black bg-opacity-50 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm"
       aria-labelledby="login-modal-title"
       role="dialog"
       aria-modal="true"
@@ -45,17 +44,14 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, loginIntent })
       <div className="absolute inset-0" onClick={onClose} aria-hidden="true"></div>
 
       {/* Modal Content */}
-      <div className="relative bg-white rounded-t-2xl w-full max-w-md p-6 m-0 transform transition-transform animate-slide-up">
-        <div className="flex justify-between items-center mb-4">
-          <div/>
-          <button 
-            onClick={onClose} 
-            className="text-gray-400 hover:text-gray-600"
-            aria-label={t('header.closeMenu')}
-          >
-            <CloseIcon className="w-6 h-6" />
-          </button>
-        </div>
+      <div className="relative bg-white rounded-lg shadow-xl w-11/2 max-w-md p-6 sm:p-8 m-4 transform transition-all">
+        <button 
+          onClick={onClose} 
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+          aria-label={t('header.closeMenu')}
+        >
+          <CloseIcon className="w-6 h-6" />
+        </button>
 
         <h2 id="login-modal-title" className="text-xl sm:text-2xl font-bold text-brand-navy mb-2">
           {t('loginModal.title')}
@@ -96,12 +92,12 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, loginIntent })
         <div className="space-y-3">
            <button 
              onClick={handleGoogleLogin}
-             className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md text-brand-dark hover:bg-gray-50"
+             className="w-full max-w-[300px] mx-auto flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md text-brand-dark hover:bg-gray-50"
            >
              <GoogleIcon className="w-5 h-5 mr-3" />
              <span>{t('loginModal.googleButton')}</span>
            </button>
-          <button className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md text-brand-dark hover:bg-gray-50">
+          <button className="w-full max-w-[300px] mx-auto flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md text-brand-dark hover:bg-gray-50">
             <AppleIcon className="w-5 h-5 mr-3" />
             <span>{t('loginModal.appleButton')}</span>
           </button>

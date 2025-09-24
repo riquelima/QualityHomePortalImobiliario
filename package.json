@@ -1,5 +1,5 @@
 {
-  "name": "qualityhome_modelolayout_2",
+  "name": "copy-of-quality-home-portal-imobiliário_v1_final_maps",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -12,9 +12,7 @@
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "@google/genai": "latest",
-    "react-leaflet": "4.2.1",
-    "leaflet": "1.9.4",
-    "leaflet-draw": "1.0.4",
+    "@react-google-maps/api": "2.19.2",
     "@supabase/supabase-js": "2"
   },
   "devDependencies": {

@@ -2,7 +2,6 @@ import React from 'react';
 import Header from './Header';
 import { useLanguage } from '../contexts/LanguageContext';
 import type { User, Profile } from '../types';
-import ArrowLeftIcon from './icons/ArrowLeftIcon';
 
 interface GuideToSellPageProps {
   onBack: () => void;
@@ -18,9 +17,8 @@ interface GuideToSellPageProps {
   hasUnreadMessages: boolean;
   navigateToGuideToSell: () => void;
   navigateToDocumentsForSale: () => void;
+  // FIX: Add missing navigateHome prop for Header.
   navigateHome: () => void;
-  // FIX: Added onSearchSubmit prop to pass to Header component.
-  onSearchSubmit: (query: string) => void;
 }
 
 const GuideToSellPage: React.FC<GuideToSellPageProps> = (props) => {
@@ -31,10 +29,11 @@ const GuideToSellPage: React.FC<GuideToSellPageProps> = (props) => {
       <Header {...props} />
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="text-sm mb-6">
-          <button onClick={props.onBack} className="text-brand-red hover:underline cursor-pointer flex items-center">
-            <ArrowLeftIcon className="w-4 h-4 mr-1" />
+          <span onClick={props.onBack} className="text-brand-red hover:underline cursor-pointer">
             {t('publishAdPage.breadcrumbHome')}
-          </button>
+          </span>
+          <span className="text-brand-gray mx-2">&gt;</span>
+          <span className="text-brand-dark font-medium">{t('header.ownersDropdown.sell.guide')}</span>
         </div>
 
         <div className="bg-white p-6 sm:p-8 md:p-12 rounded-lg shadow-lg">

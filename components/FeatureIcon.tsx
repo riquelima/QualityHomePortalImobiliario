@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 interface FeatureIconProps {
@@ -6,28 +5,29 @@ interface FeatureIconProps {
   className?: string;
 }
 
-const icons: Record<string, JSX.Element> = {
+// FIX: Replaced JSX.Element with React.ReactElement to resolve missing JSX namespace error.
+const icons: Record<string, React.ReactElement> = {
   // Home Features
-  builtInWardrobes: <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3.75h19.5v16.5H2.25V3.75zM12 3.75v16.5M8.25 11.25h.01M15.75 11.25h.01" />,
-  airConditioning: <><path strokeLinecap="round" strokeLinejoin="round" d="M3 10.5h18v6H3v-6z" /><path strokeLinecap="round" strokeLinejoin="round" d="M6 13.5h3m3 0h6" /><path strokeLinecap="round" strokeLinejoin="round" d="M9.75 6.75a2.25 2.25 0 01-2.012-1.254l-.488-1.22c-.22-.55-.78-.876-1.378-.876H3" /><path strokeLinecap="round" strokeLinejoin="round" d="M14.25 6.75a2.25 2.25 0 002.012-1.254l.488-1.22c.22-.55.78-.876 1.378-.876H21" /></>,
-  terrace: <><path strokeLinecap="round" strokeLinejoin="round" d="M3 8.25h18v10.5H3z" /><path strokeLinecap="round" strokeLinejoin="round" d="M3 8.25L9 3h6l6 5.25" /><path strokeLinecap="round" strokeLinejoin="round" d="M7.5 18.75V8.25m9 10.5V8.25" /></>,
-  balcony: <><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 21v-5.25a2.25 2.25 0 012.25-2.25h6a2.25 2.25 0 012.25 2.25V21" /><path strokeLinecap="round" strokeLinejoin="round" d="M3 21h18M6.75 13.5V6" /><path strokeLinecap="round" strokeLinejoin="round" d="M17.25 13.5V6" /><path strokeLinecap="round" strokeLinejoin="round" d="M3 6h18" /></>,
-  garage: <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375c-.621 0-1.125-.504-1.125-1.125V14.25c0-.621.504-1.125 1.125-1.125h1.5c.621 0 1.125.504 1.125 1.125v3.375m0 0a1.5 1.5 0 003 0m-3 0a1.5 1.5 0 013 0m0 0h6.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H15M9 13.125l.75-4.5m0 0l1.5 4.5M9.75 8.625h4.5M15 9.375l-.75-4.5M15 9.375a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0" />,
-  mobiliado: <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 8.25v8.25h19.5V8.25M2.25 8.25L3 6h18l.75 2.25M3.75 16.5h16.5M6 16.5v2.25m12-2.25v2.25" />,
-  cozinhaEquipada: <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 3v1.5M15.75 3v1.5M3.75 6A2.25 2.25 0 016 3.75h12A2.25 2.25 0 0120.25 6v12A2.25 2.25 0 0118 20.25H6A2.25 2.25 0 013.75 18V6zM3 13.5h18" />,
-  suite: <><path strokeLinecap="round" strokeLinejoin="round" d="M3 7.5h12v9H3zM4.5 16.5v3m9-3v3" /><path strokeLinecap="round" strokeLinejoin="round" d="M6 10.5a1.5 1.5 0 011.5-1.5h1.5a1.5 1.5 0 011.5 1.5v3a1.5 1.5 0 01-1.5 1.5h-1.5a1.5 1.5 0 01-1.5-1.5v-3z" /><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 3.75h-3m3 0v3.75a1.5 1.5 0 01-1.5 1.5h-1.5a1.5 1.5 0 01-1.5-1.5V3.75m3 0v1.5m-3-1.5v1.5m4.5 9.75v1.5m-1.5-1.5v1.5m-1.5-1.5v1.5" /></>,
-  escritorio: <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5v-2.25A3.375 3.375 0 017.125 7.5h9.75A3.375 3.375 0 0120.25 11.25v2.25m-16.5 0s1.625-1.625 4.125-1.625 4.125 1.625 4.125 1.625 1.625-1.625 4.125-1.625 4.125 1.625 4.125 1.625m-16.5 0h16.5M3.75 13.5v4.5A2.25 2.25 0 006 20.25h12A2.25 2.25 0 0020.25 18v-4.5" />,
+  builtInWardrobes: <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4" />,
+  airConditioning: <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L12 6l-1.5-1.5m3 0l-1.5 1.5-1.5-1.5M12 21v-6.75a2.25 2.25 0 00-2.25-2.25H8.25a2.25 2.25 0 00-2.25 2.25V21" />,
+  terrace: <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h6M9 11.25h6M9 15.75h6" />,
+  balcony: <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h6M9 11.25h6M9 15.75h6" />,
+  garage: <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5v11.5H3.75zM3.75 18.25h16.5M6 11.25h2.25m4.5 0h2.25" />,
+  mobiliado: <path strokeLinecap="round" strokeLinejoin="round" d="M18.75 11.25H5.25a2.25 2.25 0 00-2.25 2.25v4.5A2.25 2.25 0 005.25 20.25h13.5a2.25 2.25 0 002.25-2.25v-4.5a2.25 2.25 0 00-2.25-2.25zM3.75 9.75h16.5" />,
+  cozinhaEquipada: <path strokeLinecap="round" strokeLinejoin="round" d="M12 21v-8.25M15.75 15.75V12M8.25 15.75V12M12 2.25v2.25m-3-1.5v1.5m6-1.5v1.5M4.5 9h15" />,
+  suite: <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 6.75v10.5a2.25 2.25 0 01-2.25 2.25H9a2.25 2.25 0 01-2.25-2.25V6.75m10.5 0v-2.25a2.25 2.25 0 00-2.25-2.25h-6a2.25 2.25 0 00-2.25 2.25v2.25" />,
+  escritorio: <path strokeLinecap="round" strokeLinejoin="round" d="M9 17.25v1.5m3-1.5v1.5m3-1.5v1.5M3 13.5h18M5.25 7.5h13.5a2.25 2.25 0 012.25 2.25v.75a2.25 2.25 0 01-2.25 2.25H5.25a2.25 2.25 0 01-2.25-2.25v-.75a2.25 2.25 0 012.25-2.25z" />,
   // Building Features
-  pool: <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 5.25a2.25 2.25 0 100 4.5 2.25 2.25 0 000-4.5zM14.25 11.25L12 9l-2.25 2.25L6 7.5l-1.5 1.5L7.5 12l-1.5 1.5L9 15l2.25-2.25L13.5 15l1.5-1.5L12 10.5l2.25 1.875" />,
-  greenArea: <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 9.75c3.125-3.125 8.188-3.125 11.313 0s3.125 8.188 0 11.313c-3.125 3.125-8.188 3.125-11.313 0s-3.125-8.188 0-11.313zM3 3l5.25 5.25" />,
-  portaria24h: <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M12 21.75l-8.25-6V5.25l8.25-3 8.25 3v10.5l-8.25 6z" />,
-  academia: <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12h-9m9 0a2.25 2.25 0 012.25 2.25v0a2.25 2.25 0 01-2.25 2.25h-9a2.25 2.25 0 01-2.25-2.25v0a2.25 2.25 0 012.25-2.25m9 0a2.25 2.25 0 002.25-2.25v0a2.25 2.25 0 00-2.25-2.25h-9a2.25 2.25 0 00-2.25 2.25v0A2.25 2.25 0 007.5 12h0z" />,
-  salaoDeFestas: <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 8.25l-2.637 4.395A1.5 1.5 0 008.25 15h7.5a1.5 1.5 0 001.137-2.355L14.25 8.25M9.75 8.25h4.5m-4.5 0l1.5-2.625m3 2.625l-1.5-2.625" />,
-  churrasqueira: <><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5v6.75H3.75z" /><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5L6 18.75h12l2.25-5.25" /><path strokeLinecap="round" strokeLinejoin="round" d="M6 6.75V3.75m12 3V3.75M9 9.75h6" /></>,
-  parqueInfantil: <path strokeLinecap="round" strokeLinejoin="round" d="M6 3v13.5m0 0a2.25 2.25 0 104.5 0m-4.5 0a2.25 2.25 0 114.5 0m-4.5 0H3m3 0h4.5m4.5-13.5v13.5m0 0a2.25 2.25 0 104.5 0m-4.5 0a2.25 2.25 0 114.5 0m-4.5 0h-3m3 0h-4.5" />,
-  quadraEsportiva: <><path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9 9 0 007.8-14.7" /></>,
-  sauna: <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 6.75c.5-1.5 2-1.5 2.5 0 .5-1.5 2-1.5 2.5 0m-7.5 3c.5-1.5 2-1.5 2.5 0 .5-1.5 2-1.5 2.5 0m-7.5 3c.5-1.5 2-1.5 2.5 0 .5-1.5 2-1.5 2.5 0" />,
-  espacoGourmet: <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 15.75v-1.5a2.25 2.25 0 012.25-2.25h9a2.25 2.25 0 012.25 2.25v1.5m-13.5 0h13.5m-13.5 0a2.25 2.25 0 01-2.25-2.25v-1.5c0-1.242 1.008-2.25 2.25-2.25h13.5c1.242 0 2.25 1.008 2.25 2.25v1.5a2.25 2.25 0 01-2.25 2.25m-13.5 0v-1.5a2.25 2.25 0 012.25-2.25h9a2.25 2.25 0 012.25 2.25v1.5" />,
+  pool: <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h3m-6.75 3h9.75m-1.5 3h-6.75m-1.5 3h9.75M12 21a9 9 0 110-18 9 9 0 010 18z" />,
+  greenArea: <path strokeLinecap="round" strokeLinejoin="round" d="M12 21.75c2.422 0 4.68-.92 6.364-2.464M12 21.75c-2.422 0-4.68-.92-6.364-2.464M12 21.75v-19.5M4.836 6.364A9 9 0 0119.164 6.364" />,
+  portaria24h: <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />,
+  academia: <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12h1.5m12 0h1.5M12 4.5v1.5m0 12v1.5M6 6l1.5 1.5m9 9l1.5 1.5M6 18l1.5-1.5m9-9l1.5-1.5" />,
+  salaoDeFestas: <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.125-.504 1.125-1.125V14.25m-17.25 4.5v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5m1.5 0v-1.875a3.375 3.375 0 013.375-3.375h13.5a3.375 3.375 0 013.375 3.375v1.875" />,
+  churrasqueira: <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l7.5-7.5 7.5 7.5M4.5 12.75v4.5m15-4.5v4.5m-7.5-12v12" />,
+  parqueInfantil: <path strokeLinecap="round" strokeLinejoin="round" d="M12 21.75l-3.75-3.75m3.75 3.75L15.75 18m-3.75-3.75V3" />,
+  quadraEsportiva: <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9 9 0 100-18 9 9 0 000 18z" />,
+  sauna: <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 3.75v16.5m3-16.5v16.5m3-16.5v16.5" />,
+  espacoGourmet: <path strokeLinecap="round" strokeLinejoin="round" d="M12 21.75c-3.142 0-6.14-1.24-8.364-3.464M12 21.75v-19.5M12 2.25c3.142 0 6.14 1.24 8.364 3.464M12 2.25v19.5M12 2.25v-1.5m0 21v-1.5M12 9.75v3.75m0-3.75h.008v3.75H12z" />,
   default: <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
 };
 

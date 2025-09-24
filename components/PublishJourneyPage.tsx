@@ -52,8 +52,6 @@ interface PublishJourneyPageProps {
   navigateToDocumentsForSale: () => void;
   navigateHome: () => void;
   onAccessClick: () => void;
-  // FIX: Added onSearchSubmit prop to pass to Header component.
-  onSearchSubmit: (query: string) => void;
 }
 
 // Helper function for mock AI title generation

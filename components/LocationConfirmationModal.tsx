@@ -1,10 +1,11 @@
 
-import React, { useEffect, useRef, useState } from 'react';
-import L from 'leaflet';
+
+import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api';
 import { useLanguage } from '../contexts/LanguageContext';
 import CloseIcon from './icons/CloseIcon';
 import InfoIcon from './icons/InfoIcon';
-import FullScreenIcon from './icons/FullScreenIcon';
+import SpinnerIcon from './icons/SpinnerIcon';
 
 interface LocationConfirmationModalProps {
   isOpen: boolean;
@@ -13,58 +14,32 @@ interface LocationConfirmationModalProps {
   initialCoordinates: { lat: number; lng: number } | null;
 }
 
+const GOOGLE_MAPS_API_KEY = 'AIzaSyDukeY7JJI9UkHIFbsCZOrjPDRukqvUOfA'; // User provided API key
+
+const containerStyle = {
+  width: '100%',
+  height: '100%'
+};
+
+const libraries: ('drawing' | 'places' | 'visualization')[] = ['drawing', 'places', 'visualization'];
+
 const LocationConfirmationModal: React.FC<LocationConfirmationModalProps> = ({ isOpen, onClose, onConfirm, initialCoordinates }) => {
   const { t } = useLanguage();
   const modalContentRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstance = useRef<any>(null);
-  const markerInstance = useRef<any>(null);
-  const tileLayerInstance = useRef<any>(null);
-  
-  const [mapView, setMapView] = useState<'map' | 'satellite'>('map');
   const [markerPosition, setMarkerPosition] = useState(initialCoordinates);
+  const [mapView, setMapView] = useState<'roadmap' | 'satellite'>('roadmap');
 
-  const mapLayerUrl = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
-  const satelliteLayerUrl = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+  const { isLoaded, loadError } = useJsApiLoader({
+    id: 'google-map-script-confirmation',
+    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
+    libraries,
+  });
 
   useEffect(() => {
-    if (isOpen && initialCoordinates && mapRef.current) {
-        // Atraso para garantir que o DOM do modal esteja totalmente visível para o Leaflet calcular o tamanho
-        setTimeout(() => {
-            if (!mapRef.current) return;
-            
-            mapInstance.current = L.map(mapRef.current).setView([initialCoordinates.lat, initialCoordinates.lng], 18);
-            
-            tileLayerInstance.current = L.tileLayer(mapView === 'map' ? mapLayerUrl : satelliteLayerUrl).addTo(mapInstance.current);
-
-            markerInstance.current = L.marker([initialCoordinates.lat, initialCoordinates.lng], {
-                draggable: true,
-            }).addTo(mapInstance.current);
-
-            markerInstance.current.on('dragend', (event: any) => {
-                const { lat, lng } = event.target.getLatLng();
-                setMarkerPosition({ lat, lng });
-            });
-            
-            setMarkerPosition(initialCoordinates);
-
-        }, 100); 
+    if (isOpen) {
+      setMarkerPosition(initialCoordinates);
     }
-
-    return () => {
-        if (mapInstance.current) {
-            mapInstance.current.remove();
-            mapInstance.current = null;
-            markerInstance.current = null;
-        }
-    };
   }, [isOpen, initialCoordinates]);
-
-  useEffect(() => {
-      if (tileLayerInstance.current) {
-          tileLayerInstance.current.setUrl(mapView === 'map' ? mapLayerUrl : satelliteLayerUrl);
-      }
-  }, [mapView]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -80,14 +55,58 @@ const LocationConfirmationModal: React.FC<LocationConfirmationModalProps> = ({ i
     };
   }, [isOpen, onClose]);
 
+  // FIX: Replace google.maps.MapMouseEvent with any to resolve missing namespace error.
+  const onMarkerDragEnd = useCallback((event: any) => {
+    if (event.latLng) {
+      setMarkerPosition({
+        lat: event.latLng.lat(),
+        lng: event.latLng.lng(),
+      });
+    }
+  }, []);
 
   if (!isOpen) return null;
 
   const handleConfirm = () => {
-    if(markerPosition) {
-        onConfirm(markerPosition);
+    if (markerPosition) {
+      onConfirm(markerPosition);
     }
-  }
+  };
+
+  const renderMap = () => {
+    if (loadError) {
+      return <div>Error loading maps</div>;
+    }
+    if (!isLoaded || !initialCoordinates) {
+      return (
+        <div className="w-full h-full flex items-center justify-center bg-gray-200">
+          <SpinnerIcon className="w-12 h-12 text-brand-gray animate-spin" />
+        </div>
+      );
+    }
+    return (
+      <GoogleMap
+        mapContainerStyle={containerStyle}
+        center={initialCoordinates}
+        zoom={18}
+        options={{
+          fullscreenControl: false,
+          streetViewControl: false,
+          mapTypeControl: false,
+          zoomControl: true,
+          mapTypeId: mapView
+        }}
+      >
+        {markerPosition && (
+          <Marker
+            position={markerPosition}
+            draggable={true}
+            onDragEnd={onMarkerDragEnd}
+          />
+        )}
+      </GoogleMap>
+    );
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60" role="dialog" aria-modal="true">
@@ -108,11 +127,11 @@ const LocationConfirmationModal: React.FC<LocationConfirmationModalProps> = ({ i
         </div>
 
         <div className="relative flex-grow bg-gray-200 rounded overflow-hidden">
-            <div ref={mapRef} className="w-full h-full" />
-            <div className="absolute top-2 left-2 z-[400] bg-white rounded shadow-md">
+            {renderMap()}
+            <div className="absolute top-2 left-2 z-[1] bg-white rounded shadow-md">
                 <button 
-                    onClick={() => setMapView('map')} 
-                    className={`px-3 py-1 text-sm font-medium rounded-l ${mapView === 'map' ? 'bg-brand-navy text-white' : 'bg-white text-brand-dark'}`}
+                    onClick={() => setMapView('roadmap')} 
+                    className={`px-3 py-1 text-sm font-medium rounded-l ${mapView === 'roadmap' ? 'bg-brand-navy text-white' : 'bg-white text-brand-dark'}`}
                 >
                     Mapa
                 </button>
@@ -123,15 +142,12 @@ const LocationConfirmationModal: React.FC<LocationConfirmationModalProps> = ({ i
                     Satélite
                 </button>
             </div>
-             <button className="absolute top-2 right-2 z-[400] bg-white rounded p-2 shadow-md">
-                <FullScreenIcon className="w-5 h-5 text-brand-dark" />
-            </button>
         </div>
 
         <div className="flex flex-col sm:flex-row items-center justify-between pt-6">
             <button
                 onClick={handleConfirm}
-                className="w-full sm:w-auto bg-[#93005a] hover:bg-opacity-90 text-white font-bold py-3 px-6 rounded-md transition duration-300 order-1 sm:order-2"
+                className="w-full sm:w-auto bg-brand-red hover:bg-opacity-90 text-white font-bold py-3 px-6 rounded-md transition duration-300 order-1 sm:order-2"
             >
                 {t('publishJourney.locationConfirmationModal.confirmButton')}
             </button>
