@@ -43,6 +43,8 @@ const libraries: ('drawing' | 'places' | 'visualization')[] = ['places'];
 const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
   const { t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState<'venda' | 'aluguel' | 'temporada'>('venda');
+  const [filteredProperties, setFilteredProperties] = useState<Property[]>([]);
   
   const [map, setMap] = useState<any | null>(null);
   const [mapCenter, setMapCenter] = useState<{lat: number, lng: number}>({lat: -12.9777, lng: -38.5016}); // Default to Salvador
@@ -62,6 +64,26 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
   const onUnmount = useCallback(function callback() {
     setMap(null);
   }, []);
+  
+  useEffect(() => {
+    const lowerQuery = searchQuery.toLowerCase();
+    const keywords = lowerQuery.split(/[\s,]+/).filter(Boolean);
+
+    const newFiltered = props.properties.filter(p => {
+        const operationMatch = p.tipo_operacao === activeTab;
+        if (!operationMatch) return false;
+
+        if (keywords.length > 0) {
+            const propertyText = `${p.title} ${p.address} ${p.cidade || ''}`.toLowerCase();
+            return keywords.every(keyword => propertyText.includes(keyword));
+        }
+
+        return true;
+    });
+
+    setFilteredProperties(newFiltered);
+  }, [searchQuery, activeTab, props.properties]);
+
 
   useEffect(() => {
     if (props.deviceLocation) {
@@ -75,9 +97,6 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
   
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
-      props.onSearchSubmit(searchQuery);
-    }
   };
 
   const onMarkerClick = useCallback((property: Property) => {
@@ -98,7 +117,6 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
         if (place && place.formatted_address) {
             const newQuery = place.formatted_address;
             setSearchQuery(newQuery);
-            props.onSearchSubmit(newQuery);
         }
         if (place && place.geometry && place.geometry.location) {
             const lat = place.geometry.location.lat();
@@ -124,6 +142,28 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
           <div className="container mx-auto px-4 sm:px-6 text-center">
             <img src="https://i.imgur.com/FuxDdyF.png" alt="Quallity Home Logo" className="h-24 mx-auto mb-4" />
             <h1 className="text-3xl sm:text-4xl font-bold text-brand-navy mb-4">{t('header.searchDropdown.buy.explore')}</h1>
+            
+            <div className="flex justify-center border-b mb-6 max-w-2xl mx-auto">
+                <button 
+                  onClick={() => setActiveTab('venda')}
+                  className={`px-4 sm:px-6 py-2 text-base sm:text-lg font-medium transition-colors duration-300 ${activeTab === 'venda' ? 'border-b-4 border-brand-red text-brand-dark' : 'text-brand-gray'}`}
+                >
+                  {t('hero.tabs.buy')}
+                </button>
+                <button 
+                  onClick={() => setActiveTab('aluguel')}
+                  className={`px-4 sm:px-6 py-2 text-base sm:text-lg font-medium transition-colors duration-300 ${activeTab === 'aluguel' ? 'border-b-4 border-brand-red text-brand-dark' : 'text-brand-gray'}`}
+                >
+                  {t('hero.tabs.rent')}
+                </button>
+                <button 
+                  onClick={() => setActiveTab('temporada')}
+                  className={`px-4 sm:px-6 py-2 text-base sm:text-lg font-medium transition-colors duration-300 ${activeTab === 'temporada' ? 'border-b-4 border-brand-red text-brand-dark' : 'text-brand-gray'}`}
+                >
+                  {t('hero.tabs.season')}
+                </button>
+            </div>
+
             <form onSubmit={handleSearchSubmit} className="max-w-2xl mx-auto">
               <div className="relative flex flex-col sm:flex-row items-center gap-2">
                 <div className="relative flex-grow w-full">
@@ -186,7 +226,7 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
                             zoomControl: true
                         }}
                     >
-                        {props.properties.map(property => (
+                        {filteredProperties.map(property => (
                             <Marker 
                                 key={property.id} 
                                 position={{ lat: property.lat, lng: property.lng }}
@@ -222,11 +262,14 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
         </div>
 
         <PropertyListings
-          properties={props.properties}
+          properties={filteredProperties}
           onViewDetails={props.onViewDetails}
           favorites={props.favorites}
           onToggleFavorite={props.onToggleFavorite}
           isLoading={false}
+          title={searchQuery ? t('listings.foundTitle') : t('listings.title')}
+          noResultsTitle={searchQuery ? t('searchResults.noResults.title') : t('listings.noResults.title')}
+          noResultsDescription={searchQuery ? t('searchResults.noResults.description') : t('listings.noResults.description')}
           onContactClick={props.onContactClick}
         />
       </main>

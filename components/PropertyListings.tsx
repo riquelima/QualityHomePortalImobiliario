@@ -15,6 +15,8 @@ interface PropertyListingsProps {
   isLoading: boolean;
   title?: string;
   onContactClick: (property: Property) => void;
+  noResultsTitle?: string;
+  noResultsDescription?: string;
 }
 
 const SkeletonCard: React.FC = () => (
@@ -38,7 +40,7 @@ const SkeletonCard: React.FC = () => (
 );
 
 
-const PropertyListings: React.FC<PropertyListingsProps> = ({ properties, onViewDetails, favorites, onToggleFavorite, isLoading, title, onContactClick }) => {
+const PropertyListings: React.FC<PropertyListingsProps> = ({ properties, onViewDetails, favorites, onToggleFavorite, isLoading, title, onContactClick, noResultsTitle, noResultsDescription }) => {
   const { t } = useLanguage();
 
   return (
@@ -65,8 +67,8 @@ const PropertyListings: React.FC<PropertyListingsProps> = ({ properties, onViewD
           ) : (
              <div className="md:col-span-2 lg:col-span-3 text-center py-16 bg-brand-light-gray rounded-lg">
                 <SearchIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-brand-navy mb-2">{t('listings.noResults.title')}</h3>
-                <p className="text-brand-gray max-w-md mx-auto">{t('listings.noResults.description')}</p>
+                <h3 className="text-xl font-bold text-brand-navy mb-2">{noResultsTitle || t('listings.noResults.title')}</h3>
+                <p className="text-brand-gray max-w-md mx-auto">{noResultsDescription || t('listings.noResults.description')}</p>
              </div>
           )}
         </div>
