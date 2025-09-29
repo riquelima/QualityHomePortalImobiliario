@@ -14,8 +14,6 @@ interface LocationConfirmationModalProps {
   initialCoordinates: { lat: number; lng: number } | null;
 }
 
-const GOOGLE_MAPS_API_KEY = 'AIzaSyDukeY7JJI9UkHIFbsCZOrjPDRukqvUOfA'; // User provided API key
-
 const containerStyle = {
   width: '100%',
   height: '100%'
@@ -31,7 +29,7 @@ const LocationConfirmationModal: React.FC<LocationConfirmationModalProps> = ({ i
 
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script-confirmation',
-    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
+    googleMapsApiKey: process.env.REACT_APP_API_KEY!,
     libraries,
   });
 

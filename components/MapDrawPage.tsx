@@ -24,8 +24,6 @@ interface PropertyWithDistance extends Property {
   distance: number;
 }
 
-const GOOGLE_MAPS_API_KEY = 'AIzaSyDukeY7JJI9UkHIFbsCZOrjPDRukqvUOfA';
-
 const containerStyle = {
   width: '100%',
   height: '100%',
@@ -46,7 +44,7 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewD
 
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script-draw-page',
-    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
+    googleMapsApiKey: process.env.REACT_APP_API_KEY!,
     libraries,
   });
 

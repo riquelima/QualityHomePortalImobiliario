@@ -16,7 +16,7 @@ interface HeroProps {
   deviceLocation: { lat: number; lng: number } | null;
 }
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const ai = new GoogleGenAI({ apiKey: process.env.REACT_APP_API_KEY! });
 
 const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe, onGeolocationError, onSearchSubmit, deviceLocation }) => {
   const [activeTab, setActiveTab] = useState('comprar');

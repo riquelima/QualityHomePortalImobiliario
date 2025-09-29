@@ -54,7 +54,7 @@ interface PublishJourneyPageProps {
   deviceLocation: { lat: number; lng: number } | null;
 }
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const ai = new GoogleGenAI({ apiKey: process.env.REACT_APP_API_KEY! });
 
 const formatPrice = (price: number | null | undefined): string => {
     if (price === null || price === undefined || isNaN(price)) return '';
