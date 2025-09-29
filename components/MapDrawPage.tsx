@@ -44,7 +44,7 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewD
 
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script-draw-page',
-    googleMapsApiKey: process.env.REACT_APP_API_KEY!,
+    googleMapsApiKey: process.env.API_KEY!,
     libraries,
   });
 
