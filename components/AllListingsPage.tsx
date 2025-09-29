@@ -74,7 +74,8 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
         if (!operationMatch) return false;
 
         if (keywords.length > 0) {
-            const propertyText = `${p.title} ${p.address} ${p.cidade || ''}`.toLowerCase();
+            // Updated to include description as per user request
+            const propertyText = `${p.title} ${p.address} ${p.cidade || ''} ${p.description}`.toLowerCase();
             return keywords.every(keyword => propertyText.includes(keyword));
         }
 
@@ -97,6 +98,8 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
   
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // The search logic is already handled by the useEffect on searchQuery change.
+    // This function can remain to prevent default form submission.
   };
 
   const onMarkerClick = useCallback((property: Property) => {
@@ -114,18 +117,30 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
   const onPlaceChanged = () => {
     if (autocomplete !== null) {
         const place = autocomplete.getPlace();
-        if (place && place.formatted_address) {
-            const newQuery = place.formatted_address;
-            setSearchQuery(newQuery);
-        }
-        if (place && place.geometry && place.geometry.location) {
-            const lat = place.geometry.location.lat();
-            const lng = place.geometry.location.lng();
-            const newCenter = { lat, lng };
-            setMapCenter(newCenter);
-            if (map) {
-                map.panTo(newCenter);
-                map.setZoom(15);
+        if (place) {
+            if (place.formatted_address) {
+                // The user's issue is that the full address (e.g., "Salvador, BA, Brazil") is too specific
+                // and includes terms like "Brazil" that may not be in the property data.
+                // We create a less specific query by removing the last part of the address, which is usually the country.
+                const addressParts = place.formatted_address.split(',');
+                const newQuery = addressParts.length > 1 
+                    ? addressParts.slice(0, -1).join(',') 
+                    : place.formatted_address;
+                setSearchQuery(newQuery.trim());
+            } else if (place.name) {
+                // Fallback to place name if formatted_address is not available
+                setSearchQuery(place.name);
+            }
+            
+            if (place.geometry && place.geometry.location) {
+                const lat = place.geometry.location.lat();
+                const lng = place.geometry.location.lng();
+                const newCenter = { lat, lng };
+                setMapCenter(newCenter);
+                if (map) {
+                    map.panTo(newCenter);
+                    map.setZoom(15);
+                }
             }
         }
     } else {
