@@ -21,7 +21,6 @@ import AIIcon from './icons/AIIcon';
 import SpinnerIcon from './icons/SpinnerIcon';
 import WarningIcon from './icons/WarningIcon';
 
-
 type MediaItem = File | (Media & { type: 'existing' });
 
 interface ModalRequestConfig {
@@ -47,53 +46,15 @@ interface PublishJourneyPageProps {
   propertyToEdit?: Property | null;
   onRequestModal: (config: ModalRequestConfig) => void;
   onNavigateToAllListings: () => void;
-  hasUnreadMessages: boolean;
+  unreadCount: number;
   navigateToGuideToSell: () => void;
   navigateToDocumentsForSale: () => void;
   navigateHome: () => void;
   onAccessClick: () => void;
+  deviceLocation: { lat: number; lng: number } | null;
 }
 
-// Helper function for mock AI title generation
-const mockAITitleGeneration = (baseTitle: string): Promise<string> => {
-    return new Promise(resolve => {
-        setTimeout(() => {
-            if (!baseTitle) {
-                resolve("Título de Anúncio Incrível Gerado por IA");
-                return;
-            }
-            const enhancements = ["Oportunidade Única", "Seu Novo Lar dos Sonhos", "Localização Perfeita", "Viva com Estilo e Conforto", "Imperdível na Região"];
-            const randomEnhancement = enhancements[Math.floor(Math.random() * enhancements.length)];
-            resolve(`${baseTitle} - ${randomEnhancement}`);
-        }, 800);
-    });
-};
-
-// Helper function for mock AI description generation
-const mockAIDescriptionGeneration = (formData: any): Promise<string> => {
-     return new Promise(resolve => {
-        setTimeout(() => {
-            const { detailsPropertyType, grossArea, bedrooms, bathrooms, description, homeFeatures } = formData;
-            
-            let generatedText = `Descubra este incrível ${detailsPropertyType.toLowerCase()} com ${grossArea}m², ideal para quem busca conforto e praticidade. O imóvel conta com ${bedrooms} quarto(s) e ${bathrooms} banheiro(s), oferecendo o espaço perfeito para sua família.\n\n`;
-            
-            if (homeFeatures.includes('balcony')) {
-                generatedText += "Desfrute de momentos relaxantes na varanda, apreciando a vista da cidade. ";
-            }
-             if (homeFeatures.includes('suite')) {
-                generatedText += "A suíte principal é um verdadeiro refúgio de tranquilidade e privacidade. ";
-            }
-
-            if (description && description.trim()) {
-                generatedText += `\n${description.trim()}\n\n`;
-            }
-
-            generatedText += "Não perca a chance de conhecer seu novo lar. Agende uma visita! (Descrição de demonstração gerada por IA).";
-            
-            resolve(generatedText);
-        }, 1200);
-    });
-}
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 const formatPrice = (price: number | null | undefined): string => {
     if (price === null || price === undefined || isNaN(price)) return '';
@@ -150,7 +111,7 @@ const Stepper: React.FC<{ currentStep: number, setStep: (step: number) => void }
 
 export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
     const { t, language } = useLanguage();
-    const { user, profile, onAddProperty, onUpdateProperty, onPublishError, propertyToEdit } = props;
+    const { user, profile, onAddProperty, onUpdateProperty, onPublishError, propertyToEdit, deviceLocation } = props;
     
     // Form State
     const [step, setStep] = useState(1);
@@ -177,6 +138,11 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
         rentalConditions: [] as string[], petsAllowed: null as boolean | null,
         dailyRate: '', minStay: '1', maxGuests: '2', cleaningFee: '',
         availableDates: [] as string[],
+        // Land specific
+        topography: '',
+        zoning: '',
+        isWalled: null as boolean | null,
+        isGatedCommunity: null as boolean | null,
     });
 
     const [files, setFiles] = useState<MediaItem[]>([]);
@@ -203,6 +169,14 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
         aluguel: 'rent',
         temporada: 'season'
     };
+    
+    const validateDetails = useCallback(() => {
+        if (formData.title.trim().length < 10) {
+            props.onRequestModal({ type: 'error', title: t('systemModal.errorTitle'), message: t('publishJourney.errors.titleTooShort') });
+            return false;
+        }
+        return true;
+    }, [formData.title, props, t]);
 
     useEffect(() => {
         if (propertyToEdit) {
@@ -242,11 +216,48 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                 maxGuests: String(propertyToEdit.maximo_hospedes || '2'),
                 cleaningFee: formatPrice(propertyToEdit.taxa_limpeza),
                 availableDates: propertyToEdit.datas_disponiveis || [],
+                 // Land specific
+                topography: propertyToEdit.topografia || '',
+                zoning: propertyToEdit.zoneamento || '',
+                isWalled: propertyToEdit.murado ?? null,
+                isGatedCommunity: propertyToEdit.em_condominio ?? null,
             });
             const existingMedia = (propertyToEdit.midias_imovel || []).map(m => ({ ...m, type: 'existing' as const }));
             setFiles(existingMedia);
         }
     }, [propertyToEdit, profile]);
+
+    useEffect(() => {
+      // Auto-fill city from device location for new ads
+      if (!propertyToEdit && deviceLocation && !formData.city) {
+        const reverseGeocode = async () => {
+          try {
+            const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${deviceLocation.lat}&lon=${deviceLocation.lng}`);
+            const data = await response.json();
+            if (data && data.address) {
+              const city = data.address.city || data.address.town || data.address.village || data.address.city_district;
+              const stateName = data.address.state;
+              const stateMap: { [key: string]: string } = {
+                  'Acre': 'AC', 'Alagoas': 'AL', 'Amapá': 'AP', 'Amazonas': 'AM', 'Bahia': 'BA',
+                  'Ceará': 'CE', 'Distrito Federal': 'DF', 'Espírito Santo': 'ES', 'Goiás': 'GO',
+                  'Maranhão': 'MA', 'Mato Grosso': 'MT', 'Mato Grosso do Sul': 'MS', 'Minas Gerais': 'MG',
+                  'Pará': 'PA', 'Paraíba': 'PB', 'Paraná': 'PR', 'Pernambuco': 'PE', 'Piauí': 'PI',
+                  'Rio de Janeiro': 'RJ', 'Rio Grande do Norte': 'RN', 'Rio Grande do Sul': 'RS',
+                  'Rondônia': 'RO', 'Roraima': 'RR', 'Santa Catarina': 'SC', 'São Paulo': 'SP',
+                  'Sergipe': 'SE', 'Tocantins': 'TO'
+              };
+              const stateAbbr = stateMap[stateName] || stateName;
+              if (city && stateAbbr) {
+                  setFormData(prev => ({ ...prev, city: `${city}, ${stateAbbr}` }));
+              }
+            }
+          } catch (error) {
+            console.error("Reverse geocoding error:", error);
+          }
+        };
+        reverseGeocode();
+      }
+    }, [deviceLocation, propertyToEdit, formData.city]);
     
     const handleCurrencyChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -299,6 +310,31 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
 
     const handleNumberChange = (field: 'bedrooms' | 'bathrooms', delta: number) => {
         setFormData(prev => ({ ...prev, [field]: Math.max(0, prev[field] + delta) }));
+    };
+
+    const handlePropertyTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        setFormData(prev => {
+            const newState = { ...prev, [name]: value };
+    
+            if (value === 'Terreno') {
+                newState.bedrooms = 0;
+                newState.bathrooms = 0;
+                newState.netArea = '';
+                newState.hasElevator = null;
+                newState.homeFeatures = [];
+            } else if (prev.detailsPropertyType === 'Terreno') {
+                // If changing FROM Terreno, restore defaults and clear land-specific data
+                newState.bedrooms = 1;
+                newState.bathrooms = 1;
+                newState.topography = '';
+                newState.zoning = '';
+                newState.isWalled = null;
+                newState.isGatedCommunity = null;
+            }
+    
+            return newState;
+        });
     };
     
     const handleAddressSubmit = async (e: React.FormEvent) => {
@@ -364,6 +400,11 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
     };
 
     const handleSubmitJourney = async () => {
+        if (!validateDetails()) {
+            setStep(2);
+            return;
+        }
+
         if (!user) {
             onPublishError("Usuário não autenticado.");
             return;
@@ -422,6 +463,11 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                 maximo_hospedes: formData.maxGuests ? Number(formData.maxGuests) : null,
                 taxa_limpeza: unformatCurrencyForSubmission(formData.cleaningFee),
                 datas_disponiveis: formData.availableDates,
+                // Land specific data
+                topografia: formData.detailsPropertyType === 'Terreno' ? formData.topography : null,
+                zoneamento: formData.detailsPropertyType === 'Terreno' ? formData.zoning : null,
+                murado: formData.detailsPropertyType === 'Terreno' ? formData.isWalled : null,
+                em_condominio: formData.detailsPropertyType === 'Terreno' ? formData.isGatedCommunity : null,
                 status: 'ativo'
             };
 
@@ -496,13 +542,6 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
         if (!formData.title.trim()) return;
         setIsGeneratingTitle(true);
         try {
-            if (typeof process === 'undefined' || !process.env.API_KEY) {
-                console.warn("Chave de API do Gemini não configurada. Usando título simulado.");
-                const text = await mockAITitleGeneration(formData.title);
-                setFormData(prev => ({ ...prev, title: text }));
-                return;
-            }
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             const prompt = t('publishJourney.detailsForm.aiTitlePrompt', { title: formData.title });
             
             const response = await ai.models.generateContent({
@@ -516,11 +555,11 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
             }
         } catch (error) {
             console.error("Erro ao gerar título com IA:", error);
-            onPublishError(t('publishJourney.detailsForm.aiTitleError'));
+            props.onRequestModal({ type: 'error', title: t('systemModal.errorTitle'), message: t('publishJourney.detailsForm.aiTitleError')});
         } finally {
             setIsGeneratingTitle(false);
         }
-    }, [formData.title, t, onPublishError]);
+    }, [formData.title, t, props]);
 
     // AI Description Generation
     const generateAIDescription = useCallback(async () => {
@@ -538,14 +577,6 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
         `;
         
         try {
-            if (typeof process === 'undefined' || !process.env.API_KEY) {
-                console.warn("Chave de API do Gemini não configurada. Usando descrição simulada.");
-                const text = await mockAIDescriptionGeneration(formData);
-                setFormData(prev => ({ ...prev, description: text }));
-                return;
-            }
-
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             const prompt = t('publishJourney.detailsForm.aiDescriptionPrompt', { details });
 
             const response = await ai.models.generateContent({
@@ -558,11 +589,11 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
             }
         } catch (error) {
             console.error("Erro ao gerar descrição com IA:", error);
-            onPublishError(t('publishJourney.detailsForm.aiDescriptionError'));
+            props.onRequestModal({ type: 'error', title: t('systemModal.errorTitle'), message: t('publishJourney.detailsForm.aiDescriptionError')});
         } finally {
             setIsGeneratingDescription(false);
         }
-    }, [formData, t, onPublishError]);
+    }, [formData, t, props]);
 
     const handleAcceptLocation = () => {
         setIsLocationPermissionModalOpen(false);
@@ -753,7 +784,7 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                                     <div className="mb-4">
                                         <label htmlFor="title" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.adTitle')}</label>
                                         <div className="relative">
-                                            <input type="text" id="title" name="title" value={formData.title} onChange={handleFormChange} placeholder={t('publishJourney.detailsForm.adTitlePlaceholder')} required className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red pr-28" />
+                                            <input type="text" id="title" name="title" value={formData.title} onChange={handleFormChange} placeholder={t('publishJourney.detailsForm.adTitlePlaceholder')} required minLength={10} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red pr-28" />
                                             <button 
                                                 type="button" 
                                                 onClick={generateAITitle} 
@@ -814,11 +845,15 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                                     </div>
 
                                     {/* Characteristics */}
-                                    <h3 className="text-xl font-bold text-brand-navy mb-4 border-t pt-6">{t('publishJourney.detailsForm.apartmentCharacteristics')}</h3>
+                                    <h3 className="text-xl font-bold text-brand-navy mb-4 border-t pt-6">
+                                        {formData.detailsPropertyType === 'Terreno' ? t('publishJourney.detailsForm.landCharacteristics') : t('publishJourney.detailsForm.apartmentCharacteristics')}
+                                    </h3>
+                                    
+                                    {/* Common Fields */}
                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
                                         <div>
                                             <label htmlFor="detailsPropertyType" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.propertyType')}</label>
-                                            <select id="detailsPropertyType" name="detailsPropertyType" value={formData.detailsPropertyType} onChange={handleFormChange} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red">
+                                            <select id="detailsPropertyType" name="detailsPropertyType" value={formData.detailsPropertyType} onChange={handlePropertyTypeChange} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red">
                                                 {propertyTypes.map(item => (
                                                      <option key={item.key} value={item.value}>{t(`publishJourney.detailsForm.${item.key}`)}</option>
                                                 ))}
@@ -828,59 +863,110 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                                             <label htmlFor="grossArea" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.grossArea')}</label>
                                             <input type="number" id="grossArea" name="grossArea" value={formData.grossArea} onChange={handleFormChange} required className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" />
                                         </div>
-                                        <div>
-                                            <label htmlFor="netArea" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.netArea')}</label>
-                                            <input type="number" id="netArea" name="netArea" value={formData.netArea} onChange={handleFormChange} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" />
-                                        </div>
-                                         <div>
-                                            <label className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.bedrooms')}</label>
-                                            <div className="flex items-center border border-gray-300 rounded-md">
-                                                <button type="button" onClick={() => handleNumberChange('bedrooms', -1)} className="p-2 text-brand-dark"><MinusIcon className="w-5 h-5"/></button>
-                                                <input type="number" name="bedrooms" value={formData.bedrooms} onChange={handleFormChange} className="w-full text-center border-l border-r px-2 py-1.5 focus:outline-none" />
-                                                <button type="button" onClick={() => handleNumberChange('bedrooms', 1)} className="p-2 text-brand-dark"><PlusIcon className="w-5 h-5"/></button>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.bathrooms')}</label>
-                                             <div className="flex items-center border border-gray-300 rounded-md">
-                                                <button type="button" onClick={() => handleNumberChange('bathrooms', -1)} className="p-2 text-brand-dark"><MinusIcon className="w-5 h-5"/></button>
-                                                <input type="number" name="bathrooms" value={formData.bathrooms} onChange={handleFormChange} className="w-full text-center border-l border-r px-2 py-1.5 focus:outline-none" />
-                                                <button type="button" onClick={() => handleNumberChange('bathrooms', 1)} className="p-2 text-brand-dark"><PlusIcon className="w-5 h-5"/></button>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-medium text-brand-dark mb-2">{t('publishJourney.detailsForm.hasElevator')}</p>
-                                            <div className="flex gap-4">
-                                                <label className="flex items-center"><input type="radio" name="hasElevator" value="true" checked={formData.hasElevator === true} onChange={handleRadioChange} className="mr-2"/>{t('publishJourney.detailsForm.yes')}</label>
-                                                <label className="flex items-center"><input type="radio" name="hasElevator" value="false" checked={formData.hasElevator === false} onChange={handleRadioChange} className="mr-2"/>{t('publishJourney.detailsForm.no')}</label>
-                                            </div>
-                                        </div>
+
+                                        {/* Fields for NON-TERRENO */}
+                                        {formData.detailsPropertyType !== 'Terreno' && (
+                                            <>
+                                                <div>
+                                                    <label htmlFor="netArea" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.netArea')}</label>
+                                                    <input type="number" id="netArea" name="netArea" value={formData.netArea} onChange={handleFormChange} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.bedrooms')}</label>
+                                                    <div className="flex items-center border border-gray-300 rounded-md">
+                                                        <button type="button" onClick={() => handleNumberChange('bedrooms', -1)} className="p-2 text-brand-dark"><MinusIcon className="w-5 h-5"/></button>
+                                                        <input type="number" name="bedrooms" value={formData.bedrooms} onChange={handleFormChange} className="w-full text-center border-l border-r px-2 py-1.5 focus:outline-none" />
+                                                        <button type="button" onClick={() => handleNumberChange('bedrooms', 1)} className="p-2 text-brand-dark"><PlusIcon className="w-5 h-5"/></button>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.bathrooms')}</label>
+                                                    <div className="flex items-center border border-gray-300 rounded-md">
+                                                        <button type="button" onClick={() => handleNumberChange('bathrooms', -1)} className="p-2 text-brand-dark"><MinusIcon className="w-5 h-5"/></button>
+                                                        <input type="number" name="bathrooms" value={formData.bathrooms} onChange={handleFormChange} className="w-full text-center border-l border-r px-2 py-1.5 focus:outline-none" />
+                                                        <button type="button" onClick={() => handleNumberChange('bathrooms', 1)} className="p-2 text-brand-dark"><PlusIcon className="w-5 h-5"/></button>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-medium text-brand-dark mb-2">{t('publishJourney.detailsForm.hasElevator')}</p>
+                                                    <div className="flex gap-4">
+                                                        <label className="flex items-center"><input type="radio" name="hasElevator" value="true" checked={formData.hasElevator === true} onChange={handleRadioChange} className="mr-2"/>{t('publishJourney.detailsForm.yes')}</label>
+                                                        <label className="flex items-center"><input type="radio" name="hasElevator" value="false" checked={formData.hasElevator === false} onChange={handleRadioChange} className="mr-2"/>{t('publishJourney.detailsForm.no')}</label>
+                                                    </div>
+                                                </div>
+                                            </>
+                                        )}
+                                        {/* Fields for TERRENO */}
+                                        {formData.detailsPropertyType === 'Terreno' && (
+                                            <>
+                                                <div>
+                                                    <label htmlFor="topography" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.topography')}</label>
+                                                    <select id="topography" name="topography" value={formData.topography} onChange={handleFormChange} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red">
+                                                        <option value="">Selecione</option>
+                                                        <option value="plano">{t('publishJourney.detailsForm.flat')}</option>
+                                                        <option value="aclive">{t('publishJourney.detailsForm.uphill')}</option>
+                                                        <option value="declive">{t('publishJourney.detailsForm.downhill')}</option>
+                                                        <option value="irregular">{t('publishJourney.detailsForm.irregular')}</option>
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label htmlFor="zoning" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.zoning')}</label>
+                                                    <select id="zoning" name="zoning" value={formData.zoning} onChange={handleFormChange} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red">
+                                                        <option value="">Selecione</option>
+                                                        <option value="residencial">{t('publishJourney.detailsForm.residential')}</option>
+                                                        <option value="comercial">{t('publishJourney.detailsForm.commercial')}</option>
+                                                        <option value="misto">{t('publishJourney.detailsForm.mixedUse')}</option>
+                                                        <option value="industrial">{t('publishJourney.detailsForm.industrial')}</option>
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-medium text-brand-dark mb-2">{t('publishJourney.detailsForm.walled')}</p>
+                                                    <div className="flex gap-4">
+                                                        <label className="flex items-center"><input type="radio" name="isWalled" value="true" checked={formData.isWalled === true} onChange={handleRadioChange} className="mr-2"/>{t('publishJourney.detailsForm.yes')}</label>
+                                                        <label className="flex items-center"><input type="radio" name="isWalled" value="false" checked={formData.isWalled === false} onChange={handleRadioChange} className="mr-2"/>{t('publishJourney.detailsForm.no')}</label>
+                                                    </div>
+                                                </div>
+                                                <div className="sm:col-span-2">
+                                                    <p className="text-sm font-medium text-brand-dark mb-2">{t('publishJourney.detailsForm.gatedCommunity')}</p>
+                                                    <div className="flex gap-4">
+                                                        <label className="flex items-center"><input type="radio" name="isGatedCommunity" value="true" checked={formData.isGatedCommunity === true} onChange={handleRadioChange} className="mr-2"/>{t('publishJourney.detailsForm.yes')}</label>
+                                                        <label className="flex items-center"><input type="radio" name="isGatedCommunity" value="false" checked={formData.isGatedCommunity === false} onChange={handleRadioChange} className="mr-2"/>{t('publishJourney.detailsForm.no')}</label>
+                                                    </div>
+                                                </div>
+                                            </>
+                                        )}
                                     </div>
                                     
-                                    {/* More Features */}
-                                    <div className="mb-6">
-                                        <h4 className="text-lg font-semibold text-brand-navy mb-3">{t('publishJourney.detailsForm.otherHomeFeatures')}</h4>
-                                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                            {['builtInWardrobes', 'airConditioning', 'terrace', 'balcony', 'garage', 'mobiliado', 'cozinhaEquipada', 'suite', 'escritorio'].map(feature => (
-                                                <label key={feature} className="flex items-center">
-                                                    <input type="checkbox" value={feature} checked={formData.homeFeatures.includes(feature)} onChange={(e) => handleCheckboxChange(e, 'homeFeatures')} className="mr-2 h-4 w-4 rounded border-gray-300 text-brand-red focus:ring-brand-red" />
-                                                    <span className="text-sm">{t(`publishJourney.detailsForm.${feature}`)}</span>
-                                                </label>
-                                            ))}
+                                    {/* More Features (NON-TERRENO) */}
+                                    {formData.detailsPropertyType !== 'Terreno' && (
+                                        <div className="mb-6">
+                                            <h4 className="text-lg font-semibold text-brand-navy mb-3">{t('publishJourney.detailsForm.otherHomeFeatures')}</h4>
+                                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                                {['builtInWardrobes', 'airConditioning', 'terrace', 'balcony', 'garage', 'mobiliado', 'cozinhaEquipada', 'suite', 'escritorio'].map(feature => (
+                                                    <label key={feature} className="flex items-center">
+                                                        <input type="checkbox" value={feature} checked={formData.homeFeatures.includes(feature)} onChange={(e) => handleCheckboxChange(e, 'homeFeatures')} className="mr-2 h-4 w-4 rounded border-gray-300 text-brand-red focus:ring-brand-red" />
+                                                        <span className="text-sm">{t(`publishJourney.detailsForm.${feature}`)}</span>
+                                                    </label>
+                                                ))}
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div className="mb-6">
-                                        <h4 className="text-lg font-semibold text-brand-navy mb-3">{t('publishJourney.detailsForm.otherBuildingFeatures')}</h4>
-                                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                             {['pool', 'greenArea', 'portaria24h', 'academia', 'salaoDeFestas', 'churrasqueira', 'parqueInfantil', 'quadraEsportiva', 'sauna', 'espacoGourmet'].map(feature => (
-                                                <label key={feature} className="flex items-center">
-                                                    <input type="checkbox" value={feature} checked={formData.buildingFeatures.includes(feature)} onChange={(e) => handleCheckboxChange(e, 'buildingFeatures')} className="mr-2 h-4 w-4 rounded border-gray-300 text-brand-red focus:ring-brand-red" />
-                                                    <span className="text-sm">{t(`publishJourney.detailsForm.${feature}`)}</span>
-                                                </label>
-                                            ))}
+                                    )}
+
+                                    {/* Condominium Features (NON-TERRENO or Gated Community TERRENO) */}
+                                    {(formData.detailsPropertyType !== 'Terreno' || formData.isGatedCommunity === true) && (
+                                        <div className="mb-6">
+                                            <h4 className="text-lg font-semibold text-brand-navy mb-3">{t('publishJourney.detailsForm.otherBuildingFeatures')}</h4>
+                                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                                {['pool', 'greenArea', 'portaria24h', 'academia', 'salaoDeFestas', 'churrasqueira', 'parqueInfantil', 'quadraEsportiva', 'sauna', 'espacoGourmet'].map(feature => (
+                                                    <label key={feature} className="flex items-center">
+                                                        <input type="checkbox" value={feature} checked={formData.buildingFeatures.includes(feature)} onChange={(e) => handleCheckboxChange(e, 'buildingFeatures')} className="mr-2 h-4 w-4 rounded border-gray-300 text-brand-red focus:ring-brand-red" />
+                                                        <span className="text-sm">{t(`publishJourney.detailsForm.${feature}`)}</span>
+                                                    </label>
+                                                ))}
+                                            </div>
                                         </div>
-                                    </div>
-                                    
+                                    )}
+
                                     {/* Description */}
                                     <div className="mb-4">
                                         <label htmlFor="description" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.adDescription')}</label>
@@ -898,11 +984,12 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                                         </div>
                                     </div>
 
-                                    <button onClick={() => setStep(3)} className="mt-6 w-full bg-brand-red text-white font-bold py-3 px-4 rounded-md hover:opacity-90 transition-opacity">
+                                    <button onClick={() => { if (validateDetails()) { setStep(3); } }} className="mt-6 w-full bg-brand-red text-white font-bold py-3 px-4 rounded-md hover:opacity-90 transition-opacity">
                                         {t('publishJourney.detailsForm.continueToPhotosButton')}
                                     </button>
                                 </div>
                             )}
+
 
                             {/* Step 3: Photos */}
                             {step === 3 && (

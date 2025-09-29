@@ -1,38 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 
 interface SplashScreenProps {
-  onFinished: () => void;
+  isFadingOut: boolean;
 }
 
-const SplashScreen: React.FC<SplashScreenProps> = ({ onFinished }) => {
-  const [isExiting, setIsExiting] = useState(false);
-
-  useEffect(() => {
-    const exitTimer = setTimeout(() => {
-      setIsExiting(true);
-    }, 1500); // Start fading out after 1.5 seconds
-
-    const finishTimer = setTimeout(() => {
-      onFinished();
-    }, 2000); // Component unmounts after 2 seconds total
-
-    return () => {
-      clearTimeout(exitTimer);
-      clearTimeout(finishTimer);
-    };
-  }, [onFinished]);
-
+const SplashScreen: React.FC<SplashScreenProps> = ({ isFadingOut }) => {
   return (
-    <div
-      className={`fixed inset-0 bg-white z-[9999] flex items-center justify-center transition-opacity duration-500 ease-in-out ${
-        isExiting ? 'opacity-0' : 'opacity-100'
-      }`}
-      aria-hidden="true"
+    <div 
+      className={`fixed inset-0 z-[200] flex items-center justify-center bg-white transition-opacity duration-500 ease-in-out ${isFadingOut ? 'opacity-0' : 'opacity-100'}`}
+      aria-hidden={isFadingOut}
     >
-      <img
-        src="https://i.imgur.com/FuxDdyF.png"
-        alt="Quality Home Logo"
-        className="w-48 animate-logo-splash"
+      <img 
+        src="https://i.imgur.com/FuxDdyF.png" 
+        alt="Quallity Home Logo" 
+        className="h-32 sm:h-40 animate-slow-pulse"
       />
     </div>
   );

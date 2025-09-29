@@ -1,10 +1,12 @@
+
+
 import React, { useState, useEffect, useCallback } from 'react';
 import Header from './Header';
 import PropertyListings from './PropertyListings';
 import type { Property, User, Profile } from '../types';
 import { useLanguage } from '../contexts/LanguageContext';
 import SearchIcon from './icons/SearchIcon';
-import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, Marker, InfoWindow, Autocomplete } from '@react-google-maps/api';
 
 interface AllListingsPageProps {
   onBack: () => void;
@@ -22,12 +24,13 @@ interface AllListingsPageProps {
   onNavigateToMyAds: () => void;
   onSearchSubmit: (query: string) => void;
   onNavigateToAllListings: () => void;
-  hasUnreadMessages: boolean;
+  unreadCount: number;
   onGeolocationError: () => void;
   onContactClick: (property: Property) => void;
   navigateToGuideToSell: () => void;
   navigateToDocumentsForSale: () => void;
   navigateHome: () => void;
+  deviceLocation: { lat: number; lng: number } | null;
 }
 
 const GOOGLE_MAPS_API_KEY = 'AIzaSyDukeY7JJI9UkHIFbsCZOrjPDRukqvUOfA'; // User provided API key
@@ -42,32 +45,31 @@ const libraries: ('drawing' | 'places' | 'visualization')[] = ['places'];
 const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
   const { t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeSearchQuery, setActiveSearchQuery] = useState('');
   
+  const [map, setMap] = useState<any | null>(null);
   const [mapCenter, setMapCenter] = useState<{lat: number, lng: number}>({lat: -12.9777, lng: -38.5016}); // Default to Salvador
-  const [isLoadingGeo, setIsLoadingGeo] = useState(true);
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
+  const [autocomplete, setAutocomplete] = useState<any | null>(null);
 
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script-all-listings',
     googleMapsApiKey: GOOGLE_MAPS_API_KEY,
     libraries,
   });
+  
+  const onLoad = useCallback(function callback(mapInstance: any) {
+    setMap(mapInstance);
+  }, []);
+
+  const onUnmount = useCallback(function callback() {
+    setMap(null);
+  }, []);
 
   useEffect(() => {
-    navigator.geolocation.getCurrentPosition(
-        (position) => {
-            const { latitude, longitude } = position.coords;
-            setMapCenter({lat: latitude, lng: longitude});
-            setIsLoadingGeo(false);
-        },
-        (error) => {
-            console.error("Falha ao obter geolocalização, usando localização padrão:", error);
-            setIsLoadingGeo(false);
-        },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-    );
-  }, []);
+    if (props.deviceLocation) {
+        setMapCenter(props.deviceLocation);
+    }
+  }, [props.deviceLocation]);
   
   const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       setSearchQuery(e.target.value);
@@ -75,15 +77,10 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
   
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setActiveSearchQuery(searchQuery);
+    if (searchQuery.trim()) {
+      props.onSearchSubmit(searchQuery);
+    }
   };
-
-  const filteredProperties = props.properties.filter(p => {
-    return activeSearchQuery.trim()
-        ? p.title.toLowerCase().includes(activeSearchQuery.toLowerCase()) ||
-          p.address.toLowerCase().includes(activeSearchQuery.toLowerCase())
-        : true;
-  });
 
   const onMarkerClick = useCallback((property: Property) => {
     setSelectedProperty(property);
@@ -92,6 +89,34 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
   const onInfoWindowClose = useCallback(() => {
     setSelectedProperty(null);
   }, []);
+  
+  const onAutocompleteLoad = (autocompleteInstance: any) => {
+    setAutocomplete(autocompleteInstance);
+  };
+
+  const onPlaceChanged = () => {
+    if (autocomplete !== null) {
+        const place = autocomplete.getPlace();
+        if (place && place.formatted_address) {
+            const newQuery = place.formatted_address;
+            setSearchQuery(newQuery);
+            props.onSearchSubmit(newQuery);
+        }
+        if (place && place.geometry && place.geometry.location) {
+            const lat = place.geometry.location.lat();
+            const lng = place.geometry.location.lng();
+            const newCenter = { lat, lng };
+            setMapCenter(newCenter);
+            if (map) {
+                map.panTo(newCenter);
+                map.setZoom(15);
+            }
+        }
+    } else {
+        console.log('Autocomplete is not loaded yet!');
+    }
+  };
+
 
   return (
     <div className="bg-brand-light-gray min-h-screen flex flex-col">
@@ -99,20 +124,38 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
       <main className="flex-grow">
         <section className="bg-white py-12">
           <div className="container mx-auto px-4 sm:px-6 text-center">
-            <img src="https://i.imgur.com/FuxDdyF.png" alt="Quality Home Logo" className="h-24 mx-auto mb-4" />
+            <img src="https://i.imgur.com/FuxDdyF.png" alt="Quallity Home Logo" className="h-24 mx-auto mb-4" />
             <h1 className="text-3xl sm:text-4xl font-bold text-brand-navy mb-4">{t('header.searchDropdown.buy.explore')}</h1>
             <form onSubmit={handleSearchSubmit} className="max-w-2xl mx-auto">
               <div className="relative flex flex-col sm:flex-row items-center gap-2">
                 <div className="relative flex-grow w-full">
                     <SearchIcon className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2 z-10" />
-                    <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={handleSearchInputChange}
-                      placeholder={t('hero.locationPlaceholder')}
-                      className="w-full px-12 py-3 rounded-full text-brand-dark border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-red"
-                      autoComplete="off"
-                    />
+                    {isLoaded ? (
+                      <Autocomplete
+                          onLoad={onAutocompleteLoad}
+                          onPlaceChanged={onPlaceChanged}
+                          options={{
+                            types: ['(regions)'],
+                            componentRestrictions: { country: 'br' },
+                          }}
+                      >
+                          <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={handleSearchInputChange}
+                            placeholder={t('hero.locationPlaceholder')}
+                            className="w-full px-12 py-3 rounded-full text-brand-dark border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-red"
+                            autoComplete="off"
+                          />
+                      </Autocomplete>
+                    ) : (
+                      <input
+                        type="text"
+                        placeholder={t('hero.locationPlaceholder')}
+                        className="w-full px-12 py-3 rounded-full text-brand-dark border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-red"
+                        disabled
+                      />
+                    )}
                 </div>
                 <button 
                     type="submit"
@@ -127,7 +170,7 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
         
         <div className="container mx-auto px-4 sm:px-6 mt-8">
             <div className="h-[400px] md:h-[500px] w-full mb-8 rounded-lg overflow-hidden shadow-md relative z-0">
-                {isLoadingGeo || !isLoaded ? (
+                {!isLoaded ? (
                     <div className="w-full h-full bg-gray-200 flex items-center justify-center animate-pulse">
                         <p className="text-brand-gray">{loadError ? 'Error loading map' : t('map.loading')}</p>
                     </div>
@@ -136,6 +179,8 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
                         mapContainerStyle={containerStyle}
                         center={mapCenter}
                         zoom={13}
+                        onLoad={onLoad}
+                        onUnmount={onUnmount}
                         options={{
                             fullscreenControl: false,
                             streetViewControl: false,
@@ -143,7 +188,7 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
                             zoomControl: true
                         }}
                     >
-                        {filteredProperties.map(property => (
+                        {props.properties.map(property => (
                             <Marker 
                                 key={property.id} 
                                 position={{ lat: property.lat, lng: property.lng }}
@@ -179,8 +224,7 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
         </div>
 
         <PropertyListings
-          title={activeSearchQuery ? t('listings.foundTitle') : t('listings.title')}
-          properties={filteredProperties}
+          properties={props.properties}
           onViewDetails={props.onViewDetails}
           favorites={props.favorites}
           onToggleFavorite={props.onToggleFavorite}
@@ -191,6 +235,11 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
       <footer className="bg-brand-light-gray text-brand-gray py-8 text-center mt-12">
         <div className="container mx-auto">
           <p>&copy; {new Date().getFullYear()} {t('footer.text')}</p>
+            <div className="mt-4">
+              <a href="https://www.instagram.com/portalimobiliarioquallityhome/" target="_blank" rel="noopener noreferrer" aria-label="Siga-nos no Instagram" className="inline-block hover:opacity-75 transition-opacity">
+                <img src="https://cdn-icons-png.flaticon.com/512/3621/3621435.png" alt="Instagram" className="h-8 w-8" />
+              </a>
+            </div>
         </div>
       </footer>
     </div>

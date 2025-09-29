@@ -39,10 +39,6 @@ const SystemModal: React.FC<SystemModalProps> = ({ isOpen, onClose, onConfirm, t
   const { t } = useLanguage();
   const { Icon, iconBgClass, iconTextClass, confirmButtonClass } = modalConfig[type];
 
-  if (!isOpen) {
-    return null;
-  }
-
   const handleConfirmClick = () => {
     if (onConfirm) {
       onConfirm();
@@ -52,14 +48,16 @@ const SystemModal: React.FC<SystemModalProps> = ({ isOpen, onClose, onConfirm, t
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm"
+      className={`fixed inset-0 z-50 flex items-center justify-center bg-black transition-all duration-300 ease-in-out ${isOpen ? 'bg-opacity-50 backdrop-blur-sm' : 'bg-opacity-0 pointer-events-none'}`}
       aria-labelledby="system-modal-title"
       role="dialog"
       aria-modal="true"
+      onClick={type !== 'confirm' ? onClose : undefined}
     >
-      <div className="absolute inset-0" onClick={type !== 'confirm' ? onClose : undefined} aria-hidden="true"></div>
-
-      <div className="relative bg-white rounded-lg shadow-xl w-11/12 max-w-md p-6 sm:p-8 m-4 transform transition-all text-center">
+      <div 
+        onClick={(e) => e.stopPropagation()}
+        className={`relative bg-white rounded-lg shadow-xl w-11/12 max-w-md p-6 sm:p-8 m-4 transform transition-all duration-300 ease-out text-center ${isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
+      >
         <div className={`mx-auto flex items-center justify-center h-12 w-12 rounded-full ${iconBgClass} mb-4`}>
           <Icon className={`h-7 w-7 ${iconTextClass}`} />
         </div>

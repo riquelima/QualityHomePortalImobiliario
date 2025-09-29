@@ -22,7 +22,7 @@ interface MyAdsPageProps {
   onDeleteProperty: (id: number) => void;
   onEditProperty: (property: Property) => void;
   onNavigateToAllListings: () => void;
-  hasUnreadMessages: boolean;
+  unreadCount: number;
   // FIX: Added missing props for Header.
   navigateToGuideToSell: () => void;
   navigateToDocumentsForSale: () => void;
@@ -30,7 +30,7 @@ interface MyAdsPageProps {
 }
 
 const MyAdsPage: React.FC<MyAdsPageProps> = ({
-  onBack, user, profile, onLogout, onPublishAdClick, onAccessClick, onNavigateToFavorites, onNavigateToChatList, onNavigateToMyAds, userProperties, onViewDetails, onDeleteProperty, onEditProperty, onNavigateToAllListings, hasUnreadMessages, navigateToGuideToSell, navigateToDocumentsForSale, navigateHome
+  onBack, user, profile, onLogout, onPublishAdClick, onAccessClick, onNavigateToFavorites, onNavigateToChatList, onNavigateToMyAds, userProperties, onViewDetails, onDeleteProperty, onEditProperty, onNavigateToAllListings, unreadCount, navigateToGuideToSell, navigateToDocumentsForSale, navigateHome
 }) => {
   const { t } = useLanguage();
 
@@ -47,7 +47,7 @@ const MyAdsPage: React.FC<MyAdsPageProps> = ({
         onNavigateToChatList={onNavigateToChatList}
         onNavigateToMyAds={onNavigateToMyAds}
         onNavigateToAllListings={onNavigateToAllListings}
-        hasUnreadMessages={hasUnreadMessages}
+        unreadCount={unreadCount}
         navigateToGuideToSell={navigateToGuideToSell}
         navigateToDocumentsForSale={navigateToDocumentsForSale}
         navigateHome={navigateHome}

@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useRef, useEffect } from 'react';
 import type { User, Property, ChatSession } from '../types';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -12,28 +13,38 @@ interface ChatPageProps {
   session: ChatSession;
   property: Property;
   onSendMessage: (sessionId: string, text: string) => void;
+  onMarkAsRead: (sessionId: string) => void;
 }
 
-const ChatPage: React.FC<ChatPageProps> = ({ onBack, user, session, property, onSendMessage }) => {
+const getInitials = (name: string) => {
+    if (!name) return '?';
+    return name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
+};
+
+const ChatPage: React.FC<ChatPageProps> = ({ onBack, user, session, property, onSendMessage, onMarkAsRead }) => {
   const { t } = useLanguage();
   const [newMessage, setNewMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
-  // FIX: Correctly find the other participant's name.
-  // The key in `participantes` is the user ID. We find the participant whose ID is not the current user's.
-  const otherParticipantId = Object.keys(session.participantes).find(id => id !== user.id);
-  const otherParticipant = otherParticipantId ? session.participantes[otherParticipantId] : null;
-  const otherParticipantName = otherParticipant ? otherParticipant.nome_completo : 'Anunciante';
-
+  const otherParticipantId = Object.keys(session.participants).find(id => id !== user.id);
+  const otherParticipant = otherParticipantId ? session.participants[otherParticipantId] : null;
+  const otherParticipantName = otherParticipant?.nome_completo || 'Anunciante';
+  const otherParticipantInitials = getInitials(otherParticipantName);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [session.messages]);
+  
+  useEffect(() => {
+    onMarkAsRead(session.id);
+  }, [session.id, onMarkAsRead]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSendMessage(session.sessionId, newMessage);
-    setNewMessage('');
+    if (newMessage.trim()) {
+      onSendMessage(session.id, newMessage.trim());
+      setNewMessage('');
+    }
   };
 
   return (
@@ -41,13 +52,15 @@ const ChatPage: React.FC<ChatPageProps> = ({ onBack, user, session, property, on
       {/* Header */}
       <header className="bg-white shadow-sm sticky top-0 z-40 flex-shrink-0">
         <div className="container mx-auto px-4 sm:px-6 py-3 flex items-center">
-          <button onClick={onBack} className="mr-4 text-brand-dark hover:text-brand-red">
+          <button onClick={onBack} className="mr-3 text-brand-dark hover:text-brand-red">
             <ArrowLeftIcon className="w-6 h-6" />
           </button>
-          <div>
-            {/* FIX: `otherParticipantName` is now a string and can be rendered. */}
+          <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-brand-gray text-white font-bold mr-3">
+              {otherParticipantInitials}
+          </div>
+          <div className="overflow-hidden">
             <h1 className="text-lg font-bold text-brand-navy truncate">{otherParticipantName}</h1>
-            <p className="text-sm text-brand-gray truncate">{t('chatPage.title', { title: property.title })}</p>
+            <p className="text-sm text-brand-gray truncate">{property.title}</p>
           </div>
         </div>
       </header>
@@ -60,7 +73,10 @@ const ChatPage: React.FC<ChatPageProps> = ({ onBack, user, session, property, on
             return (
               <div key={message.id} className={`flex items-end gap-2 ${isSentByUser ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-xs md:max-w-md p-3 rounded-2xl ${isSentByUser ? 'bg-brand-navy text-white rounded-br-lg' : 'bg-white text-brand-dark border rounded-bl-lg'}`}>
-                  <p>{message.text}</p>
+                  <p className="text-sm sm:text-base whitespace-pre-wrap">{message.text}</p>
+                  <p className={`text-xs mt-1 text-right ${isSentByUser ? 'text-gray-300' : 'text-gray-500'}`}>
+                    {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </p>
                 </div>
               </div>
             );

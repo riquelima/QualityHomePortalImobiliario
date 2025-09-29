@@ -14,7 +14,7 @@ interface DocumentsForSalePageProps {
   onNavigateToChatList: () => void;
   onNavigateToMyAds: () => void;
   onNavigateToAllListings: () => void;
-  hasUnreadMessages: boolean;
+  unreadCount: number;
   navigateToGuideToSell: () => void;
   navigateToDocumentsForSale: () => void;
   // FIX: Add missing navigateHome prop for Header.
@@ -86,6 +86,11 @@ const DocumentsForSalePage: React.FC<DocumentsForSalePageProps> = (props) => {
       <footer className="bg-brand-light-gray text-brand-gray py-8 text-center mt-12">
         <div className="container mx-auto">
           <p>&copy; {new Date().getFullYear()} {t('footer.text')}</p>
+            <div className="mt-4">
+              <a href="https://www.instagram.com/portalimobiliarioquallityhome/" target="_blank" rel="noopener noreferrer" aria-label="Siga-nos no Instagram" className="inline-block hover:opacity-75 transition-opacity">
+                <img src="https://cdn-icons-png.flaticon.com/512/3621/3621435.png" alt="Instagram" className="h-8 w-8" />
+              </a>
+            </div>
         </div>
       </footer>
     </div>

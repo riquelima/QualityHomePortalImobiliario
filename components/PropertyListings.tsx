@@ -5,6 +5,7 @@ import React from 'react';
 import type { Property } from '../types';
 import PropertyCard from './PropertyCard';
 import { useLanguage } from '../contexts/LanguageContext';
+import SearchIcon from './icons/SearchIcon';
 
 interface PropertyListingsProps {
   properties: Property[];
@@ -62,8 +63,10 @@ const PropertyListings: React.FC<PropertyListingsProps> = ({ properties, onViewD
               />
             ))
           ) : (
-             <div className="md:col-span-2 lg:col-span-3 text-center py-16">
-                <p className="text-brand-gray text-lg">{t('listings.noResults')}</p>
+             <div className="md:col-span-2 lg:col-span-3 text-center py-16 bg-brand-light-gray rounded-lg">
+                <SearchIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-brand-navy mb-2">{t('listings.noResults.title')}</h3>
+                <p className="text-brand-gray max-w-md mx-auto">{t('listings.noResults.description')}</p>
              </div>
           )}
         </div>

@@ -25,7 +25,7 @@ interface FavoritesPageProps {
   // FIX: Add onNavigateToMyAds prop to resolve typing error.
   onNavigateToMyAds: () => void;
   onNavigateToAllListings: () => void;
-  hasUnreadMessages: boolean;
+  unreadCount: number;
   onContactClick: (property: Property) => void;
   // FIX: Added missing props for Header.
   navigateToGuideToSell: () => void;
@@ -48,7 +48,7 @@ const FavoritesPage: React.FC<FavoritesPageProps> = ({
   onNavigateToChatList,
   onNavigateToMyAds,
   onNavigateToAllListings,
-  hasUnreadMessages,
+  unreadCount,
   onContactClick,
   navigateToGuideToSell,
   navigateToDocumentsForSale,
@@ -71,7 +71,7 @@ const FavoritesPage: React.FC<FavoritesPageProps> = ({
         onNavigateToChatList={onNavigateToChatList}
         onNavigateToMyAds={onNavigateToMyAds}
         onNavigateToAllListings={onNavigateToAllListings}
-        hasUnreadMessages={hasUnreadMessages}
+        unreadCount={unreadCount}
         navigateToGuideToSell={navigateToGuideToSell}
         navigateToDocumentsForSale={navigateToDocumentsForSale}
         navigateHome={navigateHome}
@@ -116,6 +116,11 @@ const FavoritesPage: React.FC<FavoritesPageProps> = ({
       <footer className="bg-brand-light-gray text-brand-gray py-8 text-center mt-12">
         <div className="container mx-auto">
           <p>&copy; {new Date().getFullYear()} {t('footer.text')}</p>
+            <div className="mt-4">
+              <a href="https://www.instagram.com/portalimobiliarioquallityhome/" target="_blank" rel="noopener noreferrer" aria-label="Siga-nos no Instagram" className="inline-block hover:opacity-75 transition-opacity">
+                <img src="https://cdn-icons-png.flaticon.com/512/3621/3621435.png" alt="Instagram" className="h-8 w-8" />
+              </a>
+            </div>
         </div>
       </footer>
     </div>

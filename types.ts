@@ -1,14 +1,9 @@
 
 
+
 import type { User } from '@supabase/supabase-js';
 
 export { User };
-
-// FIX: Added the missing PropertyStatus enum which is used in PropertyCard.tsx.
-export enum PropertyStatus {
-  New = 'Novo',
-  Updated = 'Atualizado',
-}
 
 export interface Profile {
   id: string; // UUID from auth.users
@@ -77,32 +72,32 @@ export interface Property {
   datas_disponiveis?: string[]; // Array de datas no formato 'YYYY-MM-DD'
   // FIX: Added missing property 'area_util' used in PublishJourneyPage.tsx.
   area_util?: number;
+
+  // Novos campos para terrenos
+  topografia?: string;
+  zoneamento?: string;
+  murado?: boolean;
+  em_condominio?: boolean;
 }
 
 export interface Message {
   id: number | string;
-  sessao_id?: string;
-  remetente_id: string; // UUID of the sender profile
-  conteudo: string;
-  data_envio: string | Date;
-  // Legacy fields for UI compatibility
   senderId: string;
   text: string;
   timestamp: Date;
+  isRead: boolean;
 }
 
 export interface ChatSession {
-  id: string; // UUID from sessoes_chat
+  id: string;
   imovel_id: number;
-  participantes: {
-    [key: string]: { // key is user UUID
+  participants: {
+    [key: string]: {
         id: string,
         nome_completo: string,
+        url_foto_perfil?: string;
     }
   };
-  mensagens: Message[];
-  // Legacy fields for UI compatibility
-  sessionId: string;
-  propertyId: number;
   messages: Message[];
+  unreadCount: number;
 }

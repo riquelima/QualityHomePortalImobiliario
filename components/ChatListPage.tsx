@@ -1,5 +1,6 @@
 
 
+
 import React from 'react';
 import Header from './Header';
 // FIX: Import Profile type.
@@ -23,7 +24,7 @@ interface ChatListPageProps {
   // FIX: Add onNavigateToMyAds prop to resolve typing error.
   onNavigateToMyAds: () => void;
   onNavigateToAllListings: () => void;
-  hasUnreadMessages: boolean;
+  unreadCount: number;
   // FIX: Added missing props for Header.
   navigateToGuideToSell: () => void;
   navigateToDocumentsForSale: () => void;
@@ -31,25 +32,30 @@ interface ChatListPageProps {
 }
 
 const ChatListPage: React.FC<ChatListPageProps> = ({
-  onBack, user, profile, onLogout, onPublishAdClick, onAccessClick, onNavigateToFavorites, onNavigateToChatList, chatSessions, properties, onNavigateToChat, onNavigateToMyAds, onNavigateToAllListings, hasUnreadMessages, navigateToGuideToSell, navigateToDocumentsForSale, navigateHome
+  onBack, user, profile, onLogout, onPublishAdClick, onAccessClick, onNavigateToFavorites, onNavigateToChatList, chatSessions, properties, onNavigateToChat, onNavigateToMyAds, onNavigateToAllListings, unreadCount, navigateToGuideToSell, navigateToDocumentsForSale, navigateHome
 }) => {
   const { t } = useLanguage();
 
   const getOtherParticipantName = (session: ChatSession) => {
-    // FIX: Use `participantes` and get the name from the participant object.
-    const otherParticipantId = Object.keys(session.participantes).find(id => id !== user?.id);
-    return otherParticipantId ? session.participantes[otherParticipantId].nome_completo : 'Anunciante';
+    const otherParticipantId = Object.keys(session.participants).find(id => id !== user?.id);
+    return otherParticipantId ? session.participants[otherParticipantId].nome_completo : 'Anunciante';
   };
-  
-  const getPropertyTitle = (propertyId: number) => {
-    return properties.find(p => p.id === propertyId)?.title || 'Imóvel não encontrado';
+
+  const getPropertyForSession = (session: ChatSession) => {
+    return properties.find(p => p.id === session.imovel_id);
   };
+
+  const sortedSessions = [...chatSessions].sort((a, b) => {
+    const lastMessageA = a.messages[a.messages.length - 1];
+    const lastMessageB = b.messages[b.messages.length - 1];
+    if (!lastMessageA) return 1;
+    if (!lastMessageB) return -1;
+    return new Date(lastMessageB.timestamp).getTime() - new Date(lastMessageA.timestamp).getTime();
+  });
+
 
   return (
     <div className="bg-brand-light-gray min-h-screen flex flex-col">
-      {/* FIX: Pass profile prop to Header. */}
-      {/* FIX: Pass onNavigateToMyAds prop to Header. */}
-      {/* FIX: Pass navigateHome prop to Header. */}
       <Header
         onPublishAdClick={onPublishAdClick}
         onAccessClick={onAccessClick}
@@ -60,7 +66,7 @@ const ChatListPage: React.FC<ChatListPageProps> = ({
         onNavigateToChatList={onNavigateToChatList}
         onNavigateToMyAds={onNavigateToMyAds}
         onNavigateToAllListings={onNavigateToAllListings}
-        hasUnreadMessages={hasUnreadMessages}
+        unreadCount={unreadCount}
         navigateToGuideToSell={navigateToGuideToSell}
         navigateToDocumentsForSale={navigateToDocumentsForSale}
         navigateHome={navigateHome}
@@ -73,25 +79,44 @@ const ChatListPage: React.FC<ChatListPageProps> = ({
             <span className="text-brand-dark font-medium">{t('chatList.breadcrumb')}</span>
           </div>
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-brand-navy mb-8">{t('chatList.title')}</h1>
-          {chatSessions.length > 0 ? (
+          {sortedSessions.length > 0 ? (
             <div className="bg-white rounded-lg shadow-md overflow-hidden">
               <ul className="divide-y divide-gray-200">
-                {chatSessions.map(session => (
-                  <li key={session.sessionId} onClick={() => onNavigateToChat(session.sessionId)} className="p-4 sm:p-6 hover:bg-gray-50 cursor-pointer transition-colors duration-200">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <p className="text-sm font-semibold text-brand-red">{t('chatPage.title', { title: getPropertyTitle(session.propertyId) })}</p>
-                        <p className="text-lg font-bold text-brand-navy">{getOtherParticipantName(session)}</p>
-                        <p className="text-sm text-brand-gray truncate">
-                          {session.messages.length > 0 ? session.messages[session.messages.length - 1].text : "Nenhuma mensagem ainda"}
-                        </p>
+                {sortedSessions.map(session => {
+                  const property = getPropertyForSession(session);
+                  const lastMessage = session.messages[session.messages.length - 1];
+                  const placeholderImage = 'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1';
+                  const imageSrc = property?.images?.[0] || placeholderImage;
+                  
+                  return (
+                    <li key={session.id} onClick={() => onNavigateToChat(session.id)} className="p-4 hover:bg-gray-50 cursor-pointer transition-colors duration-200">
+                       <div className="flex items-center gap-4">
+                          <img src={imageSrc} alt={property?.title || 'Property'} className="w-16 h-16 rounded-md object-cover flex-shrink-0"/>
+                          <div className="flex-grow overflow-hidden">
+                               <div className="flex justify-between items-baseline">
+                                  <p className="text-lg font-bold text-brand-navy truncate">{getOtherParticipantName(session)}</p>
+                                  {lastMessage && (
+                                    <p className="text-xs text-brand-gray flex-shrink-0 ml-2">
+                                        {new Date(lastMessage.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </p>
+                                  )}
+                               </div>
+                               <p className="text-sm font-semibold text-brand-red truncate">{property?.title || 'Anúncio indisponível'}</p>
+                               <p className="text-sm text-brand-gray truncate">
+                                  {lastMessage ? lastMessage.text : "Nenhuma mensagem ainda"}
+                               </p>
+                          </div>
+                          {session.unreadCount > 0 && (
+                            <div className="flex-shrink-0 ml-2">
+                                <span className="w-6 h-6 bg-brand-red rounded-full text-white text-xs font-bold flex items-center justify-center">
+                                    {session.unreadCount}
+                                </span>
+                            </div>
+                           )}
                       </div>
-                      <div className="text-brand-gray text-xs">
-                        {session.messages.length > 0 && new Date(session.messages[session.messages.length - 1].timestamp).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
-                      </div>
-                    </div>
-                  </li>
-                ))}
+                    </li>
+                  )
+                })}
               </ul>
             </div>
           ) : (

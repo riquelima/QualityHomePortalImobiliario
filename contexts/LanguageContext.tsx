@@ -1,5 +1,5 @@
 
-import React, { createContext, useState, useContext, ReactNode } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useCallback } from 'react';
 
 // Translations are embedded directly to avoid module resolution issues.
 const ptTranslations = {
@@ -65,13 +65,22 @@ const ptTranslations = {
     "loadingLocation": "Obtendo localização...",
     "searchButton": "Buscar",
     "geolocationNotSupported": "A geolocalização não é suportada por este navegador.",
-    "geolocationError": "Não foi possível obter a sua localização. Por favor, verifique as permissões do seu navegador."
+    "geolocationError": "Não foi possível obter a sua localização. Por favor, verifique as permissões do seu navegador.",
+    "locationPermissionModal": {
+        "title": "Usar sua localização atual?",
+        "message": "Podemos centralizar o mapa em sua localização para facilitar o desenho da área de busca.",
+        "acceptButton": "Sim, usar localização",
+        "denyButton": "Não, obrigado"
+    }
   },
   "listings": {
     "title": "Imóveis em Destaque",
     "foundTitle": "Imóveis Encontrados",
     "description": "Explore nossa seleção exclusiva de imóveis que combinam luxo, conforto e localização privilegiada.",
-    "noResults": "Nenhum imóvel encontrado no momento."
+    "noResults": {
+      "title": "Nenhum Imóvel em Destaque",
+      "description": "Parece que não há imóveis disponíveis no momento. Por favor, volte mais tarde ou publique o seu!"
+    }
   },
   "propertyCard": {
     "bedrooms": "Quartos",
@@ -127,7 +136,7 @@ const ptTranslations = {
     "breadcrumbHome": "Início",
     "breadcrumbPublish": "Como publicar um anúncio",
     "mainCard": {
-      "title": "Como publicar um anúncio na Quality Home",
+      "title": "Como publicar um anúncio na Quallity Home",
       "benefit1": "Seus 2 primeiros anúncios são grátis. Para quartos, você pode publicar até 5 anúncios gratuitos.",
       "benefit2": "Você tem acesso a uma área privada onde pode gerenciar seu anúncio e os contatos que recebe.",
       "benefit3": "Você pode tirar dúvidas, trocar informações e organizar visitas de forma eficiente através do nosso chat.",
@@ -148,11 +157,11 @@ const ptTranslations = {
       "step4Content": "Inclua informações sobre seu imóvel, como o número de quartos, m², banheiros, etc. Mencione também as comodidades adicionais, como a presença de elevador, terraço, vaga de garagem, etc. Afinal, todos estes detalhes valorizam seu imóvel. Destaque as características especiais, principalmente as que aparecem nas fotos. Não se esqueça de mencionar os serviços próximos, os transportes disponíveis e os pontos de interesse na região."
     },
     "advantages": {
-      "title": "Vantagens de publicar na Quality Home",
+      "title": "Vantagens de publicar na Quallity Home",
       "advantage1Title": "Garantia de visibilidade",
       "advantage1Content": "Os anúncios publicados em nosso site são visitados por milhões de usuários, o que lhe dá a oportunidade de vender ou alugar seu imóvel de forma mais rápida e eficaz.",
       "advantage2Title": "A melhor experiência",
-      "advantage2Content": "O aplicativo da Quality Home tem múltiplas funcionalidades que ajudarão você a gerenciar sua publicação e, para quem procura um imóvel, permite configurar alertas personalizados para receber novos imóveis imediatamente.",
+      "advantage2Content": "O aplicativo da Quallity Home tem múltiplas funcionalidades que ajudarão você a gerenciar sua publicação e, para quem procura um imóvel, permite configurar alertas personalizados para receber novos imóveis imediatamente.",
       "advantage3Title": "Grande variedade de produtos para o seu anúncio",
       "advantage3Content": "Disponibilizamos uma vasta gama de ferramentas para melhorar a posição do seu anúncio e ganhar visibilidade."
     }
@@ -164,7 +173,8 @@ const ptTranslations = {
     "continueButton": "Continuar",
     "socialLoginPrompt": "Você também pode",
     "googleButton": "Continuar com Google",
-    "appleButton": "Continuar com Apple"
+    "appleButton": "Continuar com Apple",
+    "googleLoginError": "Falha ao autenticar com o Google. Por favor, tente novamente ou use outro método."
   },
   "publishJourney": {
     "stepper": {
@@ -175,6 +185,7 @@ const ptTranslations = {
     "title": "Publicar seu anúncio particular",
     "editTitle": "Editar seu anúncio",
     "adPublishedSuccess": "Anúncio publicado com sucesso!",
+    "errors": { "titleTooShort": "O título do anúncio deve ter pelo menos 10 caracteres." },
     "form": {
       "propertyType": {
         "label": "Escolha o tipo de imóvel"
@@ -227,6 +238,19 @@ const ptTranslations = {
       "aiDescriptionButtonLabel": "Melhorar descrição com IA",
       "aiDescriptionError": "Não foi possível gerar uma descrição. Verifique sua conexão ou tente novamente.",
       "apartmentCharacteristics": "Características do imóvel",
+      "landCharacteristics": "Características do Terreno",
+      "topografia": "Topografia",
+      "flat": "Plano",
+      "uphill": "Aclive",
+      "downhill": "Declive",
+      "irregular": "Irregular",
+      "zoning": "Zoneamento",
+      "residential": "Residencial",
+      "commercial": "Comercial",
+      "mixedUse": "Misto",
+      "industrial": "Industrial",
+      "walled": "É Murado?",
+      "gatedCommunity": "Está em Condomínio Fechado?",
       "propertyType": "Tipo de imóvel (opcional)",
       "apartment": "Apartamento",
       "house": "Casa",
@@ -394,7 +418,7 @@ const ptTranslations = {
     "phone": "Telefone",
     "whatsappButton": "Conversar no WhatsApp",
     "chatButton": "Conversar pelo chat",
-    "whatsappMessage": "Olá, vi este imóvel no Quality Home Portal e gostaria de mais informações. Título do anúncio: {title}"
+    "whatsappMessage": "Olá, vi este imóvel no Quallity Home Portal e gostaria de mais informações. Título do anúncio: {title}"
   },
   "chatList": {
     "title": "Minhas Conversas",
@@ -439,7 +463,20 @@ const ptTranslations = {
     "cancelButton": "Cancelar",
     "fetchError": "Não foi possível carregar os anúncios. Por favor, tente recarregar a página.",
     "editSuccessMessage": "Anúncio atualizado com sucesso!",
-    "errorDetails": "Detalhes do erro"
+    "errorDetails": "Detalhes do erro",
+    "logoutError": "Não foi possível encerrar a sessão. Por favor, tente novamente.",
+    "favoriteErrorAdd": "Não foi possível adicionar o imóvel aos favoritos. Tente novamente.",
+    "favoriteErrorRemove": "Não foi possível remover o imóvel dos favoritos. Tente novamente.",
+    "corsError": {
+      "title": "Ação Necessária: Problema de Conexão com o Servidor",
+      "description": "O site não conseguiu se comunicar com o banco de dados. Isso geralmente é causado por uma configuração de segurança (CORS) que precisa ser ajustada no seu painel do Supabase.",
+      "fixInstruction": "Para resolver, por favor, siga estes passos:",
+      "step1": "Acesse seu projeto no Supabase.",
+      "step2": "No menu esquerdo, vá para 'Project Settings' (ícone de engrenagem) e depois clique em 'API'.",
+      "step3": "Role para baixo até a seção 'CORS configuration' e adicione a seguinte URL à lista de origens permitidas:",
+      "step4": "Salve as alterações.",
+      "afterFix": "Após salvar, recarregue esta página. Os anúncios deverão aparecer."
+    }
   },
   "documentsForSalePage": {
     "title": "Documentos Necessários para a Venda",
@@ -472,7 +509,7 @@ const ptTranslations = {
     }
   },
   "footer": {
-    "text": "Quality Home Portal Imobiliário. Todos os direitos reservados."
+    "text": "Quallity Home Portal Imobiliário. Todos os direitos reservados."
   }
 };
 const enTranslations = {
@@ -546,13 +583,22 @@ const enTranslations = {
     "loadingLocation": "Getting location...",
     "searchButton": "Search",
     "geolocationNotSupported": "Geolocation is not supported by this browser.",
-    "geolocationError": "Could not get your location. Please check your browser permissions."
+    "geolocationError": "Could not get your location. Please check your browser permissions.",
+    "locationPermissionModal": {
+        "title": "Use your current location?",
+        "message": "We can center the map on your location to make it easier to draw your search area.",
+        "acceptButton": "Yes, use location",
+        "denyButton": "No, thanks"
+    }
   },
   "listings": {
     "title": "Featured Properties",
     "foundTitle": "Properties Found",
     "description": "Explore our exclusive selection of properties that combine luxury, comfort, and prime location.",
-    "noResults": "No properties found at the moment."
+    "noResults": {
+      "title": "No Featured Properties",
+      "description": "It seems there are no properties available at the moment. Please check back later or publish your own!"
+    }
   },
   "propertyCard": {
     "bedrooms": "Beds",
@@ -645,7 +691,8 @@ const enTranslations = {
     "continueButton": "Continue",
     "socialLoginPrompt": "You can also",
     "googleButton": "Continue with Google",
-    "appleButton": "Continue with Apple"
+    "appleButton": "Continue with Apple",
+    "googleLoginError": "Failed to authenticate with Google. Please try again or use another method."
   },
   "publishJourney": {
     "stepper": {
@@ -656,6 +703,7 @@ const enTranslations = {
     "title": "Publish your private ad",
     "editTitle": "Edit your ad",
     "adPublishedSuccess": "Ad published successfully!",
+    "errors": { "titleTooShort": "The ad title must be at least 10 characters long." },
     "form": {
       "propertyType": {
         "label": "Choose the property type"
@@ -708,6 +756,19 @@ const enTranslations = {
       "aiDescriptionButtonLabel": "Enhance description with AI",
       "aiDescriptionError": "Could not generate a description. Please check your connection or try again.",
       "apartmentCharacteristics": "Property characteristics",
+      "landCharacteristics": "Land Characteristics",
+      "topografia": "Topography",
+      "flat": "Flat",
+      "uphill": "Uphill",
+      "downhill": "Downhill",
+      "irregular": "Irregular",
+      "zoning": "Zoning",
+      "residential": "Residential",
+      "commercial": "Commercial",
+      "mixedUse": "Mixed-Use",
+      "industrial": "Industrial",
+      "walled": "Is it Walled?",
+      "gatedCommunity": "Is it in a Gated Community?",
       "propertyType": "Type of property (optional)",
       "apartment": "Apartment",
       "house": "House",
@@ -722,8 +783,8 @@ const enTranslations = {
       "bedrooms": "Number of bedrooms in the house",
       "bathrooms": "Number of full and service bathrooms",
       "hasElevator": "Has an elevator?",
-      "yes": "Yes, it has",
-      "no": "No, it doesn't",
+      "yes": "Yes",
+      "no": "No",
       "otherHomeFeatures": "Other features of your home",
       "builtInWardrobes": "Built-in wardrobes",
       "airConditioning": "Air conditioning",
@@ -875,7 +936,7 @@ const enTranslations = {
     "phone": "Phone",
     "whatsappButton": "Chat on WhatsApp",
     "chatButton": "Chat via app",
-    "whatsappMessage": "Hello, I saw this property on the Quality Home Portal and would like more information. Ad title: {title}"
+    "whatsappMessage": "Hello, I saw this property on the Quallity Home Portal and would like more information. Ad title: {title}"
   },
   "chatList": {
     "title": "My Chats",
@@ -920,7 +981,20 @@ const enTranslations = {
     "cancelButton": "Cancel",
     "fetchError": "Could not load ads. Please try reloading the page.",
     "editSuccessMessage": "Ad updated successfully!",
-    "errorDetails": "Error details"
+    "errorDetails": "Error details",
+    "logoutError": "Could not sign out. Please try again.",
+    "favoriteErrorAdd": "Could not add property to favorites. Please try again.",
+    "favoriteErrorRemove": "Could not remove property from favorites. Please try again.",
+    "corsError": {
+      "title": "Action Required: Server Connection Issue",
+      "description": "The website could not communicate with the database. This is usually caused by a security setting (CORS) that needs to be adjusted in your Supabase dashboard.",
+      "fixInstruction": "To resolve this, please follow these steps:",
+      "step1": "Go to your project in Supabase.",
+      "step2": "In the left menu, go to 'Project Settings' (gear icon) and then click 'API'.",
+      "step3": "Scroll down to the 'CORS configuration' section and add the following URL to the list of allowed origins:",
+      "step4": "Save the changes.",
+      "afterFix": "After saving, reload this page. The listings should now appear."
+    }
   },
   "documentsForSalePage": {
     "title": "Necessary Documents for Sale",
@@ -953,7 +1027,7 @@ const enTranslations = {
     }
   },
   "footer": {
-    "text": "Quality Home Real Estate Portal. All rights reserved."
+    "text": "Quallity Home Real Estate Portal. All rights reserved."
   }
 };
 const esTranslations = {
@@ -1027,13 +1101,22 @@ const esTranslations = {
     "loadingLocation": "Obteniendo ubicación...",
     "searchButton": "Buscar",
     "geolocationNotSupported": "La geolocalización no es compatible con este navegador.",
-    "geolocationError": "No se pudo obtener tu ubicación. Por favor, comprueba los permisos de tu navegador."
+    "geolocationError": "No se pudo obtener tu ubicación. Por favor, comprueba los permisos de tu navegador.",
+    "locationPermissionModal": {
+        "title": "¿Usar su ubicación actual?",
+        "message": "Podemos centrar el mapa en su ubicación para que sea más fácil dibujar su área de búsqueda.",
+        "acceptButton": "Sí, usar ubicación",
+        "denyButton": "No, gracias"
+    }
   },
   "listings": {
     "title": "Inmuebles Destacados",
     "foundTitle": "Inmuebles Encontrados",
     "description": "Explora nuestra selección exclusiva de inmuebles que combinan lujo, confort y una ubicación privilegiada.",
-    "noResults": "No se encontraron propiedades por el momento."
+    "noResults": {
+      "title": "No hay Inmuebles Destacados",
+      "description": "Parece que no hay inmuebles disponibles en este momento. ¡Por favor, vuelve más tarde o publica el tuyo!"
+    }
   },
   "propertyCard": {
     "bedrooms": "Hab.",
@@ -1107,7 +1190,7 @@ const esTranslations = {
       "step3Title": "3. Poner un precio de acuerdo con el valor de mercado",
       "step3Content": "En caso de duda, puedes hacer una valoración gratuita de tu inmueble en nuestra web o verificar el precio medio en esa zona.",
       "step4Title": "4. Indicar las características de tu inmueble y describir tu casa en detalle",
-      "step4Content": "Incluye información sobre tu inmueble, como el número de habitaciones, m2, baños, etc. Refiere también las comodidades adicionales, como la presencia de un ascensor, una terraza, una plaza de garaje, un trastero, etc. Al fin y al cabo, todos estos detalles valorizan tu inmueble. Destaca las características especiales de tu inmueble, sobre todo las que aparecen en las fotografías. No te olvides de explicar los servicios cercanos, los transportes disponibles y los lugares de interés en la zona."
+      "step4Content": "Incluye información sobre tu inmueble, como el número de habitaciones, m2, baños, etc. Refiere também as comodidades adicionais, como a presença de um ascensor, uma terraza, uma plaza de garaje, un trastero, etc. Al fin y al cabo, todos estos detalles valorizan tu inmueble. Destaca las características especiales de tu inmueble, sobre todo las que aparecen en las fotografías. No te olvides de explicar los servicios cercanos, los transportes disponibles y los lugares de interés en la zona."
     },
     "advantages": {
       "title": "Ventajas de publicar en Quallity Home",
@@ -1126,7 +1209,8 @@ const esTranslations = {
     "continueButton": "Continuar",
     "socialLoginPrompt": "También puedes",
     "googleButton": "Continuar con Google",
-    "appleButton": "Continuar con Apple"
+    "appleButton": "Continuar con Apple",
+    "googleLoginError": "Error al autenticarse con Google. Por favor, inténtelo de nuevo o utilice otro método."
   },
   "publishJourney": {
     "stepper": {
@@ -1137,6 +1221,7 @@ const esTranslations = {
     "title": "Publicar tu anuncio de particular",
     "editTitle": "Editar tu anuncio",
     "adPublishedSuccess": "¡Anuncio publicado con éxito!",
+    "errors": { "titleTooShort": "El título del anuncio debe tener al menos 10 caracteres." },
     "form": {
       "propertyType": {
         "label": "Elige el tipo de inmueble"
@@ -1189,6 +1274,19 @@ const esTranslations = {
       "aiDescriptionButtonLabel": "Mejorar descripción con IA",
       "aiDescriptionError": "No se pudo generar una descripción. Comprueba tu conexión o inténtalo de nuevo.",
       "apartmentCharacteristics": "Características del inmueble",
+      "landCharacteristics": "Características del Terreno",
+      "topography": "Topografía",
+      "flat": "Plano",
+      "uphill": "En pendiente ascendente",
+      "downhill": "En pendiente descendente",
+      "irregular": "Irregular",
+      "zoning": "Zonificación",
+      "residential": "Residencial",
+      "commercial": "Comercial",
+      "mixedUse": "Mixto",
+      "industrial": "Industrial",
+      "walled": "¿Está amurallado?",
+      "gatedCommunity": "¿Está en un condominio cerrado?",
       "propertyType": "Tipo de inmueble (opcional)",
       "apartment": "Apartamento",
       "house": "Casa",
@@ -1203,8 +1301,8 @@ const esTranslations = {
       "bedrooms": "Número de habitaciones en la casa",
       "bathrooms": "Número de baños completos y de servicio",
       "hasElevator": "¿Tiene ascensor?",
-      "yes": "Sí, tiene",
-      "no": "No tiene",
+      "yes": "Sí",
+      "no": "No",
       "otherHomeFeatures": "Otras características de tu vivienda",
       "builtInWardrobes": "Armarios empotrados",
       "airConditioning": "Aire acondicionado",
@@ -1356,7 +1454,7 @@ const esTranslations = {
     "phone": "Teléfono",
     "whatsappButton": "Chatear por WhatsApp",
     "chatButton": "Chatear por el chat",
-    "whatsappMessage": "Hola, vi este inmueble en el Portal Quality Home y me gustaría más información. Título del anuncio: {title}"
+    "whatsappMessage": "Hola, vi este inmueble en el Portal Quallity Home y me gustaría más información. Título del anuncio: {title}"
   },
   "chatList": {
     "title": "Mis Chats",
@@ -1401,7 +1499,20 @@ const esTranslations = {
     "cancelButton": "Cancelar",
     "fetchError": "No se pudieron cargar los anuncios. Por favor, intenta recargar la página.",
     "editSuccessMessage": "¡Anuncio actualizado con éxito!",
-    "errorDetails": "Detalles del error"
+    "errorDetails": "Detalles del error",
+    "logoutError": "No se pudo cerrar la sesión. Por favor, inténtelo de nuevo.",
+    "favoriteErrorAdd": "No se pudo añadir el inmueble a favoritos. Por favor, inténtelo de nuevo.",
+    "favoriteErrorRemove": "No se pudo quitar el inmueble de favoritos. Por favor, inténtelo de nuevo.",
+    "corsError": {
+      "title": "Acción Requerida: Problema de Conexión con el Servidor",
+      "description": "El sitio web no pudo comunicarse con la base de datos. Esto generalmente es causado por una configuración de seguridad (CORS) que necesita ser ajustada en tu panel de Supabase.",
+      "fixInstruction": "Para resolverlo, por favor, sigue estos pasos:",
+      "step1": "Accede a tu proyecto en Supabase.",
+      "step2": "En el menú izquierdo, ve a 'Project Settings' (icono de engranaje) y luego haz clic en 'API'.",
+      "step3": "Desplázate hacia abajo hasta la sección 'CORS configuration' y añade la siguiente URL a la lista de orígenes permitidos:",
+      "step4": "Guarda los cambios.",
+      "afterFix": "Después de guardar, recarga esta página. Los anuncios deberían aparecer."
+    }
   },
   "documentsForSalePage": {
     "title": "Documentos Necesarios para la Venta",
@@ -1434,7 +1545,7 @@ const esTranslations = {
     }
   },
   "footer": {
-    "text": "Quality Home Portal Inmobiliario. Todos los derechos reservados."
+    "text": "Quallity Home Portal Inmobiliario. Todos los derechos reservados."
   }
 };
 
@@ -1461,7 +1572,7 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
     setLanguage(lang);
   };
 
-  const t = (key: string, options?: { [key: string]: string | number }) => {
+  const t = useCallback((key: string, options?: { [key: string]: string | number }) => {
     const keys = key.split('.');
     let result: any = translations[language];
     for (const k of keys) {
@@ -1478,7 +1589,7 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
     
     return result || key;
-  };
+  }, [language]);
 
   return (
     <LanguageContext.Provider value={{ language, changeLanguage, t }}>

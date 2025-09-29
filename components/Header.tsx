@@ -31,7 +31,7 @@ interface HeaderProps {
   onNavigateToChatList: () => void;
   onNavigateToMyAds: () => void;
   onNavigateToAllListings: () => void;
-  hasUnreadMessages: boolean;
+  unreadCount: number;
   navigateToGuideToSell: () => void;
   navigateToDocumentsForSale: () => void;
   navigateHome: () => void;
@@ -43,7 +43,7 @@ const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
 }
 
-const Header: React.FC<HeaderProps> = ({ navigateHome, onPublishAdClick, onAccessClick, user, profile, onLogout, onNavigateToFavorites, onNavigateToChatList, onNavigateToMyAds, onNavigateToAllListings, hasUnreadMessages, navigateToGuideToSell, navigateToDocumentsForSale }) => {
+const Header: React.FC<HeaderProps> = ({ navigateHome, onPublishAdClick, onAccessClick, user, profile, onLogout, onNavigateToFavorites, onNavigateToChatList, onNavigateToMyAds, onNavigateToAllListings, unreadCount, navigateToGuideToSell, navigateToDocumentsForSale }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
@@ -80,23 +80,23 @@ const Header: React.FC<HeaderProps> = ({ navigateHome, onPublishAdClick, onAcces
   return (
     <>
       <header className="bg-white shadow-sm sticky top-0 z-40">
-        <nav className="container mx-auto px-4 sm:px-6 py-3 flex justify-between items-center relative">
+        <nav className="container mx-auto px-4 sm:px-6 py-3 flex justify-between items-center">
           {/* Logo */}
-          <a href="#" onClick={(e) => { e.preventDefault(); navigateHome(); }} className="absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 transform transition-transform duration-300 hover:scale-105 z-10">
-            <img src="https://i.imgur.com/FuxDdyF.png" alt="Quality Home Logo" className="h-16 sm:h-20" />
-          </a>
+          <div className="flex-shrink-0">
+             <a href="#" onClick={(e) => { e.preventDefault(); navigateHome(); }} className="block transition-transform duration-300 hover:scale-105">
+               <img src="https://i.imgur.com/FuxDdyF.png" alt="Quallity Home Logo" className="h-16 sm:h-20" />
+             </a>
+          </div>
 
-          {/* Desktop Navigation Links */}
-          <div className="flex-1">
-            <div className="hidden md:flex items-center space-x-6 text-sm pl-80 lg:pl-96">
+          {/* Desktop Navigation Links (Centered) */}
+          <div className="hidden md:flex flex-grow items-center justify-center space-x-6 text-sm">
                <div 
                 className="relative"
                 onMouseEnter={() => setIsOwnersDropdownOpen(true)}
                 onMouseLeave={() => setIsOwnersDropdownOpen(false)}
               >
                 <a href="#" className="text-brand-dark hover:text-brand-red transition duration-300 py-4">{t('header.nav.owners')}</a>
-                {isOwnersDropdownOpen && (
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-0 w-max bg-white rounded-b-lg shadow-2xl border-t-4 border-brand-red z-30 p-8">
+                <div className={`absolute top-full left-1/2 -translate-x-1/2 mt-0 w-max bg-white rounded-b-lg shadow-2xl border-t-4 border-brand-red z-30 p-8 transition-all duration-200 ease-out transform origin-top ${isOwnersDropdownOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}>
                     <div className="grid grid-cols-3 gap-x-16 gap-y-8 text-left">
                       {/* Vender */}
                       <div className="space-y-4">
@@ -122,8 +122,7 @@ const Header: React.FC<HeaderProps> = ({ navigateHome, onPublishAdClick, onAcces
                         </ul>
                       </div>
                     </div>
-                  </div>
-                )}
+                </div>
               </div>
               <div 
                 className="relative"
@@ -131,8 +130,7 @@ const Header: React.FC<HeaderProps> = ({ navigateHome, onPublishAdClick, onAcces
                 onMouseLeave={() => setIsSearchDropdownOpen(false)}
               >
                 <a href="#" className="text-brand-dark hover:text-brand-red transition duration-300 py-4 border-b-2 border-transparent hover:border-brand-red">{t('header.nav.search')}</a>
-                {isSearchDropdownOpen && (
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-0 w-max bg-white rounded-b-lg shadow-2xl border-t-4 border-brand-red z-30 p-8">
+                <div className={`absolute top-full left-1/2 -translate-x-1/2 mt-0 w-max bg-white rounded-b-lg shadow-2xl border-t-4 border-brand-red z-30 p-8 transition-all duration-200 ease-out transform origin-top ${isSearchDropdownOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}>
                     <div className="grid grid-cols-2 gap-x-16 gap-y-8 text-left">
                       {/* Procurar para comprar */}
                       <div className="space-y-4">
@@ -149,14 +147,12 @@ const Header: React.FC<HeaderProps> = ({ navigateHome, onPublishAdClick, onAcces
                         </ul>
                       </div>
                     </div>
-                  </div>
-                )}
+                </div>
               </div>
             </div>
-          </div>
 
           {/* Right side actions */}
-          <div className="flex items-center space-x-2 sm:space-x-4 text-sm">
+          <div className="flex-shrink-0 flex items-center space-x-2 sm:space-x-4 text-sm">
             {/* Desktop "Publique" button */}
             <button 
               onClick={onPublishAdClick}
@@ -171,8 +167,7 @@ const Header: React.FC<HeaderProps> = ({ navigateHome, onPublishAdClick, onAcces
                 <CurrentFlag className="w-6 h-auto" />
                 <ChevronDownIcon className="w-4 h-4 text-brand-gray" />
               </button>
-              {isLangDropdownOpen && (
-                <div className="absolute top-full right-0 mt-2 w-40 bg-white rounded-md shadow-lg border z-20">
+              <div className={`absolute top-full right-0 mt-2 w-40 bg-white rounded-md shadow-lg border z-20 transition-all duration-200 ease-out transform origin-top-right ${isLangDropdownOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}>
                   {Object.entries(languageMap).map(([langCode, { name, Flag }]) => (
                     <button 
                       key={langCode}
@@ -186,8 +181,7 @@ const Header: React.FC<HeaderProps> = ({ navigateHome, onPublishAdClick, onAcces
                       <span>{name}</span>
                     </button>
                   ))}
-                </div>
-              )}
+              </div>
             </div>
             
             {/* User/Login Link */}
@@ -204,8 +198,7 @@ const Header: React.FC<HeaderProps> = ({ navigateHome, onPublishAdClick, onAcces
                   <span className="hidden md:inline font-medium">{userName.split(' ')[0]}</span>
                   <ChevronDownIcon className="w-4 h-4 text-brand-gray" />
                 </button>
-                {isUserDropdownOpen && (
-                  <div className="absolute top-full right-0 mt-2 w-64 sm:w-72 bg-white rounded-md shadow-lg border z-20">
+                <div className={`absolute top-full right-0 mt-2 w-64 sm:w-72 bg-white rounded-md shadow-lg border z-20 transition-all duration-200 ease-out transform origin-top-right ${isUserDropdownOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}>
                     <div className="px-4 py-4 border-b flex items-center space-x-3">
                       {userPicture ? (
                           <img src={userPicture} alt={userName} className="w-10 h-10 rounded-full" />
@@ -231,8 +224,8 @@ const Header: React.FC<HeaderProps> = ({ navigateHome, onPublishAdClick, onAcces
                       <a href="#" onClick={(e) => { e.preventDefault(); onNavigateToChatList(); setIsUserDropdownOpen(false); }} className="relative flex items-center px-4 py-2 text-sm text-brand-dark hover:bg-gray-100 w-full">
                           <ChatIcon className="w-5 h-5 mr-3 text-brand-gray" />
                           <span>{t('header.chat')}</span>
-                          {hasUnreadMessages && (
-                            <span className="absolute right-4 top-1/2 -translate-y-1/2 w-2 h-2 bg-brand-red rounded-full"></span>
+                          {unreadCount > 0 && (
+                            <span className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 bg-brand-red rounded-full text-white text-xs flex items-center justify-center font-bold">{unreadCount}</span>
                           )}
                       </a>
                     </nav>
@@ -248,8 +241,7 @@ const Header: React.FC<HeaderProps> = ({ navigateHome, onPublishAdClick, onAcces
                         <span>{t('header.logout')}</span>
                       </button>
                     </div>
-                  </div>
-                )}
+                </div>
               </div>
             ) : (
               <button onClick={onAccessClick} className="flex items-center space-x-2 hover:text-brand-red transition duration-300">
@@ -294,7 +286,7 @@ const Header: React.FC<HeaderProps> = ({ navigateHome, onPublishAdClick, onAcces
                   <span className="text-lg">{t('header.nav.owners')}</span>
                   <ChevronDownIcon className={`w-5 h-5 transition-transform duration-300 ${isMobileOwnersMenuOpen ? 'rotate-180' : ''}`} />
               </button>
-              {isMobileOwnersMenuOpen && (
+              <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isMobileOwnersMenuOpen ? 'max-h-screen' : 'max-h-0'}`}>
                   <div className="pl-4 mt-2 space-y-3">
                       {/* Vender */}
                       <div className="space-y-1">
@@ -320,7 +312,7 @@ const Header: React.FC<HeaderProps> = ({ navigateHome, onPublishAdClick, onAcces
                           </ul>
                       </div>
                   </div>
-              )}
+              </div>
           </div>
           <div>
               <button
@@ -330,7 +322,7 @@ const Header: React.FC<HeaderProps> = ({ navigateHome, onPublishAdClick, onAcces
                   <span className="text-lg">{t('header.nav.search')}</span>
                   <ChevronDownIcon className={`w-5 h-5 transition-transform duration-300 ${isMobileSearchMenuOpen ? 'rotate-180' : ''}`} />
               </button>
-              {isMobileSearchMenuOpen && (
+               <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isMobileSearchMenuOpen ? 'max-h-screen' : 'max-h-0'}`}>
                   <div className="pl-4 mt-2 space-y-3">
                       {/* Procurar para comprar */}
                       <div className="space-y-1">
@@ -347,12 +339,12 @@ const Header: React.FC<HeaderProps> = ({ navigateHome, onPublishAdClick, onAcces
                           </ul>
                       </div>
                   </div>
-              )}
+              </div>
           </div>
           <hr className="my-2" />
 
           {/* User links for mobile */}
-          {user && (
+          {user ? (
             <>
               <button onClick={() => { onNavigateToMyAds(); setIsMenuOpen(false); }} className="w-full text-left flex items-center text-brand-dark hover:text-brand-red transition duration-300 p-3 text-lg">
                   <AdsIcon className="w-6 h-6 mr-3 text-brand-gray" />
@@ -365,12 +357,27 @@ const Header: React.FC<HeaderProps> = ({ navigateHome, onPublishAdClick, onAcces
               <button onClick={() => { onNavigateToChatList(); setIsMenuOpen(false); }} className="relative w-full text-left flex items-center text-brand-dark hover:text-brand-red transition duration-300 p-3 text-lg">
                   <ChatIcon className="w-6 h-6 mr-3 text-brand-gray" />
                   <span>{t('header.chat')}</span>
-                  {hasUnreadMessages && (
-                      <span className="absolute right-2 top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-brand-red rounded-full"></span>
+                  {unreadCount > 0 && (
+                      <span className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 bg-brand-red rounded-full text-white text-sm flex items-center justify-center font-bold">{unreadCount}</span>
                   )}
               </button>
               <hr className="my-2" />
+              <button
+                onClick={() => {
+                  onLogout();
+                  setIsMenuOpen(false);
+                }}
+                className="w-full text-left flex items-center text-brand-dark hover:text-brand-red transition duration-300 p-3 text-lg"
+              >
+                <LogoutIcon className="w-6 h-6 mr-3 text-brand-gray" />
+                <span>{t('header.logout')}</span>
+              </button>
             </>
+          ) : (
+            <button onClick={() => { onAccessClick(); setIsMenuOpen(false); }} className="w-full text-left flex items-center text-brand-dark hover:text-brand-red transition duration-300 p-3 text-lg">
+              <UserIcon className="w-6 h-6 mr-3 text-brand-gray" />
+              <span>{t('header.access')}</span>
+            </button>
           )}
           
           {/* Mobile Language Selector */}
@@ -385,7 +392,7 @@ const Header: React.FC<HeaderProps> = ({ navigateHome, onPublishAdClick, onAcces
                 </span>
                 <ChevronDownIcon className={`w-5 h-5 transition-transform duration-300 ${isMobileLangMenuOpen ? 'rotate-180' : ''}`} />
             </button>
-            {isMobileLangMenuOpen && (
+            <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isMobileLangMenuOpen ? 'max-h-screen' : 'max-h-0'}`}>
                 <div className="pl-4 mt-2 space-y-2 text-lg">
                     {Object.entries(languageMap).map(([langCode, { name, Flag }]) => (
                         <button
@@ -402,11 +409,11 @@ const Header: React.FC<HeaderProps> = ({ navigateHome, onPublishAdClick, onAcces
                         </button>
                     ))}
                 </div>
-            )}
+            </div>
         </div>
 
           <button 
-            onClick={onPublishAdClick}
+            onClick={() => { onPublishAdClick(); setIsMenuOpen(false); }}
             className="w-full text-center mt-4 px-4 py-3 bg-brand-red text-white rounded-md hover:opacity-90 transition duration-300 text-lg"
           >
             {t('header.publishAd')}

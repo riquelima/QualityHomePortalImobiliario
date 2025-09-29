@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
@@ -22,9 +21,12 @@ import AllListingsPage from './components/AllListingsPage';
 import ContactModal from './components/ContactModal';
 import GuideToSellPage from './components/GuideToSellPage';
 import DocumentsForSalePage from './components/DocumentsForSalePage';
+import SplashScreen from './components/SplashScreen';
 import { useLanguage } from './contexts/LanguageContext';
 import { supabase } from './supabaseClient';
 import type { User, Property, ChatSession, Message, Profile, Media } from './types';
+import ErrorIcon from './components/icons/ErrorIcon';
+import WarningIcon from './components/icons/WarningIcon';
 
 interface PageState {
   page: 'home' | 'map' | 'publish' | 'publish-journey' | 'searchResults' | 'propertyDetail' | 'favorites' | 'chatList' | 'chat' | 'myAds' | 'edit-journey' | 'allListings' | 'guideToSell' | 'documentsForSale';
@@ -35,7 +37,7 @@ interface PageState {
   propertyToEdit?: Property;
 }
 
-interface ModalConfig {
+export interface ModalConfig {
   isOpen: boolean;
   type: 'success' | 'error' | 'confirm';
   title: string;
@@ -207,9 +209,16 @@ const App: React.FC = () => {
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthReady, setIsAuthReady] = useState(false);
-  const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
   const fetchingRef = useRef(false);
+  const debounceTimerRef = useRef<number | null>(null);
   const [contactModalProperty, setContactModalProperty] = useState<Property | null>(null);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [isCorsError, setIsCorsError] = useState(false);
+  const [showSplash, setShowSplash] = useState(true);
+  const [isSplashFading, setIsSplashFading] = useState(false);
+  const [deviceLocation, setDeviceLocation] = useState<{ lat: number; lng: number } | null>(null);
+
+  const totalUnreadChatsCount = chatSessions.filter(s => s.unreadCount > 0).length;
 
   const navigateHome = useCallback(() => setPageState({ page: 'home', userLocation: null }), []);
 
@@ -225,50 +234,92 @@ const App: React.FC = () => {
     if (fetchingRef.current) return;
     fetchingRef.current = true;
     setIsLoading(true);
+    setFetchError(null);
+    setIsCorsError(false);
     console.time('fetchAllData');
 
     try {
-        let query = supabase
-            .from('imoveis')
-            .select(`
-                *,
-                midias_imovel ( url, tipo ),
-                perfis:anunciante_id ( id, nome_completo, telefone, url_foto_perfil )
-            `);
-
-        // Apply filter: active properties for everyone, plus own properties for logged-in users.
+        // Step 1: Fetch base property data
+        let propertyQuery = supabase.from('imoveis').select('*');
         if (currentUser) {
-            query = query.or(`status.eq.ativo,anunciante_id.eq.${currentUser.id}`);
+            propertyQuery = propertyQuery.or(`status.eq.ativo,anunciante_id.eq.${currentUser.id}`);
         } else {
-            query = query.eq('status', 'ativo');
+            propertyQuery = propertyQuery.eq('status', 'ativo');
+        }
+        const { data: propertiesData, error: propertiesError } = await propertyQuery;
+
+        if (propertiesError) throw propertiesError;
+
+        if (!propertiesData || propertiesData.length === 0) {
+            console.warn("Nenhum dado de imóvel foi retornado pelo Supabase.");
+            setProperties([]);
+            setMyAds([]);
+            if (currentUser) {
+                setFavorites([]);
+                setChatSessions([]);
+            }
+            console.timeEnd('fetchAllData');
+            setIsLoading(false);
+            fetchingRef.current = false;
+            return;
         }
 
-        const { data: propertiesData, error } = await query;
-        if (error) throw error;
+        const propertyIds = propertiesData.map(p => p.id);
+        const announcerIds = [...new Set(propertiesData.map(p => p.anunciante_id).filter(id => id))];
 
-        // The query is now unified, so no de-duplication is needed.
-        const uniquePropertiesData = propertiesData || [];
+        // Step 2: Fetch related data in batches
+        const [mediaRes, profilesRes] = await Promise.all([
+            supabase.from('midias_imovel').select('*').in('imovel_id', propertyIds),
+            announcerIds.length > 0 ? supabase.from('perfis').select('*').in('id', announcerIds) : Promise.resolve({ data: [], error: null })
+        ]);
 
-        const adaptedProperties = uniquePropertiesData.map((db:any): Property => ({
-          ...db,
-          title: db.titulo,
-          address: db.endereco_completo,
-          bedrooms: db.quartos,
-          bathrooms: db.banheiros,
-          area: db.area_bruta,
-          lat: db.latitude,
-          lng: db.longitude,
-          price: db.preco,
-          description: db.descricao,
-          images: (db.midias_imovel || []).filter((m:any)=>m.tipo==='imagem').map((m:any)=>m.url),
-          videos: (db.midias_imovel || []).filter((m:any)=>m.tipo==='video').map((m:any)=>m.url),
-          owner: db.perfis ? { ...db.perfis, phone: db.perfis.telefone } : undefined,
-          midias_imovel: db.midias_imovel || [],
-        }));
+        const { data: mediaData, error: mediaError } = mediaRes;
+        const { data: profilesData, error: profilesError } = profilesRes;
+
+        if (mediaError) console.error('Error fetching media:', mediaError.message);
+        if (profilesError) console.error('Error fetching profiles:', profilesError.message);
+
+        // Step 3: Combine data on the client side
+        const profilesMap = new Map(profilesData?.map(p => [p.id, p]));
+        const mediaMap = new Map<number, Media[]>();
+        mediaData?.forEach(m => {
+            if (!mediaMap.has(m.imovel_id)) {
+                mediaMap.set(m.imovel_id, []);
+            }
+            mediaMap.get(m.imovel_id)!.push(m);
+        });
+
+        const adaptedProperties = propertiesData.map((db: any): Property => {
+            const ownerProfileData = (db.anunciante_id ? profilesMap.get(db.anunciante_id) : undefined) as Profile | undefined;
+            const ownerProfile = ownerProfileData ? {
+                ...ownerProfileData,
+                phone: ownerProfileData.telefone,
+            } : undefined;
+            
+            const propertyMedia = mediaMap.get(db.id) || [];
+
+            return {
+              ...db,
+              title: db.titulo,
+              address: db.endereco_completo,
+              bedrooms: db.quartos,
+              bathrooms: db.banheiros,
+              area: db.area_bruta,
+              lat: db.latitude,
+              lng: db.longitude,
+              price: db.preco,
+              description: db.descricao,
+              images: propertyMedia.filter((m: Media) => m.tipo === 'imagem').map((m: Media) => m.url),
+              videos: propertyMedia.filter((m: Media) => m.tipo === 'video').map((m: Media) => m.url),
+              owner: ownerProfile,
+              midias_imovel: propertyMedia,
+            };
+        });
 
         setProperties(adaptedProperties);
         setMyAds(currentUser ? adaptedProperties.filter(p => p.anunciante_id === currentUser.id) : []);
 
+        // Step 4: Fetch user-specific data (favorites, chats)
         if (currentUser) {
             const { data: favoritesData, error: favoritesError } = await supabase
                 .from('favoritos_usuario')
@@ -283,35 +334,19 @@ const App: React.FC = () => {
 
             if (chatError) console.error('Error fetching chat sessions:', chatError);
             else if (chatData) {
-                const adaptedSessions = chatData.map((s: any) => {
-                    const validParticipants = (s.participants || []).filter((p: any) => p && p.id);
-                    const validMessages = (s.messages || []).filter((m: any) => m && m.id && m.data_envio);
-
-                    return {
-                        id: s.session_id,
-                        sessionId: s.session_id,
-                        propertyId: s.imovel_id,
-                        imovel_id: s.imovel_id,
-                        participants: validParticipants.reduce((acc: any, p: any) => {
-                            acc[p.id] = { id: p.id, nome_completo: p.nome_completo };
-                            return acc;
-                        }, {}),
-                        messages: validMessages.map((m: any): Message => ({
-                            id: m.id,
-                            senderId: m.remetente_id,
-                            text: m.conteudo,
-                            timestamp: new Date(m.data_envio),
-                            remetente_id: m.remetente_id,
-                            conteudo: m.conteudo,
-                            data_envio: m.data_envio,
-                        })),
-                        mensagens: validMessages,
-                        participantes: validParticipants.reduce((acc: any, p: any) => {
-                            acc[p.id] = { id: p.id, nome_completo: p.nome_completo };
-                            return acc;
-                        }, {}),
-                    };
-                });
+                const adaptedSessions: ChatSession[] = chatData.map((s: any) => ({
+                    id: s.session_id,
+                    imovel_id: s.imovel_id,
+                    participants: (s.participants || []).reduce((acc: { [key: string]: any }, p: any) => {
+                        if (p && p.id) acc[p.id] = { id: p.id, nome_completo: p.nome_completo };
+                        return acc;
+                    }, {}),
+                    messages: (s.messages || []).filter((m: any) => m && m.id).map((m: any): Message => ({
+                        id: m.id, senderId: m.remetente_id, text: m.conteudo,
+                        timestamp: new Date(m.data_envio), isRead: m.foi_lida,
+                    })).sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime()),
+                    unreadCount: (s.messages || []).filter((m: any) => m && !m.foi_lida && m.remetente_id !== currentUser.id).length,
+                }));
                 setChatSessions(adaptedSessions);
             }
         } else {
@@ -321,13 +356,19 @@ const App: React.FC = () => {
         }
     } catch (error: any) {
         console.error('Falha ao buscar dados:', error);
+         if (error.message && (error.message.includes('Failed to fetch') || error.message.includes('NetworkError'))) {
+            console.warn('Network error detected, likely a CORS issue.');
+            setIsCorsError(true);
+        } else {
+            setFetchError(error.message);
+        }
+
+        console.warn("Clearing local/session storage due to fetch error:", error);
+        sessionStorage.clear();
+        localStorage.clear();
+
         setProperties([]);
         setMyAds([]);
-        showModal({
-            type: 'error',
-            title: t('systemModal.errorTitle'),
-            message: `${t('systemModal.fetchError')} ${t('systemModal.errorDetails')}: ${error.message}`,
-        });
     } finally {
         console.timeEnd('fetchAllData');
         setIsLoading(false);
@@ -336,6 +377,47 @@ const App: React.FC = () => {
   }, [t, showModal]);
   
   const navigateToPublishJourney = () => setPageState({ page: 'publish-journey', userLocation: null });
+  
+  // Scroll to top on page change
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [pageState.page, pageState.propertyId, pageState.searchQuery, pageState.chatSessionId]);
+
+  // Splash screen effect
+  useEffect(() => {
+    const splashTimer = setTimeout(() => {
+      setIsSplashFading(true);
+    }, 2000); // Splash screen visible for 2 seconds
+
+    const fadeTimer = setTimeout(() => {
+      setShowSplash(false);
+    }, 2500); // 2s visibility + 0.5s fade out
+
+    return () => {
+      clearTimeout(splashTimer);
+      clearTimeout(fadeTimer);
+    };
+  }, []);
+
+  // Geolocation Request on App Load
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setDeviceLocation({ lat: latitude, lng: longitude });
+        },
+        (error) => {
+          console.error("Geolocation error on app load:", error);
+          if (!sessionStorage.getItem('geolocationErrorShown')) {
+            openGeoErrorModal();
+            sessionStorage.setItem('geolocationErrorShown', 'true');
+          }
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 600000 }
+      );
+    }
+  }, []);
 
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -343,38 +425,24 @@ const App: React.FC = () => {
       setUser(currentUser);
 
       if (currentUser) {
-        // On initial session load, try to restore page state from sessionStorage
         if (event === 'INITIAL_SESSION') {
             try {
-                const savedStateJSON = sessionStorage.getItem('qualityHomePageState');
-                if (savedStateJSON) {
-                    const savedState = JSON.parse(savedStateJSON) as PageState;
-                    if (savedState && typeof savedState.page === 'string') {
-                        setPageState(savedState);
-                    }
-                }
+                const savedStateJSON = sessionStorage.getItem('quallityHomePageState');
+                if (savedStateJSON) setPageState(JSON.parse(savedStateJSON) as PageState);
             } catch (error) {
                 console.error("Could not restore page state:", error);
-                sessionStorage.removeItem('qualityHomePageState'); // Clear corrupted state
+                sessionStorage.removeItem('quallityHomePageState');
             }
         }
 
-        const { data: userProfile, error } = await supabase
-          .from('perfis')
-          .select('*')
-          .eq('id', currentUser.id)
-          .single();
+        const { data: userProfile, error } = await supabase.from('perfis').select('*').eq('id', currentUser.id).single();
 
         if (error && error.code === 'PGRST116') {
-          const { data: newProfile, error: insertError } = await supabase
-            .from('perfis')
-            .insert({
-              id: currentUser.id,
-              nome_completo: currentUser.user_metadata.full_name || currentUser.email,
-              url_foto_perfil: currentUser.user_metadata.avatar_url,
-            })
-            .select()
-            .single();
+          const { data: newProfile, error: insertError } = await supabase.from('perfis').insert({
+            id: currentUser.id,
+            nome_completo: currentUser.user_metadata.full_name || currentUser.email,
+            url_foto_perfil: currentUser.user_metadata.avatar_url,
+          }).select().single();
           if(insertError) console.error("Error creating profile:", insertError);
           else setProfile(newProfile);
         } else if (userProfile) {
@@ -390,35 +458,35 @@ const App: React.FC = () => {
             setLoginIntent('default');
         }
       } else {
+        // Clear all user-specific state on logout/session expiry
+        setUser(null);
         setProfile(null);
-        sessionStorage.removeItem('qualityHomePageState'); // Clear state on logout
+        setFavorites([]);
+        setChatSessions([]);
+        setMyAds([]);
+        sessionStorage.removeItem('quallityHomePageState');
       }
+      
+      // Fetch data immediately with the determined user state to avoid race conditions.
+      fetchAllData(currentUser);
       setIsAuthReady(true);
     });
 
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, [loginIntent]);
+  }, [loginIntent, fetchAllData]);
 
-  // Save page state to sessionStorage on change for logged-in users
   useEffect(() => {
     if (user && isAuthReady) {
         try {
-            const stateToSave = JSON.stringify(pageState);
-            sessionStorage.setItem('qualityHomePageState', stateToSave);
+            sessionStorage.setItem('quallityHomePageState', JSON.stringify(pageState));
         } catch (error) {
             console.error("Could not save page state:", error);
         }
     }
   }, [pageState, user, isAuthReady]);
   
-  useEffect(() => {
-    if(isAuthReady) {
-      fetchAllData(user);
-    }
-  }, [isAuthReady, user, fetchAllData]);
-
   useEffect(() => {
     (window as any).seedDatabase = seedDatabase;
     console.log("Função de teste 'seedDatabase()' disponível. Use para popular o banco de dados.");
@@ -431,48 +499,25 @@ const App: React.FC = () => {
       .channel('public:mensagens_chat')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'mensagens_chat' }, (payload) => {
         const newMessage = payload.new as any;
-  
-        // Set notification for incoming messages
-        if (newMessage.remetente_id !== user.id) {
-          setHasUnreadMessages(true);
-        }
-  
-        // Update chat sessions state
         setChatSessions(prevSessions => {
           const sessionIndex = prevSessions.findIndex(s => s.id === newMessage.sessao_id);
-  
-          // If session is not in state, it might be a new chat. Fetch all data to be safe.
           if (sessionIndex === -1) {
             fetchAllData(user);
             return prevSessions;
           }
-  
-          // If session exists, update it immutably
           const updatedSessions = [...prevSessions];
           const targetSession = { ...updatedSessions[sessionIndex] };
-  
-          // Avoid adding duplicate messages that might come from the subscription
-          const messageExists = targetSession.messages.some(m => m.id === newMessage.id);
-          if (messageExists) {
-            return prevSessions;
+          if (targetSession.messages.some(m => m.id === newMessage.id)) return prevSessions;
+          
+          targetSession.messages = [...targetSession.messages, {
+            id: newMessage.id, senderId: newMessage.remetente_id, text: newMessage.conteudo,
+            timestamp: new Date(newMessage.data_envio), isRead: newMessage.foi_lida
+          }];
+          
+          if (newMessage.remetente_id !== user.id) {
+            targetSession.unreadCount = (targetSession.unreadCount || 0) + 1;
           }
-  
-          const adaptedMessage: Message = {
-            id: newMessage.id,
-            senderId: newMessage.remetente_id,
-            text: newMessage.conteudo,
-            timestamp: new Date(newMessage.data_envio),
-            remetente_id: newMessage.remetente_id,
-            conteudo: newMessage.conteudo,
-            data_envio: newMessage.data_envio,
-          };
-          
-          // Update both message arrays for compatibility
-          targetSession.messages = [...targetSession.messages, adaptedMessage];
-          targetSession.mensagens = [...targetSession.mensagens, adaptedMessage];
-          
           updatedSessions[sessionIndex] = targetSession;
-  
           return updatedSessions;
         });
       })
@@ -488,28 +533,29 @@ const App: React.FC = () => {
 
     const propertiesChannel = supabase
       .channel('public:imoveis')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'imoveis' },
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'imoveis' },
         (payload) => {
-          console.log('Real-time change detected on imoveis table:', payload);
-          fetchAllData(user);
+          console.log('Real-time change detected on imoveis table, debouncing fetch:', payload);
+          if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+          debounceTimerRef.current = window.setTimeout(() => {
+             fetchAllData(user);
+          }, 300);
         }
       )
       .subscribe();
 
     return () => {
       supabase.removeChannel(propertiesChannel);
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
     };
   }, [isAuthReady, user, fetchAllData]);
 
-  // Timeout guard to prevent infinite loading state
   useEffect(() => {
     if (!isLoading) return;
     const timeoutId = setTimeout(() => {
       console.warn("Fetch timeout reached. Forcing loading state to false.");
       setIsLoading(false);
-    }, 8000); // 8 seconds timeout
+    }, 8000);
     return () => clearTimeout(timeoutId);
   }, [isLoading]);
   
@@ -519,21 +565,13 @@ const App: React.FC = () => {
   const navigateToSearchResults = (query: string) => setPageState({ page: 'searchResults', userLocation: null, searchQuery: query });
   const navigateToPropertyDetail = (id: number) => setPageState({ page: 'propertyDetail', propertyId: id, userLocation: null });
   const navigateToFavorites = () => setPageState({ page: 'favorites', userLocation: null });
-  const navigateToChatList = () => {
-    setHasUnreadMessages(false);
-    setPageState({ page: 'chatList', userLocation: null });
-  };
+  const navigateToChatList = () => setPageState({ page: 'chatList', userLocation: null });
   const navigateToChat = (sessionId: string) => setPageState({ page: 'chat', chatSessionId: sessionId, userLocation: null });
   const navigateToMyAds = () => {
-    if (user) {
-      setPageState({ page: 'myAds', userLocation: null });
-    } else {
-      openLoginModal();
-    }
+    if (user) setPageState({ page: 'myAds', userLocation: null });
+    else openLoginModal();
   };
-  const navigateToEditJourney = (property: Property) => {
-    setPageState({ page: 'edit-journey', userLocation: null, propertyToEdit: property });
-  };
+  const navigateToEditJourney = (property: Property) => setPageState({ page: 'edit-journey', userLocation: null, propertyToEdit: property });
   const navigateToAllListings = () => setPageState({ page: 'allListings', userLocation: null });
   const navigateToGuideToSell = () => setPageState({ page: 'guideToSell', userLocation: null });
   const navigateToDocumentsForSale = () => setPageState({ page: 'documentsForSale', userLocation: null });
@@ -545,22 +583,36 @@ const App: React.FC = () => {
   const closeLoginModal = () => setIsLoginModalOpen(false);
 
   const handlePublishClick = () => {
-    if (user) {
-      navigateToPublishJourney();
-    } else {
-      openLoginModal('publish');
-    }
+    if (user) navigateToPublishJourney();
+    else openLoginModal('publish');
   };
   
   const openGeoErrorModal = () => setIsGeoErrorModalOpen(true);
   const closeGeoErrorModal = () => setIsGeoErrorModalOpen(false);
 
-  const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-        console.error('Error signing out:', error.message);
-    }
+  const handleLogout = () => {
+    // Optimistic update for immediate UI feedback.
+    setUser(null);
+    setProfile(null);
+    setFavorites([]);
+    setChatSessions([]);
+    setMyAds([]);
+    sessionStorage.removeItem('quallityHomePageState');
     navigateHome();
+    
+    // Perform the sign out in the background.
+    supabase.auth.signOut().then(({ error }) => {
+      if (error) {
+        console.error('Error signing out:', error.message);
+        showModal({
+          type: 'error',
+          title: t('systemModal.errorTitle'),
+          message: t('systemModal.logoutError'),
+        });
+        // If sign-out fails, the onAuthStateChange listener will eventually
+        // correct the state by re-authenticating the user.
+      }
+    });
   };
 
   const toggleFavorite = async (propertyId: number) => {
@@ -568,40 +620,65 @@ const App: React.FC = () => {
       openLoginModal();
       return;
     }
+  
     const isCurrentlyFavorite = favorites.includes(propertyId);
+    const originalFavorites = [...favorites];
+  
+    // Optimistic UI update for instant feedback
+    if (isCurrentlyFavorite) {
+      setFavorites(prev => prev.filter(id => id !== propertyId));
+    } else {
+      setFavorites(prev => [...prev, propertyId]);
+    }
+  
+    // Perform database operation
     if (isCurrentlyFavorite) {
       const { error } = await supabase.from('favoritos_usuario').delete().match({ usuario_id: user.id, imovel_id: propertyId });
-      if (!error) setFavorites(prev => prev.filter(id => id !== propertyId));
-      else console.error("Error removing favorite:", error);
+      if (error) {
+        console.error("Error removing favorite:", error.message);
+        setFavorites(originalFavorites); // Rollback on error
+        showModal({
+          type: 'error',
+          title: t('systemModal.errorTitle'),
+          message: t('systemModal.favoriteErrorRemove'),
+        });
+      }
     } else {
       const { error } = await supabase.from('favoritos_usuario').insert({ usuario_id: user.id, imovel_id: propertyId });
-      if (!error) setFavorites(prev => [...prev, propertyId]);
-      else console.error("Error adding favorite:", error);
+      if (error) {
+        console.error("Error adding favorite:", error.message);
+        setFavorites(originalFavorites); // Rollback on error
+        showModal({
+          type: 'error',
+          title: t('systemModal.errorTitle'),
+          message: t('systemModal.favoriteErrorAdd'),
+        });
+      }
     }
   };
 
   const handleAddProperty = useCallback(async (newProperty: Property) => {
-    showModal({
-        type: 'success',
-        title: t('systemModal.successTitle'),
-        message: t('confirmationModal.message'),
-    });
     navigateHome();
-    if (user) {
-        fetchAllData(user);
-    }
+    setTimeout(() => {
+        showModal({
+            type: 'success',
+            title: t('systemModal.successTitle'),
+            message: t('confirmationModal.message'),
+        });
+        if (user) fetchAllData(user);
+    }, 100);
   }, [user, fetchAllData, t, showModal, navigateHome]);
 
   const handleUpdateProperty = useCallback(async () => {
-    showModal({
-        type: 'success',
-        title: t('systemModal.successTitle'),
-        message: t('systemModal.editSuccessMessage'),
-    });
     navigateHome();
-    if (user) {
-        fetchAllData(user);
-    }
+    setTimeout(() => {
+        showModal({
+            type: 'success',
+            title: t('systemModal.successTitle'),
+            message: t('systemModal.editSuccessMessage'),
+        });
+        if (user) fetchAllData(user);
+    }, 100);
   }, [user, fetchAllData, t, showModal, navigateHome]);
 
   const handlePublishError = useCallback((message: string) => {
@@ -613,32 +690,17 @@ const App: React.FC = () => {
   }, [t, showModal]);
 
   const confirmDeleteProperty = async (propertyId: number) => {
-    // Primeiro, deletar mídias associadas para evitar violação de chave estrangeira
-    const { error: mediaError } = await supabase
-        .from('midias_imovel')
-        .delete()
-        .eq('imovel_id', propertyId);
-
+    const { error: mediaError } = await supabase.from('midias_imovel').delete().eq('imovel_id', propertyId);
     if (mediaError) {
         showModal({ type: 'error', title: t('systemModal.errorTitle'), message: `${t('myAdsPage.adDeletedError')} (media): ${mediaError.message}` });
-        console.error('Error deleting property media:', mediaError);
         return;
     }
-    
-    // Depois, deletar o imóvel
-    const { error: propertyError } = await supabase
-        .from('imoveis')
-        .delete()
-        .eq('id', propertyId);
-
+    const { error: propertyError } = await supabase.from('imoveis').delete().eq('id', propertyId);
     if (propertyError) {
         showModal({ type: 'error', title: t('systemModal.errorTitle'), message: `${t('myAdsPage.adDeletedError')} ${t('systemModal.errorDetails')}: ${propertyError.message}` });
-        console.error('Error deleting property:', propertyError);
     } else {
         showModal({ type: 'success', title: t('systemModal.successTitle'), message: t('myAdsPage.adDeletedSuccess') });
-        if (user) {
-            fetchAllData(user);
-        }
+        if (user) fetchAllData(user);
     }
   };
 
@@ -658,27 +720,19 @@ const App: React.FC = () => {
     }
     
     const { data: existing, error: findError } = await supabase.rpc('find_chat_session', {
-      p_imovel_id: property.id,
-      user1_id: user.id,
-      user2_id: property.anunciante_id
+      p_imovel_id: property.id, user1_id: user.id, user2_id: property.anunciante_id
     });
 
-    if (findError) {
-      console.error("Error finding chat session:", findError);
-      return;
-    }
+    if (findError) { console.error("Error finding chat session:", findError); return; }
 
     if (existing) {
         navigateToChat(existing);
     } else {
         const { data: newSession, error: createError } = await supabase.rpc('create_chat_session', {
-            p_imovel_id: property.id,
-            user1_id: user.id,
-            user2_id: property.anunciante_id
+            p_imovel_id: property.id, user1_id: user.id, user2_id: property.anunciante_id
         });
-        if (createError) {
-            console.error("Error creating chat session:", createError);
-        } else if (newSession) {
+        if (createError) console.error("Error creating chat session:", createError);
+        else if (newSession) {
             fetchAllData(user);
             navigateToChat(newSession);
         }
@@ -687,221 +741,184 @@ const App: React.FC = () => {
 
   const handleSendMessage = async (sessionId: string, text: string) => {
     if (!user || !text.trim()) return;
+    const { data, error } = await supabase.from('mensagens_chat').insert({
+      sessao_id: sessionId, remetente_id: user.id, conteudo: text.trim()
+    }).select().single();
 
-    const newMessage = {
-      sessao_id: sessionId,
-      remetente_id: user.id,
-      conteudo: text.trim(),
-    };
-
-    const { error } = await supabase.from('mensagens_chat').insert(newMessage);
-    if(error) console.error("Error sending message:", error);
-  };
-  
-  const openContactModal = (property: Property) => {
-    if (!property.owner) {
-      console.warn("Attempted to open contact modal for property with no owner.", property);
+    if (error) {
+      console.error("Error sending message:", error);
+      showModal({type: 'error', title: t('systemModal.errorTitle'), message: 'Falha ao enviar mensagem. Tente novamente.'});
       return;
     }
+    
+    if (data) {
+      const adaptedMessage: Message = { id: data.id, senderId: data.remetente_id, text: data.conteudo, timestamp: new Date(data.data_envio), isRead: data.foi_lida };
+      setChatSessions(prevSessions => {
+        const sessionIndex = prevSessions.findIndex(s => s.id === sessionId);
+        if (sessionIndex === -1) return prevSessions;
+        const updatedSessions = [...prevSessions];
+        const targetSession = { ...updatedSessions[sessionIndex] };
+        if (!targetSession.messages.some(m => m.id === adaptedMessage.id)) {
+            targetSession.messages = [...targetSession.messages, adaptedMessage];
+            updatedSessions[sessionIndex] = targetSession;
+        }
+        return updatedSessions;
+      });
+    }
+  };
+
+  const handleMarkAsRead = useCallback(async (sessionId: string) => {
+    if (!user) return;
+    const sessionToUpdate = chatSessions.find(s => s.id === sessionId);
+    if (!sessionToUpdate || sessionToUpdate.unreadCount === 0) return;
+    
+    const { error } = await supabase.from('mensagens_chat').update({ foi_lida: true })
+        .match({ sessao_id: sessionId, foi_lida: false }).neq('remetente_id', user.id);
+
+    if (error) console.error("Error marking messages as read:", error);
+    else {
+        setChatSessions(prevSessions => prevSessions.map(session => 
+            session.id === sessionId ? { ...session, unreadCount: 0, messages: session.messages.map(msg => 
+                msg.senderId !== user.id ? { ...msg, isRead: true } : msg
+            )} : session
+        ));
+    }
+  }, [user, chatSessions]);
+  
+  const openContactModal = (property: Property) => {
+    if (!property.owner) return;
     setContactModalProperty(property);
   };
   const closeContactModal = () => setContactModalProperty(null);
 
   const renderCurrentPage = () => {
     const headerProps = {
-      navigateHome,
-      onPublishAdClick: handlePublishClick,
-      onAccessClick: () => openLoginModal('default'),
-      user,
-      profile,
-      onLogout: handleLogout,
-      onNavigateToFavorites: navigateToFavorites,
-      onNavigateToChatList: navigateToChatList,
-      onNavigateToMyAds: navigateToMyAds,
-      onNavigateToAllListings: navigateToAllListings,
-      hasUnreadMessages,
-      navigateToGuideToSell,
-      navigateToDocumentsForSale,
+      navigateHome, onPublishAdClick: handlePublishClick, onAccessClick: () => openLoginModal('default'),
+      user, profile, onLogout: handleLogout, onNavigateToFavorites: navigateToFavorites,
+      onNavigateToChatList: navigateToChatList, onNavigateToMyAds: navigateToMyAds,
+      onNavigateToAllListings: navigateToAllListings, unreadCount: totalUnreadChatsCount,
+      navigateToGuideToSell, navigateToDocumentsForSale,
     };
+    
+    const pageKey = `${pageState.page}-${pageState.propertyId}-${pageState.chatSessionId}-${pageState.searchQuery}`;
 
-    switch (pageState.page) {
-      case 'map':
-        return <MapDrawPage 
-                  onBack={navigateHome} 
-                  userLocation={pageState.userLocation} 
-                  onViewDetails={navigateToPropertyDetail}
-                  favorites={favorites}
-                  onToggleFavorite={toggleFavorite}
-                  properties={properties}
-                  onContactClick={openContactModal}
-               />;
-      case 'publish':
-        return <PublishAdPage 
-                  onBack={navigateHome} 
-                  onPublishAdClick={handlePublishClick}
-                  onOpenLoginModal={() => openLoginModal('publish')} 
-                  onNavigateToJourney={navigateToPublishJourney}
-                  {...headerProps}
-               />;
-      case 'publish-journey':
-      case 'edit-journey':
-        return <PublishJourneyPage
-                  propertyToEdit={pageState.page === 'edit-journey' ? pageState.propertyToEdit : null}
-                  onBack={navigateHome}
-                  onAddProperty={handleAddProperty}
-                  onUpdateProperty={handleUpdateProperty}
-                  onPublishError={handlePublishError}
-                  onRequestModal={showModal}
-                  // FIX: Pass the onOpenLoginModal prop to satisfy the PublishJourneyPageProps interface.
-                  onOpenLoginModal={openLoginModal}
-                  {...headerProps}
-                />;
-      case 'searchResults':
-        const query = pageState.searchQuery?.toLowerCase() ?? '';
-        const filteredProperties = query
-          ? properties.filter(p =>
-            p.title.toLowerCase().includes(query) || p.address.toLowerCase().includes(query)
-          )
-          : [];
-        return <SearchResultsPage
-          onBack={navigateHome}
-          searchQuery={pageState.searchQuery ?? ''}
-          properties={filteredProperties}
-          onViewDetails={navigateToPropertyDetail}
-          favorites={favorites}
-          onToggleFavorite={toggleFavorite}
-          onContactClick={openContactModal}
-          {...headerProps}
-        />;
-      case 'propertyDetail':
-        const property = [...properties, ...myAds].find(p => p.id === pageState.propertyId);
-        if (!property) {
-          navigateHome();
-          return null;
-        }
-        return <PropertyDetailPage 
-                  property={property}
-                  onBack={() => window.history.back()}
-                  isFavorite={favorites.includes(property.id)}
-                  onToggleFavorite={toggleFavorite}
-                  onStartChat={handleStartChat}
-                  {...headerProps}
-                />;
-      case 'favorites':
-          const favoriteProperties = properties.filter(p => favorites.includes(p.id));
-          return <FavoritesPage
-            onBack={navigateHome}
-            properties={favoriteProperties}
-            onViewDetails={navigateToPropertyDetail}
-            favorites={favorites}
-            onToggleFavorite={toggleFavorite}
-            onContactClick={openContactModal}
-            {...headerProps}
-          />;
-      case 'chatList':
-        if (!user) { navigateHome(); return null; }
-        return <ChatListPage
-                  onBack={navigateHome}
-                  chatSessions={chatSessions.filter(s => s.participantes[user.id])}
-                  properties={properties}
-                  onNavigateToChat={navigateToChat}
-                  {...headerProps}
-               />;
-      case 'chat':
-        const session = chatSessions.find(s => s.id === pageState.chatSessionId);
-        const propertyForChat = properties.find(p => p.id === session?.imovel_id);
-        if (!session || !user || !propertyForChat) { navigateHome(); return null; }
-        return <ChatPage
-                  onBack={navigateToChatList}
-                  user={user}
-                  session={session}
-                  property={propertyForChat}
-                  onSendMessage={handleSendMessage}
-               />;
-      case 'myAds':
-        if (!user) { navigateHome(); return null; }
-        return <MyAdsPage
-            onBack={navigateHome}
-            userProperties={myAds}
-            onViewDetails={navigateToPropertyDetail}
-            onDeleteProperty={handleRequestDeleteProperty}
-            onEditProperty={navigateToEditJourney}
-            {...headerProps}
-        />;
-      case 'allListings':
-        return <AllListingsPage
-          onBack={navigateHome}
-          properties={properties}
-          onViewDetails={navigateToPropertyDetail}
-          favorites={favorites}
-          onToggleFavorite={toggleFavorite}
-          onSearchSubmit={navigateToSearchResults}
-          onGeolocationError={openGeoErrorModal}
-          onContactClick={openContactModal}
-          {...headerProps}
-        />;
-       case 'guideToSell':
-        return <GuideToSellPage
-          onBack={navigateHome}
-          {...headerProps}
-        />;
-      case 'documentsForSale':
-        return <DocumentsForSalePage
-          onBack={navigateHome}
-          {...headerProps}
-        />;
-      case 'home':
-      default:
-        return (
-          <div className="bg-white font-sans text-brand-dark">
-            <Header {...headerProps} />
-            <main>
-              <Hero 
-                onDrawOnMapClick={() => navigateToMap()} 
-                onSearchNearMe={(location) => navigateToMap(location)}
-                onGeolocationError={openGeoErrorModal}
-                onSearchSubmit={navigateToSearchResults}
-              />
-              <PropertyListings 
-                properties={properties}
-                onViewDetails={navigateToPropertyDetail} 
-                favorites={favorites}
-                onToggleFavorite={toggleFavorite}
-                isLoading={isLoading}
-                onContactClick={openContactModal}
-              />
-            </main>
-            <footer className="bg-brand-light-gray text-brand-gray py-8 text-center mt-20">
-              <div className="container mx-auto">
-                <p>&copy; {new Date().getFullYear()} {t('footer.text')}</p>
-              </div>
-            </footer>
-          </div>
-        );
-    }
+    const pageContent = () => {
+      switch (pageState.page) {
+        case 'map': return <MapDrawPage onBack={navigateHome} userLocation={pageState.userLocation} onViewDetails={navigateToPropertyDetail} favorites={favorites} onToggleFavorite={toggleFavorite} properties={properties} onContactClick={openContactModal} />;
+        case 'publish': return <PublishAdPage onBack={navigateHome} onPublishAdClick={handlePublishClick} onOpenLoginModal={() => openLoginModal('publish')} onNavigateToJourney={navigateToPublishJourney} {...headerProps} />;
+        case 'publish-journey': case 'edit-journey': return <PublishJourneyPage deviceLocation={deviceLocation} propertyToEdit={pageState.page === 'edit-journey' ? pageState.propertyToEdit : null} onBack={navigateHome} onAddProperty={handleAddProperty} onUpdateProperty={handleUpdateProperty} onPublishError={handlePublishError} onRequestModal={showModal} onOpenLoginModal={openLoginModal} {...headerProps} />;
+        case 'searchResults':
+          const query = pageState.searchQuery?.toLowerCase() ?? '';
+          const filteredProperties = query ? properties.filter(p => p.title.toLowerCase().includes(query) || p.address.toLowerCase().includes(query)) : [];
+          return <SearchResultsPage onBack={navigateHome} searchQuery={pageState.searchQuery ?? ''} properties={filteredProperties} onViewDetails={navigateToPropertyDetail} favorites={favorites} onToggleFavorite={toggleFavorite} onContactClick={openContactModal} {...headerProps} />;
+        case 'propertyDetail':
+          const property = [...properties, ...myAds].find(p => p.id === pageState.propertyId);
+          if (!property) { navigateHome(); return null; }
+          return <PropertyDetailPage property={property} onBack={() => window.history.back()} isFavorite={favorites.includes(property.id)} onToggleFavorite={toggleFavorite} onStartChat={handleStartChat} {...headerProps} />;
+        case 'favorites':
+            const favoriteProperties = properties.filter(p => favorites.includes(p.id));
+            return <FavoritesPage onBack={navigateHome} properties={favoriteProperties} onViewDetails={navigateToPropertyDetail} favorites={favorites} onToggleFavorite={toggleFavorite} onContactClick={openContactModal} {...headerProps} />;
+        case 'chatList':
+          if (!user) { navigateHome(); return null; }
+          return <ChatListPage onBack={navigateHome} chatSessions={chatSessions.filter(s => s.participants[user.id])} properties={properties} onNavigateToChat={navigateToChat} {...headerProps} />;
+        case 'chat':
+          const session = chatSessions.find(s => s.id === pageState.chatSessionId);
+          const propertyForChat = properties.find(p => p.id === session?.imovel_id);
+          if (!session || !user || !propertyForChat) { navigateHome(); return null; }
+          return <ChatPage onBack={navigateToChatList} user={user} session={session} property={propertyForChat} onSendMessage={handleSendMessage} onMarkAsRead={handleMarkAsRead} />;
+        case 'myAds':
+          if (!user) { navigateHome(); return null; }
+          return <MyAdsPage onBack={navigateHome} userProperties={myAds} onViewDetails={navigateToPropertyDetail} onDeleteProperty={handleRequestDeleteProperty} onEditProperty={navigateToEditJourney} {...headerProps} />;
+        case 'allListings':
+          return <AllListingsPage onBack={navigateHome} deviceLocation={deviceLocation} properties={properties} onViewDetails={navigateToPropertyDetail} favorites={favorites} onToggleFavorite={toggleFavorite} onSearchSubmit={navigateToSearchResults} onGeolocationError={openGeoErrorModal} onContactClick={openContactModal} {...headerProps} />;
+         case 'guideToSell': return <GuideToSellPage onBack={navigateHome} {...headerProps} />;
+        case 'documentsForSale': return <DocumentsForSalePage onBack={navigateHome} {...headerProps} />;
+        case 'home': default:
+          return (
+            <div className="bg-white font-sans text-brand-dark">
+              <Header {...headerProps} />
+              <main>
+                <Hero deviceLocation={deviceLocation} onDrawOnMapClick={() => navigateToMap()} onSearchNearMe={(location) => navigateToMap(location)} onGeolocationError={openGeoErrorModal} onSearchSubmit={navigateToSearchResults} />
+                {isCorsError ? (
+                  <section className="bg-white py-16 sm:py-20">
+                    <div className="container mx-auto px-4 sm:px-6">
+                      <div className="text-left p-6 sm:p-8 bg-orange-50 border-l-4 border-orange-400 rounded-r-lg">
+                          <div className="flex">
+                              <div className="flex-shrink-0">
+                                  <WarningIcon className="h-6 w-6 text-orange-400" />
+                              </div>
+                              <div className="ml-3">
+                                  <h3 className="text-lg font-bold text-orange-800">{t('systemModal.corsError.title')}</h3>
+                                  <div className="mt-2 text-sm text-orange-700 space-y-3">
+                                      <p>{t('systemModal.corsError.description')}</p>
+                                      <p className="font-semibold">{t('systemModal.corsError.fixInstruction')}</p>
+                                      <ol className="list-decimal list-inside space-y-2 pl-2">
+                                          <li>{t('systemModal.corsError.step1')}</li>
+                                          <li>{t('systemModal.corsError.step2')}</li>
+                                          <li>{t('systemModal.corsError.step3')} <code className="text-xs bg-orange-100 p-1 rounded font-mono">{window.location.origin}</code></li>
+                                          <li>{t('systemModal.corsError.step4')}</li>
+                                      </ol>
+                                      <p>{t('systemModal.corsError.afterFix')}</p>
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+                    </div>
+                  </section>
+                ) : fetchError ? (
+                  <section className="bg-white py-16 sm:py-20">
+                    <div className="container mx-auto px-4 sm:px-6">
+                      <div className="text-center py-16 bg-red-50 border border-red-200 rounded-lg">
+                          <ErrorIcon className="w-12 h-12 text-brand-red mx-auto mb-4" />
+                          <p className="text-brand-red font-semibold text-lg mb-2">{t('systemModal.errorTitle')}</p>
+                          <p className="text-brand-gray">{t('systemModal.fetchError')}</p>
+                          <p className="mt-4 text-sm text-gray-600 bg-red-100 p-3 rounded-md inline-block max-w-full overflow-x-auto">
+                              <strong className="font-bold">{t('systemModal.errorDetails')}:</strong> <code className="text-xs">{fetchError}</code>
+                          </p>
+                      </div>
+                    </div>
+                  </section>
+                ) : (
+                  <PropertyListings properties={properties} onViewDetails={navigateToPropertyDetail} favorites={favorites} onToggleFavorite={toggleFavorite} isLoading={isLoading} onContactClick={openContactModal} />
+                )}
+              </main>
+              <footer className="bg-brand-light-gray text-brand-gray py-8 text-center mt-20">
+                <div className="container mx-auto">
+                  <p>&copy; {new Date().getFullYear()} {t('footer.text')}</p>
+                  <div className="mt-4">
+                    <a href="https://www.instagram.com/portalimobiliarioquallityhome/" target="_blank" rel="noopener noreferrer" aria-label="Siga-nos no Instagram" className="inline-block hover:opacity-75 transition-opacity">
+                      <img src="https://cdn-icons-png.flaticon.com/512/3621/3621435.png" alt="Instagram" className="h-8 w-8" />
+                    </a>
+                  </div>
+                </div>
+              </footer>
+            </div>
+          );
+      }
+    };
+    
+    return <div key={pageKey} className="page-fade-in">{pageContent()}</div>;
   };
 
   return (
     <>
-      {renderCurrentPage()}
-      <LoginModal isOpen={isLoginModalOpen} onClose={closeLoginModal} loginIntent={loginIntent} />
-      <GeolocationErrorModal isOpen={isGeoErrorModalOpen} onClose={closeGeoErrorModal} />
-      <SystemModal
-        {...modalConfig}
-        onClose={hideModal}
-      />
-      <ContactModal 
-        isOpen={!!contactModalProperty}
-        onClose={closeContactModal}
-        owner={contactModalProperty?.owner}
-        propertyTitle={contactModalProperty?.title || ''}
-        onStartChat={() => {
-          if (contactModalProperty) {
-            handleStartChat(contactModalProperty);
-            closeContactModal();
-          }
-        }}
-      />
+      {showSplash && <SplashScreen isFadingOut={isSplashFading} />}
+      {!showSplash && (
+        <>
+          {renderCurrentPage()}
+          <LoginModal isOpen={isLoginModalOpen} onClose={closeLoginModal} loginIntent={loginIntent} showModal={showModal} />
+          <GeolocationErrorModal isOpen={isGeoErrorModalOpen} onClose={closeGeoErrorModal} />
+          <SystemModal {...modalConfig} onClose={hideModal} />
+          <ContactModal isOpen={!!contactModalProperty} onClose={closeContactModal} owner={contactModalProperty?.owner} propertyTitle={contactModalProperty?.title || ''}
+            onStartChat={() => {
+              if (contactModalProperty) {
+                handleStartChat(contactModalProperty);
+                closeContactModal();
+              }
+            }}
+          />
+        </>
+      )}
     </>
   );
 };

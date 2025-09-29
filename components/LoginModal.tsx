@@ -1,21 +1,26 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import CloseIcon from './icons/CloseIcon';
 import AppleIcon from './icons/AppleIcon';
 import GoogleIcon from './icons/GoogleIcon';
 import { supabase } from '../supabaseClient';
+import SpinnerIcon from './icons/SpinnerIcon';
+import type { ModalConfig } from '../App';
 
 interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
   loginIntent: 'default' | 'publish';
+  showModal: (config: Omit<ModalConfig, 'isOpen'>) => void;
 }
 
-const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, loginIntent }) => {
+const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, loginIntent, showModal }) => {
   const { t } = useLanguage();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   const handleGoogleLogin = async () => {
+    setIsGoogleLoading(true);
     localStorage.setItem('loginIntent', loginIntent);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -26,25 +31,32 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, loginIntent })
     if (error) {
       console.error('Error logging in with Google:', error.message);
       localStorage.removeItem('loginIntent');
+      showModal({
+        type: 'error',
+        title: t('systemModal.errorTitle'),
+        message: t('loginModal.googleLoginError')
+      });
+      setIsGoogleLoading(false);
     }
+    // On successful redirect initiation, loading state is not turned off here
+    // as the page will reload. If the user closes the popup, the promise resolves,
+    // and we need to stop the loading state.
+    setTimeout(() => setIsGoogleLoading(false), 1000); // Failsafe to turn off spinner
   };
-  
-  if (!isOpen) {
-    return null;
-  }
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm"
+      className={`fixed inset-0 z-50 flex items-center justify-center bg-black transition-all duration-300 ease-in-out ${isOpen ? 'bg-opacity-50 backdrop-blur-sm' : 'bg-opacity-0 pointer-events-none'}`}
       aria-labelledby="login-modal-title"
       role="dialog"
       aria-modal="true"
+      onClick={onClose}
     >
-      {/* Backdrop */}
-      <div className="absolute inset-0" onClick={onClose} aria-hidden="true"></div>
-
       {/* Modal Content */}
-      <div className="relative bg-white rounded-lg shadow-xl w-11/2 max-w-md p-6 sm:p-8 m-4 transform transition-all">
+      <div 
+        onClick={(e) => e.stopPropagation()}
+        className={`relative bg-white rounded-lg shadow-xl w-11/12 max-w-md p-6 sm:p-8 m-4 transform transition-all duration-300 ease-out ${isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
+      >
         <button 
           onClick={onClose} 
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
@@ -92,9 +104,14 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, loginIntent })
         <div className="space-y-3">
            <button 
              onClick={handleGoogleLogin}
-             className="w-full max-w-[300px] mx-auto flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md text-brand-dark hover:bg-gray-50"
+             disabled={isGoogleLoading}
+             className="w-full max-w-[300px] mx-auto flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md text-brand-dark hover:bg-gray-50 disabled:opacity-50 disabled:cursor-wait"
            >
-             <GoogleIcon className="w-5 h-5 mr-3" />
+             {isGoogleLoading ? (
+                <SpinnerIcon className="w-5 h-5 mr-3 animate-spin" />
+             ) : (
+                <GoogleIcon className="w-5 h-5 mr-3" />
+             )}
              <span>{t('loginModal.googleButton')}</span>
            </button>
           <button className="w-full max-w-[300px] mx-auto flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md text-brand-dark hover:bg-gray-50">

@@ -4,10 +4,25 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="https://i.postimg.cc/4dqSTCqs/logo-Browser.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Quality Home Portal Imobiliário</title>
+    <title>Quallity Home Portal Imobiliário</title>
     
     <style>
-      /* Custom styles can go here if needed in the future */
+      /* Custom styles for page transitions */
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .page-fade-in {
+        animation: fadeIn 0.4s ease-in-out;
+      }
+      /* Splash screen animation */
+      @keyframes slow-pulse {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.03); opacity: 0.95; }
+      }
+      .animate-slow-pulse {
+        animation: slow-pulse 2s ease-in-out infinite;
+      }
     </style>
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -50,11 +65,17 @@
   }
 }
 </script>
-<link rel="stylesheet" href="/index.css">
 </head>
   <body>
     <div id="root"></div>
     
+    <script>
+      window.process = {
+        env: {
+          API_KEY: 'AIzaSyCsX9l10XCu3TtSCU1BSx-qOYrwUKYw2xk'
+        }
+      };
+    </script>
     <script type="module" src="/index.tsx"></script>
   </body>
 </html>
