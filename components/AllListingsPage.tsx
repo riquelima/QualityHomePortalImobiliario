@@ -116,35 +116,42 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
 
   const onPlaceChanged = () => {
     if (autocomplete !== null) {
-        const place = autocomplete.getPlace();
-        if (place) {
-            if (place.formatted_address) {
-                // The user's issue is that the full address (e.g., "Salvador, BA, Brazil") is too specific
-                // and includes terms like "Brazil" that may not be in the property data.
-                // We create a less specific query by removing the last part of the address, which is usually the country.
-                const addressParts = place.formatted_address.split(',');
-                const newQuery = addressParts.length > 1 
-                    ? addressParts.slice(0, -1).join(',') 
-                    : place.formatted_address;
-                setSearchQuery(newQuery.trim());
-            } else if (place.name) {
-                // Fallback to place name if formatted_address is not available
-                setSearchQuery(place.name);
-            }
-            
-            if (place.geometry && place.geometry.location) {
-                const lat = place.geometry.location.lat();
-                const lng = place.geometry.location.lng();
-                const newCenter = { lat, lng };
-                setMapCenter(newCenter);
-                if (map) {
-                    map.panTo(newCenter);
-                    map.setZoom(15);
-                }
-            }
+      const place = autocomplete.getPlace();
+      if (place) {
+        let newQuery = '';
+
+        if (place.address_components) {
+          const getComponent = (type: string, useShortName = false) =>
+            place.address_components.find((c: any) => c.types.includes(type))
+              ?.[useShortName ? 'short_name' : 'long_name'];
+          
+          const street = getComponent('route');
+          const neighborhood = getComponent('sublocality_level_1');
+          const city = getComponent('administrative_area_level_2');
+          const state = getComponent('administrative_area_level_1', true);
+          
+          const queryParts = [street, neighborhood, city, state].filter(Boolean);
+          newQuery = [...new Set(queryParts)].join(', ');
+
+        } else {
+          newQuery = (place.formatted_address || place.name || '').replace(/, Brazil|, Brasil/i, '').trim();
         }
+        
+        setSearchQuery(newQuery);
+
+        if (place.geometry && place.geometry.location) {
+          const lat = place.geometry.location.lat();
+          const lng = place.geometry.location.lng();
+          const newCenter = { lat, lng };
+          setMapCenter(newCenter);
+          if (map) {
+            map.panTo(newCenter);
+            map.setZoom(15);
+          }
+        }
+      }
     } else {
-        console.log('Autocomplete is not loaded yet!');
+      console.log('Autocomplete is not loaded yet!');
     }
   };
 
@@ -171,133 +178,99 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
                 >
                   {t('hero.tabs.rent')}
                 </button>
-                <button 
+                 <button 
                   onClick={() => setActiveTab('temporada')}
                   className={`px-4 sm:px-6 py-2 text-base sm:text-lg font-medium transition-colors duration-300 ${activeTab === 'temporada' ? 'border-b-4 border-brand-red text-brand-dark' : 'text-brand-gray'}`}
                 >
                   {t('hero.tabs.season')}
                 </button>
             </div>
-
-            <form onSubmit={handleSearchSubmit} className="max-w-2xl mx-auto">
-              <div className="relative flex flex-col sm:flex-row items-center gap-2">
-                <div className="relative flex-grow w-full">
-                    <SearchIcon className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2 z-10" />
-                    {isLoaded ? (
-                      <Autocomplete
-                          onLoad={onAutocompleteLoad}
-                          onPlaceChanged={onPlaceChanged}
-                          options={{
-                            types: ['(regions)'],
-                            componentRestrictions: { country: 'br' },
-                          }}
-                      >
-                          <input
-                            type="text"
-                            value={searchQuery}
-                            onChange={handleSearchInputChange}
-                            placeholder={t('hero.locationPlaceholder')}
-                            className="w-full px-12 py-3 rounded-full text-brand-dark border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-red"
-                            autoComplete="off"
-                          />
-                      </Autocomplete>
-                    ) : (
-                      <input
-                        type="text"
-                        placeholder={t('hero.locationPlaceholder')}
-                        className="w-full px-12 py-3 rounded-full text-brand-dark border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-red"
-                        disabled
-                      />
-                    )}
-                </div>
-                <button 
-                    type="submit"
-                    className="w-full sm:w-auto bg-brand-red hover:opacity-90 text-white font-bold py-3 px-8 rounded-full transition duration-300"
+            
+            <form className="relative max-w-2xl mx-auto" onSubmit={handleSearchSubmit}>
+              <SearchIcon className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2 z-10"/>
+              {isLoaded && (
+                <Autocomplete
+                  onLoad={onAutocompleteLoad}
+                  onPlaceChanged={onPlaceChanged}
+                  options={{
+                    componentRestrictions: { country: 'br' } // Restrict to Brazil
+                  }}
                 >
-                    {t('hero.searchButton')}
-                </button>
-              </div>
+                  <input 
+                    type="text" 
+                    placeholder={t('hero.locationPlaceholder')}
+                    className="w-full pl-12 pr-4 py-3 rounded-full text-brand-dark border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-red shadow-sm"
+                    value={searchQuery}
+                    onChange={handleSearchInputChange}
+                  />
+                </Autocomplete>
+              )}
             </form>
           </div>
         </section>
         
-        <div className="container mx-auto px-4 sm:px-6 mt-8">
-            <div className="h-[400px] md:h-[500px] w-full mb-8 rounded-lg overflow-hidden shadow-md relative z-0">
-                {!isLoaded ? (
-                    <div className="w-full h-full bg-gray-200 flex items-center justify-center animate-pulse">
-                        <p className="text-brand-gray">{loadError ? 'Error loading map' : t('map.loading')}</p>
-                    </div>
-                ) : (
-                    <GoogleMap
-                        mapContainerStyle={containerStyle}
-                        center={mapCenter}
-                        zoom={13}
-                        onLoad={onLoad}
-                        onUnmount={onUnmount}
-                        options={{
-                            fullscreenControl: false,
-                            streetViewControl: false,
-                            mapTypeControl: false,
-                            zoomControl: true
-                        }}
-                    >
-                        {filteredProperties.map(property => (
-                            <Marker 
-                                key={property.id} 
-                                position={{ lat: property.lat, lng: property.lng }}
-                                onClick={() => onMarkerClick(property)}
-                            />
-                        ))}
-
-                        {selectedProperty && (
-                            <InfoWindow
+        <div className="container mx-auto px-4 sm:px-6 py-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2">
+                     <PropertyListings 
+                        properties={filteredProperties} 
+                        onViewDetails={props.onViewDetails} 
+                        favorites={props.favorites} 
+                        onToggleFavorite={props.onToggleFavorite} 
+                        isLoading={false} 
+                        onContactClick={props.onContactClick}
+                        title={t('listings.foundTitle')}
+                        noResultsTitle="Nenhum imóvel encontrado"
+                        noResultsDescription="Tente ajustar seus filtros ou pesquisar por uma localização diferente."
+                    />
+                </div>
+                <div className="lg:col-span-1">
+                    <div className="sticky top-24 h-96 lg:h-[600px] bg-gray-300 rounded-lg shadow-md overflow-hidden">
+                       {isLoaded && (
+                          <GoogleMap
+                            mapContainerStyle={containerStyle}
+                            center={mapCenter}
+                            zoom={13}
+                            onLoad={onLoad}
+                            onUnmount={onUnmount}
+                             options={{
+                                fullscreenControl: false,
+                                streetViewControl: false,
+                                mapTypeControl: false,
+                                zoomControl: true,
+                            }}
+                          >
+                            {filteredProperties.map(prop => (
+                              <Marker 
+                                key={prop.id} 
+                                position={{ lat: prop.lat, lng: prop.lng }}
+                                onClick={() => onMarkerClick(prop)}
+                              />
+                            ))}
+                             {selectedProperty && (
+                              <InfoWindow
                                 position={{ lat: selectedProperty.lat, lng: selectedProperty.lng }}
                                 onCloseClick={onInfoWindowClose}
-                            >
-                                <div className="w-48">
-                                    <img 
-                                        src={selectedProperty.images?.[0] || 'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'} 
-                                        alt={selectedProperty.title}
-                                        className="w-full h-24 object-cover rounded-md mb-2"
-                                    />
-                                    <h3 className="font-bold text-sm mb-1 truncate">{selectedProperty.title}</h3>
-                                    <p className="text-xs text-brand-gray mb-2 truncate">{selectedProperty.address}</p>
-                                    <button 
-                                        onClick={() => props.onViewDetails(selectedProperty.id)}
-                                        className="w-full bg-brand-red text-white text-xs font-bold py-1 px-2 rounded hover:opacity-90"
-                                    >
-                                        {t('propertyCard.details')}
-                                    </button>
-                                </div>
-                            </InfoWindow>
-                        )}
-                    </GoogleMap>
-                )}
+                              >
+                                 <div className="w-48">
+                                     <h3 className="font-bold text-sm mb-1 truncate">{selectedProperty.title}</h3>
+                                     <button 
+                                         onClick={() => props.onViewDetails(selectedProperty.id)}
+                                         className="w-full bg-brand-red text-white text-xs font-bold py-1 px-2 rounded hover:opacity-90"
+                                     >
+                                         {t('propertyCard.details')}
+                                     </button>
+                                 </div>
+                              </InfoWindow>
+                            )}
+                          </GoogleMap>
+                       )}
+                       {loadError && <div>Error loading map</div>}
+                    </div>
+                </div>
             </div>
         </div>
-
-        <PropertyListings
-          properties={filteredProperties}
-          onViewDetails={props.onViewDetails}
-          favorites={props.favorites}
-          onToggleFavorite={props.onToggleFavorite}
-          isLoading={false}
-          title={searchQuery ? t('listings.foundTitle') : t('listings.title')}
-          noResultsTitle={searchQuery ? t('searchResults.noResults.title') : t('listings.noResults.title')}
-          noResultsDescription={searchQuery ? t('searchResults.noResults.description') : t('listings.noResults.description')}
-          onContactClick={props.onContactClick}
-        />
       </main>
-      <footer className="bg-brand-light-gray text-brand-gray py-8 text-center mt-12">
-        <div className="container mx-auto">
-          <p>&copy; {new Date().getFullYear()} {t('footer.text')}</p>
-            <div className="mt-4">
-              <a href="https://www.instagram.com/portalimobiliarioquallityhome/" target="_blank" rel="noopener noreferrer" aria-label="Siga-nos no Instagram" className="inline-block hover:opacity-75 transition-opacity">
-                <img src="https://cdn-icons-png.flaticon.com/512/3621/3621435.png" alt="Instagram" className="h-8 w-8" />
-              </a>
-            </div>
-        </div>
-      </footer>
     </div>
   );
 };
