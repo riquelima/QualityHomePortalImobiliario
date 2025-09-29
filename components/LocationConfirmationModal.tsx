@@ -29,7 +29,7 @@ const LocationConfirmationModal: React.FC<LocationConfirmationModalProps> = ({ i
 
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script-confirmation',
-    googleMapsApiKey: process.env.API_KEY!,
+    googleMapsApiKey: (window as any).APP_CONFIG.MAPS_API_KEY,
     libraries,
   });
 

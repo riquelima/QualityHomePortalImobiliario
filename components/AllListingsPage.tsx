@@ -51,7 +51,7 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
 
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script-all-listings',
-    googleMapsApiKey: process.env.API_KEY!,
+    googleMapsApiKey: (window as any).APP_CONFIG.MAPS_API_KEY,
     libraries,
   });
   
