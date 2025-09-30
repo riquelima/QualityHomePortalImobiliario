@@ -52,7 +52,31 @@ interface PublishJourneyPageProps {
   deviceLocation: { lat: number; lng: number } | null;
 }
 
-const ai = new GoogleGenAI({ apiKey: 'AIzaSyCsX9l10XCu3TtSCU1BSx-qOYrwUKYw2xk' });
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
+const generateContentWithRetry = async (prompt: string, maxRetries = 3) => {
+  let attempt = 0;
+  while (attempt < maxRetries) {
+    try {
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+      });
+      return response; // Success
+    } catch (error) {
+      attempt++;
+      console.warn(`Gemini API call attempt ${attempt} failed:`, error);
+      if (attempt >= maxRetries) {
+        console.error("Gemini API call failed after all retries.");
+        throw error; // Rethrow error after last attempt
+      }
+      const delay = Math.pow(2, attempt) * 1000; // Exponential backoff: 2s, 4s
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+  throw new Error("Failed to generate content after multiple retries.");
+};
+
 
 const formatPrice = (price: number | null | undefined): string => {
     if (price === null || price === undefined || isNaN(price)) return '';
@@ -542,10 +566,8 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
         try {
             const prompt = t('publishJourney.detailsForm.aiTitlePrompt', { title: formData.title });
             
-            const response = await ai.models.generateContent({
-              model: 'gemini-2.5-flash',
-              contents: prompt,
-            });
+            const response = await generateContentWithRetry(prompt);
+            if (!response) throw new Error("No response from AI");
 
             const text = response.text.trim();
             if (text) {
@@ -577,10 +599,9 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
         try {
             const prompt = t('publishJourney.detailsForm.aiDescriptionPrompt', { details });
 
-            const response = await ai.models.generateContent({
-              model: 'gemini-2.5-flash',
-              contents: prompt,
-            });
+            const response = await generateContentWithRetry(prompt);
+            if (!response) throw new Error("No response from AI");
+
             const text = response.text.trim();
             if (text) {
                 setFormData(prev => ({ ...prev, description: text }));

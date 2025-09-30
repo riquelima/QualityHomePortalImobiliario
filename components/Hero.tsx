@@ -14,7 +14,31 @@ interface HeroProps {
   deviceLocation: { lat: number; lng: number } | null;
 }
 
-const ai = new GoogleGenAI({ apiKey: 'AIzaSyCsX9l10XCu3TtSCU1BSx-qOYrwUKYw2xk' });
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
+const generateContentWithRetry = async (prompt: string, maxRetries = 3) => {
+  let attempt = 0;
+  while (attempt < maxRetries) {
+    try {
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+      });
+      return response; // Success
+    } catch (error) {
+      attempt++;
+      console.warn(`Gemini API call attempt ${attempt} failed:`, error);
+      if (attempt >= maxRetries) {
+        console.error("Gemini API call failed after all retries.");
+        throw error; // Rethrow error after last attempt
+      }
+      const delay = Math.pow(2, attempt) * 1000; // Exponential backoff: 2s, 4s
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+  throw new Error("Failed to generate content after multiple retries.");
+};
+
 
 const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe, onGeolocationError, onSearchSubmit, deviceLocation }) => {
   const [activeTab, setActiveTab] = useState('comprar');
@@ -39,12 +63,9 @@ const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe, onGeoloca
       try {
         const prompt = t('hero.geminiPrompt');
         
-        const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
-          contents: prompt,
-        });
+        const response = await generateContentWithRetry(prompt);
 
-        if (isCancelled) return;
+        if (isCancelled || !response) return;
 
         const text = response.text.trim();
         if (text) {
