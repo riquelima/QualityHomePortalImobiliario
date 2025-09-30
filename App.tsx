@@ -236,170 +236,128 @@ const App: React.FC = () => {
     fetchingRef.current = true;
     setIsLoading(true);
     setFetchError(null);
-    setIsCorsError(false);
     console.time('fetchAllData');
 
     const maxRetries = 3;
     let attempt = 0;
+    let success = false;
     let lastError: any = null;
 
-    while (attempt < maxRetries) {
-      attempt++;
-      try {
-        console.log(`Attempting to fetch data, attempt #${attempt}`);
-        
-        // Step 1: Fetch base property data
-        let propertyQuery = supabase.from('imoveis').select('*');
-        if (currentUser) {
-            propertyQuery = propertyQuery.or(`status.eq.ativo,anunciante_id.eq.${currentUser.id}`);
-        } else {
-            propertyQuery = propertyQuery.eq('status', 'ativo');
-        }
-        const { data: propertiesData, error: propertiesError } = await propertyQuery;
+    while (attempt < maxRetries && !success) {
+        attempt++;
+        try {
+            console.log(`Attempting to fetch data, attempt #${attempt}`);
 
-        if (propertiesError) throw propertiesError;
-
-        if (!propertiesData || propertiesData.length === 0) {
-            console.warn("Nenhum dado de imóvel foi retornado pelo Supabase.");
-            setProperties([]);
-            setMyAds([]);
+            let propertyQuery = supabase.from('imoveis').select('*');
             if (currentUser) {
-                setFavorites([]);
-                setChatSessions([]);
+                propertyQuery = propertyQuery.or(`status.eq.ativo,anunciante_id.eq.${currentUser.id}`);
+            } else {
+                propertyQuery = propertyQuery.eq('status', 'ativo');
             }
-            lastError = null; // Successful fetch, even if empty
-            break;
-        }
+            const { data: propertiesData, error: propertiesError } = await propertyQuery;
 
-        const propertyIds = propertiesData.map(p => p.id);
-        const announcerIds = [...new Set(propertiesData.map(p => p.anunciante_id).filter(id => id))];
+            if (propertiesError) throw propertiesError;
 
-        // Step 2: Fetch related data in batches
-        const [mediaRes, profilesRes] = await Promise.all([
-            supabase.from('midias_imovel').select('*').in('imovel_id', propertyIds),
-            announcerIds.length > 0 ? supabase.from('perfis').select('*').in('id', announcerIds) : Promise.resolve({ data: [], error: null })
-        ]);
+            if (propertiesData && propertiesData.length > 0) {
+                const propertyIds = propertiesData.map(p => p.id);
+                const announcerIds = [...new Set(propertiesData.map(p => p.anunciante_id).filter(id => id))];
 
-        const { data: mediaData, error: mediaError } = mediaRes;
-        const { data: profilesData, error: profilesError } = profilesRes;
+                const [mediaRes, profilesRes] = await Promise.all([
+                    supabase.from('midias_imovel').select('*').in('imovel_id', propertyIds),
+                    announcerIds.length > 0 ? supabase.from('perfis').select('*').in('id', announcerIds) : Promise.resolve({ data: [], error: null })
+                ]);
 
-        if (mediaError) throw mediaError;
-        if (profilesError) throw profilesError;
+                const { data: mediaData, error: mediaError } = mediaRes;
+                const { data: profilesData, error: profilesError } = profilesRes;
 
-        // Step 3: Combine data on the client side
-        const profilesMap = new Map(profilesData?.map(p => [p.id, p]));
-        const mediaMap = new Map<number, Media[]>();
-        mediaData?.forEach(m => {
-            if (!mediaMap.has(m.imovel_id)) {
-                mediaMap.set(m.imovel_id, []);
+                if (mediaError) throw mediaError;
+                if (profilesError) throw profilesError;
+
+                const profilesMap = new Map(profilesData?.map(p => [p.id, p]));
+                const mediaMap = new Map<number, Media[]>();
+                mediaData?.forEach(m => {
+                    if (!mediaMap.has(m.imovel_id)) {
+                        mediaMap.set(m.imovel_id, []);
+                    }
+                    mediaMap.get(m.imovel_id)!.push(m);
+                });
+
+                const adaptedProperties = propertiesData.map((db: any): Property => {
+                    const ownerProfileData = (db.anunciante_id ? profilesMap.get(db.anunciante_id) : undefined) as Profile | undefined;
+                    const ownerProfile = ownerProfileData ? { ...ownerProfileData, phone: ownerProfileData.telefone } : undefined;
+                    const propertyMedia = mediaMap.get(db.id) || [];
+                    const validImages = propertyMedia.filter((m: Media) => m.tipo === 'imagem' && m.url).map((m: Media) => m.url);
+                    return {
+                        ...db, title: db.titulo, address: db.endereco_completo, bedrooms: db.quartos,
+                        bathrooms: db.banheiros, area: db.area_bruta, lat: db.latitude, lng: db.longitude,
+                        price: db.preco, description: db.descricao, images: validImages,
+                        videos: propertyMedia.filter((m: Media) => m.tipo === 'video' && m.url).map((m: Media) => m.url),
+                        owner: ownerProfile, midias_imovel: propertyMedia,
+                    };
+                });
+
+                setProperties(adaptedProperties);
+                setMyAds(currentUser ? adaptedProperties.filter(p => p.anunciante_id === currentUser.id) : []);
+
+                if (currentUser) {
+                    const { data: favoritesData, error: favoritesError } = await supabase.from('favoritos_usuario').select('imovel_id').eq('usuario_id', currentUser.id);
+                    if (favoritesError) console.error('Error fetching favorites:', favoritesError);
+                    else setFavorites(favoritesData.map(f => f.imovel_id));
+
+                    const { data: chatData, error: chatError } = await supabase.rpc('get_user_chat_sessions', { user_id_param: currentUser.id });
+                    if (chatError) console.error('Error fetching chat sessions:', chatError);
+                    else if (chatData) {
+                        const adaptedSessions: ChatSession[] = chatData.map((s: any) => ({
+                            id: s.session_id, imovel_id: s.imovel_id,
+                            participants: (s.participants || []).reduce((acc: { [key: string]: any }, p: any) => {
+                                if (p && p.id) acc[p.id] = { id: p.id, nome_completo: p.nome_completo };
+                                return acc;
+                            }, {}),
+                            messages: (s.messages || []).filter((m: any) => m && m.id).map((m: any): Message => ({
+                                id: m.id, senderId: m.remetente_id, text: m.conteudo,
+                                timestamp: new Date(m.data_envio), isRead: m.foi_lida,
+                            })).sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime()),
+                            unreadCount: (s.messages || []).filter((m: any) => m && !m.foi_lida && m.remetente_id !== currentUser.id).length,
+                        }));
+                        setChatSessions(adaptedSessions);
+                    }
+                } else {
+                    setFavorites([]); setChatSessions([]); setMyAds([]);
+                }
+                success = true;
+            } else {
+                if (attempt < maxRetries) {
+                    console.warn(`Fetch attempt #${attempt} returned no properties. Retrying...`);
+                    await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+                } else {
+                    console.log("No properties found after all retries. Setting state to empty.");
+                    setProperties([]); setMyAds([]); setFavorites([]); setChatSessions([]);
+                    success = true;
+                }
             }
-            mediaMap.get(m.imovel_id)!.push(m);
-        });
-
-        const adaptedProperties = propertiesData.map((db: any): Property => {
-            const ownerProfileData = (db.anunciante_id ? profilesMap.get(db.anunciante_id) : undefined) as Profile | undefined;
-            const ownerProfile = ownerProfileData ? {
-                ...ownerProfileData,
-                phone: ownerProfileData.telefone,
-            } : undefined;
-            
-            const propertyMedia = mediaMap.get(db.id) || [];
-            const validImages = propertyMedia
-                .filter((m: Media) => m.tipo === 'imagem' && m.url)
-                .map((m: Media) => m.url);
-
-            return {
-              ...db,
-              title: db.titulo,
-              address: db.endereco_completo,
-              bedrooms: db.quartos,
-              bathrooms: db.banheiros,
-              area: db.area_bruta,
-              lat: db.latitude,
-              lng: db.longitude,
-              price: db.preco,
-              description: db.descricao,
-              images: validImages,
-              videos: propertyMedia.filter((m: Media) => m.tipo === 'video' && m.url).map((m: Media) => m.url),
-              owner: ownerProfile,
-              midias_imovel: propertyMedia,
-            };
-        });
-
-        setProperties(adaptedProperties);
-        setMyAds(currentUser ? adaptedProperties.filter(p => p.anunciante_id === currentUser.id) : []);
-
-        // Step 4: Fetch user-specific data (favorites, chats)
-        if (currentUser) {
-            const { data: favoritesData, error: favoritesError } = await supabase
-                .from('favoritos_usuario')
-                .select('imovel_id')
-                .eq('usuario_id', currentUser.id);
-
-            if (favoritesError) console.error('Error fetching favorites:', favoritesError);
-            else setFavorites(favoritesData.map(f => f.imovel_id));
-
-            const { data: chatData, error: chatError } = await supabase
-                .rpc('get_user_chat_sessions', { user_id_param: currentUser.id });
-
-            if (chatError) console.error('Error fetching chat sessions:', chatError);
-            else if (chatData) {
-                const adaptedSessions: ChatSession[] = chatData.map((s: any) => ({
-                    id: s.session_id,
-                    imovel_id: s.imovel_id,
-                    participants: (s.participants || []).reduce((acc: { [key: string]: any }, p: any) => {
-                        if (p && p.id) acc[p.id] = { id: p.id, nome_completo: p.nome_completo };
-                        return acc;
-                    }, {}),
-                    messages: (s.messages || []).filter((m: any) => m && m.id).map((m: any): Message => ({
-                        id: m.id, senderId: m.remetente_id, text: m.conteudo,
-                        timestamp: new Date(m.data_envio), isRead: m.foi_lida,
-                    })).sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime()),
-                    unreadCount: (s.messages || []).filter((m: any) => m && !m.foi_lida && m.remetente_id !== currentUser.id).length,
-                }));
-                setChatSessions(adaptedSessions);
+        } catch (error: any) {
+            console.error(`Fetch attempt #${attempt} failed:`, error);
+            lastError = error;
+            if (attempt < maxRetries) {
+                await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
             }
-        } else {
-            setFavorites([]);
-            setChatSessions([]);
-            setMyAds([]);
         }
-
-        lastError = null; // Success
-        break; // Exit retry loop
-
-      } catch (error: any) {
-        lastError = error;
-        console.error(`Fetch attempt #${attempt} failed:`, error);
-        if (attempt < maxRetries) {
-          await new Promise(resolve => setTimeout(resolve, 1000 * attempt)); // Exponential backoff-like delay
-        }
-      }
     }
 
-    // After the loop, if an error persists, handle it
-    if (lastError) {
+    if (!success && lastError) {
         console.error('Falha ao buscar dados após múltiplas tentativas:', lastError);
-         if (lastError.message && (lastError.message.includes('Failed to fetch') || lastError.message.includes('NetworkError'))) {
-            // This is a network error. We will show a message but preserve user session.
-            console.warn('Network error detected. User session will be preserved.');
+        if (lastError.message && (lastError.message.includes('Failed to fetch') || lastError.message.includes('NetworkError'))) {
             setFetchError(t('systemModal.fetchError'));
         } else {
-            // This is a more critical error (e.g., auth, server-side).
             setFetchError(lastError.message);
-            console.warn("Clearing local/session storage due to critical fetch error:", lastError);
-            sessionStorage.clear();
-            localStorage.clear();
-            setProperties([]);
-            setMyAds([]);
         }
+        setProperties([]); setMyAds([]); setFavorites([]); setChatSessions([]);
     }
 
-    // This block runs regardless of the outcome.
     console.timeEnd('fetchAllData');
     setIsLoading(false);
     fetchingRef.current = false;
-  }, [t, showModal]);
+  }, [t]);
   
   const navigateToPublishJourney = () => setPageState({ page: 'publish-journey', userLocation: null });
   
