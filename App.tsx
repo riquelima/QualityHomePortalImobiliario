@@ -239,7 +239,15 @@ const App: React.FC = () => {
     setIsCorsError(false);
     console.time('fetchAllData');
 
-    try {
+    const maxRetries = 3;
+    let attempt = 0;
+    let lastError: any = null;
+
+    while (attempt < maxRetries) {
+      attempt++;
+      try {
+        console.log(`Attempting to fetch data, attempt #${attempt}`);
+        
         // Step 1: Fetch base property data
         let propertyQuery = supabase.from('imoveis').select('*');
         if (currentUser) {
@@ -259,10 +267,8 @@ const App: React.FC = () => {
                 setFavorites([]);
                 setChatSessions([]);
             }
-            console.timeEnd('fetchAllData');
-            setIsLoading(false);
-            fetchingRef.current = false;
-            return;
+            lastError = null; // Successful fetch, even if empty
+            break;
         }
 
         const propertyIds = propertiesData.map(p => p.id);
@@ -358,26 +364,41 @@ const App: React.FC = () => {
             setChatSessions([]);
             setMyAds([]);
         }
-    } catch (error: any) {
-        console.error('Falha ao buscar dados:', error);
-         if (error.message && (error.message.includes('Failed to fetch') || error.message.includes('NetworkError'))) {
-            console.warn('Network error detected, likely a CORS issue.');
-            setIsCorsError(true);
-        } else {
-            setFetchError(error.message);
+
+        lastError = null; // Success
+        break; // Exit retry loop
+
+      } catch (error: any) {
+        lastError = error;
+        console.error(`Fetch attempt #${attempt} failed:`, error);
+        if (attempt < maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt)); // Exponential backoff-like delay
         }
-
-        console.warn("Clearing local/session storage due to fetch error:", error);
-        sessionStorage.clear();
-        localStorage.clear();
-
-        setProperties([]);
-        setMyAds([]);
-    } finally {
-        console.timeEnd('fetchAllData');
-        setIsLoading(false);
-        fetchingRef.current = false;
+      }
     }
+
+    // After the loop, if an error persists, handle it
+    if (lastError) {
+        console.error('Falha ao buscar dados após múltiplas tentativas:', lastError);
+         if (lastError.message && (lastError.message.includes('Failed to fetch') || lastError.message.includes('NetworkError'))) {
+            // This is a network error. We will show a message but preserve user session.
+            console.warn('Network error detected. User session will be preserved.');
+            setFetchError(t('systemModal.fetchError'));
+        } else {
+            // This is a more critical error (e.g., auth, server-side).
+            setFetchError(lastError.message);
+            console.warn("Clearing local/session storage due to critical fetch error:", lastError);
+            sessionStorage.clear();
+            localStorage.clear();
+            setProperties([]);
+            setMyAds([]);
+        }
+    }
+
+    // This block runs regardless of the outcome.
+    console.timeEnd('fetchAllData');
+    setIsLoading(false);
+    fetchingRef.current = false;
   }, [t, showModal]);
   
   const navigateToPublishJourney = () => setPageState({ page: 'publish-journey', userLocation: null });
