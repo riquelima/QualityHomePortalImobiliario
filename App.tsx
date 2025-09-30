@@ -240,11 +240,9 @@ const App: React.FC = () => {
 
     const maxRetries = 3;
     let attempt = 0;
-    let success = false;
     let lastError: any = null;
 
-    while (attempt < maxRetries && !success) {
-        attempt++;
+    for (attempt = 1; attempt <= maxRetries; attempt++) {
         try {
             console.log(`Attempting to fetch data, attempt #${attempt}`);
 
@@ -258,6 +256,8 @@ const App: React.FC = () => {
 
             if (propertiesError) throw propertiesError;
 
+            // Only consider it a success if we get data.
+            // If we get an empty array, we treat it as a temporary failure and retry.
             if (propertiesData && propertiesData.length > 0) {
                 const propertyIds = propertiesData.map(p => p.id);
                 const announcerIds = [...new Set(propertiesData.map(p => p.anunciante_id).filter(id => id))];
@@ -267,15 +267,12 @@ const App: React.FC = () => {
                     announcerIds.length > 0 ? supabase.from('perfis').select('*').in('id', announcerIds) : Promise.resolve({ data: [], error: null })
                 ]);
 
-                const { data: mediaData, error: mediaError } = mediaRes;
-                const { data: profilesData, error: profilesError } = profilesRes;
+                if (mediaRes.error) throw mediaRes.error;
+                if (profilesRes.error) throw profilesRes.error;
 
-                if (mediaError) throw mediaError;
-                if (profilesError) throw profilesError;
-
-                const profilesMap = new Map(profilesData?.map(p => [p.id, p]));
+                const profilesMap = new Map(profilesRes.data?.map(p => [p.id, p]));
                 const mediaMap = new Map<number, Media[]>();
-                mediaData?.forEach(m => {
+                mediaRes.data?.forEach(m => {
                     if (!mediaMap.has(m.imovel_id)) {
                         mediaMap.set(m.imovel_id, []);
                     }
@@ -324,35 +321,35 @@ const App: React.FC = () => {
                 } else {
                     setFavorites([]); setChatSessions([]); setMyAds([]);
                 }
-                success = true;
+                
+                // Success, exit function
+                console.timeEnd('fetchAllData');
+                setIsLoading(false);
+                fetchingRef.current = false;
+                return;
             } else {
-                if (attempt < maxRetries) {
-                    console.warn(`Fetch attempt #${attempt} returned no properties. Retrying...`);
-                    await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
-                } else {
-                    console.log("No properties found after all retries. Setting state to empty.");
-                    setProperties([]); setMyAds([]); setFavorites([]); setChatSessions([]);
-                    success = true;
-                }
+                // Empty data is treated as a retryable error
+                lastError = new Error("Query returned no data.");
+                console.warn(`Fetch attempt #${attempt} returned no properties. Retrying...`);
             }
         } catch (error: any) {
             console.error(`Fetch attempt #${attempt} failed:`, error);
             lastError = error;
-            if (attempt < maxRetries) {
-                await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
-            }
+        }
+
+        if (attempt < maxRetries) {
+            await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
         }
     }
 
-    if (!success && lastError) {
-        console.error('Falha ao buscar dados após múltiplas tentativas:', lastError);
-        if (lastError.message && (lastError.message.includes('Failed to fetch') || lastError.message.includes('NetworkError'))) {
-            setFetchError(t('systemModal.fetchError'));
-        } else {
-            setFetchError(lastError.message);
-        }
-        setProperties([]); setMyAds([]); setFavorites([]); setChatSessions([]);
+    // If loop completes, all retries failed
+    console.error('Falha ao buscar dados após múltiplas tentativas:', lastError);
+    if (lastError?.message && (lastError.message.includes('Failed to fetch') || lastError.message.includes('NetworkError'))) {
+        setFetchError(t('systemModal.fetchError'));
+    } else if (lastError?.message !== 'Query returned no data.') {
+        setFetchError(lastError.message);
     }
+    setProperties([]); setMyAds([]); setFavorites([]); setChatSessions([]);
 
     console.timeEnd('fetchAllData');
     setIsLoading(false);
