@@ -276,8 +276,8 @@ const App: React.FC = () => {
         const { data: mediaData, error: mediaError } = mediaRes;
         const { data: profilesData, error: profilesError } = profilesRes;
 
-        if (mediaError) console.error('Error fetching media:', mediaError.message);
-        if (profilesError) console.error('Error fetching profiles:', profilesError.message);
+        if (mediaError) throw mediaError;
+        if (profilesError) throw profilesError;
 
         // Step 3: Combine data on the client side
         const profilesMap = new Map(profilesData?.map(p => [p.id, p]));
