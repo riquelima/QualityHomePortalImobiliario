@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect, useCallback } from 'react';
 import Header from './Header';
 import PropertyListings from './PropertyListings';
@@ -53,8 +51,7 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
 
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script-all-listings',
-    // FIX: Use process.env to avoid TypeScript errors with import.meta.env in this environment.
-    googleMapsApiKey: process.env.VITE_MAPS_KEY!,
+    googleMapsApiKey: 'AIzaSyDukeY7JJI9UkHIFbsCZOrjPDRukqvUOfA',
     libraries,
   });
   

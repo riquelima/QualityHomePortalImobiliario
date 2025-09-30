@@ -1,5 +1,3 @@
-
-
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Header from './Header';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -54,8 +52,7 @@ interface PublishJourneyPageProps {
   deviceLocation: { lat: number; lng: number } | null;
 }
 
-// FIX: Use process.env.API_KEY as per the coding guidelines for the Gemini API key.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const ai = new GoogleGenAI({ apiKey: 'AIzaSyCsX9l10XCu3TtSCU1BSx-qOYrwUKYw2xk' });
 
 const formatPrice = (price: number | null | undefined): string => {
     if (price === null || price === undefined || isNaN(price)) return '';

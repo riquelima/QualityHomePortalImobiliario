@@ -1,5 +1,3 @@
-
-
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -29,8 +27,7 @@ const LocationConfirmationModal: React.FC<LocationConfirmationModalProps> = ({ i
 
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script-confirmation',
-    // FIX: Use process.env to avoid TypeScript errors with import.meta.env in this environment.
-    googleMapsApiKey: process.env.VITE_MAPS_KEY!,
+    googleMapsApiKey: 'AIzaSyDukeY7JJI9UkHIFbsCZOrjPDRukqvUOfA',
     libraries,
   });
 
