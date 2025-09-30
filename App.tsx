@@ -309,8 +309,8 @@ const App: React.FC = () => {
               lng: db.longitude,
               price: db.preco,
               description: db.descricao,
-              images: propertyMedia.filter((m: Media) => m.tipo === 'imagem').map((m: Media) => m.url),
-              videos: propertyMedia.filter((m: Media) => m.tipo === 'video').map((m: Media) => m.url),
+              images: propertyMedia.filter((m: Media) => m.tipo === 'imagem' && m.url).map((m: Media) => m.url),
+              videos: propertyMedia.filter((m: Media) => m.tipo === 'video' && m.url).map((m: Media) => m.url),
               owner: ownerProfile,
               midias_imovel: propertyMedia,
             };
@@ -658,28 +658,35 @@ const App: React.FC = () => {
   };
 
   const handleAddProperty = useCallback(async (newProperty: Property) => {
+    setIsLoading(true);
     navigateHome();
-    setTimeout(() => {
-        showModal({
-            type: 'success',
-            title: t('systemModal.successTitle'),
-            message: t('confirmationModal.message'),
-        });
-        if (user) fetchAllData(user);
-    }, 100);
+    
+    if (user) {
+        await fetchAllData(user);
+    }
+    
+    showModal({
+        type: 'success',
+        title: t('systemModal.successTitle'),
+        message: t('confirmationModal.message'),
+    });
   }, [user, fetchAllData, t, showModal, navigateHome]);
 
   const handleUpdateProperty = useCallback(async () => {
+    setIsLoading(true);
     navigateHome();
-    setTimeout(() => {
-        showModal({
-            type: 'success',
-            title: t('systemModal.successTitle'),
-            message: t('systemModal.editSuccessMessage'),
-        });
-        if (user) fetchAllData(user);
-    }, 100);
+    
+    if (user) {
+        await fetchAllData(user);
+    }
+    
+    showModal({
+        type: 'success',
+        title: t('systemModal.successTitle'),
+        message: t('systemModal.editSuccessMessage'),
+    });
   }, [user, fetchAllData, t, showModal, navigateHome]);
+
 
   const handlePublishError = useCallback((message: string) => {
     showModal({
