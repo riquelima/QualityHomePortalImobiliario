@@ -406,43 +406,26 @@ const App: React.FC = () => {
   // Geolocation Request on App Load
   useEffect(() => {
     if (navigator.geolocation) {
-      // First, try with lower accuracy for better reliability and speed.
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
+          console.log("Geolocation successful:", { lat: latitude, lng: longitude });
           setDeviceLocation({ lat: latitude, lng: longitude });
         },
         (error) => {
-          console.warn("Geolocation attempt failed:", error);
-          // If the first attempt fails (e.g., timeout on a device with only GPS),
-          // try again with high accuracy as a fallback.
-          // Don't retry if permission was explicitly denied.
-          if (error.code !== error.PERMISSION_DENIED) {
-            console.log("Retrying geolocation with high accuracy.");
-            navigator.geolocation.getCurrentPosition(
-              (position) => {
-                const { latitude, longitude } = position.coords;
-                setDeviceLocation({ lat: latitude, lng: longitude });
-              },
-              (highAccError) => {
-                console.error("High accuracy geolocation also failed:", highAccError);
-                if (!sessionStorage.getItem('geolocationErrorShown')) {
-                  openGeoErrorModal();
-                  sessionStorage.setItem('geolocationErrorShown', 'true');
-                }
-              },
-              { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
-            );
-          } else {
-            // Handle permission denied error
-            console.error("Geolocation permission denied by user.");
-            if (!sessionStorage.getItem('geolocationErrorShown')) {
-              openGeoErrorModal();
-              sessionStorage.setItem('geolocationErrorShown', 'true');
-            }
+          // This unified error handling is more robust.
+          // Any failure to get location will result in the same outcome.
+          console.error("Geolocation error on app load:", error);
+          if (!sessionStorage.getItem('geolocationErrorShown')) {
+            openGeoErrorModal();
+            sessionStorage.setItem('geolocationErrorShown', 'true');
           }
         },
-        { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 }
+        { 
+          enableHighAccuracy: true, // Prioritize accuracy.
+          timeout: 20000,           // Increase timeout to 20 seconds for GPS to get a fix.
+          maximumAge: 0             // Force a fresh location check.
+        }
       );
     }
   }, []);
