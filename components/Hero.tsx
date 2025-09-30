@@ -14,6 +14,7 @@ interface HeroProps {
   deviceLocation: { lat: number; lng: number } | null;
 }
 
+// FIX: Replaced import.meta.env with process.env to align with coding guidelines.
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 const generateContentWithRetry = async (prompt: string, maxRetries = 3) => {

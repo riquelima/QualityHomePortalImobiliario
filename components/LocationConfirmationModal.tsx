@@ -27,7 +27,8 @@ const LocationConfirmationModal: React.FC<LocationConfirmationModalProps> = ({ i
 
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script-confirmation',
-    googleMapsApiKey: 'AIzaSyDukeY7JJI9UkHIFbsCZOrjPDRukqvUOfA',
+    // FIX: Replaced import.meta.env with process.env to resolve TypeScript error.
+    googleMapsApiKey: process.env.VITE_MAPS_KEY!,
     libraries,
   });
 

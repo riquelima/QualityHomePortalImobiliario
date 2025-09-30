@@ -42,7 +42,8 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewD
 
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script-draw-page',
-    googleMapsApiKey: 'AIzaSyDukeY7JJI9UkHIFbsCZOrjPDRukqvUOfA',
+    // FIX: Replaced import.meta.env with process.env to resolve TypeScript error.
+    googleMapsApiKey: process.env.VITE_MAPS_KEY!,
     libraries,
   });
 
