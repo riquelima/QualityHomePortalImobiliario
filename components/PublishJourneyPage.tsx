@@ -61,7 +61,7 @@ const generateContentWithRetry = async (prompt: string, maxRetries = 3) => {
     try {
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
-        contents: prompt,
+        contents: { parts: [{ text: prompt }] },
       });
       return response; // Success
     } catch (error) {
