@@ -16,6 +16,7 @@ interface HeroProps {
   deviceLocation: { lat: number; lng: number } | null;
 }
 
+// FIX: Use process.env.API_KEY for Gemini API key per guidelines.
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe, onGeolocationError, onSearchSubmit, deviceLocation }) => {
