@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
@@ -297,6 +298,9 @@ const App: React.FC = () => {
             } : undefined;
             
             const propertyMedia = mediaMap.get(db.id) || [];
+            const validImages = propertyMedia
+                .filter((m: Media) => m.tipo === 'imagem' && m.url)
+                .map((m: Media) => m.url);
 
             return {
               ...db,
@@ -309,7 +313,7 @@ const App: React.FC = () => {
               lng: db.longitude,
               price: db.preco,
               description: db.descricao,
-              images: propertyMedia.filter((m: Media) => m.tipo === 'imagem' && m.url).map((m: Media) => m.url),
+              images: validImages,
               videos: propertyMedia.filter((m: Media) => m.tipo === 'video' && m.url).map((m: Media) => m.url),
               owner: ownerProfile,
               midias_imovel: propertyMedia,
@@ -402,19 +406,43 @@ const App: React.FC = () => {
   // Geolocation Request on App Load
   useEffect(() => {
     if (navigator.geolocation) {
+      // First, try with lower accuracy for better reliability and speed.
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
           setDeviceLocation({ lat: latitude, lng: longitude });
         },
         (error) => {
-          console.error("Geolocation error on app load:", error);
-          if (!sessionStorage.getItem('geolocationErrorShown')) {
-            openGeoErrorModal();
-            sessionStorage.setItem('geolocationErrorShown', 'true');
+          console.warn("Geolocation attempt failed:", error);
+          // If the first attempt fails (e.g., timeout on a device with only GPS),
+          // try again with high accuracy as a fallback.
+          // Don't retry if permission was explicitly denied.
+          if (error.code !== error.PERMISSION_DENIED) {
+            console.log("Retrying geolocation with high accuracy.");
+            navigator.geolocation.getCurrentPosition(
+              (position) => {
+                const { latitude, longitude } = position.coords;
+                setDeviceLocation({ lat: latitude, lng: longitude });
+              },
+              (highAccError) => {
+                console.error("High accuracy geolocation also failed:", highAccError);
+                if (!sessionStorage.getItem('geolocationErrorShown')) {
+                  openGeoErrorModal();
+                  sessionStorage.setItem('geolocationErrorShown', 'true');
+                }
+              },
+              { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+            );
+          } else {
+            // Handle permission denied error
+            console.error("Geolocation permission denied by user.");
+            if (!sessionStorage.getItem('geolocationErrorShown')) {
+              openGeoErrorModal();
+              sessionStorage.setItem('geolocationErrorShown', 'true');
+            }
           }
         },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 600000 }
+        { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 }
       );
     }
   }, []);
@@ -658,33 +686,39 @@ const App: React.FC = () => {
   };
 
   const handleAddProperty = useCallback(async (newProperty: Property) => {
+    // Set loading state immediately and navigate home to show skeleton loaders
     setIsLoading(true);
     navigateHome();
     
-    if (user) {
-        await fetchAllData(user);
-    }
-    
-    showModal({
-        type: 'success',
-        title: t('systemModal.successTitle'),
-        message: t('confirmationModal.message'),
-    });
+    // Use a short timeout to allow the navigation to complete and skeletons to render
+    setTimeout(async () => {
+        if (user) {
+            await fetchAllData(user); // This will turn off isLoading
+        }
+        showModal({
+            type: 'success',
+            title: t('systemModal.successTitle'),
+            message: t('confirmationModal.message'),
+        });
+    }, 100); // A small delay
   }, [user, fetchAllData, t, showModal, navigateHome]);
 
   const handleUpdateProperty = useCallback(async () => {
+    // Set loading state immediately and navigate home to show skeleton loaders
     setIsLoading(true);
     navigateHome();
     
-    if (user) {
-        await fetchAllData(user);
-    }
-    
-    showModal({
-        type: 'success',
-        title: t('systemModal.successTitle'),
-        message: t('systemModal.editSuccessMessage'),
-    });
+     // Use a short timeout to allow the navigation to complete and skeletons to render
+    setTimeout(async () => {
+        if (user) {
+            await fetchAllData(user); // This will turn off isLoading
+        }
+        showModal({
+            type: 'success',
+            title: t('systemModal.successTitle'),
+            message: t('systemModal.editSuccessMessage'),
+        });
+    }, 100);
   }, [user, fetchAllData, t, showModal, navigateHome]);
 
 
