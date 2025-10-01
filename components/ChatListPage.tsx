@@ -103,7 +103,7 @@ const ChatListPage: React.FC<ChatListPageProps> = ({
                                </div>
                                <p className="text-sm font-semibold text-brand-red truncate">{property?.title || 'Anúncio indisponível'}</p>
                                <p className="text-sm text-brand-gray truncate">
-                                  {lastMessage ? lastMessage.text : "Nenhuma mensagem ainda"}
+                                  {lastMessage ? `${lastMessage.senderId === user?.id ? 'Você: ' : ''}${lastMessage.text}` : "Nenhuma mensagem ainda"}
                                </p>
                           </div>
                           {session.unreadCount > 0 && (

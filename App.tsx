@@ -235,122 +235,110 @@ const App: React.FC = () => {
     if (fetchingRef.current) return;
     fetchingRef.current = true;
     setIsLoading(true);
-    setFetchError(null);
     console.time('fetchAllData');
 
-    const maxRetries = 3;
-    let attempt = 0;
-    let lastError: any = null;
-
-    for (attempt = 1; attempt <= maxRetries; attempt++) {
-        try {
-            console.log(`Attempting to fetch data, attempt #${attempt}`);
-
-            let propertyQuery = supabase.from('imoveis').select('*');
-            if (currentUser) {
-                propertyQuery = propertyQuery.or(`status.eq.ativo,anunciante_id.eq.${currentUser.id}`);
-            } else {
-                propertyQuery = propertyQuery.eq('status', 'ativo');
-            }
-            const { data: propertiesData, error: propertiesError } = await propertyQuery;
-
-            if (propertiesError) throw propertiesError;
-
-            // Supabase returns an array (even empty) on success.
-            // The previous logic incorrectly treated an empty array as an error.
-            // This is now corrected to process the data, ensuring the UI reflects the true state.
-            if (!propertiesData) {
-                throw new Error("Query returned null or undefined data without an error.");
-            }
-            
-            const propertyIds = propertiesData.map(p => p.id);
-            const announcerIds = [...new Set(propertiesData.map(p => p.anunciante_id).filter(id => id))];
-
-            const [mediaRes, profilesRes] = await Promise.all([
-                supabase.from('midias_imovel').select('*').in('imovel_id', propertyIds),
-                announcerIds.length > 0 ? supabase.from('perfis').select('*').in('id', announcerIds) : Promise.resolve({ data: [], error: null })
-            ]);
-
-            if (mediaRes.error) throw mediaRes.error;
-            if (profilesRes.error) throw profilesRes.error;
-
-            const profilesMap = new Map(profilesRes.data?.map(p => [p.id, p]));
-            const mediaMap = new Map<number, Media[]>();
-            mediaRes.data?.forEach(m => {
-                if (!mediaMap.has(m.imovel_id)) {
-                    mediaMap.set(m.imovel_id, []);
-                }
-                mediaMap.get(m.imovel_id)!.push(m);
-            });
-
-            const adaptedProperties = propertiesData.map((db: any): Property => {
-                const ownerProfileData = (db.anunciante_id ? profilesMap.get(db.anunciante_id) : undefined) as Profile | undefined;
-                const ownerProfile = ownerProfileData ? { ...ownerProfileData, phone: ownerProfileData.telefone } : undefined;
-                const propertyMedia = mediaMap.get(db.id) || [];
-                const validImages = propertyMedia.filter((m: Media) => m.tipo === 'imagem' && m.url).map((m: Media) => m.url);
-                return {
-                    ...db, title: db.titulo, address: db.endereco_completo, bedrooms: db.quartos,
-                    bathrooms: db.banheiros, area: db.area_bruta, lat: db.latitude, lng: db.longitude,
-                    price: db.preco, description: db.descricao, images: validImages,
-                    videos: propertyMedia.filter((m: Media) => m.tipo === 'video' && m.url).map((m: Media) => m.url),
-                    owner: ownerProfile, midias_imovel: propertyMedia,
-                };
-            });
-
-            setProperties(adaptedProperties);
-            setMyAds(currentUser ? adaptedProperties.filter(p => p.anunciante_id === currentUser.id) : []);
-
-            if (currentUser) {
-                const { data: favoritesData, error: favoritesError } = await supabase.from('favoritos_usuario').select('imovel_id').eq('usuario_id', currentUser.id);
-                if (favoritesError) console.error('Error fetching favorites:', favoritesError);
-                else setFavorites(favoritesData.map(f => f.imovel_id));
-
-                const { data: chatData, error: chatError } = await supabase.rpc('get_user_chat_sessions', { user_id_param: currentUser.id });
-                if (chatError) console.error('Error fetching chat sessions:', chatError);
-                else if (chatData) {
-                    const adaptedSessions: ChatSession[] = chatData.map((s: any) => ({
-                        id: s.session_id, imovel_id: s.imovel_id,
-                        participants: (s.participants || []).reduce((acc: { [key: string]: any }, p: any) => {
-                            if (p && p.id) acc[p.id] = { id: p.id, nome_completo: p.nome_completo };
-                            return acc;
-                        }, {}),
-                        messages: (s.messages || []).filter((m: any) => m && m.id).map((m: any): Message => ({
-                            id: m.id, senderId: m.remetente_id, text: m.conteudo,
-                            timestamp: new Date(m.data_envio), isRead: m.foi_lida,
-                        })).sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime()),
-                        unreadCount: (s.messages || []).filter((m: any) => m && !m.foi_lida && m.remetente_id !== currentUser.id).length,
-                    }));
-                    setChatSessions(adaptedSessions);
-                }
-            } else {
-                setFavorites([]); setChatSessions([]); setMyAds([]);
-            }
-            
-            // Success, exit function
-            console.timeEnd('fetchAllData');
-            setIsLoading(false);
-            fetchingRef.current = false;
-            return;
-        } catch (error: any) {
-            console.error(`Fetch attempt #${attempt} failed:`, error);
-            lastError = error;
-        }
-
-        if (attempt < maxRetries) {
-            await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
-        }
-    }
-
-    // If loop completes, all retries failed
-    console.error('Falha ao buscar dados após múltiplas tentativas:', lastError);
-    if (lastError?.message) {
-        if (lastError.message.includes('Failed to fetch') || lastError.message.includes('NetworkError')) {
-            setFetchError(t('systemModal.fetchError'));
+    // Fetch properties and related data
+    try {
+        let propertyQuery = supabase.from('imoveis').select('*');
+        if (currentUser) {
+            propertyQuery = propertyQuery.or(`status.eq.ativo,anunciante_id.eq.${currentUser.id}`);
         } else {
-            setFetchError(lastError.message);
+            propertyQuery = propertyQuery.eq('status', 'ativo');
         }
+        const { data: propertiesData, error: propertiesError } = await propertyQuery;
+        if (propertiesError) throw propertiesError;
+        if (!propertiesData) throw new Error("Query returned null or undefined data for properties.");
+
+        const propertyIds = propertiesData.map(p => p.id);
+        const announcerIds = [...new Set(propertiesData.map(p => p.anunciante_id).filter(id => id))];
+
+        const [mediaRes, profilesRes] = await Promise.all([
+            supabase.from('midias_imovel').select('*').in('imovel_id', propertyIds),
+            announcerIds.length > 0 ? supabase.from('perfis').select('*').in('id', announcerIds) : Promise.resolve({ data: [], error: null })
+        ]);
+        if (mediaRes.error) throw mediaRes.error;
+        if (profilesRes.error) throw profilesRes.error;
+
+        const profilesMap = new Map(profilesRes.data?.map(p => [p.id, p]));
+        const mediaMap = new Map<number, Media[]>();
+        mediaRes.data?.forEach(m => {
+            if (!mediaMap.has(m.imovel_id)) mediaMap.set(m.imovel_id, []);
+            mediaMap.get(m.imovel_id)!.push(m);
+        });
+
+        const adaptedProperties = propertiesData.map((db: any): Property => {
+            const ownerProfileData = (db.anunciante_id ? profilesMap.get(db.anunciante_id) : undefined) as Profile | undefined;
+            const ownerProfile = ownerProfileData ? { ...ownerProfileData, phone: ownerProfileData.telefone } : undefined;
+            const propertyMedia = mediaMap.get(db.id) || [];
+            const validImages = propertyMedia.filter((m: Media) => m.tipo === 'imagem' && m.url).map((m: Media) => m.url);
+            return {
+                ...db, title: db.titulo, address: db.endereco_completo, bedrooms: db.quartos,
+                bathrooms: db.banheiros, area: db.area_bruta, lat: db.latitude, lng: db.longitude,
+                price: db.preco, description: db.descricao, images: validImages,
+                videos: propertyMedia.filter((m: Media) => m.tipo === 'video' && m.url).map((m: Media) => m.url),
+                owner: ownerProfile, midias_imovel: propertyMedia,
+            };
+        });
+
+        setProperties(adaptedProperties);
+        setMyAds(currentUser ? adaptedProperties.filter(p => p.anunciante_id === currentUser.id) : []);
+        setFetchError(null);
+    } catch (error: any) {
+        console.error('Falha ao buscar imóveis:', error);
+        if (error?.message) {
+            if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                setFetchError(t('systemModal.fetchError'));
+            } else {
+                setFetchError(error.message);
+            }
+        }
+        setProperties([]);
+        setMyAds([]);
     }
-    setProperties([]); setMyAds([]); setFavorites([]); setChatSessions([]);
+
+    // Fetch user-specific data (favorites, chats)
+    if (currentUser) {
+        // Fetch Favorites
+        try {
+            const { data: favoritesData, error: favoritesError } = await supabase.from('favoritos_usuario').select('imovel_id').eq('usuario_id', currentUser.id);
+            if (favoritesError) throw favoritesError;
+            setFavorites(favoritesData.map(f => f.imovel_id));
+        } catch (error) {
+            console.error('Error fetching favorites:', error);
+            setFavorites([]);
+        }
+
+        // Fetch Chat Sessions
+        try {
+            const { data: chatData, error: chatError } = await supabase.rpc('get_user_chat_sessions', { user_id_param: currentUser.id });
+            if (chatError) throw chatError;
+
+            if (chatData) {
+                const adaptedSessions: ChatSession[] = chatData.map((s: any) => ({
+                    id: s.session_id, imovel_id: s.imovel_id,
+                    participants: (s.participants || []).reduce((acc: { [key: string]: any }, p: any) => {
+                        if (p && p.id) acc[p.id] = { id: p.id, nome_completo: p.nome_completo };
+                        return acc;
+                    }, {}),
+                    messages: (s.messages || []).filter((m: any) => m && m.id).map((m: any): Message => ({
+                        id: m.id, senderId: m.remetente_id, text: m.conteudo,
+                        timestamp: new Date(m.data_envio), isRead: m.foi_lida,
+                    })).sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime()),
+                    unreadCount: (s.messages || []).filter((m: any) => m && !m.foi_lida && m.remetente_id !== currentUser.id).length,
+                }));
+                setChatSessions(adaptedSessions);
+            } else {
+                setChatSessions([]);
+            }
+        } catch (error) {
+            console.error('Error fetching chat sessions:', error);
+            setChatSessions([]);
+        }
+    } else {
+        setFavorites([]);
+        setChatSessions([]);
+        setMyAds([]);
+    }
 
     console.timeEnd('fetchAllData');
     setIsLoading(false);
@@ -485,29 +473,58 @@ const App: React.FC = () => {
   
     const channel = supabase
       .channel('public:mensagens_chat')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'mensagens_chat' }, (payload) => {
-        const newMessage = payload.new as any;
-        setChatSessions(prevSessions => {
-          const sessionIndex = prevSessions.findIndex(s => s.id === newMessage.sessao_id);
-          if (sessionIndex === -1) {
-            fetchAllData(user);
-            return prevSessions;
-          }
-          const updatedSessions = [...prevSessions];
-          const targetSession = { ...updatedSessions[sessionIndex] };
-          if (targetSession.messages.some(m => m.id === newMessage.id)) return prevSessions;
-          
-          targetSession.messages = [...targetSession.messages, {
-            id: newMessage.id, senderId: newMessage.remetente_id, text: newMessage.conteudo,
-            timestamp: new Date(newMessage.data_envio), isRead: newMessage.foi_lida
-          }];
-          
-          if (newMessage.remetente_id !== user.id) {
-            targetSession.unreadCount = (targetSession.unreadCount || 0) + 1;
-          }
-          updatedSessions[sessionIndex] = targetSession;
-          return updatedSessions;
-        });
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'mensagens_chat' }, (payload) => {
+        
+        if (payload.eventType === 'INSERT') {
+            const newMessage = payload.new as any;
+            setChatSessions(prevSessions => {
+                const sessionIndex = prevSessions.findIndex(s => s.id === newMessage.sessao_id);
+                // If session doesn't exist, a full refresh is safer to get all participant/property data
+                if (sessionIndex === -1) {
+                    fetchAllData(user);
+                    return prevSessions;
+                }
+                const updatedSessions = [...prevSessions];
+                const targetSession = { ...updatedSessions[sessionIndex] };
+                // Prevent adding duplicates if optimistic update was faster
+                if (targetSession.messages.some(m => m.id === newMessage.id)) {
+                    return prevSessions;
+                }
+                
+                targetSession.messages = [...targetSession.messages, {
+                    id: newMessage.id, senderId: newMessage.remetente_id, text: newMessage.conteudo,
+                    timestamp: new Date(newMessage.data_envio), isRead: newMessage.foi_lida
+                }];
+                
+                if (newMessage.remetente_id !== user.id && !newMessage.foi_lida) {
+                    targetSession.unreadCount = (targetSession.unreadCount || 0) + 1;
+                }
+                updatedSessions[sessionIndex] = targetSession;
+                return updatedSessions.sort((a, b) => { // Keep sessions sorted by last message
+                    const lastMsgA = a.messages[a.messages.length - 1];
+                    const lastMsgB = b.messages[b.messages.length - 1];
+                    if (!lastMsgA) return 1;
+                    if (!lastMsgB) return -1;
+                    return new Date(lastMsgB.timestamp).getTime() - new Date(lastMsgA.timestamp).getTime();
+                });
+            });
+        }
+
+        if (payload.eventType === 'UPDATE') {
+            const updatedMessage = payload.new as any;
+            setChatSessions(prevSessions => 
+                prevSessions.map(session => {
+                    if (session.id === updatedMessage.sessao_id) {
+                        const newMessages = session.messages.map(msg => 
+                            msg.id === updatedMessage.id ? { ...msg, text: updatedMessage.conteudo, isRead: updatedMessage.foi_lida } : msg
+                        );
+                        const newUnreadCount = newMessages.filter(m => !m.isRead && m.senderId !== user.id).length;
+                        return { ...session, messages: newMessages, unreadCount: newUnreadCount };
+                    }
+                    return session;
+                })
+            );
+        }
       })
       .subscribe();
   
@@ -716,26 +733,48 @@ const App: React.FC = () => {
   
   const handleStartChat = async (property: Property) => {
     if (!user || !property.anunciante_id) {
-      openLoginModal();
-      return;
+        openLoginModal();
+        return;
     }
-    
+
+    // Check for existing session
     const { data: existing, error: findError } = await supabase.rpc('find_chat_session', {
-      p_imovel_id: property.id, user1_id: user.id, user2_id: property.anunciante_id
+        p_imovel_id: property.id, user1_id: user.id, user2_id: property.anunciante_id
     });
 
-    if (findError) { console.error("Error finding chat session:", findError); return; }
+    if (findError) {
+        console.error("Error finding chat session:", findError);
+        showModal({ type: 'error', title: t('systemModal.errorTitle'), message: 'Falha ao iniciar conversa.' });
+        return;
+    }
 
     if (existing) {
         navigateToChat(existing);
     } else {
-        const { data: newSession, error: createError } = await supabase.rpc('create_chat_session', {
+        // Create new session
+        const { data: newSessionId, error: createError } = await supabase.rpc('create_chat_session', {
             p_imovel_id: property.id, user1_id: user.id, user2_id: property.anunciante_id
         });
-        if (createError) console.error("Error creating chat session:", createError);
-        else if (newSession) {
+
+        if (createError) {
+            console.error("Error creating chat session:", createError);
+            showModal({ type: 'error', title: t('systemModal.errorTitle'), message: 'Falha ao criar conversa.' });
+        } else if (newSessionId) {
+            // Optimistically add the new session to state
+            const newSessionObject: ChatSession = {
+                id: newSessionId,
+                imovel_id: property.id,
+                participants: {
+                    [user.id]: { id: user.id, nome_completo: profile?.nome_completo || user.email || '' },
+                    [property.anunciante_id]: { id: property.anunciante_id, nome_completo: property.owner?.nome_completo || 'Anunciante' }
+                },
+                messages: [],
+                unreadCount: 0
+            };
+            setChatSessions(prev => [newSessionObject, ...prev]);
+            navigateToChat(newSessionId);
+            // Fetch in background to ensure data consistency, without blocking UI
             fetchAllData(user);
-            navigateToChat(newSession);
         }
     }
   };
@@ -821,10 +860,10 @@ const App: React.FC = () => {
             return <FavoritesPage onBack={navigateHome} properties={favoriteProperties} onViewDetails={navigateToPropertyDetail} favorites={favorites} onToggleFavorite={toggleFavorite} onContactClick={openContactModal} {...headerProps} />;
         case 'chatList':
           if (!user) { navigateHome(); return null; }
-          return <ChatListPage onBack={navigateHome} chatSessions={chatSessions.filter(s => s.participants[user.id])} properties={properties} onNavigateToChat={navigateToChat} {...headerProps} />;
+          return <ChatListPage onBack={navigateHome} chatSessions={chatSessions.filter(s => s.participants[user.id])} properties={[...properties, ...myAds]} onNavigateToChat={navigateToChat} {...headerProps} />;
         case 'chat':
           const session = chatSessions.find(s => s.id === pageState.chatSessionId);
-          const propertyForChat = properties.find(p => p.id === session?.imovel_id);
+          const propertyForChat = [...properties, ...myAds].find(p => p.id === session?.imovel_id);
           if (!session || !user || !propertyForChat) { navigateHome(); return null; }
           return <ChatPage onBack={navigateToChatList} user={user} session={session} property={propertyForChat} onSendMessage={handleSendMessage} onMarkAsRead={handleMarkAsRead} />;
         case 'myAds':
