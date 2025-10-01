@@ -520,25 +520,30 @@ const App: React.FC = () => {
                         return session;
                     }
 
-                    // Optimistic update defense: If the unread count for this session is already 0 in our state,
-                    // and we receive an update that a message is now read, it's highly likely a confirmation
-                    // of our own `handleMarkAsRead`. In this case, we MUST NOT recalculate the unread count,
-                    // as it could be based on stale message data from before the optimistic update, causing the count to jump back up.
-                    const isLikelyMarkAsReadConfirmation = session.unreadCount === 0 && updatedMessage.foi_lida === true && updatedMessage.remetente_id !== user.id;
+                    const messageInState = session.messages.find(m => m.id === updatedMessage.id);
+
+                    // This is the key condition:
+                    // If the message is from another user, was just marked as read by the server,
+                    // AND we had already marked it as read optimistically, then this is a confirmation.
+                    const isReadConfirmation = updatedMessage.remetente_id !== user.id &&
+                                               updatedMessage.foi_lida === true &&
+                                               messageInState?.isRead === true;
 
                     const newMessages = session.messages.map(msg => 
                         msg.id === updatedMessage.id ? { ...msg, text: updatedMessage.conteudo, isRead: updatedMessage.foi_lida } : msg
                     );
 
-                    if (isLikelyMarkAsReadConfirmation) {
-                        // Only update the messages array, but preserve the unread count which is already 0.
+                    if (isReadConfirmation) {
+                        // It's a confirmation of our optimistic `markAsRead`.
+                        // The `unreadCount` should already be 0 from the optimistic update.
+                        // We just update the messages array but preserve the existing unreadCount.
                         return { ...session, messages: newMessages };
+                    } else {
+                        // It's a different kind of update (e.g., other user read our message).
+                        // It is safe to recalculate the unread count.
+                        const newUnreadCount = newMessages.filter(m => !m.isRead && m.senderId !== user.id).length;
+                        return { ...session, messages: newMessages, unreadCount: newUnreadCount };
                     }
-                    
-                    // For all other cases (e.g., our sent message was read by the other party),
-                    // perform the full recalculation to ensure data consistency.
-                    const newUnreadCount = newMessages.filter(m => !m.isRead && m.senderId !== user.id).length;
-                    return { ...session, messages: newMessages, unreadCount: newUnreadCount };
                 })
             );
         }
