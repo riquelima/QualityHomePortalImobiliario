@@ -809,21 +809,41 @@ const App: React.FC = () => {
 
   const handleMarkAsRead = useCallback(async (sessionId: string) => {
     if (!user) return;
-    const sessionToUpdate = chatSessions.find(s => s.id === sessionId);
-    if (!sessionToUpdate || sessionToUpdate.unreadCount === 0) return;
-    
-    const { error } = await supabase.from('mensagens_chat').update({ foi_lida: true })
-        .match({ sessao_id: sessionId, foi_lida: false }).neq('remetente_id', user.id);
 
-    if (error) console.error("Error marking messages as read:", error);
-    else {
-        setChatSessions(prevSessions => prevSessions.map(session => 
-            session.id === sessionId ? { ...session, unreadCount: 0, messages: session.messages.map(msg => 
-                msg.senderId !== user.id ? { ...msg, isRead: true } : msg
-            )} : session
-        ));
+    // Perform an optimistic update for immediate UI feedback.
+    // This uses the functional form of setChatSessions to avoid stale state.
+    setChatSessions(prevSessions => {
+        const sessionNeedsUpdate = prevSessions.some(s => s.id === sessionId && s.unreadCount > 0);
+        if (!sessionNeedsUpdate) {
+            return prevSessions; // No update needed, prevents re-render loops.
+        }
+
+        return prevSessions.map(session => {
+            if (session.id === sessionId) {
+                // Set unread count to 0 and mark all incoming messages as read.
+                return {
+                    ...session,
+                    unreadCount: 0,
+                    messages: session.messages.map(msg =>
+                        (!msg.isRead && msg.senderId !== user.id) ? { ...msg, isRead: true } : msg
+                    )
+                };
+            }
+            return session;
+        });
+    });
+
+    // Update the database in the background.
+    const { error } = await supabase.from('mensagens_chat').update({ foi_lida: true })
+        .match({ sessao_id: sessionId, foi_lida: false })
+        .neq('remetente_id', user.id);
+
+    if (error) {
+        console.error("Error marking messages as read in DB:", error);
+        // On failure, roll back by refetching data to ensure consistency.
+        fetchAllData(user);
     }
-  }, [user, chatSessions]);
+  }, [user, fetchAllData]);
   
   const openContactModal = (property: Property) => {
     if (!property.owner) return;
