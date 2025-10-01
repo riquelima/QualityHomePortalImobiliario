@@ -520,19 +520,23 @@ const App: React.FC = () => {
                         return session;
                     }
 
-                    const messageToUpdate = session.messages.find(m => m.id === updatedMessage.id);
-                    const isNowReadRemotely = updatedMessage.foi_lida === true;
+                    // Optimistic update defense: If the unread count for this session is already 0 in our state,
+                    // and we receive an update that a message is now read, it's highly likely a confirmation
+                    // of our own `handleMarkAsRead`. In this case, we MUST NOT recalculate the unread count,
+                    // as it could be based on stale message data from before the optimistic update, causing the count to jump back up.
+                    const isLikelyMarkAsReadConfirmation = session.unreadCount === 0 && updatedMessage.foi_lida === true && updatedMessage.remetente_id !== user.id;
 
-                    // If the message is now read remotely, but our local state already has it as read
-                    // (due to an optimistic update), we can skip this state update to prevent the flicker.
-                    if (messageToUpdate && messageToUpdate.isRead && isNowReadRemotely) {
-                        return session; 
-                    }
-                    
-                    // Otherwise, the state is genuinely different, so we proceed with the update.
                     const newMessages = session.messages.map(msg => 
                         msg.id === updatedMessage.id ? { ...msg, text: updatedMessage.conteudo, isRead: updatedMessage.foi_lida } : msg
                     );
+
+                    if (isLikelyMarkAsReadConfirmation) {
+                        // Only update the messages array, but preserve the unread count which is already 0.
+                        return { ...session, messages: newMessages };
+                    }
+                    
+                    // For all other cases (e.g., our sent message was read by the other party),
+                    // perform the full recalculation to ensure data consistency.
                     const newUnreadCount = newMessages.filter(m => !m.isRead && m.senderId !== user.id).length;
                     return { ...session, messages: newMessages, unreadCount: newUnreadCount };
                 })
