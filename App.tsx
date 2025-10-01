@@ -514,14 +514,25 @@ const App: React.FC = () => {
             const updatedMessage = payload.new as any;
             setChatSessions(prevSessions => 
                 prevSessions.map(session => {
-                    if (session.id === updatedMessage.sessao_id) {
-                        const newMessages = session.messages.map(msg => 
-                            msg.id === updatedMessage.id ? { ...msg, text: updatedMessage.conteudo, isRead: updatedMessage.foi_lida } : msg
-                        );
-                        const newUnreadCount = newMessages.filter(m => !m.isRead && m.senderId !== user.id).length;
-                        return { ...session, messages: newMessages, unreadCount: newUnreadCount };
+                    if (session.id !== updatedMessage.sessao_id) {
+                        return session;
                     }
-                    return session;
+
+                    const messageToUpdate = session.messages.find(m => m.id === updatedMessage.id);
+                    const isNowReadRemotely = updatedMessage.foi_lida === true;
+
+                    // If the message is now read remotely, but our local state already has it as read
+                    // (due to an optimistic update), we can skip this state update to prevent the flicker.
+                    if (messageToUpdate && messageToUpdate.isRead && isNowReadRemotely) {
+                        return session; 
+                    }
+                    
+                    // Otherwise, the state is genuinely different, so we proceed with the update.
+                    const newMessages = session.messages.map(msg => 
+                        msg.id === updatedMessage.id ? { ...msg, text: updatedMessage.conteudo, isRead: updatedMessage.foi_lida } : msg
+                    );
+                    const newUnreadCount = newMessages.filter(m => !m.isRead && m.senderId !== user.id).length;
+                    return { ...session, messages: newMessages, unreadCount: newUnreadCount };
                 })
             );
         }
