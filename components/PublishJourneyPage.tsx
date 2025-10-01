@@ -18,6 +18,7 @@ import { GoogleGenAI } from '@google/genai';
 import AIIcon from './icons/AIIcon';
 import SpinnerIcon from './icons/SpinnerIcon';
 import WarningIcon from './icons/WarningIcon';
+import { Autocomplete, useJsApiLoader } from '@react-google-maps/api';
 
 type MediaItem = File | (Media & { type: 'existing' });
 
@@ -178,6 +179,14 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
     const [isVerifyingAddress, setIsVerifyingAddress] = useState(false);
     const [isGeneratingTitle, setIsGeneratingTitle] = useState(false);
     const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
+    const [cityAutocomplete, setCityAutocomplete] = useState<any>(null);
+    const [streetAutocomplete, setStreetAutocomplete] = useState<any>(null);
+
+    const { isLoaded } = useJsApiLoader({
+        id: 'google-map-script-journey',
+        googleMapsApiKey: 'AIzaSyDukeY7JJI9UkHIFbsCZOrjPDRukqvUOfA',
+        libraries: ['places'],
+    });
 
     const propertyTypes = [
         { key: 'apartment', value: 'Apartamento' },
@@ -652,6 +661,52 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
         }
     };
 
+    const onCityLoad = (autocomplete: any) => {
+        setCityAutocomplete(autocomplete);
+    }
+    const onStreetLoad = (autocomplete: any) => {
+        setStreetAutocomplete(autocomplete);
+    }
+
+    const onCityPlaceChanged = () => {
+        if (cityAutocomplete) {
+            const place = cityAutocomplete.getPlace();
+            if (place && place.formatted_address) {
+                 setFormData(prev => ({ ...prev, city: place.formatted_address.replace(/, Brazil|, Brasil/i, '').trim() }));
+            }
+        }
+    }
+    
+    const onStreetPlaceChanged = () => {
+        if (streetAutocomplete) {
+            const place = streetAutocomplete.getPlace();
+            if (place && place.address_components) {
+                const get = (type: string, useShortName = false) => {
+                    const component = place.address_components.find((c: any) => c.types.includes(type));
+                    return component ? component[useShortName ? 'short_name' : 'long_name'] : '';
+                };
+                
+                const street_number = get('street_number');
+                const route = get('route');
+                const sublocality_level_1 = get('sublocality_level_1'); // Bairro
+                const administrative_area_level_2 = get('administrative_area_level_2'); // Cidade
+                const state = get('administrative_area_level_1', true); // Estado (short name)
+
+                const cityValue = [sublocality_level_1, administrative_area_level_2, state].filter(Boolean).join(', ');
+
+                setFormData(prev => ({
+                    ...prev,
+                    street: route,
+                    number: street_number,
+                    city: cityValue,
+                }));
+            } else if (place && place.name) {
+                setFormData(prev => ({...prev, street: place.name}));
+            }
+        }
+    }
+
+
     return (
         <div className="bg-brand-light-gray min-h-screen">
             <Header {...props} />
@@ -702,11 +757,37 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                                 <div className="sm:col-span-3">
                                                     <label htmlFor="city" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.form.location.city')}</label>
-                                                    <input type="text" id="city" name="city" value={formData.city} onChange={handleFormChange} required className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" />
+                                                    {isLoaded ? (
+                                                        <Autocomplete
+                                                            onLoad={onCityLoad}
+                                                            onPlaceChanged={onCityPlaceChanged}
+                                                            options={{
+                                                                types: ['(regions)'],
+                                                                componentRestrictions: { country: 'br' },
+                                                            }}
+                                                        >
+                                                            <input type="text" id="city" name="city" value={formData.city} onChange={handleFormChange} required className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" />
+                                                        </Autocomplete>
+                                                    ) : (
+                                                        <input type="text" id="city" name="city" value={formData.city} onChange={handleFormChange} required className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" />
+                                                    )}
                                                 </div>
                                                 <div className="sm:col-span-2">
                                                     <label htmlFor="street" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.form.location.street')}</label>
-                                                    <input type="text" id="street" name="street" value={formData.street} onChange={handleFormChange} required className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" />
+                                                    {isLoaded ? (
+                                                        <Autocomplete
+                                                            onLoad={onStreetLoad}
+                                                            onPlaceChanged={onStreetPlaceChanged}
+                                                            options={{
+                                                                types: ['address'],
+                                                                componentRestrictions: { country: 'br' },
+                                                            }}
+                                                        >
+                                                            <input type="text" id="street" name="street" value={formData.street} onChange={handleFormChange} required className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" />
+                                                        </Autocomplete>
+                                                    ) : (
+                                                        <input type="text" id="street" name="street" value={formData.street} onChange={handleFormChange} required className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" />
+                                                    )}
                                                 </div>
                                                 <div>
                                                     <label htmlFor="number" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.form.location.number')}</label>
