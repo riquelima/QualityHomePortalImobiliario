@@ -134,8 +134,8 @@ const Stepper: React.FC<{ currentStep: number, setStep: (step: number) => void }
 };
 
 export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
-    const { t, language } = useLanguage();
-    const { user, profile, onAddProperty, onUpdateProperty, onPublishError, propertyToEdit, deviceLocation } = props;
+    const { t } = useLanguage();
+    const { user, profile, onAddProperty, onUpdateProperty, onPublishError, propertyToEdit, deviceLocation, onRequestModal } = props;
     
     // Form State
     const [step, setStep] = useState(1);
@@ -204,11 +204,11 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
     
     const validateDetails = useCallback(() => {
         if (formData.title.trim().length < 10) {
-            props.onRequestModal({ type: 'error', title: t('systemModal.errorTitle'), message: t('publishJourney.errors.titleTooShort') });
+            onRequestModal({ type: 'error', title: t('systemModal.errorTitle'), message: t('publishJourney.errors.titleTooShort') });
             return false;
         }
         return true;
-    }, [formData.title, props, t]);
+    }, [formData.title, onRequestModal, t]);
 
     useEffect(() => {
         if (propertyToEdit) {
@@ -385,7 +385,7 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                 setFormData(prev => ({ ...prev, coordinates }));
                 setLocationConfirmationModalOpen(true);
             } else {
-                 props.onRequestModal({
+                 onRequestModal({
                     type: 'error',
                     title: 'Endereço não encontrado',
                     message: 'Não foi possível localizar o endereço fornecido. Por favor, verifique os dados e tente novamente.',
@@ -393,7 +393,7 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
             }
         } catch (error) {
             console.error("Erro de geocodificação:", error);
-            props.onRequestModal({
+            onRequestModal({
                 type: 'error',
                 title: t('systemModal.errorTitle'),
                 message: 'Ocorreu um erro ao tentar verificar o endereço. Por favor, tente novamente.',
@@ -585,11 +585,11 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
             }
         } catch (error) {
             console.error("Erro ao gerar título com IA:", error);
-            props.onRequestModal({ type: 'error', title: t('systemModal.errorTitle'), message: t('publishJourney.detailsForm.aiTitleError')});
+            onRequestModal({ type: 'error', title: t('systemModal.errorTitle'), message: t('publishJourney.detailsForm.aiTitleError')});
         } finally {
             setIsGeneratingTitle(false);
         }
-    }, [formData.title, t, props]);
+    }, [formData.title, t, onRequestModal]);
 
     // AI Description Generation
     const generateAIDescription = useCallback(async () => {
@@ -618,11 +618,11 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
             }
         } catch (error) {
             console.error("Erro ao gerar descrição com IA:", error);
-            props.onRequestModal({ type: 'error', title: t('systemModal.errorTitle'), message: t('publishJourney.detailsForm.aiDescriptionError')});
+            onRequestModal({ type: 'error', title: t('systemModal.errorTitle'), message: t('publishJourney.detailsForm.aiDescriptionError')});
         } finally {
             setIsGeneratingDescription(false);
         }
-    }, [formData, t, props]);
+    }, [formData, t, onRequestModal]);
 
     const handleAcceptLocation = () => {
         setIsLocationPermissionModalOpen(false);
@@ -706,10 +706,24 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
         }
     }
 
+    const { 
+        navigateHome, onPublishAdClick, onAccessClick, onLogout, 
+        onNavigateToFavorites, onNavigateToChatList, onNavigateToMyAds, 
+        onNavigateToAllListings, unreadCount, navigateToGuideToSell, 
+        navigateToDocumentsForSale 
+    } = props;
+    
+    const headerProps = {
+        navigateHome, onPublishAdClick, onAccessClick, user, profile, onLogout,
+        onNavigateToFavorites, onNavigateToChatList, onNavigateToMyAds,
+        onNavigateToAllListings, unreadCount, navigateToGuideToSell,
+        navigateToDocumentsForSale
+    };
+
 
     return (
         <div className="bg-brand-light-gray min-h-screen">
-            <Header {...props} />
+            <Header {...headerProps} />
             <div className="container mx-auto px-4 sm:px-6 py-8">
                 <div className="text-sm mb-6">
                     <span onClick={props.onBack} className="text-brand-red hover:underline cursor-pointer">
