@@ -231,10 +231,10 @@ const App: React.FC = () => {
       setModalConfig(prev => ({ ...prev, isOpen: false }));
   };
 
-  const fetchAllData = useCallback(async (currentUser: User | null) => {
-    if (fetchingRef.current) return;
+  const fetchAllData = useCallback(async (currentUser: User | null, options: { skipChats?: boolean } = {}) => {
+    if (fetchingRef.current && !options.skipChats) return; // Allow property refreshes to proceed
     fetchingRef.current = true;
-    setIsLoading(true);
+    if(!options.skipChats) setIsLoading(true);
     console.time('fetchAllData');
 
     // Fetch properties and related data
@@ -309,30 +309,32 @@ const App: React.FC = () => {
         }
 
         // Fetch Chat Sessions
-        try {
-            const { data: chatData, error: chatError } = await supabase.rpc('get_user_chat_sessions', { user_id_param: currentUser.id });
-            if (chatError) throw chatError;
+        if (!options.skipChats) {
+            try {
+                const { data: chatData, error: chatError } = await supabase.rpc('get_user_chat_sessions', { user_id_param: currentUser.id });
+                if (chatError) throw chatError;
 
-            if (chatData) {
-                const adaptedSessions: ChatSession[] = chatData.map((s: any) => ({
-                    id: s.session_id, imovel_id: s.imovel_id,
-                    participants: (s.participants || []).reduce((acc: { [key: string]: any }, p: any) => {
-                        if (p && p.id) acc[p.id] = { id: p.id, nome_completo: p.nome_completo };
-                        return acc;
-                    }, {}),
-                    messages: (s.messages || []).filter((m: any) => m && m.id).map((m: any): Message => ({
-                        id: m.id, senderId: m.remetente_id, text: m.conteudo,
-                        timestamp: new Date(m.data_envio), isRead: m.foi_lida,
-                    })).sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime()),
-                    unreadCount: (s.messages || []).filter((m: any) => m && !m.foi_lida && m.remetente_id !== currentUser.id).length,
-                }));
-                setChatSessions(adaptedSessions);
-            } else {
+                if (chatData) {
+                    const adaptedSessions: ChatSession[] = chatData.map((s: any) => ({
+                        id: s.session_id, imovel_id: s.imovel_id,
+                        participants: (s.participants || []).reduce((acc: { [key: string]: any }, p: any) => {
+                            if (p && p.id) acc[p.id] = { id: p.id, nome_completo: p.nome_completo };
+                            return acc;
+                        }, {}),
+                        messages: (s.messages || []).filter((m: any) => m && m.id).map((m: any): Message => ({
+                            id: m.id, senderId: m.remetente_id, text: m.conteudo,
+                            timestamp: new Date(m.data_envio), isRead: m.foi_lida,
+                        })).sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime()),
+                        unreadCount: (s.messages || []).filter((m: any) => m && !m.foi_lida && m.remetente_id !== currentUser.id).length,
+                    }));
+                    setChatSessions(adaptedSessions);
+                } else {
+                    setChatSessions([]);
+                }
+            } catch (error) {
+                console.error('Error fetching chat sessions:', error);
                 setChatSessions([]);
             }
-        } catch (error) {
-            console.error('Error fetching chat sessions:', error);
-            setChatSessions([]);
         }
     } else {
         setFavorites([]);
@@ -341,7 +343,7 @@ const App: React.FC = () => {
     }
 
     console.timeEnd('fetchAllData');
-    setIsLoading(false);
+    if(!options.skipChats) setIsLoading(false);
     fetchingRef.current = false;
   }, [t]);
   
@@ -554,7 +556,7 @@ const App: React.FC = () => {
           console.log('Real-time change detected on imoveis table, debouncing fetch:', payload);
           if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
           debounceTimerRef.current = window.setTimeout(() => {
-             fetchAllData(user);
+             fetchAllData(user, { skipChats: true });
           }, 300);
         }
       )
