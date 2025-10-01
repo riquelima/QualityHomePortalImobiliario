@@ -36,7 +36,7 @@ const containerStyle = {
   height: '100%'
 };
 
-const libraries: ('drawing' | 'places' | 'visualization')[] = ['places'];
+const libraries: ('drawing' | 'places' | 'visualization')[] = ['drawing', 'places', 'visualization'];
 
 const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
   const { t } = useLanguage();
@@ -50,7 +50,7 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
   const [autocomplete, setAutocomplete] = useState<any | null>(null);
 
   const { isLoaded, loadError } = useJsApiLoader({
-    id: 'google-map-script-all-listings',
+    id: 'google-map-script',
     // API key hardcoded as per user request to resolve runtime errors.
     googleMapsApiKey: 'AIzaSyDukeY7JJI9UkHIFbsCZOrjPDRukqvUOfA',
     libraries,

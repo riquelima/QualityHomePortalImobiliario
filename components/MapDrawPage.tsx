@@ -27,7 +27,7 @@ const containerStyle = {
   height: '100%',
 };
 
-const libraries: ('drawing' | 'places' | 'visualization')[] = ['drawing', 'visualization'];
+const libraries: ('drawing' | 'places' | 'visualization')[] = ['drawing', 'places', 'visualization'];
 
 const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewDetails, favorites, onToggleFavorite, properties, onContactClick }) => {
   const { t } = useLanguage();
@@ -41,7 +41,7 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewD
   const [drawnCircle, setDrawnCircle] = useState<{center: any, radius: number} | null>(null);
 
   const { isLoaded, loadError } = useJsApiLoader({
-    id: 'google-map-script-draw-page',
+    id: 'google-map-script',
     // API key hardcoded as per user request to resolve runtime errors.
     googleMapsApiKey: 'AIzaSyDukeY7JJI9UkHIFbsCZOrjPDRukqvUOfA',
     libraries,

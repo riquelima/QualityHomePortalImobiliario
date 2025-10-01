@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api';
+import { GoogleMap, Marker } from '@react-google-maps/api';
 import { useLanguage } from '../contexts/LanguageContext';
 import CloseIcon from './icons/CloseIcon';
 import InfoIcon from './icons/InfoIcon';
@@ -10,6 +10,8 @@ interface LocationConfirmationModalProps {
   onClose: () => void;
   onConfirm: (coordinates: { lat: number; lng: number }) => void;
   initialCoordinates: { lat: number; lng: number } | null;
+  isLoaded: boolean;
+  loadError?: Error | null;
 }
 
 const containerStyle = {
@@ -17,20 +19,11 @@ const containerStyle = {
   height: '100%'
 };
 
-const libraries: ('drawing' | 'places' | 'visualization')[] = ['drawing', 'places', 'visualization'];
-
-const LocationConfirmationModal: React.FC<LocationConfirmationModalProps> = ({ isOpen, onClose, onConfirm, initialCoordinates }) => {
+const LocationConfirmationModal: React.FC<LocationConfirmationModalProps> = ({ isOpen, onClose, onConfirm, initialCoordinates, isLoaded, loadError }) => {
   const { t } = useLanguage();
   const modalContentRef = useRef<HTMLDivElement>(null);
   const [markerPosition, setMarkerPosition] = useState(initialCoordinates);
   const [mapView, setMapView] = useState<'roadmap' | 'satellite'>('roadmap');
-
-  const { isLoaded, loadError } = useJsApiLoader({
-    id: 'google-map-script-confirmation',
-    // API key hardcoded as per user request to resolve runtime errors.
-    googleMapsApiKey: 'AIzaSyDukeY7JJI9UkHIFbsCZOrjPDRukqvUOfA',
-    libraries,
-  });
 
   useEffect(() => {
     if (isOpen) {

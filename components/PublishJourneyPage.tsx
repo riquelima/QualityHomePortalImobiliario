@@ -53,6 +53,8 @@ interface PublishJourneyPageProps {
   deviceLocation: { lat: number; lng: number } | null;
 }
 
+const libraries: ('drawing' | 'places' | 'visualization')[] = ['drawing', 'places', 'visualization'];
+
 // API key hardcoded as per user request to resolve runtime errors.
 const ai = new GoogleGenAI({ apiKey: 'AIzaSyCsX9l10XCu3TtSCU1BSx-qOYrwUKYw2xk' });
 
@@ -182,10 +184,11 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
     const [cityAutocomplete, setCityAutocomplete] = useState<any>(null);
     const [streetAutocomplete, setStreetAutocomplete] = useState<any>(null);
 
-    const { isLoaded } = useJsApiLoader({
-        id: 'google-map-script-journey',
+    const { isLoaded, loadError } = useJsApiLoader({
+        id: 'google-map-script',
+        // API key hardcoded as per user request to resolve runtime errors.
         googleMapsApiKey: 'AIzaSyDukeY7JJI9UkHIFbsCZOrjPDRukqvUOfA',
-        libraries: ['places'],
+        libraries,
     });
 
     const propertyTypes = [
@@ -1218,6 +1221,8 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                 onClose={() => setLocationConfirmationModalOpen(false)}
                 onConfirm={handleConfirmLocation}
                 initialCoordinates={formData.coordinates}
+                isLoaded={isLoaded}
+                loadError={loadError}
             />
 
             {isLocationPermissionModalOpen && (
