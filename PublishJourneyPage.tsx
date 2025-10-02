@@ -1,6 +1,7 @@
 
 
 
+
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Header from './components/Header';
 import { useLanguage } from './contexts/LanguageContext';
@@ -59,8 +60,7 @@ interface PublishJourneyPageProps {
 const libraries: ('drawing' | 'places' | 'visualization')[] = ['drawing', 'places', 'visualization'];
 const MAX_FILES = 10;
 
-// API key hardcoded as per user request to resolve runtime errors.
-const ai = new GoogleGenAI({ apiKey: 'AIzaSyCsX9l10XCu3TtSCU1BSx-qOYrwUKYw2xk' });
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || 'AIzaSyCsX9l10XCu3TtSCU1BSx-qOYrwUKYw2xk' });
 
 const generateContentWithRetry = async (prompt: string, maxRetries = 3) => {
   let attempt = 0;
@@ -190,8 +190,7 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
 
     const { isLoaded, loadError } = useJsApiLoader({
         id: 'google-map-script',
-        // API key hardcoded as per user request to resolve runtime errors.
-        googleMapsApiKey: 'AIzaSyDukeY7JJI9UkHIFbsCZOrjPDRukqvUOfA',
+        googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY || 'AIzaSyDukeY7JJI9UkHIFbsCZOrjPDRukqvUOfA',
         libraries,
     });
 

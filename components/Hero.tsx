@@ -1,4 +1,5 @@
 
+
 import React, { useState, useRef, useEffect } from 'react';
 import SearchIcon from './icons/SearchIcon';
 import ChevronDownIcon from './icons/ChevronDownIcon';
@@ -17,8 +18,7 @@ interface HeroProps {
   onTabChange: (tab: 'venda' | 'aluguel' | 'temporada') => void;
 }
 
-// API key hardcoded as per user request to resolve runtime errors.
-const ai = new GoogleGenAI({ apiKey: 'AIzaSyCsX9l10XCu3TtSCU1BSx-qOYrwUKYw2xk' });
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || 'AIzaSyCsX9l10XCu3TtSCU1BSx-qOYrwUKYw2xk' });
 
 const generateContentWithRetry = async (prompt: string, maxRetries = 3) => {
   let attempt = 0;

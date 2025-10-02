@@ -1,6 +1,7 @@
 
 
 
+
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
@@ -716,18 +717,19 @@ const App: React.FC = () => {
   useEffect(() => {
     if (!isLoading) return;
     const timeoutId = setTimeout(() => {
+      // Only trigger timeout if it's the very first fetch that's failing.
       if (!initialFetchSuccess) {
-        console.warn("Initial fetch timeout reached. Setting a fetch error.");
-        setFetchError("A conexão com o servidor demorou mais que o esperado. Por favor, verifique sua conexão com a internet e recarregue a página.");
-        setIsLoading(false); 
-        fetchingRef.current = false; 
-      } else {
-        console.warn("A background data refresh is taking a long time but will be ignored to prevent UI disruption.");
+        console.warn("Initial fetch timeout reached. This is likely a CORS or network configuration issue.");
+        // Re-use the CORS error UI as it's the most likely cause for a timeout on a new production deployment.
+        setIsCorsError(true);
+        setFetchError(t('systemModal.corsError.title'));
+        setIsLoading(false);
+        fetchingRef.current = false;
       }
-    }, 12000); 
+    }, 15000); // Increased timeout to 15s to be more lenient on slow networks.
 
     return () => clearTimeout(timeoutId);
-  }, [isLoading, initialFetchSuccess]);
+  }, [isLoading, initialFetchSuccess, t]);
   
   const navigateToMap = (location: { lat: number; lng: number } | null = null) => setPageState({ page: 'map', userLocation: location });
   const navigateToPublish = () => setPageState({ page: 'publish', userLocation: null });
