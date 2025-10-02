@@ -640,11 +640,19 @@ const App: React.FC = () => {
   useEffect(() => {
     if (!isLoading) return;
     const timeoutId = setTimeout(() => {
-      console.warn("Fetch timeout reached. Forcing loading state to false.");
-      setIsLoading(false);
-    }, 8000);
+      // Only set a page-blocking error if the initial fetch has not completed.
+      if (!initialFetchSuccess) {
+        console.warn("Initial fetch timeout reached. Setting a fetch error.");
+        setFetchError("A conexão com o servidor demorou mais que o esperado. Por favor, verifique sua conexão com a internet e recarregue a página.");
+        setIsLoading(false); // Stop loading to display the error.
+        fetchingRef.current = false; // Allow for future fetch attempts.
+      } else {
+        console.warn("A background data refresh is taking a long time but will be ignored to prevent UI disruption.");
+      }
+    }, 12000); // 12 second timeout
+
     return () => clearTimeout(timeoutId);
-  }, [isLoading]);
+  }, [isLoading, initialFetchSuccess]);
   
   const navigateToMap = (location: { lat: number; lng: number } | null = null) => setPageState({ page: 'map', userLocation: location });
   const navigateToPublish = () => setPageState({ page: 'publish', userLocation: null });
@@ -1038,10 +1046,7 @@ const App: React.FC = () => {
                       <div className="text-center py-16 bg-red-50 border border-red-200 rounded-lg">
                           <ErrorIcon className="w-12 h-12 text-brand-red mx-auto mb-4" />
                           <p className="text-brand-red font-semibold text-lg mb-2">{t('systemModal.errorTitle')}</p>
-                          <p className="text-brand-gray">{t('systemModal.fetchError')}</p>
-                          <p className="mt-4 text-sm text-gray-600 bg-red-100 p-3 rounded-md inline-block max-w-full overflow-x-auto">
-                              <strong className="font-bold">{t('systemModal.errorDetails')}:</strong> <code className="text-xs">{fetchError}</code>
-                          </p>
+                          <p className="text-brand-gray max-w-lg mx-auto">{fetchError}</p>
                       </div>
                     </div>
                   </section>
