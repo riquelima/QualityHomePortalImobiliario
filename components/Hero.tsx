@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import SearchIcon from './icons/SearchIcon';
 import ChevronDownIcon from './icons/ChevronDownIcon';
@@ -12,6 +13,8 @@ interface HeroProps {
   onGeolocationError: () => void;
   onSearchSubmit: (query: string) => void;
   deviceLocation: { lat: number; lng: number } | null;
+  activeTab: 'venda' | 'aluguel' | 'temporada';
+  onTabChange: (tab: 'venda' | 'aluguel' | 'temporada') => void;
 }
 
 // API key hardcoded as per user request to resolve runtime errors.
@@ -41,8 +44,7 @@ const generateContentWithRetry = async (prompt: string, maxRetries = 3) => {
 };
 
 
-const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe, onGeolocationError, onSearchSubmit, deviceLocation }) => {
-  const [activeTab, setActiveTab] = useState('comprar');
+const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe, onGeolocationError, onSearchSubmit, deviceLocation, activeTab, onTabChange }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isSearchingNearMe, setIsSearchingNearMe] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -151,19 +153,19 @@ const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe, onGeoloca
         <div className="bg-white p-2 rounded-lg">
           <div className="flex flex-wrap border-b mb-4">
             <button 
-              onClick={() => setActiveTab('comprar')}
-              className={`px-4 sm:px-6 py-2 text-base sm:text-lg font-medium transition-colors duration-300 ${activeTab === 'comprar' ? 'border-b-4 border-brand-red text-brand-dark' : 'text-brand-gray'}`}
+              onClick={() => onTabChange('venda')}
+              className={`px-4 sm:px-6 py-2 text-base sm:text-lg font-medium transition-colors duration-300 ${activeTab === 'venda' ? 'border-b-4 border-brand-red text-brand-dark' : 'text-brand-gray'}`}
             >
               {t('hero.tabs.buy')}
             </button>
             <button 
-              onClick={() => setActiveTab('alugar')}
-              className={`px-4 sm:px-6 py-2 text-base sm:text-lg font-medium transition-colors duration-300 ${activeTab === 'alugar' ? 'border-b-4 border-brand-red text-brand-dark' : 'text-brand-gray'}`}
+              onClick={() => onTabChange('aluguel')}
+              className={`px-4 sm:px-6 py-2 text-base sm:text-lg font-medium transition-colors duration-300 ${activeTab === 'aluguel' ? 'border-b-4 border-brand-red text-brand-dark' : 'text-brand-gray'}`}
             >
               {t('hero.tabs.rent')}
             </button>
             <button 
-              onClick={() => setActiveTab('temporada')}
+              onClick={() => onTabChange('temporada')}
               className={`px-4 sm:px-6 py-2 text-base sm:text-lg font-medium transition-colors duration-300 ${activeTab === 'temporada' ? 'border-b-4 border-brand-red text-brand-dark' : 'text-brand-gray'}`}
             >
               {t('hero.tabs.season')}

@@ -56,6 +56,7 @@ interface PublishJourneyPageProps {
 }
 
 const libraries: ('drawing' | 'places' | 'visualization')[] = ['drawing', 'places', 'visualization'];
+const MAX_FILES = 10;
 
 // API key hardcoded as per user request to resolve runtime errors.
 const ai = new GoogleGenAI({ apiKey: 'AIzaSyCsX9l10XCu3TtSCU1BSx-qOYrwUKYw2xk' });
@@ -432,6 +433,16 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
             const newFiles = Array.from(e.target.files);
+            
+            if (files.length + newFiles.length > MAX_FILES) {
+                onRequestModal({
+                    type: 'error',
+                    title: t('publishJourney.limitExceeded.title'),
+                    message: t('publishJourney.limitExceeded.message', { count: MAX_FILES }),
+                });
+                return;
+            }
+            
             setFiles(prev => [...prev, ...newFiles]);
         }
     };
@@ -454,34 +465,49 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
             setStep(2);
             return;
         }
-
+    
         if (!user) {
             onPublishError("Usuário não autenticado.");
             return;
         }
         setIsSubmitting(true);
-
+    
         try {
-            // 1. Upload new files to Supabase Storage
+            // 1. Upload new files to Supabase Storage in parallel
             const newFilesToUpload = files.filter(f => f instanceof File) as File[];
-            const uploadedUrls: { url: string, type: 'imagem' | 'video' }[] = [];
-
-            for (const file of newFilesToUpload) {
+            
+            const filesWithPaths = newFilesToUpload.map(file => {
                 const fileExt = file.name.split('.').pop();
-                const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-                const { error: uploadError } = await supabase.storage
-                    .from('midia')
-                    .upload(fileName, file);
-
-                if (uploadError) throw new Error(`Erro no upload do arquivo ${file.name}: ${uploadError.message}`);
-                
-                const { data } = supabase.storage.from('midia').getPublicUrl(fileName);
-                uploadedUrls.push({
-                    url: data.publicUrl,
-                    type: file.type.startsWith('video') ? 'video' : 'imagem'
-                });
+                const fileName = `${user.id}/${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
+                return { file, path: fileName };
+            });
+    
+            const uploadPromises = filesWithPaths.map(({ file, path }) =>
+                supabase.storage.from('midia').upload(path, file)
+            );
+    
+            const uploadResults = await Promise.all(uploadPromises);
+    
+            const uploadErrors = uploadResults.filter(result => result.error);
+            if (uploadErrors.length > 0) {
+                const successfulPaths = filesWithPaths
+                    .map((f, i) => !uploadResults[i].error ? f.path : null)
+                    .filter((p): p is string => p !== null);
+                if (successfulPaths.length > 0) {
+                    await supabase.storage.from('midia').remove(successfulPaths);
+                }
+                throw new Error(`Falha ao enviar ${uploadErrors.length} arquivos. Erro: ${uploadErrors[0].error.message}`);
             }
-
+    
+            const uploadedUrls = filesWithPaths.map(({ file, path }) => {
+                const { data } = supabase.storage.from('midia').getPublicUrl(path);
+                return {
+                    url: data.publicUrl,
+                    type: file.type.startsWith('video') ? 'video' : 'imagem' as 'imagem' | 'video'
+                };
+            });
+    
+            // 2. Prepare and save property data
             const propertyDataForDb = {
                 anunciante_id: user.id,
                 titulo: formData.title,
@@ -518,7 +544,7 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                 em_condominio: formData.detailsPropertyType === 'Terreno' ? formData.isGatedCommunity : undefined,
                 status: 'ativo',
             };
-
+    
             if (propertyToEdit) {
                 const { error } = await supabase.from('imoveis').update(propertyDataForDb).eq('id', propertyToEdit.id);
                 if (error) throw error;
@@ -534,12 +560,12 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                         if (dbDeleteError) console.error("Failed to delete media from DB:", dbDeleteError);
                     }
                 }
-
+    
                 if (uploadedUrls.length > 0) {
                     const mediaToInsert = uploadedUrls.map(media => ({
                         imovel_id: propertyToEdit.id,
                         url: media.url,
-                        tipo: media.type as 'imagem' | 'video'
+                        tipo: media.type
                     }));
                     const { error: mediaInsertError } = await supabase.from('midias_imovel').insert(mediaToInsert);
                     if (mediaInsertError) throw mediaInsertError;
@@ -554,14 +580,14 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                     const mediaToInsert = uploadedUrls.map(media => ({
                         imovel_id: insertedProperty.id,
                         url: media.url,
-                        tipo: media.type as 'imagem' | 'video'
+                        tipo: media.type
                     }));
                     const { error: mediaInsertError } = await supabase.from('midias_imovel').insert(mediaToInsert);
                     if (mediaInsertError) throw mediaInsertError;
                 }
                 await onAddProperty({ ...propertyDataForDb, id: insertedProperty.id } as any);
             }
-
+    
             if (formData.contactPhone && formData.contactPhone !== profile?.telefone) {
                 const { error: profileError } = await supabase
                     .from('perfis')

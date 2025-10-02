@@ -4,6 +4,12 @@ import React, { createContext, useState, useContext, ReactNode, useCallback } fr
 
 // Translations are embedded directly to avoid module resolution issues.
 const ptTranslations = {
+  "initialGeolocationModal": {
+    "title": "Usar sua localização?",
+    "message": "Para aprimorar sua experiência e mostrar imóveis perto de você, podemos usar sua localização. Seus dados exatos nunca são compartilhados.",
+    "allowButton": "Permitir",
+    "denyButton": "Talvez depois"
+  },
   "header": {
     "nav": {
       "owners": "Proprietários",
@@ -187,6 +193,10 @@ const ptTranslations = {
     "editTitle": "Editar seu anúncio",
     "adPublishedSuccess": "Anúncio publicado com sucesso!",
     "errors": { "titleTooShort": "O título do anúncio deve ter pelo menos 10 caracteres." },
+    "limitExceeded": {
+      "title": "Limite de arquivos excedido",
+      "message": "Você pode enviar no máximo {count} arquivos por anúncio."
+    },
     "form": {
       "propertyType": {
         "label": "Escolha o tipo de imóvel"
@@ -328,7 +338,7 @@ const ptTranslations = {
       "title": "Adicione fotos, plantas e vídeos ao seu anúncio",
       "dragAndDrop": "Arraste e solte suas fotos aqui ou selecione do seu dispositivo",
       "addButton": "Adicionar fotos e vídeos",
-      "limitsInfo": "Selecione até 30 fotos e 10 plantas (máx. 32MB cada) e 6 vídeos (máx. 600MB cada) da sua galeria.",
+      "limitsInfo": "Envie até 10 arquivos (fotos e vídeos). Máx. 32MB por foto e 600MB por vídeo.",
       "rememberTitle": "Lembre-se...",
       "tip1": "Fotos, plantas e vídeos atraem mais pessoas para o seu anúncio",
       "tip2": "Se você tiver a planta do imóvel, pode tirar uma foto dela ou desenhá-la à mão e fotografar o desenho",
@@ -523,6 +533,12 @@ const ptTranslations = {
   }
 };
 const enTranslations = {
+  "initialGeolocationModal": {
+    "title": "Use your location?",
+    "message": "To enhance your experience and show properties near you, we can use your location. Your exact data is never shared.",
+    "allowButton": "Allow",
+    "denyButton": "Maybe Later"
+  },
   "header": {
     "nav": {
       "owners": "Owners",
@@ -714,6 +730,10 @@ const enTranslations = {
     "editTitle": "Edit your ad",
     "adPublishedSuccess": "Ad published successfully!",
     "errors": { "titleTooShort": "The ad title must be at least 10 characters long." },
+    "limitExceeded": {
+      "title": "File Limit Exceeded",
+      "message": "You can upload a maximum of {count} files per ad."
+    },
     "form": {
       "propertyType": {
         "label": "Choose the property type"
@@ -855,7 +875,7 @@ const enTranslations = {
       "title": "Add photos, floor plans, and videos to your ad",
       "dragAndDrop": "Drag and drop your photos here or select them from your device",
       "addButton": "Add photos and videos",
-      "limitsInfo": "Select up to 30 photos and 10 floor plans (max. 32 MB each) and 6 videos (max. 600 MB each) from your gallery.",
+      "limitsInfo": "Upload up to 10 files (photos and videos). Max 32MB per photo and 600MB per video.",
       "rememberTitle": "Remember that...",
       "tip1": "Photos, floor plans, and videos: attract more people to your ad",
       "tip2": "If you have a floor plan of the property, you can take a photo of it or draw it by hand and take a photograph of the drawing",
@@ -1050,6 +1070,12 @@ const enTranslations = {
   }
 };
 const esTranslations = {
+  "initialGeolocationModal": {
+    "title": "¿Usar tu ubicación?",
+    "message": "Para mejorar tu experiencia y mostrarte propiedades cercanas, podemos usar tu ubicación. Tus datos exactos nunca se comparten.",
+    "allowButton": "Permitir",
+    "denyButton": "Quizás más tarde"
+  },
   "header": {
     "nav": {
       "owners": "Propietarios",
@@ -1241,6 +1267,10 @@ const esTranslations = {
     "editTitle": "Editar tu anuncio",
     "adPublishedSuccess": "¡Anuncio publicado con éxito!",
     "errors": { "titleTooShort": "El título del anuncio debe tener al menos 10 caracteres." },
+    "limitExceeded": {
+      "title": "Límite de archivos excedido",
+      "message": "Puedes subir un máximo de {count} archivos por anuncio."
+    },
     "form": {
       "propertyType": {
         "label": "Elige el tipo de inmueble"
@@ -1382,7 +1412,7 @@ const esTranslations = {
         "title": "Añadir fotos, planos y vídeos a tu anuncio",
         "dragAndDrop": "Arrastra y suelta tus fotos aquí o selecciónalas desde tu dispositivo",
         "addButton": "Añadir fotos y vídeos",
-        "limitsInfo": "Selecciona hasta 30 fotos y 10 planos (máx. 32 MB cada uno) y 6 vídeos (máx. 600 MB cada uno) de tu galería.",
+        "limitsInfo": "Sube hasta 10 archivos (fotos y vídeos). Máx. 32 MB por foto y 600 MB por vídeo.",
         "rememberTitle": "Recuerda que...",
         "tip1": "Fotos, planos y vídeos: atraen a más personas a tu anuncio",
         "tip2": "Si tienes un plano del inmueble, puedes hacerle una foto o dibujarlo a mano y hacer una fotografía del dibujo",

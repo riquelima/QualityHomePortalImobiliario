@@ -11,6 +11,7 @@ import PublishAdPage from './components/PublishAdPage';
 import { PublishJourneyPage } from './components/PublishJourneyPage';
 import LoginModal from './components/LoginModal';
 import GeolocationErrorModal from './components/GeolocationErrorModal';
+import InitialGeolocationModal from './components/InitialGeolocationModal';
 import SearchResultsPage from './components/SearchResultsPage';
 import PropertyDetailPage from './components/PropertyDetailPage';
 import FavoritesPage from './components/FavoritesPage';
@@ -236,6 +237,7 @@ const App: React.FC = () => {
   const [pageState, setPageState] = useState<PageState>({ page: 'home', userLocation: null });
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isGeoErrorModalOpen, setIsGeoErrorModalOpen] = useState(false);
+  const [isInitialGeoPromptOpen, setIsInitialGeoPromptOpen] = useState(false);
   const [modalConfig, setModalConfig] = useState<ModalConfig>({ isOpen: false, type: 'success', title: '', message: '' });
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -255,6 +257,8 @@ const App: React.FC = () => {
   const [isSplashFading, setIsSplashFading] = useState(false);
   const [deviceLocation, setDeviceLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [initialFetchSuccess, setInitialFetchSuccess] = useState(false);
+  const [activeTab, setActiveTab] = useState<'venda' | 'aluguel' | 'temporada'>('venda');
+
 
   const totalUnreadChatsCount = chatSessions.filter(s => s.unreadCount > 0).length;
 
@@ -405,7 +409,10 @@ const App: React.FC = () => {
     };
   }, []);
 
-  useEffect(() => {
+  const handleAllowGeolocation = () => {
+    localStorage.setItem('geolocationRequested', 'true');
+    setIsInitialGeoPromptOpen(false);
+
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -414,18 +421,26 @@ const App: React.FC = () => {
           setDeviceLocation({ lat: latitude, lng: longitude });
         },
         (error) => {
-          console.error("Geolocation error on app load:", error);
-          if (!sessionStorage.getItem('geolocationErrorShown')) {
-            openGeoErrorModal();
-            sessionStorage.setItem('geolocationErrorShown', 'true');
-          }
+          console.error("Geolocation error after prompt:", error);
         },
-        { 
-          enableHighAccuracy: true, 
-          timeout: 20000,           
-          maximumAge: 0             
-        }
+        { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
       );
+    }
+  };
+
+  const handleDenyGeolocation = () => {
+    localStorage.setItem('geolocationRequested', 'true');
+    setIsInitialGeoPromptOpen(false);
+  };
+
+  useEffect(() => {
+    const geolocationRequested = localStorage.getItem('geolocationRequested');
+    if (!geolocationRequested) {
+        const timer = setTimeout(() => {
+            setIsInitialGeoPromptOpen(true);
+        }, 2600);
+        
+        return () => clearTimeout(timer);
     }
   }, []);
 
@@ -1023,6 +1038,10 @@ const App: React.FC = () => {
     return properties.filter(p => p.anunciante_id === user.id);
   }, [properties, user]);
 
+  const filteredPropertiesForHome = useMemo(() => {
+    return properties.filter(p => p.tipo_operacao === activeTab);
+  }, [properties, activeTab]);
+
   const renderCurrentPage = () => {
     const headerProps = {
       navigateHome, onPublishAdClick: handlePublishClick, onAccessClick: () => openLoginModal('default'),
@@ -1070,7 +1089,15 @@ const App: React.FC = () => {
             <div className="bg-white font-sans text-brand-dark">
               <Header {...headerProps} />
               <main>
-                <Hero deviceLocation={deviceLocation} onDrawOnMapClick={() => navigateToMap()} onSearchNearMe={(location) => navigateToMap(location)} onGeolocationError={openGeoErrorModal} onSearchSubmit={navigateToSearchResults} />
+                <Hero 
+                    deviceLocation={deviceLocation} 
+                    onDrawOnMapClick={() => navigateToMap()} 
+                    onSearchNearMe={(location) => navigateToMap(location)} 
+                    onGeolocationError={openGeoErrorModal} 
+                    onSearchSubmit={navigateToSearchResults}
+                    activeTab={activeTab}
+                    onTabChange={setActiveTab}
+                />
                 
                 {isCorsError ? (
                   <section className="bg-white pt-16 sm:pt-20">
@@ -1136,7 +1163,7 @@ const App: React.FC = () => {
                 ) : null}
 
                 <PropertyListings 
-                  properties={properties} 
+                  properties={filteredPropertiesForHome} 
                   onViewDetails={navigateToPropertyDetail} 
                   favorites={favorites} 
                   onToggleFavorite={toggleFavorite} 
@@ -1170,6 +1197,7 @@ const App: React.FC = () => {
           {renderCurrentPage()}
           <LoginModal isOpen={isLoginModalOpen} onClose={closeLoginModal} loginIntent={loginIntent} showModal={showModal} />
           <GeolocationErrorModal isOpen={isGeoErrorModalOpen} onClose={closeGeoErrorModal} />
+          <InitialGeolocationModal isOpen={isInitialGeoPromptOpen} onAllow={handleAllowGeolocation} onDeny={handleDenyGeolocation} />
           <SystemModal {...modalConfig} onClose={hideModal} />
           <ContactModal isOpen={!!contactModalProperty} onClose={closeContactModal} owner={contactModalProperty?.owner} propertyTitle={contactModalProperty?.title || ''}
             onStartChat={() => {
