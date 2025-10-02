@@ -1,6 +1,5 @@
 
 
-
 import type { User } from '@supabase/supabase-js';
 
 export { User };
@@ -50,7 +49,7 @@ export interface Property {
 
 
   // Campos que já existem no front
-  images: string[] | null;
+  images?: string[] | null;
   videos?: string[] | null;
   status?: string; // Alterado para string para suportar 'ativo'/'inativo'
   owner?: Profile & { email?: string, phone?: string }; // Merged Profile with legacy owner fields for compatibility

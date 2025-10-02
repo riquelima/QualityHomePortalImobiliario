@@ -1,25 +1,25 @@
 
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import Header from './Header';
-import { useLanguage } from '../contexts/LanguageContext';
-import type { User, Property, Profile, Media } from '../types';
-import BoltIcon from './icons/BoltIcon';
-import BriefcaseIcon from './icons/BriefcaseIcon';
-import LocationConfirmationModal from './LocationConfirmationModal';
-import VerifiedIcon from './icons/VerifiedIcon';
-import PlusIcon from './icons/PlusIcon';
-import MinusIcon from './icons/MinusIcon';
-import CheckIcon from './icons/CheckIcon';
-import PhotoIcon from './icons/PhotoIcon';
-import PlanIcon from './icons/PlanIcon';
-import VideoIcon from './icons/VideoIcon';
-import { supabase } from '../supabaseClient';
-import CloseIcon from './icons/CloseIcon';
+import Header from './components/Header';
+import { useLanguage } from './contexts/LanguageContext';
+import type { User, Property, Profile, Media } from './types';
+import BoltIcon from './components/icons/BoltIcon';
+import BriefcaseIcon from './components/icons/BriefcaseIcon';
+import LocationConfirmationModal from './components/LocationConfirmationModal';
+import VerifiedIcon from './components/icons/VerifiedIcon';
+import PlusIcon from './components/icons/PlusIcon';
+import MinusIcon from './components/icons/MinusIcon';
+import CheckIcon from './components/icons/CheckIcon';
+import PhotoIcon from './components/icons/PhotoIcon';
+import PlanIcon from './components/icons/PlanIcon';
+import VideoIcon from './components/icons/VideoIcon';
+import { supabase } from './supabaseClient';
+import CloseIcon from './components/icons/CloseIcon';
 import { GoogleGenAI } from '@google/genai';
-import AIIcon from './icons/AIIcon';
-import SpinnerIcon from './icons/SpinnerIcon';
-import WarningIcon from './icons/WarningIcon';
+import AIIcon from './components/icons/AIIcon';
+import SpinnerIcon from './components/icons/SpinnerIcon';
+import WarningIcon from './components/icons/WarningIcon';
 import { Autocomplete, useJsApiLoader } from '@react-google-maps/api';
 
 type MediaItem = File | (Media & { type: 'existing' });
