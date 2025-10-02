@@ -284,24 +284,7 @@ const App: React.FC = () => {
         const { data: propertiesData, error: propertiesError } = await propertyQuery;
         if (propertiesError) throw propertiesError;
 
-        if (!propertiesData || propertiesData.length === 0) {
-            if (initialFetchSuccess) {
-                console.warn("A atualização em tempo real retornou uma lista vazia. Mantendo os dados antigos e exibindo um aviso.");
-                showModal({
-                    type: 'error',
-                    title: 'Falha na Sincronização',
-                    message: 'Não foi possível atualizar os imóveis. Os dados exibidos podem estar desatualizados. Por favor, verifique a conexão e as configurações do banco de dados.'
-                });
-                fetchingRef.current = false;
-                if (!options.skipChats) setIsLoading(false);
-                console.timeEnd('fetchAllData');
-                return;
-            } else {
-                throw new Error("SYNC_ERROR");
-            }
-        }
-        
-        const coreProperties = propertiesData.map((db: any): Property => {
+        const coreProperties = (propertiesData || []).map((db: any): Property => {
             const ownerProfileData = db.perfis as Profile | undefined;
             const ownerProfile = ownerProfileData ? { ...ownerProfileData, phone: ownerProfileData.telefone } : undefined;
             
@@ -399,7 +382,7 @@ const App: React.FC = () => {
 
     console.timeEnd('fetchAllData');
     fetchingRef.current = false;
-  }, [t, initialFetchSuccess, showModal]);
+  }, [t, showModal]);
   
   const navigateToPublishJourney = () => setPageState({ page: 'publish-journey', userLocation: null });
   
@@ -500,6 +483,25 @@ const App: React.FC = () => {
       authListener.subscription.unsubscribe();
     };
   }, [loginIntent, fetchAllData]);
+  
+  // Effect to re-fetch data on window focus for better synchronization
+  useEffect(() => {
+    const handleFocus = () => {
+      // Re-fetch data to ensure synchronization when the user returns to the tab.
+      // We skip chats for a quicker, more focused update on properties.
+      // isAuthReady check ensures we don't fetch before the user session is known.
+      if (isAuthReady) {
+        console.log('Window focused, fetching latest data.');
+        fetchAllData(user, { skipChats: true });
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [isAuthReady, user, fetchAllData]);
 
   useEffect(() => {
     if (user && isAuthReady) {
@@ -1121,7 +1123,7 @@ const App: React.FC = () => {
                       </div>
                     </div>
                   </section>
-                ) : fetchError ? (
+                ) : fetchError && !isLoading && properties.length === 0 ? (
                   <section className="bg-white pt-16 sm:pt-20">
                     <div className="container mx-auto px-4 sm:px-6">
                       <div className="text-center py-16 bg-red-50 border border-red-200 rounded-lg">
@@ -1138,7 +1140,7 @@ const App: React.FC = () => {
                   onViewDetails={navigateToPropertyDetail} 
                   favorites={favorites} 
                   onToggleFavorite={toggleFavorite} 
-                  isLoading={isLoading} 
+                  isLoading={isLoading && !initialFetchSuccess} 
                   onContactClick={openContactModal} 
                 />
               </main>
