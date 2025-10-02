@@ -56,7 +56,7 @@ const seedDatabase = async () => {
   console.log(`Usuário de teste ID: ${testUserId}`);
 
   try {
-    // 1. Limpar dados antigos
+    // 1. Limpar dados antigos (incluindo arquivos do storage)
     console.log('Limpando anúncios e mídias antigas...');
     const { data: userProperties, error: fetchError } = await supabase
       .from('imoveis')
@@ -68,11 +68,44 @@ const seedDatabase = async () => {
     if (userProperties && userProperties.length > 0) {
       const propertyIds = userProperties.map(p => p.id);
       
+      // Fetch media URLs for storage deletion before deleting DB records
+      const { data: media, error: fetchMediaError } = await supabase
+          .from('midias_imovel')
+          .select('url')
+          .in('imovel_id', propertyIds);
+
+      if (fetchMediaError) {
+          throw new Error(`Erro ao buscar mídias antigas para limpeza: ${fetchMediaError.message}`);
+      }
+      
+      // Delete files from storage
+      if (media && media.length > 0) {
+          const pathsToRemove = media.map(m => {
+              try {
+                  const url = new URL(m.url);
+                  const pathParts = url.pathname.split('/midia/');
+                  if (pathParts.length > 1) return pathParts[1];
+                  return null;
+              } catch (e) { return null; }
+          }).filter((p): p is string => p !== null);
+
+          if (pathsToRemove.length > 0) {
+              const { error: storageError } = await supabase.storage.from('midia').remove(pathsToRemove);
+              if (storageError) {
+                  // Log error but don't stop the seed process
+                  console.error(`Falha ao remover arquivos antigos do armazenamento: ${storageError.message}`);
+              } else {
+                  console.log(`${pathsToRemove.length} arquivos antigos removidos do armazenamento.`);
+              }
+          }
+      }
+
+      // Proceed with deleting DB records
       const { error: mediaDeleteError } = await supabase.from('midias_imovel').delete().in('imovel_id', propertyIds);
-      if (mediaDeleteError) console.warn(`Aviso ao deletar mídias antigas: ${mediaDeleteError.message}. Isso pode ocorrer se a tabela 'midia' não existir ou estiver vazia.`);
+      if (mediaDeleteError) console.warn(`Aviso ao deletar mídias antigas do DB: ${mediaDeleteError.message}.`);
 
       const { error: propertyDeleteError } = await supabase.from('imoveis').delete().eq('anunciante_id', testUserId);
-      if (propertyDeleteError) throw new Error(`Erro ao deletar imóveis antigos: ${propertyDeleteError.message}`);
+      if (propertyDeleteError) throw new Error(`Erro ao deletar imóveis antigos do DB: ${propertyDeleteError.message}`);
       
       console.log(`${propertyIds.length} anúncios antigos e suas mídias foram limpos.`);
     } else {
@@ -811,6 +844,18 @@ const App: React.FC = () => {
   }, [t, showModal]);
 
   const confirmDeleteProperty = async (propertyId: number) => {
+    // 1. Get media URLs to delete from storage later
+    const { data: media, error: fetchMediaError } = await supabase
+        .from('midias_imovel')
+        .select('url')
+        .eq('imovel_id', propertyId);
+
+    if (fetchMediaError) {
+        showModal({ type: 'error', title: t('systemModal.errorTitle'), message: `Erro ao buscar mídias para exclusão. Detalhes: ${fetchMediaError.message}` });
+        return;
+    }
+
+    // 2. Delete DB records (media first, then property)
     const { error: mediaError } = await supabase.from('midias_imovel').delete().eq('imovel_id', propertyId);
     if(mediaError) {
       showModal({ type: 'error', title: t('systemModal.errorTitle'), message: `Erro ao excluir mídias do anúncio. Detalhes: ${mediaError.message}` });
@@ -820,9 +865,35 @@ const App: React.FC = () => {
     const { error: propertyError } = await supabase.from('imoveis').delete().eq('id', propertyId);
     if (propertyError) {
         showModal({ type: 'error', title: t('systemModal.errorTitle'), message: `${t('myAdsPage.adDeletedError')} ${t('systemModal.errorDetails')}: ${propertyError.message}` });
-    } else {
-        showModal({ type: 'success', title: t('systemModal.successTitle'), message: t('myAdsPage.adDeletedSuccess') });
+        return;
     }
+    
+    // 3. Delete files from storage
+    if (media && media.length > 0) {
+        const pathsToRemove = media.map(m => {
+            try {
+                const url = new URL(m.url);
+                const pathParts = url.pathname.split('/midia/');
+                if (pathParts.length > 1) return pathParts[1];
+                return null; // External URL (e.g., pexels)
+            } catch (e) {
+                console.warn(`Could not parse URL for storage deletion: ${m.url}`);
+                return null;
+            }
+        }).filter((p): p is string => p !== null);
+
+        if (pathsToRemove.length > 0) {
+            const { error: storageError } = await supabase.storage.from('midia').remove(pathsToRemove);
+            if (storageError) {
+                console.error('Erro ao excluir arquivos do armazenamento:', storageError.message);
+                // Show success for DB deletion but warn about storage
+                showModal({ type: 'success', title: t('systemModal.successTitle'), message: `${t('myAdsPage.adDeletedSuccess')} (Aviso: alguns arquivos podem não ter sido removidos do armazenamento.)` });
+                return;
+            }
+        }
+    }
+
+    showModal({ type: 'success', title: t('systemModal.successTitle'), message: t('myAdsPage.adDeletedSuccess') });
   };
 
   const handleRequestDeleteProperty = useCallback((propertyId: number) => {
