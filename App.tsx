@@ -1,7 +1,4 @@
 
-
-
-
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
@@ -239,9 +236,7 @@ const App: React.FC = () => {
     if(!options.skipChats) setIsLoading(true);
     console.time('fetchAllData');
 
-    // PHASE 1: Fetch and display core property data
     try {
-        // OPTIMIZATION: Fetch properties and their owner profiles in a single query.
         let propertyQuery = supabase.from('imoveis').select('*, perfis:anunciante_id(*)');
         if (currentUser) {
             propertyQuery = propertyQuery.or(`status.eq.ativo,anunciante_id.eq.${currentUser.id}`);
@@ -270,7 +265,6 @@ const App: React.FC = () => {
 
         const propertyIds = propertiesData.map(p => p.id);
         
-        // Adapt properties WITHOUT media first
         const coreProperties = propertiesData.map((db: any): Property => {
             const ownerProfileData = db.perfis as Profile | undefined;
             const ownerProfile = ownerProfileData ? { ...ownerProfileData, phone: ownerProfileData.telefone } : undefined;
@@ -282,15 +276,13 @@ const App: React.FC = () => {
             };
         });
         
-        // IMMEDIATE UI UPDATE
         setProperties(coreProperties);
         setFetchError(null);
         setIsCorsError(false);
         setIsSyncError(false);
         setInitialFetchSuccess(true);
-        if (!options.skipChats) setIsLoading(false); // Stop main loading indicator
+        if (!options.skipChats) setIsLoading(false); 
 
-        // PHASE 2: Asynchronously fetch and hydrate media
         (async () => {
             try {
                 if (propertyIds.length === 0) return;
@@ -350,7 +342,6 @@ const App: React.FC = () => {
         }
     }
 
-    // Fetch user-specific data (favorites, chats)
     if (currentUser) {
         try {
             const { data: favoritesData, error: favoritesError } = await supabase.from('favoritos_usuario').select('imovel_id').eq('usuario_id', currentUser.id);
@@ -399,20 +390,18 @@ const App: React.FC = () => {
   
   const navigateToPublishJourney = () => setPageState({ page: 'publish-journey', userLocation: null });
   
-  // Scroll to top on page change
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [pageState.page, pageState.propertyId, pageState.searchQuery, pageState.chatSessionId]);
 
-  // Splash screen effect
   useEffect(() => {
     const splashTimer = setTimeout(() => {
       setIsSplashFading(true);
-    }, 2000); // Splash screen visible for 2 seconds
+    }, 2000); 
 
     const fadeTimer = setTimeout(() => {
       setShowSplash(false);
-    }, 2500); // 2s visibility + 0.5s fade out
+    }, 2500); 
 
     return () => {
       clearTimeout(splashTimer);
@@ -420,7 +409,6 @@ const App: React.FC = () => {
     };
   }, []);
 
-  // Geolocation Request on App Load
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -430,8 +418,6 @@ const App: React.FC = () => {
           setDeviceLocation({ lat: latitude, lng: longitude });
         },
         (error) => {
-          // This unified error handling is more robust.
-          // Any failure to get location will result in the same outcome.
           console.error("Geolocation error on app load:", error);
           if (!sessionStorage.getItem('geolocationErrorShown')) {
             openGeoErrorModal();
@@ -439,9 +425,9 @@ const App: React.FC = () => {
           }
         },
         { 
-          enableHighAccuracy: true, // Prioritize accuracy.
-          timeout: 20000,           // Increase timeout to 20 seconds for GPS to get a fix.
-          maximumAge: 0             // Force a fresh location check.
+          enableHighAccuracy: true, 
+          timeout: 20000,           
+          maximumAge: 0             
         }
       );
     }
@@ -486,7 +472,6 @@ const App: React.FC = () => {
             setLoginIntent('default');
         }
       } else {
-        // Clear all user-specific state on logout/session expiry
         setUser(null);
         setProfile(null);
         setFavorites([]);
@@ -494,7 +479,6 @@ const App: React.FC = () => {
         sessionStorage.removeItem('quallityHomePageState');
       }
       
-      // Fetch data immediately with the determined user state to avoid race conditions.
       fetchAllData(currentUser);
       setIsAuthReady(true);
     });
@@ -530,14 +514,12 @@ const App: React.FC = () => {
             const newMessage = payload.new as any;
             setChatSessions(prevSessions => {
                 const sessionIndex = prevSessions.findIndex(s => s.id === newMessage.sessao_id);
-                // If session doesn't exist, a full refresh is safer to get all participant/property data
                 if (sessionIndex === -1) {
                     fetchAllData(user);
                     return prevSessions;
                 }
                 const updatedSessions = [...prevSessions];
                 const targetSession = { ...updatedSessions[sessionIndex] };
-                // Prevent adding duplicates if optimistic update was faster
                 if (targetSession.messages.some(m => m.id === newMessage.id)) {
                     return prevSessions;
                 }
@@ -551,7 +533,7 @@ const App: React.FC = () => {
                     targetSession.unreadCount = (targetSession.unreadCount || 0) + 1;
                 }
                 updatedSessions[sessionIndex] = targetSession;
-                return updatedSessions.sort((a, b) => { // Keep sessions sorted by last message
+                return updatedSessions.sort((a, b) => { 
                     const lastMsgA = a.messages[a.messages.length - 1];
                     const lastMsgB = b.messages[b.messages.length - 1];
                     if (!lastMsgA) return 1;
@@ -571,9 +553,6 @@ const App: React.FC = () => {
 
                     const messageInState = session.messages.find(m => m.id === updatedMessage.id);
 
-                    // This is the key condition:
-                    // If the message is from another user, was just marked as read by the server,
-                    // AND we had already marked it as read optimistically, then this is a confirmation.
                     const isReadConfirmation = updatedMessage.remetente_id !== user.id &&
                                                updatedMessage.foi_lida === true &&
                                                messageInState?.isRead === true;
@@ -583,13 +562,8 @@ const App: React.FC = () => {
                     );
 
                     if (isReadConfirmation) {
-                        // It's a confirmation of our optimistic `markAsRead`.
-                        // The `unreadCount` should already be 0 from the optimistic update.
-                        // We just update the messages array but preserve the existing unreadCount.
                         return { ...session, messages: newMessages };
                     } else {
-                        // It's a different kind of update (e.g., other user read our message).
-                        // It is safe to recalculate the unread count.
                         const newUnreadCount = newMessages.filter(m => !m.isRead && m.senderId !== user.id).length;
                         return { ...session, messages: newMessages, unreadCount: newUnreadCount };
                     }
@@ -604,21 +578,6 @@ const App: React.FC = () => {
     };
   }, [user, fetchAllData]);
 
-  // Helper function to adapt supabase data to frontend Property type
-  const adaptSupabaseProperty = (dbProperty: any, owner?: Profile): Partial<Property> => ({
-      ...dbProperty,
-      title: dbProperty.titulo,
-      address: dbProperty.endereco_completo,
-      bedrooms: dbProperty.quartos,
-      bathrooms: dbProperty.banheiros,
-      area: dbProperty.area_bruta,
-      lat: dbProperty.latitude,
-      lng: dbProperty.longitude,
-      price: dbProperty.preco,
-      description: dbProperty.descricao,
-      ...(owner && { owner: { ...owner, phone: owner.telefone } }),
-  });
-
   useEffect(() => {
     if (!isAuthReady) return;
 
@@ -626,11 +585,25 @@ const App: React.FC = () => {
         console.log('Real-time INSERT on imoveis:', payload.new);
         const newDbProperty = payload.new;
         const { data: ownerProfile } = await supabase.from('perfis').select('*').eq('id', newDbProperty.anunciante_id).single();
-        const newProperty = {
-            ...adaptSupabaseProperty(newDbProperty, ownerProfile || undefined),
-            images: [], videos: [], midias_imovel: [],
-        } as Property;
-        setProperties(prev => [newProperty, ...prev]);
+        const owner = ownerProfile ? { ...ownerProfile, phone: ownerProfile.telefone } : undefined;
+
+        const newProperty: Property = {
+            ...newDbProperty,
+            title: newDbProperty.titulo,
+            address: newDbProperty.endereco_completo,
+            bedrooms: newDbProperty.quartos,
+            bathrooms: newDbProperty.banheiros,
+            area: newDbProperty.area_bruta,
+            lat: newDbProperty.latitude,
+            lng: newDbProperty.longitude,
+            price: newDbProperty.preco,
+            description: newDbProperty.descricao,
+            images: [],
+            videos: [],
+            midias_imovel: [],
+            owner: owner,
+        };
+        setProperties(prev => [newProperty, ...prev.filter(p => p.id !== newProperty.id)]);
     };
 
     const handlePropertyUpdate = (payload: any) => {
@@ -638,7 +611,20 @@ const App: React.FC = () => {
         const updatedData = payload.new;
         setProperties(prev => prev.map(p => {
             if (p.id === updatedData.id) {
-                return { ...p, ...adaptSupabaseProperty(updatedData) };
+                const newProperty = { ...p, ...updatedData };
+                
+                // Re-map the aliased fields from the source-of-truth db columns
+                newProperty.title = newProperty.titulo;
+                newProperty.address = newProperty.endereco_completo;
+                newProperty.bedrooms = newProperty.quartos;
+                newProperty.bathrooms = newProperty.banheiros;
+                newProperty.area = newProperty.area_bruta;
+                newProperty.lat = newProperty.latitude;
+                newProperty.lng = newProperty.longitude;
+                newProperty.price = newProperty.preco;
+                newProperty.description = newProperty.descricao;
+                
+                return newProperty as Property;
             }
             return p;
         }));
@@ -700,16 +686,15 @@ const App: React.FC = () => {
   useEffect(() => {
     if (!isLoading) return;
     const timeoutId = setTimeout(() => {
-      // Only set a page-blocking error if the initial fetch has not completed.
       if (!initialFetchSuccess) {
         console.warn("Initial fetch timeout reached. Setting a fetch error.");
         setFetchError("A conexão com o servidor demorou mais que o esperado. Por favor, verifique sua conexão com a internet e recarregue a página.");
-        setIsLoading(false); // Stop loading to display the error.
-        fetchingRef.current = false; // Allow for future fetch attempts.
+        setIsLoading(false); 
+        fetchingRef.current = false; 
       } else {
         console.warn("A background data refresh is taking a long time but will be ignored to prevent UI disruption.");
       }
-    }, 12000); // 12 second timeout
+    }, 12000); 
 
     return () => clearTimeout(timeoutId);
   }, [isLoading, initialFetchSuccess]);
@@ -746,7 +731,6 @@ const App: React.FC = () => {
   const closeGeoErrorModal = () => setIsGeoErrorModalOpen(false);
 
   const handleLogout = () => {
-    // Optimistic update for immediate UI feedback.
     setUser(null);
     setProfile(null);
     setFavorites([]);
@@ -754,7 +738,6 @@ const App: React.FC = () => {
     sessionStorage.removeItem('quallityHomePageState');
     navigateHome();
     
-    // Perform the sign out in the background.
     supabase.auth.signOut().then(({ error }) => {
       if (error) {
         console.error('Error signing out:', error.message);
@@ -763,8 +746,6 @@ const App: React.FC = () => {
           title: t('systemModal.errorTitle'),
           message: t('systemModal.logoutError'),
         });
-        // If sign-out fails, the onAuthStateChange listener will eventually
-        // correct the state by re-authenticating the user.
       }
     });
   };
@@ -778,19 +759,17 @@ const App: React.FC = () => {
     const isCurrentlyFavorite = favorites.includes(propertyId);
     const originalFavorites = [...favorites];
   
-    // Optimistic UI update for instant feedback
     if (isCurrentlyFavorite) {
       setFavorites(prev => prev.filter(id => id !== propertyId));
     } else {
       setFavorites(prev => [...prev, propertyId]);
     }
   
-    // Perform database operation
     if (isCurrentlyFavorite) {
       const { error } = await supabase.from('favoritos_usuario').delete().match({ usuario_id: user.id, imovel_id: propertyId });
       if (error) {
         console.error("Error removing favorite:", error.message);
-        setFavorites(originalFavorites); // Rollback on error
+        setFavorites(originalFavorites); 
         showModal({
           type: 'error',
           title: t('systemModal.errorTitle'),
@@ -801,7 +780,7 @@ const App: React.FC = () => {
       const { error } = await supabase.from('favoritos_usuario').insert({ usuario_id: user.id, imovel_id: propertyId });
       if (error) {
         console.error("Error adding favorite:", error.message);
-        setFavorites(originalFavorites); // Rollback on error
+        setFavorites(originalFavorites); 
         showModal({
           type: 'error',
           title: t('systemModal.errorTitle'),
@@ -812,32 +791,28 @@ const App: React.FC = () => {
   };
 
   const handleAddProperty = useCallback(async (newProperty: Property) => {
-    // Set loading state immediately and navigate home to show skeleton loaders
     setIsLoading(true);
     navigateHome();
     
-    // Use a short timeout to allow the navigation to complete and skeletons to render
     setTimeout(async () => {
         if (user) {
-            await fetchAllData(user); // This will turn off isLoading
+            await fetchAllData(user); 
         }
         showModal({
             type: 'success',
             title: t('systemModal.successTitle'),
             message: t('confirmationModal.message'),
         });
-    }, 100); // A small delay
+    }, 100); 
   }, [user, fetchAllData, t, showModal, navigateHome]);
 
   const handleUpdateProperty = useCallback(async () => {
-    // Set loading state immediately and navigate home to show skeleton loaders
     setIsLoading(true);
     navigateHome();
     
-     // Use a short timeout to allow the navigation to complete and skeletons to render
     setTimeout(async () => {
         if (user) {
-            await fetchAllData(user); // This will turn off isLoading
+            await fetchAllData(user); 
         }
         showModal({
             type: 'success',
@@ -867,7 +842,6 @@ const App: React.FC = () => {
         showModal({ type: 'error', title: t('systemModal.errorTitle'), message: `${t('myAdsPage.adDeletedError')} ${t('systemModal.errorDetails')}: ${propertyError.message}` });
     } else {
         showModal({ type: 'success', title: t('systemModal.successTitle'), message: t('myAdsPage.adDeletedSuccess') });
-        // The real-time listener will handle the UI update automatically. No fetchAllData needed.
     }
   };
 
@@ -886,7 +860,6 @@ const App: React.FC = () => {
         return;
     }
 
-    // Check for existing session
     const { data: existing, error: findError } = await supabase.rpc('find_chat_session', {
         p_imovel_id: property.id, user1_id: user.id, user2_id: property.anunciante_id
     });
@@ -900,7 +873,6 @@ const App: React.FC = () => {
     if (existing) {
         navigateToChat(existing);
     } else {
-        // Create new session
         const { data: newSessionId, error: createError } = await supabase.rpc('create_chat_session', {
             p_imovel_id: property.id, user1_id: user.id, user2_id: property.anunciante_id
         });
@@ -909,7 +881,6 @@ const App: React.FC = () => {
             console.error("Error creating chat session:", createError);
             showModal({ type: 'error', title: t('systemModal.errorTitle'), message: 'Falha ao criar conversa.' });
         } else if (newSessionId) {
-            // Optimistically add the new session to state
             const newSessionObject: ChatSession = {
                 id: newSessionId,
                 imovel_id: property.id,
@@ -922,7 +893,6 @@ const App: React.FC = () => {
             };
             setChatSessions(prev => [newSessionObject, ...prev]);
             navigateToChat(newSessionId);
-            // Fetch in background to ensure data consistency, without blocking UI
             fetchAllData(user);
         }
     }
@@ -959,17 +929,14 @@ const App: React.FC = () => {
   const handleMarkAsRead = useCallback(async (sessionId: string) => {
     if (!user) return;
 
-    // Perform an optimistic update for immediate UI feedback.
-    // This uses the functional form of setChatSessions to avoid stale state.
     setChatSessions(prevSessions => {
         const sessionNeedsUpdate = prevSessions.some(s => s.id === sessionId && s.unreadCount > 0);
         if (!sessionNeedsUpdate) {
-            return prevSessions; // No update needed, prevents re-render loops.
+            return prevSessions; 
         }
 
         return prevSessions.map(session => {
             if (session.id === sessionId) {
-                // Set unread count to 0 and mark all incoming messages as read.
                 return {
                     ...session,
                     unreadCount: 0,
@@ -982,14 +949,12 @@ const App: React.FC = () => {
         });
     });
 
-    // Update the database in the background.
     const { error } = await supabase.from('mensagens_chat').update({ foi_lida: true })
         .match({ sessao_id: sessionId, foi_lida: false })
         .neq('remetente_id', user.id);
 
     if (error) {
         console.error("Error marking messages as read in DB:", error);
-        // On failure, roll back by refetching data to ensure consistency.
         fetchAllData(user);
     }
   }, [user, fetchAllData]);
