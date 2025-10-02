@@ -1,4 +1,5 @@
 
+
 import React, { createContext, useState, useContext, ReactNode, useCallback } from 'react';
 
 // Translations are embedded directly to avoid module resolution issues.
@@ -476,6 +477,15 @@ const ptTranslations = {
       "step3": "Role para baixo até a seção 'CORS configuration' e adicione a seguinte URL à lista de origens permitidas:",
       "step4": "Salve as alterações.",
       "afterFix": "Após salvar, recarregue esta página. Os anúncios deverão aparecer."
+    },
+    "syncError": {
+      "title": "Ação Necessária: Falha ao Carregar Imóveis",
+      "description": "A conexão com o servidor foi bem-sucedida, mas nenhum imóvel foi retornado. A causa mais comum é uma configuração de 'Row Level Security' (RLS) no Supabase que está bloqueando o acesso aos dados.",
+      "fixInstruction": "Para resolver, por favor, verifique suas políticas de RLS:",
+      "step1": "Acesse seu projeto no Supabase e vá para 'Authentication' > 'Policies'.",
+      "step2": "Encontre a tabela 'imoveis' e verifique se existe uma política que permite a leitura (SELECT) para usuários não autenticados (role 'anon').",
+      "step3": "Se não houver, crie uma nova política para SELECT com a expressão 'USING (true)' para permitir que todos leiam os anúncios.",
+      "afterFix": "Após salvar a política, recarregue esta página."
     }
   },
   "documentsForSalePage": {
@@ -757,7 +767,7 @@ const enTranslations = {
       "aiDescriptionError": "Could not generate a description. Please check your connection or try again.",
       "apartmentCharacteristics": "Property characteristics",
       "landCharacteristics": "Land Characteristics",
-      "topografia": "Topography",
+      "topography": "Topography",
       "flat": "Flat",
       "uphill": "Uphill",
       "downhill": "Downhill",
@@ -994,6 +1004,15 @@ const enTranslations = {
       "step3": "Scroll down to the 'CORS configuration' section and add the following URL to the list of allowed origins:",
       "step4": "Save the changes.",
       "afterFix": "After saving, reload this page. The listings should now appear."
+    },
+    "syncError": {
+      "title": "Action Required: Failed to Load Properties",
+      "description": "The connection to the server was successful, but no properties were returned. The most common cause is a 'Row Level Security' (RLS) policy in Supabase that is blocking access to the data.",
+      "fixInstruction": "To resolve this, please check your RLS policies:",
+      "step1": "Go to your project in Supabase and navigate to 'Authentication' > 'Policies'.",
+      "step2": "Find the 'imoveis' table and check if a policy exists that allows read access (SELECT) for non-authenticated users (role 'anon').",
+      "step3": "If not, create a new policy for SELECT with the expression 'USING (true)' to allow everyone to read the listings.",
+      "afterFix": "After saving the policy, reload this page."
     }
   },
   "documentsForSalePage": {
@@ -1512,6 +1531,15 @@ const esTranslations = {
       "step3": "Desplázate hacia abajo hasta la sección 'CORS configuration' y añade la siguiente URL a la lista de orígenes permitidos:",
       "step4": "Guarda los cambios.",
       "afterFix": "Después de guardar, recarga esta página. Los anuncios deberían aparecer."
+    },
+    "syncError": {
+      "title": "Acción Requerida: Error al Cargar Propiedades",
+      "description": "La conexión con el servidor fue exitosa, pero no se devolvieron propiedades. La causa más común es una política de 'Seguridad a Nivel de Fila' (RLS) en Supabase que está bloqueando el acceso a los datos.",
+      "fixInstruction": "Para resolver esto, por favor, verifica tus políticas de RLS:",
+      "step1": "Ve a tu proyecto en Supabase y navega a 'Authentication' > 'Policies'.",
+      "step2": "Encuentra la tabla 'imoveis' y verifica si existe una política que permita el acceso de lectura (SELECT) para usuarios no autenticados (rol 'anon').",
+      "step3": "Si no, crea una nueva política para SELECT con la expresión 'USING (true)' para permitir que todos lean los listados.",
+      "afterFix": "Después de guardar la política, recarga esta página."
     }
   },
   "documentsForSalePage": {

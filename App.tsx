@@ -215,6 +215,7 @@ const App: React.FC = () => {
   const [contactModalProperty, setContactModalProperty] = useState<Property | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [isCorsError, setIsCorsError] = useState(false);
+  const [isSyncError, setIsSyncError] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
   const [isSplashFading, setIsSplashFading] = useState(false);
   const [deviceLocation, setDeviceLocation] = useState<{ lat: number; lng: number } | null>(null);
@@ -248,7 +249,26 @@ const App: React.FC = () => {
         }
         const { data: propertiesData, error: propertiesError } = await propertyQuery;
         if (propertiesError) throw propertiesError;
-        if (!propertiesData) throw new Error("Query returned null or undefined data for properties.");
+
+        if (!propertiesData || propertiesData.length === 0) {
+            if (initialFetchSuccess) {
+                // Background refresh returned empty, but we had data. This is a sync error.
+                console.warn("A atualização em tempo real retornou uma lista vazia. Mantendo os dados antigos e exibindo um aviso.");
+                showModal({
+                    type: 'error',
+                    title: 'Falha na Sincronização',
+                    message: 'Não foi possível atualizar os imóveis. Os dados exibidos podem estar desatualizados. Por favor, verifique a conexão e as configurações do banco de dados.'
+                });
+                // MUST exit to preserve old data.
+                fetchingRef.current = false;
+                if (!options.skipChats) setIsLoading(false);
+                console.timeEnd('fetchAllData');
+                return;
+            } else {
+                // Initial fetch is empty. This is a critical failure, likely a config issue (RLS).
+                throw new Error("SYNC_ERROR");
+            }
+        }
 
         const propertyIds = propertiesData.map(p => p.id);
         const announcerIds = [...new Set(propertiesData.map(p => p.anunciante_id).filter(id => id))];
@@ -285,11 +305,12 @@ const App: React.FC = () => {
         setMyAds(currentUser ? adaptedProperties.filter(p => p.anunciante_id === currentUser.id) : []);
         setFetchError(null);
         setIsCorsError(false);
+        setIsSyncError(false);
         setInitialFetchSuccess(true);
     } catch (error: any) {
         console.error('Falha ao buscar imóveis:', error);
         if (initialFetchSuccess) {
-            // A background refresh failed. Show a non-blocking modal and keep stale data.
+            // A background network refresh failed. Show a non-blocking modal and keep stale data.
             showModal({
                 type: 'error',
                 title: 'Erro de Sincronização',
@@ -299,15 +320,20 @@ const App: React.FC = () => {
         } else {
             // Initial data load failed. Show the blocking error UI.
             if (error?.message) {
-                if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                 if (error.message.includes('SYNC_ERROR')) {
+                    setIsSyncError(true);
+                    setFetchError(t('systemModal.syncError.title'));
+                } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
                     setIsCorsError(true);
                     setFetchError(t('systemModal.corsError.title'));
                 } else {
                     setIsCorsError(false);
+                    setIsSyncError(false);
                     setFetchError(error.message);
                 }
             } else {
                 setIsCorsError(false);
+                setIsSyncError(false);
                 setFetchError('An unknown error occurred while fetching data.');
             }
             setProperties([]);
@@ -960,6 +986,31 @@ const App: React.FC = () => {
                                           <li>{t('systemModal.corsError.step4')}</li>
                                       </ol>
                                       <p>{t('systemModal.corsError.afterFix')}</p>
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+                    </div>
+                  </section>
+                ) : isSyncError ? (
+                  <section className="bg-white py-16 sm:py-20">
+                    <div className="container mx-auto px-4 sm:px-6">
+                      <div className="text-left p-6 sm:p-8 bg-orange-50 border-l-4 border-orange-400 rounded-r-lg">
+                          <div className="flex">
+                              <div className="flex-shrink-0">
+                                  <WarningIcon className="h-6 w-6 text-orange-400" />
+                              </div>
+                              <div className="ml-3">
+                                  <h3 className="text-lg font-bold text-orange-800">{t('systemModal.syncError.title')}</h3>
+                                  <div className="mt-2 text-sm text-orange-700 space-y-3">
+                                      <p>{t('systemModal.syncError.description')}</p>
+                                      <p className="font-semibold">{t('systemModal.syncError.fixInstruction')}</p>
+                                      <ol className="list-decimal list-inside space-y-2 pl-2">
+                                          <li>{t('systemModal.syncError.step1')}</li>
+                                          <li>{t('systemModal.syncError.step2')}</li>
+                                          <li>{t('systemModal.syncError.step3')}</li>
+                                      </ol>
+                                      <p>{t('systemModal.syncError.afterFix')}</p>
                                   </div>
                               </div>
                           </div>
