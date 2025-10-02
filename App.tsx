@@ -218,6 +218,7 @@ const App: React.FC = () => {
   const [showSplash, setShowSplash] = useState(true);
   const [isSplashFading, setIsSplashFading] = useState(false);
   const [deviceLocation, setDeviceLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [initialFetchSuccess, setInitialFetchSuccess] = useState(false);
 
   const totalUnreadChatsCount = chatSessions.filter(s => s.unreadCount > 0).length;
 
@@ -284,22 +285,34 @@ const App: React.FC = () => {
         setMyAds(currentUser ? adaptedProperties.filter(p => p.anunciante_id === currentUser.id) : []);
         setFetchError(null);
         setIsCorsError(false);
+        setInitialFetchSuccess(true);
     } catch (error: any) {
         console.error('Falha ao buscar imóveis:', error);
-        if (error?.message) {
-            if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-                setIsCorsError(true);
-                setFetchError(t('systemModal.corsError.title'));
+        if (initialFetchSuccess) {
+            // A background refresh failed. Show a non-blocking modal and keep stale data.
+            showModal({
+                type: 'error',
+                title: 'Erro de Sincronização',
+                message: 'Não foi possível atualizar a lista de imóveis. Os dados exibidos podem estar desatualizados. Por favor, verifique sua conexão com a internet.'
+            });
+            // DO NOT clear properties
+        } else {
+            // Initial data load failed. Show the blocking error UI.
+            if (error?.message) {
+                if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                    setIsCorsError(true);
+                    setFetchError(t('systemModal.corsError.title'));
+                } else {
+                    setIsCorsError(false);
+                    setFetchError(error.message);
+                }
             } else {
                 setIsCorsError(false);
-                setFetchError(error.message);
+                setFetchError('An unknown error occurred while fetching data.');
             }
-        } else {
-            setIsCorsError(false);
-            setFetchError('An unknown error occurred while fetching data.');
+            setProperties([]);
+            setMyAds([]);
         }
-        setProperties([]);
-        setMyAds([]);
     }
 
     // Fetch user-specific data (favorites, chats)
@@ -351,7 +364,7 @@ const App: React.FC = () => {
     console.timeEnd('fetchAllData');
     if(!options.skipChats) setIsLoading(false);
     fetchingRef.current = false;
-  }, [t]);
+  }, [t, initialFetchSuccess, showModal]);
   
   const navigateToPublishJourney = () => setPageState({ page: 'publish-journey', userLocation: null });
   
