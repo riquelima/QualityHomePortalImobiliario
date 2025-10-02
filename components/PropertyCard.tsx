@@ -131,7 +131,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onViewDetails, is
           onClick={() => onViewDetails(property.id)}
         >
           {images.map((src, index) => (
-            <img key={index} src={src} alt={`${property.title} - Foto ${index + 1}`} className="w-full h-56 object-cover aspect-video flex-shrink-0" draggable="false" />
+            <img key={index} src={src} alt={`${property.title} - Foto ${index + 1}`} className="w-full h-56 object-cover aspect-video flex-shrink-0 bg-gray-200" draggable="false" />
           ))}
         </div>
         

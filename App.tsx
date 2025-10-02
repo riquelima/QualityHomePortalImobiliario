@@ -319,6 +319,7 @@ const App: React.FC = () => {
             }
             setProperties([]);
         }
+        if (!options.skipChats) setIsLoading(false);
     }
 
     if (currentUser) {
@@ -997,8 +998,9 @@ const App: React.FC = () => {
               <Header {...headerProps} />
               <main>
                 <Hero deviceLocation={deviceLocation} onDrawOnMapClick={() => navigateToMap()} onSearchNearMe={(location) => navigateToMap(location)} onGeolocationError={openGeoErrorModal} onSearchSubmit={navigateToSearchResults} />
+                
                 {isCorsError ? (
-                  <section className="bg-white py-16 sm:py-20">
+                  <section className="bg-white pt-16 sm:pt-20">
                     <div className="container mx-auto px-4 sm:px-6">
                       <div className="text-left p-6 sm:p-8 bg-orange-50 border-l-4 border-orange-400 rounded-r-lg">
                           <div className="flex">
@@ -1024,7 +1026,7 @@ const App: React.FC = () => {
                     </div>
                   </section>
                 ) : isSyncError ? (
-                  <section className="bg-white py-16 sm:py-20">
+                  <section className="bg-white pt-16 sm:pt-20">
                     <div className="container mx-auto px-4 sm:px-6">
                       <div className="text-left p-6 sm:p-8 bg-orange-50 border-l-4 border-orange-400 rounded-r-lg">
                           <div className="flex">
@@ -1049,7 +1051,7 @@ const App: React.FC = () => {
                     </div>
                   </section>
                 ) : fetchError ? (
-                  <section className="bg-white py-16 sm:py-20">
+                  <section className="bg-white pt-16 sm:pt-20">
                     <div className="container mx-auto px-4 sm:px-6">
                       <div className="text-center py-16 bg-red-50 border border-red-200 rounded-lg">
                           <ErrorIcon className="w-12 h-12 text-brand-red mx-auto mb-4" />
@@ -1058,9 +1060,16 @@ const App: React.FC = () => {
                       </div>
                     </div>
                   </section>
-                ) : (
-                  <PropertyListings properties={properties} onViewDetails={navigateToPropertyDetail} favorites={favorites} onToggleFavorite={toggleFavorite} isLoading={isLoading} onContactClick={openContactModal} />
-                )}
+                ) : null}
+
+                <PropertyListings 
+                  properties={properties} 
+                  onViewDetails={navigateToPropertyDetail} 
+                  favorites={favorites} 
+                  onToggleFavorite={toggleFavorite} 
+                  isLoading={isLoading} 
+                  onContactClick={openContactModal} 
+                />
               </main>
               <footer className="bg-brand-light-gray text-brand-gray py-8 text-center mt-20">
                 <div className="container mx-auto">
