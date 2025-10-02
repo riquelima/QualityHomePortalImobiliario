@@ -234,12 +234,12 @@ const App: React.FC = () => {
   };
 
   const fetchAllData = useCallback(async (currentUser: User | null, options: { skipChats?: boolean } = {}) => {
-    if (fetchingRef.current && !options.skipChats) return; // Allow property refreshes to proceed
+    if (fetchingRef.current && !options.skipChats) return;
     fetchingRef.current = true;
     if(!options.skipChats) setIsLoading(true);
     console.time('fetchAllData');
 
-    // Fetch properties and related data
+    // PHASE 1: Fetch and display core property data
     try {
         let propertyQuery = supabase.from('imoveis').select('*');
         if (currentUser) {
@@ -252,73 +252,91 @@ const App: React.FC = () => {
 
         if (!propertiesData || propertiesData.length === 0) {
             if (initialFetchSuccess) {
-                // Background refresh returned empty, but we had data. This is a sync error.
                 console.warn("A atualização em tempo real retornou uma lista vazia. Mantendo os dados antigos e exibindo um aviso.");
                 showModal({
                     type: 'error',
                     title: 'Falha na Sincronização',
                     message: 'Não foi possível atualizar os imóveis. Os dados exibidos podem estar desatualizados. Por favor, verifique a conexão e as configurações do banco de dados.'
                 });
-                // MUST exit to preserve old data.
                 fetchingRef.current = false;
                 if (!options.skipChats) setIsLoading(false);
                 console.timeEnd('fetchAllData');
                 return;
             } else {
-                // Initial fetch is empty. This is a critical failure, likely a config issue (RLS).
                 throw new Error("SYNC_ERROR");
             }
         }
 
         const propertyIds = propertiesData.map(p => p.id);
         const announcerIds = [...new Set(propertiesData.map(p => p.anunciante_id).filter(id => id))];
+        
+        const { data: profilesData, error: profilesError } = announcerIds.length > 0
+            ? await supabase.from('perfis').select('*').in('id', announcerIds)
+            : { data: [], error: null };
+        if (profilesError) throw profilesError;
 
-        const [mediaRes, profilesRes] = await Promise.all([
-            supabase.from('midias_imovel').select('*').in('imovel_id', propertyIds),
-            announcerIds.length > 0 ? supabase.from('perfis').select('*').in('id', announcerIds) : Promise.resolve({ data: [], error: null })
-        ]);
-        if (mediaRes.error) throw mediaRes.error;
-        if (profilesRes.error) throw profilesRes.error;
+        const profilesMap = new Map(profilesData?.map(p => [p.id, p]));
 
-        const profilesMap = new Map(profilesRes.data?.map(p => [p.id, p]));
-        const mediaMap = new Map<number, Media[]>();
-        mediaRes.data?.forEach(m => {
-            if (!mediaMap.has(m.imovel_id)) mediaMap.set(m.imovel_id, []);
-            mediaMap.get(m.imovel_id)!.push(m);
-        });
-
-        const adaptedProperties = propertiesData.map((db: any): Property => {
+        // Adapt properties WITHOUT media first
+        const coreProperties = propertiesData.map((db: any): Property => {
             const ownerProfileData = (db.anunciante_id ? profilesMap.get(db.anunciante_id) : undefined) as Profile | undefined;
             const ownerProfile = ownerProfileData ? { ...ownerProfileData, phone: ownerProfileData.telefone } : undefined;
-            const propertyMedia = mediaMap.get(db.id) || [];
-            const validImages = propertyMedia.filter((m: Media) => m.tipo === 'imagem' && m.url).map((m: Media) => m.url);
             return {
                 ...db, title: db.titulo, address: db.endereco_completo, bedrooms: db.quartos,
                 bathrooms: db.banheiros, area: db.area_bruta, lat: db.latitude, lng: db.longitude,
-                price: db.preco, description: db.descricao, images: validImages,
-                videos: propertyMedia.filter((m: Media) => m.tipo === 'video' && m.url).map((m: Media) => m.url),
-                owner: ownerProfile, midias_imovel: propertyMedia,
+                price: db.preco, description: db.descricao,
+                images: [], videos: [], owner: ownerProfile, midias_imovel: [],
             };
         });
-
-        setProperties(adaptedProperties);
-        setMyAds(currentUser ? adaptedProperties.filter(p => p.anunciante_id === currentUser.id) : []);
+        
+        // IMMEDIATE UI UPDATE
+        setProperties(coreProperties);
+        setMyAds(currentUser ? coreProperties.filter(p => p.anunciante_id === currentUser.id) : []);
         setFetchError(null);
         setIsCorsError(false);
         setIsSyncError(false);
         setInitialFetchSuccess(true);
+        if (!options.skipChats) setIsLoading(false); // Stop main loading indicator
+
+        // PHASE 2: Asynchronously fetch and hydrate media
+        (async () => {
+            try {
+                const { data: mediaData, error: mediaError } = await supabase.from('midias_imovel').select('*').in('imovel_id', propertyIds);
+                if (mediaError) throw mediaError;
+                if (!mediaData) return;
+
+                const mediaMap = new Map<number, Media[]>();
+                mediaData.forEach(m => {
+                    if (!mediaMap.has(m.imovel_id)) mediaMap.set(m.imovel_id, []);
+                    mediaMap.get(m.imovel_id)!.push(m);
+                });
+
+                const hydrateWithMedia = (prop: Property): Property => {
+                    const propertyMedia = mediaMap.get(prop.id) || [];
+                    if (propertyMedia.length === 0) return prop;
+
+                    const validImages = propertyMedia.filter((m: Media) => m.tipo === 'imagem' && m.url).map((m: Media) => m.url);
+                    const validVideos = propertyMedia.filter((m: Media) => m.tipo === 'video' && m.url).map((m: Media) => m.url);
+                    return { ...prop, images: validImages, videos: validVideos, midias_imovel: propertyMedia };
+                };
+                
+                setProperties(prevProperties => prevProperties.map(hydrateWithMedia));
+                setMyAds(prevMyAds => prevMyAds.map(hydrateWithMedia));
+
+            } catch (mediaError) {
+                console.error('Failed to fetch media in background:', mediaError);
+            }
+        })();
+
     } catch (error: any) {
         console.error('Falha ao buscar imóveis:', error);
         if (initialFetchSuccess) {
-            // A background network refresh failed. Show a non-blocking modal and keep stale data.
             showModal({
                 type: 'error',
                 title: 'Erro de Sincronização',
                 message: 'Não foi possível atualizar a lista de imóveis. Os dados exibidos podem estar desatualizados. Por favor, verifique sua conexão com a internet.'
             });
-            // DO NOT clear properties
         } else {
-            // Initial data load failed. Show the blocking error UI.
             if (error?.message) {
                  if (error.message.includes('SYNC_ERROR')) {
                     setIsSyncError(true);
@@ -343,7 +361,6 @@ const App: React.FC = () => {
 
     // Fetch user-specific data (favorites, chats)
     if (currentUser) {
-        // Fetch Favorites
         try {
             const { data: favoritesData, error: favoritesError } = await supabase.from('favoritos_usuario').select('imovel_id').eq('usuario_id', currentUser.id);
             if (favoritesError) throw favoritesError;
@@ -353,7 +370,6 @@ const App: React.FC = () => {
             setFavorites([]);
         }
 
-        // Fetch Chat Sessions
         if (!options.skipChats) {
             try {
                 const { data: chatData, error: chatError } = await supabase.rpc('get_user_chat_sessions', { user_id_param: currentUser.id });
@@ -388,7 +404,6 @@ const App: React.FC = () => {
     }
 
     console.timeEnd('fetchAllData');
-    if(!options.skipChats) setIsLoading(false);
     fetchingRef.current = false;
   }, [t, initialFetchSuccess, showModal]);
   
