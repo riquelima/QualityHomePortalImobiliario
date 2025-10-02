@@ -523,9 +523,17 @@ const App: React.FC = () => {
     const handlePropertyInsert = async (payload: any) => {
         console.log('Real-time INSERT on imoveis:', payload.new);
         const newDbProperty = payload.new as any;
-        const { data: ownerProfile } = await supabase.from('perfis').select('*').eq('id', newDbProperty.anunciante_id).single();
-        const owner = ownerProfile ? { ...ownerProfile, phone: ownerProfile.telefone } : undefined;
-
+        
+        let owner;
+        if (newDbProperty.anunciante_id) {
+            const { data: ownerProfile, error } = await supabase.from('perfis').select('*').eq('id', newDbProperty.anunciante_id).single();
+            if (error) {
+                console.error(`Error fetching owner for new property ${newDbProperty.id}:`, error);
+            } else if (ownerProfile) {
+                owner = { ...ownerProfile, phone: ownerProfile.telefone };
+            }
+        }
+        
         const newProperty: Property = {
             ...newDbProperty,
             title: newDbProperty.titulo,
@@ -539,32 +547,43 @@ const App: React.FC = () => {
             description: newDbProperty.descricao,
             images: newDbProperty.images || [],
             videos: newDbProperty.videos || [],
-            owner: owner,
+            owner,
         };
         setProperties(prev => [newProperty, ...prev.filter(p => p.id !== newProperty.id)]);
     };
     
-    const handlePropertyUpdate = (payload: any) => {
+    const handlePropertyUpdate = async (payload: any) => {
         console.log('Real-time UPDATE on imoveis:', payload.new);
         const updatedDbProperty = payload.new as any;
+
+        const { data: ownerProfile, error } = updatedDbProperty.anunciante_id
+            ? await supabase.from('perfis').select('*').eq('id', updatedDbProperty.anunciante_id).single()
+            : { data: null, error: null };
+
+        if (error) {
+            console.error(`Error fetching owner for updated property ${updatedDbProperty.id}:`, error);
+        }
+
+        const owner = ownerProfile ? { ...ownerProfile, phone: ownerProfile.telefone } : undefined;
+        
         setProperties(prev => prev.map(p => {
             if (p.id === updatedDbProperty.id) {
-                const updatedProperty: Property = {
-                    ...p, 
-                    ...updatedDbProperty,
-                    title: updatedDbProperty.titulo,
-                    address: updatedDbProperty.endereco_completo,
-                    bedrooms: updatedDbProperty.quartos,
-                    bathrooms: updatedDbProperty.banheiros,
-                    area: updatedDbProperty.area_bruta,
-                    lat: updatedDbProperty.latitude,
-                    lng: updatedDbProperty.longitude,
-                    price: updatedDbProperty.preco,
-                    description: updatedDbProperty.descricao,
-                    images: updatedDbProperty.images || [],
-                    videos: updatedDbProperty.videos || [],
-                };
-                return updatedProperty;
+                const mergedData = { ...p, ...updatedDbProperty };
+                return {
+                    ...mergedData,
+                    title: mergedData.titulo,
+                    address: mergedData.endereco_completo,
+                    bedrooms: mergedData.quartos,
+                    bathrooms: mergedData.banheiros,
+                    area: mergedData.area_bruta,
+                    lat: mergedData.latitude,
+                    lng: mergedData.longitude,
+                    price: mergedData.preco,
+                    description: mergedData.descricao,
+                    images: mergedData.images || [],
+                    videos: mergedData.videos || [],
+                    owner, // Use the freshly fetched owner
+                } as Property;
             }
             return p;
         }));
