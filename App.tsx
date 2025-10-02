@@ -2,6 +2,8 @@
 
 
 
+
+
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
@@ -1098,8 +1100,9 @@ const App: React.FC = () => {
                                       <ol className="list-decimal list-inside space-y-2 pl-2">
                                           <li>{t('systemModal.corsError.step1')}</li>
                                           <li>{t('systemModal.corsError.step2')}</li>
-                                          <li>{t('systemModal.corsError.step3')} <code className="text-xs bg-orange-100 p-1 rounded font-mono">{window.location.origin}</code></li>
+                                          <li>{t('systemModal.corsError.step3')} <code className="text-xs bg-orange-100 p-1 rounded font-mono break-all">{window.location.origin}</code></li>
                                           <li>{t('systemModal.corsError.step4')}</li>
+                                          <li>{t('systemModal.corsError.step5')}</li>
                                       </ol>
                                       <p>{t('systemModal.corsError.afterFix')}</p>
                                   </div>

@@ -479,14 +479,15 @@ const ptTranslations = {
     "favoriteErrorAdd": "Não foi possível adicionar o imóvel aos favoritos. Tente novamente.",
     "favoriteErrorRemove": "Não foi possível remover o imóvel dos favoritos. Tente novamente.",
     "corsError": {
-      "title": "Ação Necessária: Problema de Conexão com o Servidor",
-      "description": "O site não conseguiu se comunicar com o banco de dados. Isso geralmente é causado por uma configuração de segurança (CORS) que precisa ser ajustada no seu painel do Supabase.",
-      "fixInstruction": "Para resolver, por favor, siga estes passos:",
-      "step1": "Acesse seu projeto no Supabase.",
-      "step2": "No menu esquerdo, vá para 'Project Settings' (ícone de engrenagem) e depois clique em 'API'.",
-      "step3": "Role para baixo até a seção 'CORS configuration' e adicione a seguinte URL à lista de origens permitidas:",
-      "step4": "Salve as alterações.",
-      "afterFix": "Após salvar, recarregue esta página. Os anúncios deverão aparecer."
+      "title": "Ação Necessária: Corrija a Configuração de CORS no Supabase",
+      "description": "Seu aplicativo não pode carregar os anúncios porque o servidor (Supabase) está bloqueando a conexão por segurança. Isso é normal e precisa de uma configuração simples.",
+      "fixInstruction": "Para resolver permanentemente, siga estes passos no seu painel do Supabase:",
+      "step1": "Acesse seu projeto no Supabase: supabase.com.",
+      "step2": "Vá para 'Project Settings' (ícone de engrenagem) > 'API'.",
+      "step3": "Na seção 'CORS configuration', adicione a URL exata do seu site. Para este preview, a URL é:",
+      "step4": "Para Vercel, adicione também um padrão com wildcard para cobrir todos os previews futuros, como por exemplo: `https://seusite-*.vercel.app` (substitua 'seusite' pelo nome do seu projeto Vercel). Adicione também `http://localhost:3000` para testes locais.",
+      "step5": "Clique em 'Save'. Após alguns segundos, recarregue esta página.",
+      "afterFix": "Com esta configuração, os anúncios carregarão corretamente em todos os ambientes."
     },
     "syncError": {
       "title": "Ação Necessária: Falha ao Carregar Imóveis",
@@ -1016,14 +1017,15 @@ const enTranslations = {
     "favoriteErrorAdd": "Could not add property to favorites. Please try again.",
     "favoriteErrorRemove": "Could not remove property from favorites. Please try again.",
     "corsError": {
-      "title": "Action Required: Server Connection Issue",
-      "description": "The website could not communicate with the database. This is usually caused by a security setting (CORS) that needs to be adjusted in your Supabase dashboard.",
-      "fixInstruction": "To resolve this, please follow these steps:",
-      "step1": "Go to your project in Supabase.",
-      "step2": "In the left menu, go to 'Project Settings' (gear icon) and then click 'API'.",
-      "step3": "Scroll down to the 'CORS configuration' section and add the following URL to the list of allowed origins:",
-      "step4": "Save the changes.",
-      "afterFix": "After saving, reload this page. The listings should now appear."
+      "title": "Action Required: Fix CORS Configuration in Supabase",
+      "description": "Your app can't load listings because the server (Supabase) is blocking the connection for security. This is normal and requires a simple one-time setup.",
+      "fixInstruction": "To permanently solve this, follow these steps in your Supabase dashboard:",
+      "step1": "Go to your project on supabase.com.",
+      "step2": "Navigate to 'Project Settings' (gear icon) > 'API'.",
+      "step3": "In the 'CORS configuration' section, add your site's exact URL. For this preview, the URL is:",
+      "step4": "For Vercel, also add a wildcard pattern to cover all future previews, for example: `https://your-site-*.vercel.app` (replace 'your-site' with your Vercel project name). Also add `http://localhost:3000` for local testing.",
+      "step5": "Click 'Save'. After a few seconds, reload this page.",
+      "afterFix": "With this setup, listings will load correctly in all environments."
     },
     "syncError": {
       "title": "Action Required: Failed to Load Properties",
@@ -1553,14 +1555,15 @@ const esTranslations = {
     "favoriteErrorAdd": "No se pudo añadir el inmueble a favoritos. Por favor, inténtelo de nuevo.",
     "favoriteErrorRemove": "No se pudo quitar el inmueble de favoritos. Por favor, inténtelo de nuevo.",
     "corsError": {
-      "title": "Acción Requerida: Problema de Conexión con el Servidor",
-      "description": "El sitio web no pudo comunicarse con la base de datos. Esto generalmente es causado por una configuración de seguridad (CORS) que necesita ser ajustada en tu panel de Supabase.",
-      "fixInstruction": "Para resolverlo, por favor, sigue estos pasos:",
-      "step1": "Accede a tu proyecto en Supabase.",
-      "step2": "En el menú izquierdo, ve a 'Project Settings' (icono de engranaje) y luego haz clic en 'API'.",
-      "step3": "Desplázate hacia abajo hasta la sección 'CORS configuration' y añade la siguiente URL a la lista de orígenes permitidos:",
-      "step4": "Guarda los cambios.",
-      "afterFix": "Después de guardar, recarga esta página. Los anuncios deberían aparecer."
+      "title": "Acción Requerida: Corregir la Configuración de CORS en Supabase",
+      "description": "Tu aplicación no puede cargar los anuncios porque el servidor (Supabase) está bloqueando la conexión por seguridad. Esto es normal y requiere una configuración simple.",
+      "fixInstruction": "Para solucionarlo permanentemente, sigue estos pasos en tu panel de Supabase:",
+      "step1": "Ve a tu proyecto en supabase.com.",
+      "step2": "Navega a 'Project Settings' (icono de engranaje) > 'API'.",
+      "step3": "En la sección 'CORS configuration', agrega la URL exacta de tu sitio. Para esta vista previa, la URL es:",
+      "step4": "Para Vercel, añade también un patrón con comodín para cubrir todas las futuras vistas previas, por ejemplo: `https://tu-sitio-*.vercel.app` (reemplaza 'tu-sitio' por el nombre de tu proyecto en Vercel). Agrega también `http://localhost:3000` para pruebas locales.",
+      "step5": "Haz clic en 'Save'. Después de unos segundos, recarga esta página.",
+      "afterFix": "Con esta configuración, los anuncios se cargarán correctamente en todos los entornos."
     },
     "syncError": {
       "title": "Acción Requerida: Error al Cargar Propiedades",
