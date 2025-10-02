@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Header from './components/Header';
 import { useLanguage } from './contexts/LanguageContext';
@@ -39,7 +40,7 @@ interface PublishJourneyPageProps {
   profile: Profile | null;
   onLogout: () => void;
   onNavigateToFavorites: () => void;
-  onAddProperty: (propertyData: Property) => Promise<void>;
+  onAddProperty: () => Promise<void>;
   onUpdateProperty: () => Promise<void>;
   onPublishError: (message: string) => void;
   onNavigateToChatList: () => void;
@@ -470,42 +471,38 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
             onPublishError("Usuário não autenticado.");
             return;
         }
+
+        let success = false;
         setIsSubmitting(true);
     
         try {
-            // 1. Upload new files to Supabase Storage in parallel
+            // 1. Upload new files to Supabase Storage sequentially for robustness
             const newFilesToUpload = files.filter(f => f instanceof File) as File[];
-            
-            const filesWithPaths = newFilesToUpload.map(file => {
+            const uploadedUrls: { url: string; type: 'imagem' | 'video'; }[] = [];
+            const uploadedPaths: string[] = [];
+    
+            for (const file of newFilesToUpload) {
                 const fileExt = file.name.split('.').pop();
                 const fileName = `${user.id}/${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
-                return { file, path: fileName };
-            });
+                const path = fileName;
+                
+                const { error: uploadError } = await supabase.storage.from('midia').upload(path, file);
     
-            const uploadPromises = filesWithPaths.map(({ file, path }) =>
-                supabase.storage.from('midia').upload(path, file)
-            );
-    
-            const uploadResults = await Promise.all(uploadPromises);
-    
-            const uploadErrors = uploadResults.filter(result => result.error);
-            if (uploadErrors.length > 0) {
-                const successfulPaths = filesWithPaths
-                    .map((f, i) => !uploadResults[i].error ? f.path : null)
-                    .filter((p): p is string => p !== null);
-                if (successfulPaths.length > 0) {
-                    await supabase.storage.from('midia').remove(successfulPaths);
+                if (uploadError) {
+                    // If one upload fails, clean up what was already uploaded in this attempt.
+                    if (uploadedPaths.length > 0) {
+                        await supabase.storage.from('midia').remove(uploadedPaths);
+                    }
+                    throw uploadError; // This will be caught by the outer catch block.
                 }
-                throw new Error(`Falha ao enviar ${uploadErrors.length} arquivos. Erro: ${uploadErrors[0].error.message}`);
-            }
     
-            const uploadedUrls = filesWithPaths.map(({ file, path }) => {
                 const { data } = supabase.storage.from('midia').getPublicUrl(path);
-                return {
+                uploadedUrls.push({
                     url: data.publicUrl,
-                    type: file.type.startsWith('video') ? 'video' : 'imagem' as 'imagem' | 'video'
-                };
-            });
+                    type: file.type.startsWith('video') ? 'video' : 'imagem'
+                });
+                uploadedPaths.push(path);
+            }
     
             // 2. Prepare and save property data
             const propertyDataForDb = {
@@ -585,7 +582,7 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                     const { error: mediaInsertError } = await supabase.from('midias_imovel').insert(mediaToInsert);
                     if (mediaInsertError) throw mediaInsertError;
                 }
-                await onAddProperty({ ...propertyDataForDb, id: insertedProperty.id } as any);
+                await onAddProperty();
             }
     
             if (formData.contactPhone && formData.contactPhone !== profile?.telefone) {
@@ -595,12 +592,22 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                     .eq('id', user.id);
                 if (profileError) console.error("Could not update profile phone:", profileError);
             }
+
+            success = true;
             
         } catch (error: any) {
             console.error("Erro ao publicar anúncio:", error);
             onPublishError(error.message);
         } finally {
             setIsSubmitting(false);
+            if (success) {
+                props.navigateHome();
+                onRequestModal({
+                    type: 'success',
+                    title: propertyToEdit ? t('systemModal.successTitle') : t('systemModal.successTitle'),
+                    message: propertyToEdit ? t('systemModal.editSuccessMessage') : t('confirmationModal.message'),
+                });
+            }
         }
     };
     

@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
@@ -819,37 +820,17 @@ const App: React.FC = () => {
     }
   };
 
-  const handleAddProperty = useCallback(async (newProperty: Property) => {
-    setIsLoading(true);
-    navigateHome();
-    
-    setTimeout(async () => {
-        if (user) {
-            await fetchAllData(user); 
-        }
-        showModal({
-            type: 'success',
-            title: t('systemModal.successTitle'),
-            message: t('confirmationModal.message'),
-        });
-    }, 100); 
-  }, [user, fetchAllData, t, showModal, navigateHome]);
+  const handleAddProperty = useCallback(async () => {
+    if (user) {
+      await fetchAllData(user);
+    }
+  }, [user, fetchAllData]);
 
   const handleUpdateProperty = useCallback(async () => {
-    setIsLoading(true);
-    navigateHome();
-    
-    setTimeout(async () => {
-        if (user) {
-            await fetchAllData(user); 
-        }
-        showModal({
-            type: 'success',
-            title: t('systemModal.successTitle'),
-            message: t('systemModal.editSuccessMessage'),
-        });
-    }, 100);
-  }, [user, fetchAllData, t, showModal, navigateHome]);
+    if (user) {
+      await fetchAllData(user);
+    }
+  }, [user, fetchAllData]);
 
 
   const handlePublishError = useCallback((message: string) => {
