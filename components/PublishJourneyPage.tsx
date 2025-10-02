@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Header from './Header';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -171,8 +172,9 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
         isGatedCommunity: null as boolean | null,
     });
 
-    const [files, setFiles] = useState<MediaItem[]>([]);
-    const [filesToRemove, setFilesToRemove] = useState<number[]>([]);
+    const [files, setFiles] = useState<(File | { id: number, url: string, tipo: string, type: 'existing' })[]>([]);
+    // FIX: Changed state type from number[] to string[] to correctly store file paths for removal.
+    const [filesToRemove, setFilesToRemove] = useState<string[]>([]);
 
     // UI State
     const [isLocationPermissionModalOpen, setIsLocationPermissionModalOpen] = useState(!propertyToEdit);
@@ -257,7 +259,10 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                 isWalled: propertyToEdit.murado ?? null,
                 isGatedCommunity: propertyToEdit.em_condominio ?? null,
             });
-            const existingMedia = (propertyToEdit.midias_imovel || []).map(m => ({ ...m, type: 'existing' as const }));
+            const existingMedia = [
+              ...(propertyToEdit.images || []).map(url => ({ id: Math.random(), url, tipo: 'imagem', type: 'existing' as const })),
+              ...(propertyToEdit.videos || []).map(url => ({ id: Math.random(), url, tipo: 'video', type: 'existing' as const }))
+            ];
             setFiles(existingMedia);
         }
     }, [propertyToEdit, profile]);
@@ -424,11 +429,15 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
         }
     };
     
-    const removeFile = (fileToRemove: MediaItem) => {
-        // FIX: Use 'id' as a more robust type guard to differentiate between existing Media and new File objects.
+    const removeFile = (fileToRemove: File | { id: number, url: string, type: 'existing' }) => {
         if ('id' in fileToRemove) { // It's an existing Media object
             setFiles(prev => prev.filter(f => f !== fileToRemove));
-            setFilesToRemove(prev => [...prev, fileToRemove.id]);
+            const url = new URL(fileToRemove.url);
+            const path = url.pathname.split('/midia/')[1];
+            if (path) {
+                // FIX: Removed incorrect `as any` cast. The state is now correctly typed as string[].
+                setFilesToRemove(prev => [...prev, path]);
+            }
         } else { // It's a new File
             setFiles(prev => prev.filter(f => f !== fileToRemove));
         }
@@ -448,7 +457,7 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
 
         try {
             // 1. Upload new files to Supabase Storage
-            const newFilesToUpload = files.filter(f => 'name' in f) as File[];
+            const newFilesToUpload = files.filter(f => f instanceof File) as File[];
             const uploadedUrls: { url: string, type: 'imagem' | 'video' }[] = [];
 
             for (const file of newFilesToUpload) {
@@ -466,9 +475,17 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                     type: file.type.startsWith('video') ? 'video' : 'imagem'
                 });
             }
+
+            // FIX: Correctly filter for existing media files by first applying a type guard.
+            const existingFiles = files.filter((f): f is { id: number, url: string, tipo: string, type: 'existing' } => 'type' in f && f.type === 'existing');
+            const existingImages = existingFiles.filter(f => f.tipo === 'imagem').map(f => f.url);
+            const existingVideos = existingFiles.filter(f => f.tipo === 'video').map(f => f.url);
             
+            const finalImageUrls = [...existingImages, ...uploadedUrls.filter(u => u.type === 'imagem').map(u => u.url)];
+            const finalVideoUrls = [...existingVideos, ...uploadedUrls.filter(u => u.type === 'video').map(u => u.url)];
+
             // 2. Prepare property data for Supabase table
-            const propertyData = {
+            const propertyData: Omit<Property, 'id' | 'created_at' | 'owner' | 'bedrooms' | 'bathrooms' | 'area' | 'address' | 'title' | 'lat' | 'lng' | 'price' | 'description'> & { images: string[], videos: string[] } = {
                 anunciante_id: user.id,
                 titulo: formData.title,
                 descricao: formData.description,
@@ -498,55 +515,36 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                 maximo_hospedes: formData.maxGuests ? Number(formData.maxGuests) : null,
                 taxa_limpeza: unformatCurrencyForSubmission(formData.cleaningFee),
                 datas_disponiveis: formData.availableDates,
-                // Land specific data
                 topografia: formData.detailsPropertyType === 'Terreno' ? formData.topography : null,
                 zoneamento: formData.detailsPropertyType === 'Terreno' ? formData.zoning : null,
                 murado: formData.detailsPropertyType === 'Terreno' ? formData.isWalled : null,
                 em_condominio: formData.detailsPropertyType === 'Terreno' ? formData.isGatedCommunity : null,
-                status: 'ativo'
+                status: 'ativo',
+                images: finalImageUrls,
+                videos: finalVideoUrls,
             };
 
-            let propertyId: number;
-
             if (propertyToEdit) {
-                 // UPDATE existing property
-                const { data: updatedProperty, error } = await supabase
+                // UPDATE existing property
+                if (filesToRemove.length > 0) {
+                    // FIX: Removed incorrect type assertion as `filesToRemove` is now correctly typed as string[].
+                    const { error: storageError } = await supabase.storage.from('midia').remove(filesToRemove);
+                    if (storageError) {
+                        console.error("Failed to remove old files from storage:", storageError);
+                    }
+                }
+                const { error } = await supabase
                     .from('imoveis')
                     .update(propertyData)
-                    .eq('id', propertyToEdit.id)
-                    .select('id')
-                    .single();
+                    .eq('id', propertyToEdit.id);
                 if (error) throw error;
-                propertyId = updatedProperty.id;
 
-                // Handle media removal
-                if (filesToRemove.length > 0) {
-                    const { error: deleteMediaError } = await supabase
-                        .from('midias_imovel')
-                        .delete()
-                        .in('id', filesToRemove);
-                    if (deleteMediaError) console.error("Error removing media:", deleteMediaError);
-                }
             } else {
                  // INSERT new property
-                const { data: newProperty, error } = await supabase
+                const { error } = await supabase
                     .from('imoveis')
-                    .insert(propertyData)
-                    .select('id')
-                    .single();
+                    .insert(propertyData);
                 if (error) throw error;
-                propertyId = newProperty.id;
-            }
-
-            // 3. Insert new media URLs into midias_imovel table
-            if (uploadedUrls.length > 0) {
-                const mediaToInsert = uploadedUrls.map(media => ({
-                    imovel_id: propertyId,
-                    url: media.url,
-                    tipo: media.type
-                }));
-                const { error: mediaError } = await supabase.from('midias_imovel').insert(mediaToInsert);
-                if (mediaError) throw new Error(`Erro ao salvar mídias: ${mediaError.message}`);
             }
 
             // 4. Update profile if phone number was added/changed
@@ -1127,11 +1125,10 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                                     {files.length > 0 && (
                                         <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                                             {files.map((file, index) => {
-                                                // FIX: Use a more robust type guard ('id' in file) to differentiate between existing Media and new File objects.
-                                                // This resolves TypeScript errors where properties like 'url' and 'tipo' were not found on the union type 'MediaItem'.
-                                                const isExisting = 'id' in file;
-                                                const url = isExisting ? file.url : URL.createObjectURL(file);
-                                                const fileType = isExisting ? file.tipo : file.type;
+                                                const isExisting = 'type' in file && file.type === 'existing';
+                                                const url = isExisting ? (file as { url: string }).url : URL.createObjectURL(file as File);
+                                                const fileType = isExisting ? (file as { tipo: string }).tipo : (file as File).type;
+
 
                                                 return (
                                                     <div key={index} className="relative group aspect-w-1 aspect-h-1">

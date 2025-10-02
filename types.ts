@@ -50,11 +50,10 @@ export interface Property {
 
 
   // Campos que já existem no front
-  images: string[];
-  videos?: string[];
+  images: string[] | null;
+  videos?: string[] | null;
   status?: string; // Alterado para string para suportar 'ativo'/'inativo'
   owner?: Profile & { email?: string, phone?: string }; // Merged Profile with legacy owner fields for compatibility
-  midias_imovel?: Media[];
   caracteristicas_imovel?: string[];
   caracteristicas_condominio?: string[];
   situacao_ocupacao?: string;
