@@ -283,14 +283,20 @@ const App: React.FC = () => {
         setProperties(adaptedProperties);
         setMyAds(currentUser ? adaptedProperties.filter(p => p.anunciante_id === currentUser.id) : []);
         setFetchError(null);
+        setIsCorsError(false);
     } catch (error: any) {
         console.error('Falha ao buscar imóveis:', error);
         if (error?.message) {
             if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-                setFetchError(t('systemModal.fetchError'));
+                setIsCorsError(true);
+                setFetchError(t('systemModal.corsError.title'));
             } else {
+                setIsCorsError(false);
                 setFetchError(error.message);
             }
+        } else {
+            setIsCorsError(false);
+            setFetchError('An unknown error occurred while fetching data.');
         }
         setProperties([]);
         setMyAds([]);
