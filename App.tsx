@@ -242,7 +242,7 @@ const App: React.FC = () => {
     console.time('fetchAllData');
 
     try {
-        let propertyQuery = supabase.from('imoveis').select('*, perfis:anunciante_id(*)');
+        let propertyQuery = supabase.from('imoveis').select('*, perfis:anunciante_id(*), midias_imovel(*)');
         if (currentUser) {
             propertyQuery = propertyQuery.or(`status.eq.ativo,anunciante_id.eq.${currentUser.id}`);
         } else {
@@ -267,27 +267,12 @@ const App: React.FC = () => {
                 throw new Error("SYNC_ERROR");
             }
         }
-
-        const propertyIds = propertiesData.map(p => p.id);
-        const { data: mediaData, error: mediaError } = await supabase.from('midias_imovel').select('*').in('imovel_id', propertyIds);
-
-        if (mediaError) {
-          console.error("Falha ao buscar mídias:", mediaError);
-        }
-
-        const mediaByPropertyId: { [key: number]: Media[] } = (mediaData || []).reduce((acc, media) => {
-          if (!acc[media.imovel_id]) {
-            acc[media.imovel_id] = [];
-          }
-          acc[media.imovel_id].push(media);
-          return acc;
-        }, {});
         
         const coreProperties = propertiesData.map((db: any): Property => {
             const ownerProfileData = db.perfis as Profile | undefined;
             const ownerProfile = ownerProfileData ? { ...ownerProfileData, phone: ownerProfileData.telefone } : undefined;
             
-            const propertyMedia = mediaByPropertyId[db.id] || [];
+            const propertyMedia = (db.midias_imovel || []) as Media[];
             const images = propertyMedia.filter(m => m.tipo === 'imagem').map(m => m.url);
             const videos = propertyMedia.filter(m => m.tipo === 'video').map(m => m.url);
 
