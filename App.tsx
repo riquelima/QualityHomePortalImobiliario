@@ -1,6 +1,8 @@
 
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+
+
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import InfoSection from './components/InfoSection';
@@ -206,12 +208,10 @@ const App: React.FC = () => {
   const [favorites, setFavorites] = useState<number[]>([]);
   const { t } = useLanguage();
   const [properties, setProperties] = useState<Property[]>([]);
-  const [myAds, setMyAds] = useState<Property[]>([]);
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthReady, setIsAuthReady] = useState(false);
   const fetchingRef = useRef(false);
-  const debounceTimerRef = useRef<number | null>(null);
   const [contactModalProperty, setContactModalProperty] = useState<Property | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [isCorsError, setIsCorsError] = useState(false);
@@ -241,7 +241,8 @@ const App: React.FC = () => {
 
     // PHASE 1: Fetch and display core property data
     try {
-        let propertyQuery = supabase.from('imoveis').select('*');
+        // OPTIMIZATION: Fetch properties and their owner profiles in a single query.
+        let propertyQuery = supabase.from('imoveis').select('*, perfis:anunciante_id(*)');
         if (currentUser) {
             propertyQuery = propertyQuery.or(`status.eq.ativo,anunciante_id.eq.${currentUser.id}`);
         } else {
@@ -268,18 +269,10 @@ const App: React.FC = () => {
         }
 
         const propertyIds = propertiesData.map(p => p.id);
-        const announcerIds = [...new Set(propertiesData.map(p => p.anunciante_id).filter(id => id))];
         
-        const { data: profilesData, error: profilesError } = announcerIds.length > 0
-            ? await supabase.from('perfis').select('*').in('id', announcerIds)
-            : { data: [], error: null };
-        if (profilesError) throw profilesError;
-
-        const profilesMap = new Map(profilesData?.map(p => [p.id, p]));
-
         // Adapt properties WITHOUT media first
         const coreProperties = propertiesData.map((db: any): Property => {
-            const ownerProfileData = (db.anunciante_id ? profilesMap.get(db.anunciante_id) : undefined) as Profile | undefined;
+            const ownerProfileData = db.perfis as Profile | undefined;
             const ownerProfile = ownerProfileData ? { ...ownerProfileData, phone: ownerProfileData.telefone } : undefined;
             return {
                 ...db, title: db.titulo, address: db.endereco_completo, bedrooms: db.quartos,
@@ -291,7 +284,6 @@ const App: React.FC = () => {
         
         // IMMEDIATE UI UPDATE
         setProperties(coreProperties);
-        setMyAds(currentUser ? coreProperties.filter(p => p.anunciante_id === currentUser.id) : []);
         setFetchError(null);
         setIsCorsError(false);
         setIsSyncError(false);
@@ -301,6 +293,7 @@ const App: React.FC = () => {
         // PHASE 2: Asynchronously fetch and hydrate media
         (async () => {
             try {
+                if (propertyIds.length === 0) return;
                 const { data: mediaData, error: mediaError } = await supabase.from('midias_imovel').select('*').in('imovel_id', propertyIds);
                 if (mediaError) throw mediaError;
                 if (!mediaData) return;
@@ -321,7 +314,6 @@ const App: React.FC = () => {
                 };
                 
                 setProperties(prevProperties => prevProperties.map(hydrateWithMedia));
-                setMyAds(prevMyAds => prevMyAds.map(hydrateWithMedia));
 
             } catch (mediaError) {
                 console.error('Failed to fetch media in background:', mediaError);
@@ -355,7 +347,6 @@ const App: React.FC = () => {
                 setFetchError('An unknown error occurred while fetching data.');
             }
             setProperties([]);
-            setMyAds([]);
         }
     }
 
@@ -400,7 +391,6 @@ const App: React.FC = () => {
     } else {
         setFavorites([]);
         setChatSessions([]);
-        setMyAds([]);
     }
 
     console.timeEnd('fetchAllData');
@@ -501,7 +491,6 @@ const App: React.FC = () => {
         setProfile(null);
         setFavorites([]);
         setChatSessions([]);
-        setMyAds([]);
         sessionStorage.removeItem('quallityHomePageState');
       }
       
@@ -615,27 +604,98 @@ const App: React.FC = () => {
     };
   }, [user, fetchAllData]);
 
+  // Helper function to adapt supabase data to frontend Property type
+  const adaptSupabaseProperty = (dbProperty: any, owner?: Profile): Partial<Property> => ({
+      ...dbProperty,
+      title: dbProperty.titulo,
+      address: dbProperty.endereco_completo,
+      bedrooms: dbProperty.quartos,
+      bathrooms: dbProperty.banheiros,
+      area: dbProperty.area_bruta,
+      lat: dbProperty.latitude,
+      lng: dbProperty.longitude,
+      price: dbProperty.preco,
+      description: dbProperty.descricao,
+      ...(owner && { owner: { ...owner, phone: owner.telefone } }),
+  });
+
   useEffect(() => {
     if (!isAuthReady) return;
 
+    const handlePropertyInsert = async (payload: any) => {
+        console.log('Real-time INSERT on imoveis:', payload.new);
+        const newDbProperty = payload.new;
+        const { data: ownerProfile } = await supabase.from('perfis').select('*').eq('id', newDbProperty.anunciante_id).single();
+        const newProperty = {
+            ...adaptSupabaseProperty(newDbProperty, ownerProfile || undefined),
+            images: [], videos: [], midias_imovel: [],
+        } as Property;
+        setProperties(prev => [newProperty, ...prev]);
+    };
+
+    const handlePropertyUpdate = (payload: any) => {
+        console.log('Real-time UPDATE on imoveis:', payload.new);
+        const updatedData = payload.new;
+        setProperties(prev => prev.map(p => {
+            if (p.id === updatedData.id) {
+                return { ...p, ...adaptSupabaseProperty(updatedData) };
+            }
+            return p;
+        }));
+    };
+
+    const handlePropertyDelete = (payload: any) => {
+        console.log('Real-time DELETE on imoveis:', payload.old);
+        const deletedId = payload.old.id;
+        if (deletedId) {
+            setProperties(prev => prev.filter(p => p.id !== deletedId));
+        }
+    };
+
     const propertiesChannel = supabase
       .channel('public:imoveis')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'imoveis' },
-        (payload) => {
-          console.log('Real-time change detected on imoveis table, debouncing fetch:', payload);
-          if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
-          debounceTimerRef.current = window.setTimeout(() => {
-             fetchAllData(user, { skipChats: true });
-          }, 300);
-        }
-      )
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'imoveis' }, handlePropertyInsert)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'imoveis' }, handlePropertyUpdate)
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'imoveis' }, handlePropertyDelete)
       .subscribe();
+
+    const handleMediaChange = (payload: any) => {
+        console.log(`Real-time ${payload.eventType} on midias_imovel:`, payload);
+        const media: Media = payload.eventType === 'DELETE' ? payload.old : payload.new;
+        if (!media || !media.imovel_id) return;
+        
+        setProperties(prev => prev.map(p => {
+            if (p.id === media.imovel_id) {
+                const updatedProperty = { ...p };
+                let mediaItems = updatedProperty.midias_imovel || [];
+                
+                if (payload.eventType === 'INSERT') {
+                    mediaItems = [...mediaItems, media];
+                } else if (payload.eventType === 'DELETE') {
+                    mediaItems = mediaItems.filter(m => m.id !== media.id);
+                }
+                
+                updatedProperty.midias_imovel = mediaItems;
+                updatedProperty.images = mediaItems.filter(m => m.tipo === 'imagem').map(m => m.url);
+                updatedProperty.videos = mediaItems.filter(m => m.tipo === 'video').map(m => m.url);
+
+                return updatedProperty;
+            }
+            return p;
+        }));
+    };
+
+    const mediaChannel = supabase
+        .channel('public:midias_imovel')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'midias_imovel' }, handleMediaChange)
+        .subscribe();
+
 
     return () => {
       supabase.removeChannel(propertiesChannel);
-      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+      supabase.removeChannel(mediaChannel);
     };
-  }, [isAuthReady, user, fetchAllData]);
+  }, [isAuthReady, user]);
 
   useEffect(() => {
     if (!isLoading) return;
@@ -691,7 +751,6 @@ const App: React.FC = () => {
     setProfile(null);
     setFavorites([]);
     setChatSessions([]);
-    setMyAds([]);
     sessionStorage.removeItem('quallityHomePageState');
     navigateHome();
     
@@ -808,7 +867,7 @@ const App: React.FC = () => {
         showModal({ type: 'error', title: t('systemModal.errorTitle'), message: `${t('myAdsPage.adDeletedError')} ${t('systemModal.errorDetails')}: ${propertyError.message}` });
     } else {
         showModal({ type: 'success', title: t('systemModal.successTitle'), message: t('myAdsPage.adDeletedSuccess') });
-        if (user) fetchAllData(user);
+        // The real-time listener will handle the UI update automatically. No fetchAllData needed.
     }
   };
 
@@ -941,6 +1000,11 @@ const App: React.FC = () => {
   };
   const closeContactModal = () => setContactModalProperty(null);
 
+  const myAds = useMemo(() => {
+    if (!user) return [];
+    return properties.filter(p => p.anunciante_id === user.id);
+  }, [properties, user]);
+
   const renderCurrentPage = () => {
     const headerProps = {
       navigateHome, onPublishAdClick: handlePublishClick, onAccessClick: () => openLoginModal('default'),
@@ -962,7 +1026,7 @@ const App: React.FC = () => {
           const filteredProperties = query ? properties.filter(p => p.title.toLowerCase().includes(query) || p.address.toLowerCase().includes(query)) : [];
           return <SearchResultsPage onBack={navigateHome} searchQuery={pageState.searchQuery ?? ''} properties={filteredProperties} onViewDetails={navigateToPropertyDetail} favorites={favorites} onToggleFavorite={toggleFavorite} onContactClick={openContactModal} {...headerProps} />;
         case 'propertyDetail':
-          const property = [...properties, ...myAds].find(p => p.id === pageState.propertyId);
+          const property = properties.find(p => p.id === pageState.propertyId);
           if (!property) { navigateHome(); return null; }
           return <PropertyDetailPage property={property} onBack={() => window.history.back()} isFavorite={favorites.includes(property.id)} onToggleFavorite={toggleFavorite} onStartChat={handleStartChat} {...headerProps} />;
         case 'favorites':
@@ -970,10 +1034,10 @@ const App: React.FC = () => {
             return <FavoritesPage onBack={navigateHome} properties={favoriteProperties} onViewDetails={navigateToPropertyDetail} favorites={favorites} onToggleFavorite={toggleFavorite} onContactClick={openContactModal} {...headerProps} />;
         case 'chatList':
           if (!user) { navigateHome(); return null; }
-          return <ChatListPage onBack={navigateHome} chatSessions={chatSessions.filter(s => s.participants[user.id])} properties={[...properties, ...myAds]} onNavigateToChat={navigateToChat} {...headerProps} />;
+          return <ChatListPage onBack={navigateHome} chatSessions={chatSessions.filter(s => s.participants[user.id])} properties={properties} onNavigateToChat={navigateToChat} {...headerProps} />;
         case 'chat':
           const session = chatSessions.find(s => s.id === pageState.chatSessionId);
-          const propertyForChat = [...properties, ...myAds].find(p => p.id === session?.imovel_id);
+          const propertyForChat = properties.find(p => p.id === session?.imovel_id);
           if (!session || !user || !propertyForChat) { navigateHome(); return null; }
           return <ChatPage onBack={navigateToChatList} user={user} session={session} property={propertyForChat} onSendMessage={handleSendMessage} onMarkAsRead={handleMarkAsRead} />;
         case 'myAds':
