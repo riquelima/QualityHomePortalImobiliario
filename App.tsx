@@ -1095,16 +1095,25 @@ const App: React.FC = () => {
                               <div className="ml-3">
                                   <h3 className="text-lg font-bold text-orange-800">{t('systemModal.corsError.title')}</h3>
                                   <div className="mt-2 text-sm text-orange-700 space-y-3">
-                                      <p>{t('systemModal.corsError.description')}</p>
-                                      <p className="font-semibold">{t('systemModal.corsError.fixInstruction')}</p>
-                                      <ol className="list-decimal list-inside space-y-2 pl-2">
-                                          <li>{t('systemModal.corsError.step1')}</li>
-                                          <li>{t('systemModal.corsError.step2')}</li>
-                                          <li>{t('systemModal.corsError.step3')} <code className="text-xs bg-orange-100 p-1 rounded font-mono break-all">{window.location.origin}</code></li>
-                                          <li>{t('systemModal.corsError.step4')}</li>
-                                          <li>{t('systemModal.corsError.step5')}</li>
-                                      </ol>
-                                      <p>{t('systemModal.corsError.afterFix')}</p>
+                                      <div className="prose prose-sm max-w-none text-orange-700 [&_a]:text-orange-600 [&_a]:underline [&_strong]:text-orange-800 [&_strong]:font-bold [&_code]:text-orange-900 [&_code]:bg-orange-200 [&_code]:p-1 [&_code]:rounded">
+                                          <p dangerouslySetInnerHTML={{ __html: t('systemModal.corsError.description') }} />
+                                          <p dangerouslySetInnerHTML={{ __html: t('systemModal.corsError.fixInstruction') }} />
+                                          <ol>
+                                              <li dangerouslySetInnerHTML={{ __html: t('systemModal.corsError.step1') }} />
+                                              <li dangerouslySetInnerHTML={{ __html: t('systemModal.corsError.step2') }} />
+                                              <li dangerouslySetInnerHTML={{ __html: t('systemModal.corsError.step3') }} />
+                                              <li dangerouslySetInnerHTML={{ __html: t('systemModal.corsError.step4') }} />
+                                              <li dangerouslySetInnerHTML={{ __html: t('systemModal.corsError.step5') }} />
+                                              <div className="not-prose pl-8 my-2">
+                                                  <code className="text-xs bg-orange-100 p-1 rounded font-mono break-all">{window.location.origin}</code>
+                                              </div>
+                                              <li dangerouslySetInnerHTML={{ __html: t('systemModal.corsError.step6_code')}} />
+                                              <ul className="not-prose list-disc list-inside pl-8 space-y-1 my-2" dangerouslySetInnerHTML={{ __html: t('systemModal.corsError.step6_urls')}} />
+                                              <li dangerouslySetInnerHTML={{ __html: t('systemModal.corsError.step7') }} />
+                                              <li dangerouslySetInnerHTML={{ __html: t('systemModal.corsError.step8') }} />
+                                          </ol>
+                                          <p dangerouslySetInnerHTML={{ __html: t('systemModal.corsError.afterFix') }} />
+                                      </div>
                                   </div>
                               </div>
                           </div>
