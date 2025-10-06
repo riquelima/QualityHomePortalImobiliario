@@ -792,7 +792,7 @@ const enTranslations = {
       "aiDescriptionError": "Could not generate a description. Please check your connection or try again.",
       "apartmentCharacteristics": "Property characteristics",
       "landCharacteristics": "Land Characteristics",
-      "topografia": "Topography",
+      "topography": "Topography",
       "flat": "Flat",
       "uphill": "Uphill",
       "downhill": "Downhill",
@@ -1329,311 +1329,24 @@ const esTranslations = {
       "aiTitlePrompt": "Basado en el siguiente título de anuncio inmobiliario, crea uno más atractivo y llamativo. Mantenlo conciso y profesional, con un máximo de 10 palabras. Título original: '{title}'. Devuelve solo el nuevo título, sin comillas ni texto adicional.",
       "aiTitleButtonLabel": "Mejorar con IA",
       "aiTitleError": "No se pudo generar un título. Comprueba tu conexión o inténtalo de nuevo.",
-      "aiDescriptionPrompt": "Eres un agente inmobiliario experto en marketing. Tu tarea es crear una descripción de anuncio irresistible en español. Utiliza la información detallada proporcionada a continuación para escribir un texto fluido, profesional y atractivo. Incorpora los detalles de forma natural en la descripción, convirtiendo la lista de características en una narrativa convincente. No te limites a enumerar las características. El objetivo es que el lector se imagine en la propiedad. Sé creativo y céntrate en los beneficios que ofrece cada característica.\n\n**Reglas importantes:**\n- **Incorpora todos los detalles proporcionados.** Menciona el número de habitaciones, baños, superficie y características especiales.\n- **No enumeres las características.** Descríbelas como parte de una historia (ej: 'relájate en el espacioso balcón' en lugar de 'característica: balcón').\n- **No incluyas el precio.**\n- **No repitas el título del anuncio.**\n- El texto final debe tener entre 2 y 4 párrafos.\n\n**Información del Inmueble:**\n{details}",
-      "aiDescriptionButtonLabel": "Mejorar descripción con IA",
-      "aiDescriptionError": "No se pudo generar una descripción. Comprueba tu conexión o inténtalo de nuevo.",
-      "apartmentCharacteristics": "Características del inmueble",
-      "landCharacteristics": "Características del Terreno",
-      "topography": "Topografía",
-      "flat": "Plano",
-      "uphill": "En pendiente ascendente",
-      "downhill": "En pendiente descendente",
-      "irregular": "Irregular",
-      "zoning": "Zonificación",
-      "residential": "Residencial",
-      "commercial": "Comercial",
-      "mixedUse": "Mixto",
-      "industrial": "Industrial",
-      "walled": "¿Está amurallado?",
-      "gatedCommunity": "¿Está en un condominio cerrado?",
-      "propertyType": "Tipo de inmueble (opcional)",
-      "apartment": "Apartamento",
-      "house": "Casa",
-      "room": "Habitación",
-      "office": "Oficina",
-      "land": "Terreno",
-      "condition": "Estado",
-      "forRenovation": "Para reformar",
-      "goodCondition": "Buen estado",
-      "grossArea": "m² superficie bruta",
-      "netArea": "m² superficie útil (opcional)",
-      "bedrooms": "Número de habitaciones en la casa",
-      "bathrooms": "Número de baños completos y de servicio",
-      "hasElevator": "¿Tiene ascensor?",
-      "yes": "Sí",
-      "no": "No",
-      "otherHomeFeatures": "Otras características de tu vivienda",
-      "builtInWardrobes": "Armarios empotrados",
-      "airConditioning": "Aire acondicionado",
-      "terrace": "Terraza",
-      "balcony": "Balcón",
-      "garage": "Plaza de garaje/Box",
-      "mobiliado": "Amueblado",
-      "cozinhaEquipada": "Cocina equipada",
-      "suite": "Suite",
-      "escritorio": "Oficina en casa",
-      "otherBuildingFeatures": "Otras características de tu edificio",
-      "pool": "Piscina",
-      "greenArea": "Zona verde",
-      "portaria24h": "Portería 24h",
-      "academia": "Gimnasio",
-      "salaoDeFestas": "Salón de fiestas",
-      "churrasqueira": "Zona de barbacoa",
-      "parqueInfantil": "Parque infantil",
-      "quadraEsportiva": "Cancha deportiva",
-      "sauna": "Sauna",
-      "espacoGourmet": "Espacio gourmet",
-      "showMoreDetails": "Indicar más detalles",
-      "adDescription": "Descripción del anuncio",
-      "descriptionPlaceholder": "Escribe aquí la descripción en español. Más tarde, podrás añadir otros idiomas.",
-      "continueToPhotosButton": "Continuar e importar fotos",
-      "sellTitle": "Detalles para Venta",
-      "rentTitle": "Detalles para Alquiler",
-      "seasonTitle": "Detalles para Alquiler por Temporada",
-      "salePrice": "Precio de Venta",
-      "iptuAnnual": "IBI (anual, opcional)",
-      "acceptsFinancing": "¿Acepta financiación?",
-      "occupationSituation": "Situación de ocupación del inmueble",
-      "rented": "Alquilado (con inquilinos)",
-      "vacant": "Libre (sin inquilinos)",
-      "monthlyRent": "Alquiler Mensual",
-      "condoFee": "Gastos de comunidad (opcional)",
-      "iptuMonthly": "IBI (mensual, opcional)",
-      "rentalConditions": "Condiciones del alquiler",
-      "deposit": "Fianza",
-      "guarantor": "Aval",
-      "insurance": "Seguro de impago",
-      "petsAllowed": "¿Se admiten mascotas?",
-      "dailyRate": "Precio por Noche",
-      "minStay": "Estancia mínima (días)",
-      "maxGuests": "Número máximo de huéspedes",
-      "cleaningFee": "Tasa de limpieza (opcional)",
-      "availability": "Disponibilidad",
-      "currency": {
-        "reais": "euros",
-        "reaisMonth": "euros/mes"
-      },
-      "calendar": {
-        "prev": "Ant",
-        "next": "Sig"
-      }
-    },
-    "photosForm": {
-        "title": "Añadir fotos, planos y vídeos a tu anuncio",
-        "dragAndDrop": "Arrastra y suelta tus fotos aquí o selecciónalas desde tu dispositivo",
-        "addButton": "Añadir fotos y vídeos",
-        "limitsInfo": "Sube hasta 10 archivos (fotos y vídeos). Máx. 32 MB por foto y 600 MB por vídeo.",
-        "rememberTitle": "Recuerda que...",
-        "tip1": "Fotos, planos y vídeos: atraen a más personas a tu anuncio",
-        "tip2": "Si tienes un plano del inmueble, puedes hacerle una foto o dibujarlo a mano y hacer una fotografía del dibujo",
-        "tip3": "Cuando hagas tus fotografías, asegúrate de que cada estancia está ordenada, limpia y bien iluminada",
-        "backButton": "Volver",
-        "continueButton": "Continuar sin fotos",
-        "publishButton": "Publicar Anuncio",
-        "updateButton": "Actualizar Anuncio",
-        "publishingButton": "Publicando...",
-        "updatingButton": "Actualizando...",
-        "removeFile": "Quitar archivo"
-    },
-    "sidebar": {
-      "title": "Información útil",
-      "p1": "Prepara las fotos. Si todavía no las tienes, podrás añadirlas más tarde. Sin fotos no obtendrás resultados.",
-      "p2": "Te ofrecemos los dos primeros anuncios gratis para que pruebes nuestro servicio. Puedes publicar anuncios gratis de apartamentos, chalets, terrenos, locales comerciales, etc. hasta que los vendas o alquiles.",
-      "p3": "Además, puedes publicar hasta 5 habitaciones gratis, en inmuebles para compartir, que no se suman al número de anuncios que te ofrecemos.",
-      "p4": "Para garantizar la calidad de nuestros servicios, cobramos una tasa en los siguientes casos:",
-      "case1": "anunciantes con más de dos inmuebles",
-      "case2": "anunciantes de inmuebles duplicados",
-      "case3": "inmuebles en venta por más de 1.000.000 de euros",
-      "case4": "inmuebles en alquiler por más de 2.500 €/mes",
-      "quickSell": {
-        "title": "¿Quieres vender tu casa rápidamente?",
-        "link": "Encuentra la agencia inmobiliaria más adecuada"
-      },
-      "professional": {
-        "title": "¿Eres profesional inmobiliario?",
-        "link": "Conoce las ventajas que ofrecemos para profesionales"
-      }
-    },
-    "locationConfirmationModal": {
-      "title": "¿Está en el lugar correcto?",
-      "subtitle": "Si no está bien ubicado, puedes arrastrar el pin hasta la posición correcta.",
-      "countryInfo": "Brasil",
-      "confirmButton": "Confirmar dirección",
-      "backButton": "Volver a escribir la dirección"
-    },
-    "locationPermissionModal": {
-      "title": "¿Mejorar sugerencias de ciudad?",
-      "message": "Para ofrecer sugerencias más relevantes para tu región, podemos usar tu ubicación. Tus datos de ubicación exacta nunca se guardan ni se comparten."
+      "aiDescriptionPrompt": "Eres un agente inmobiliario experto en marketing. Tu tarea es crear una descripción de anuncio irresistible en español. Utiliza la información detallada proporcionada a continuación para escribir un texto fluido, profesional y atractivo. Incorpora los detalles de forma natural en la descripción, convirtiendo la lista de características en una narrativa convincente. No te limites a enumerar las características. El objetivo es que el lector se imagine en la propiedad. Sé creativo y céntrate en los beneficios que ofrece cada característica.\n\n**Reglas importantes:**\n- **Incorpora todos los detalles proporcion"
     }
-  },
-  "geolocationErrorModal": {
-    "title": "Error de Ubicación",
-    "description": "No pudimos obtener tu ubicación. Esto puede ocurrir si denegaste la solicitud de permiso o si tu navegador no admite la geolocalización. Por favor, revisa los permisos de sitio de tu navegador e inténtalo de nuevo.",
-    "closeButton": "OK"
-  },
-  "searchResults": {
-    "breadcrumb": "Resultados de búsqueda",
-    "title": "Inmuebles para \"{query}\"",
-    "subtitle": "{count} inmuebles encontrados",
-    "noResults": {
-      "title": "No se encontraron resultados",
-      "description": "Intenta ajustar tus términos de búsqueda o busca una ubicación diferente."
-    }
-  },
-  "propertyDetail": {
-    "breadcrumb": "Detalles del Inmueble",
-    "gallery": "Galería de Fotos",
-    "description": "Descripción",
-    "details": "Detalles del Inmueble",
-    "videos": "Galería de Vídeos",
-    "scheduleVisit": "Agendar Visita",
-    "addToFavorites": "Añadir a Favoritos",
-    "removeFromFavorites": "Quitar de Favoritos",
-    "generalDetails": "Detalles Generales",
-    "propertyFeatures": "Características del Inmueble",
-    "condoAmenities": "Comodidades del Condominio",
-    "propertyType": "Tipo de inmueble",
-    "occupationStatus": "Situación",
-    "hasElevator": "Ascensor",
-    "yes": "Sí",
-    "no": "No",
-    "condoFee": "Comunidad"
-  },
-  "favoritesPage": {
-    "title": "Mis Inmuebles Favoritos",
-    "breadcrumb": "Favoritos",
-    "noFavorites": {
-      "title": "Aún no tienes inmuebles favoritos",
-      "description": "Haz clic en el corazón en los anuncios para guardar los inmuebles que más te gusten aquí."
-    }
-  },
-  "contactModal": {
-    "title": "Contacto del Anunciante",
-    "contactPerson": "Hablar con",
-    "phone": "Teléfono",
-    "whatsappButton": "Chatear por WhatsApp",
-    "chatButton": "Chatear por el chat",
-    "whatsappMessage": "Hola, vi este inmueble en el Portal Quallity Home y me gustaría más información. Título del anuncio: {title}"
-  },
-  "chatList": {
-    "title": "Mis Chats",
-    "breadcrumb": "Chat",
-    "noChats": {
-      "title": "Aún no tienes conversaciones",
-      "description": "Inicia una conversación desde la página de detalles de un inmueble."
-    }
-  },
-  "chatPage": {
-    "title": "Chat sobre: {title}",
-    "messagePlaceholder": "Escribe tu mensaje...",
-    "sendButton": "Enviar"
-  },
-  "myAdsPage": {
-    "title": "Mis Anuncios",
-    "breadcrumb": "Mis Anuncios",
-    "noAds": {
-      "title": "Aún no has publicado ningún anuncio",
-      "description": "Empieza ahora y llega a miles de personas interesadas en tu inmueble."
-    },
-    "newAdButton": "Publicar Nuevo Anuncio",
-    "viewButton": "Ver",
-    "editButton": "Editar",
-    "deleteButton": "Eliminar",
-    "deleteConfirm": "¿Estás seguro de que quieres eliminar este anuncio? Esta acción no se puede deshacer.",
-    "adDeletedSuccess": "¡Anuncio eliminado con éxito!",
-    "adDeletedError": "Error al eliminar el anuncio.",
-    "inactiveStatus": "Inactivo"
-  },
-  "confirmationModal": {
-    "title": "¡Éxito!",
-    "message": "Tu anuncio se ha publicado correctamente y ya está visible en el portal.",
-    "closeButton": "Entendido"
-  },
-  "systemModal": {
-    "successTitle": "¡Éxito!",
-    "errorTitle": "Ocurrió un Error",
-    "confirmTitle": "¿Estás seguro?",
-    "okButton": "Entendido",
-    "confirmButton": "Confirmar",
-    "cancelButton": "Cancelar",
-    "fetchError": "No se pudieron cargar los anuncios. Por favor, intenta recargar la página.",
-    "editSuccessMessage": "¡Anuncio actualizado con éxito!",
-    "errorDetails": "Detalles del error",
-    "logoutError": "No se pudo cerrar la sesión. Por favor, inténtelo de nuevo.",
-    "favoriteErrorAdd": "No se pudo añadir el inmueble a favoritos. Por favor, inténtelo de nuevo.",
-    "favoriteErrorRemove": "No se pudo quitar el inmueble de favoritos. Por favor, inténtelo de nuevo.",
-    "corsError": {
-      "title": "Acción Requerida: Configurar CORS en Supabase",
-      "description": "Tu aplicación no puede cargar los listados porque el servidor de Supabase está bloqueando la conexión por seguridad. Las alternativas que encontraste (Edge Functions/Proxies) son soluciones avanzadas pero innecesarias para este problema, que se puede resolver con una simple configuración.",
-      "fixInstruction": "La interfaz del panel de Supabase puede cambiar, pero la configuración siempre se encuentra en la sección de API. Por favor, sigue estos pasos actualizados y más detallados:",
-      "step1": "<strong>1. Accede a tu Proyecto:</strong> Inicia sesión en <a href='https://supabase.com/' target='_blank' rel='noopener noreferrer'>supabase.com</a> y navega a tu proyecto.",
-      "step2": "<strong>2. Encuentra la Configuración de API:</strong> En la barra lateral izquierda, busca un <strong>icono de engranaje</strong> (Project Settings). Haz clic en él.",
-      "step3": "<strong>3. Ve a la Sección de API:</strong> En el menú de configuración, haz clic en <strong>'API'</strong>.",
-      "step4": "<strong>4. Añade la URL de tu sitio:</strong> Desplázate hacia abajo en la página hasta que encuentres la sección llamada <strong>'Configuration'</strong> y el campo <strong>'CORS Origins'</strong>. Es un cuadro de texto.",
-      "step5": "<strong>5. Pega la URL:</strong> Añade la URL exacta donde se está ejecutando tu sitio. Para esta vista previa, la URL es:",
-      "step6_code": "<strong>6. Añade Otras URLs (Recomendado):</strong> Presiona Enter después de cada URL. Es una buena práctica añadir también las siguientes para cubrir todos los entornos:",
-      "step6_urls": "<li><code>http://localhost:3000</code> (para desarrollo local)</li><li>Patrones para Vercel/Netlify, como <code>https://*.vercel.app</code></li>",
-      "step7": "<strong>7. Guarda los Cambios:</strong> En la <strong>esquina inferior derecha</strong> de la página, encontrarás un botón de <strong>'Save'</strong> (Guardar). Haz clic en él para aplicar los cambios.",
-      "step8": "<strong>8. Recarga la Página:</strong> Vuelve a esta página y actualízala. Los listados deberían cargarse correctamente.",
-      "afterFix": "Si sigues teniendo dudas, consulta la <a href='https://supabase.com/docs/guides/api/cors' target='_blank' rel='noopener noreferrer'>documentación oficial de Supabase sobre CORS</a>, que está siempre actualizada."
-    },
-    "syncError": {
-      "title": "Acción Requerida: Error al Cargar Propiedades",
-      "description": "La conexión con el servidor fue exitosa, pero no se devolvieron propiedades. La causa más común es una política de 'Seguridad a Nivel de Fila' (RLS) en Supabase que está bloqueando el acceso a los datos.",
-      "fixInstruction": "Para resolver esto, por favor, verifica tus políticas de RLS:",
-      "step1": "Ve a tu proyecto en Supabase y navega a 'Authentication' > 'Policies'.",
-      "step2": "Encuentra la tabla 'imoveis' y verifica si existe una política que permita el acceso de lectura (SELECT) para usuarios no autenticados (rol 'anon').",
-      "step3": "Si no, crea una nueva política para SELECT con la expresión 'USING (true)' para permitir que todos lean los listados.",
-      "afterFix": "Después de guardar la política, recarga esta página."
-    }
-  },
-  "documentsForSalePage": {
-    "title": "Documentos Necesarios para la Venta",
-    "intro": "La venta de un inmueble implica una serie de documentos para garantizar la seguridad jurídica de la transacción. A continuación, se presenta una lista general de los documentos que se suelen exigir:",
-    "seller": {
-      "title": "Documentos del Vendedor (y cónyuge, si corresponde)",
-      "doc1": "Documento de identidad (DNI y NIF/CIF)",
-      "doc2": "Justificante de estado civil (Certificado de Nacimiento o Matrimonio)",
-      "doc3": "Justificante de domicilio",
-      "doc4": "Certificados de estar al corriente de pago (federales, estatales, municipales y laborales)",
-      "doc5": "Capitulaciones matrimoniales, si las hubiera"
-    },
-    "buyer": {
-      "title": "Documentos del Comprador (y cónyuge, si corresponde)",
-      "doc1": "Documento de identidad (DNI y NIF/CIF)",
-      "doc2": "Justificante de estado civil",
-      "doc3": "Justificante de domicilio"
-    },
-    "property": {
-      "title": "Documentos del Inmueble",
-      "doc1": "Nota Simple o Certificación Registral actualizada del inmueble (expedida por el Registro de la Propiedad)",
-      "doc2": "Certificado de cargas y gravámenes (para verificar si existen hipotecas o embargos)",
-      "doc3": "Certificado de estar al corriente de pago del IBI (expedido por el ayuntamiento)",
-      "doc4": "Declaración de estar al corriente de los gastos de comunidad (si procede)",
-      "doc5": "Plano de la vivienda aprobado por el ayuntamiento (opcional, pero recomendado)"
-    },
-    "disclaimer": {
-      "title": "Aviso Importante",
-      "text": "Esta es una lista de referencia. La documentación exacta puede variar en función de la ubicación del inmueble y de las particularidades de la negociación. Recomendamos siempre consultar a un abogado o a un agente inmobiliario."
-    }
-  },
-  "footer": {
-    "text": "Quallity Home Portal Inmobiliario. Todos los derechos reservados."
   }
 };
 
-type Language = 'pt' | 'en' | 'es';
-
+// FIX: Implement and export LanguageProvider and useLanguage hook.
 const translations = {
   pt: ptTranslations,
   en: enTranslations,
   es: esTranslations,
 };
 
+type Language = 'pt' | 'en' | 'es';
+
 interface LanguageContextType {
   language: Language;
   changeLanguage: (lang: Language) => void;
-  t: (key: string, options?: { [key: string]: string | number }) => string;
+  t: (key: string, replacements?: { [key: string]: string | number }) => string;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -1641,31 +1354,52 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [language, setLanguage] = useState<Language>('pt');
 
-  const changeLanguage = (lang: Language) => {
-    setLanguage(lang);
-  };
+  const changeLanguage = useCallback((lang: Language) => {
+    if (translations[lang]) {
+      setLanguage(lang);
+    }
+  }, []);
 
-  const t = useCallback((key: string, options?: { [key: string]: string | number }) => {
+  const t = useCallback((key: string, replacements?: { [key: string]: string | number }): string => {
     const keys = key.split('.');
     let result: any = translations[language];
+
     for (const k of keys) {
-      result = result?.[k];
-      if (result === undefined) {
-        return key; // Return the key itself if not found
+      if (result && typeof result === 'object' && k in result) {
+        result = result[k];
+      } else {
+        // Fallback to English if translation not found in current language
+        let fallbackResult: any = translations['en'];
+        for (const fk of keys) {
+            if (fallbackResult && typeof fallbackResult === 'object' && fk in fallbackResult) {
+                fallbackResult = fallbackResult[fk];
+            } else {
+                return key; // Return key if not found in fallback either
+            }
+        }
+        result = fallbackResult;
+        break;
       }
     }
 
-    if (typeof result === 'string' && options) {
-      Object.keys(options).forEach(optKey => {
-        result = result.replace(`{${optKey}}`, String(options[optKey]));
-      });
+    if (typeof result !== 'string') {
+      return key;
     }
-    
-    return result || key;
+
+    let finalString = result;
+    if (replacements) {
+        Object.keys(replacements).forEach(rKey => {
+            finalString = finalString.replace(`{${rKey}}`, String(replacements[rKey]));
+        });
+    }
+
+    return finalString;
   }, [language]);
 
+  const value = { language, changeLanguage, t };
+
   return (
-    <LanguageContext.Provider value={{ language, changeLanguage, t }}>
+    <LanguageContext.Provider value={value}>
       {children}
     </LanguageContext.Provider>
   );
@@ -1673,7 +1407,7 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
 
 export const useLanguage = (): LanguageContextType => {
   const context = useContext(LanguageContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useLanguage must be used within a LanguageProvider');
   }
   return context;

@@ -1,11 +1,12 @@
 
 
-import React from 'react';
+import React, { useRef, useEffect, useCallback } from 'react';
 // FIX: Removed unused import of PropertyStatus.
 import type { Property } from '../types';
 import PropertyCard from './PropertyCard';
 import { useLanguage } from '../contexts/LanguageContext';
 import SearchIcon from './icons/SearchIcon';
+import SpinnerIcon from './icons/SpinnerIcon';
 
 interface PropertyListingsProps {
   properties: Property[];
@@ -17,6 +18,9 @@ interface PropertyListingsProps {
   onContactClick: (property: Property) => void;
   noResultsTitle?: string;
   noResultsDescription?: string;
+  loadMore: () => void;
+  isFetchingMore: boolean;
+  hasMore: boolean;
 }
 
 const SkeletonCard: React.FC = () => (
@@ -40,8 +44,29 @@ const SkeletonCard: React.FC = () => (
 );
 
 
-const PropertyListings: React.FC<PropertyListingsProps> = ({ properties, onViewDetails, favorites, onToggleFavorite, isLoading, title, onContactClick, noResultsTitle, noResultsDescription }) => {
+const PropertyListings: React.FC<PropertyListingsProps> = ({ properties, onViewDetails, favorites, onToggleFavorite, isLoading, title, onContactClick, noResultsTitle, noResultsDescription, loadMore, isFetchingMore, hasMore }) => {
   const { t } = useLanguage();
+  const loader = useRef(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+        (entries) => {
+            if (entries[0].isIntersecting && hasMore && !isFetchingMore) {
+                loadMore();
+            }
+        },
+        { rootMargin: "200px" }
+    );
+    const currentLoader = loader.current;
+    if (currentLoader) {
+        observer.observe(currentLoader);
+    }
+    return () => {
+        if (currentLoader) {
+            observer.unobserve(currentLoader);
+        }
+    };
+  }, [hasMore, isFetchingMore, loadMore]);
 
   return (
     <section className="bg-white py-16 sm:py-20">
@@ -54,9 +79,9 @@ const PropertyListings: React.FC<PropertyListingsProps> = ({ properties, onViewD
           {isLoading ? (
             Array.from({ length: 6 }).map((_, index) => <SkeletonCard key={index} />)
           ) : properties.length > 0 ? (
-            properties.map((property) => (
+            properties.map((property, index) => (
               <PropertyCard 
-                key={property.id} 
+                key={`${property.id}-${index}`} 
                 property={property} 
                 onViewDetails={onViewDetails}
                 isFavorite={favorites.includes(property.id)}
@@ -72,6 +97,13 @@ const PropertyListings: React.FC<PropertyListingsProps> = ({ properties, onViewD
              </div>
           )}
         </div>
+        
+        <div ref={loader} className="h-10" />
+        {isFetchingMore && (
+            <div className="flex justify-center items-center py-8">
+                <SpinnerIcon className="w-10 h-10 animate-spin text-brand-red" />
+            </div>
+        )}
       </div>
     </section>
   );

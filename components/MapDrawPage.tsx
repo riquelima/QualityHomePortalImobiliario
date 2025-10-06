@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { GoogleMap, useJsApiLoader, Marker, InfoWindow, Circle, DrawingManager } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, Marker, Circle, DrawingManager } from '@react-google-maps/api';
 import type { Property } from '../types';
 import PropertyCard from './PropertyCard';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -57,11 +57,10 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewD
 
   const onMarkerClick = useCallback((property: Property) => {
     setSelectedProperty(property);
-  }, []);
-
-  const onInfoWindowClose = useCallback(() => {
-    setSelectedProperty(null);
-  }, []);
+    if (map) {
+      map.panTo({ lat: property.lat, lng: property.lng });
+    }
+  }, [map]);
 
   // Effect for userLocation search
   useEffect(() => {
@@ -143,6 +142,7 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewD
           mapTypeControl: false,
           zoomControl: true,
         }}
+        onClick={() => setSelectedProperty(null)}
       >
         {/* Markers */}
         {properties.map(prop => (
@@ -156,24 +156,6 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewD
         {/* User Location Marker */}
         {/* FIX: Access google.maps through window object to resolve missing namespace error. */}
         {userLocation && <Marker position={userLocation} icon={{ path: (window as any).google.maps.SymbolPath.CIRCLE, scale: 8, fillColor: '#4285F4', fillOpacity: 1, strokeColor: 'white', strokeWeight: 2 }} />}
-
-        {/* InfoWindow */}
-        {selectedProperty && (
-          <InfoWindow
-            position={{ lat: selectedProperty.lat, lng: selectedProperty.lng }}
-            onCloseClick={onInfoWindowClose}
-          >
-             <div className="w-48">
-                 <h3 className="font-bold text-sm mb-1 truncate">{selectedProperty.title}</h3>
-                 <button 
-                     onClick={() => onViewDetails(selectedProperty.id)}
-                     className="w-full bg-brand-red text-white text-xs font-bold py-1 px-2 rounded hover:opacity-90"
-                 >
-                     {t('propertyCard.details')}
-                 </button>
-             </div>
-          </InfoWindow>
-        )}
         
         {/* Drawing Manager */}
         {!userLocation && isDrawing && (
@@ -218,7 +200,7 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewD
       {renderMap()}
 
       {/* UI Overlay */}
-      <div className="absolute top-0 left-0 w-full p-4 md:p-6 z-[1000] bg-gradient-to-b from-white/80 to-transparent pointer-events-none">
+      <div className="absolute top-0 left-0 w-full p-4 md:p-6 z-10 bg-gradient-to-b from-white/80 to-transparent pointer-events-none">
          <div className="container mx-auto pointer-events-auto">
             <div className="text-sm mb-4">
                 <span onClick={onBack} className="text-brand-red hover:underline cursor-pointer">{t('map.breadcrumbs.home')}</span>
@@ -232,7 +214,7 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewD
       </div>
 
       {!userLocation && (
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[1000]">
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10">
             {!isDrawing && !drawnCircle && (
                 <button
                     onClick={handleStartDrawing}
@@ -259,8 +241,8 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewD
         </div>
       )}
       
-      {userLocation && propertiesInZone.length > 0 && (
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[1000]">
+      {userLocation && propertiesInZone.length > 0 && !selectedProperty && (
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10">
           <button
             onClick={() => setIsSidebarOpen(prev => !prev)}
             className="bg-brand-navy hover:bg-brand-dark text-white font-bold py-3 px-6 rounded-full shadow-2xl transition duration-300"
@@ -269,6 +251,30 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewD
           </button>
         </div>
       )}
+      
+      {/* Selected Property Card Overlay */}
+      {selectedProperty && (
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-sm z-10 animate-fadeIn">
+          <div className="relative">
+            <PropertyCard
+              key={selectedProperty.id}
+              property={selectedProperty}
+              onViewDetails={onViewDetails}
+              isFavorite={favorites.includes(selectedProperty.id)}
+              onToggleFavorite={onToggleFavorite}
+              onContactClick={onContactClick}
+            />
+            <button
+              onClick={(e) => { e.stopPropagation(); setSelectedProperty(null); }}
+              className="absolute -top-2 -right-2 bg-white p-1 rounded-full text-brand-dark shadow-lg hover:bg-gray-200 transition-all duration-200 z-20"
+              aria-label="Close property details"
+            >
+              <CloseIcon className="w-6 h-6" />
+            </button>
+          </div>
+        </div>
+      )}
+
 
       {isSidebarOpen && (
           <div 

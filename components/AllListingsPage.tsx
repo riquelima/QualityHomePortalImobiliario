@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import Header from './Header';
 import PropertyListings from './PropertyListings';
@@ -37,6 +38,7 @@ const containerStyle = {
 };
 
 const libraries: ('drawing' | 'places' | 'visualization')[] = ['drawing', 'places', 'visualization'];
+const PAGE_SIZE = 9;
 
 const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
   const { t } = useLanguage();
@@ -48,6 +50,11 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
   const [mapCenter, setMapCenter] = useState<{lat: number, lng: number}>({lat: -12.9777, lng: -38.5016}); // Default to Salvador
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [autocomplete, setAutocomplete] = useState<any | null>(null);
+
+  // Infinite Scroll State
+  const [displayedProperties, setDisplayedProperties] = useState<Property[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
 
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script',
@@ -82,6 +89,36 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
 
     setFilteredProperties(newFiltered);
   }, [searchQuery, activeTab, props.properties]);
+
+  useEffect(() => {
+    setDisplayedProperties(filteredProperties.slice(0, PAGE_SIZE));
+    setCurrentPage(1);
+  }, [filteredProperties]);
+
+  const loadMoreProperties = useCallback(() => {
+    if (isFetchingMore || filteredProperties.length === 0) return;
+  
+    setIsFetchingMore(true);
+  
+    setTimeout(() => {
+      const nextPage = currentPage + 1;
+      const start = currentPage * PAGE_SIZE;
+      const end = start + PAGE_SIZE;
+      
+      let newItems = filteredProperties.slice(start, end);
+  
+      if (newItems.length === 0 && filteredProperties.length > 0) {
+        // Loop back to the beginning
+        newItems = filteredProperties.slice(0, PAGE_SIZE);
+        setCurrentPage(1);
+      } else {
+        setCurrentPage(nextPage);
+      }
+  
+      setDisplayedProperties(prev => [...prev, ...newItems]);
+      setIsFetchingMore(false);
+    }, 500);
+  }, [isFetchingMore, currentPage, filteredProperties]);
 
 
   useEffect(() => {
@@ -211,7 +248,7 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2">
                      <PropertyListings 
-                        properties={filteredProperties} 
+                        properties={displayedProperties} 
                         onViewDetails={props.onViewDetails} 
                         favorites={props.favorites} 
                         onToggleFavorite={props.onToggleFavorite} 
@@ -220,6 +257,9 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
                         title={t('listings.foundTitle')}
                         noResultsTitle="Nenhum imóvel encontrado"
                         noResultsDescription="Tente ajustar seus filtros ou pesquisar por uma localização diferente."
+                        loadMore={loadMoreProperties}
+                        isFetchingMore={isFetchingMore}
+                        hasMore={filteredProperties.length > 0}
                     />
                 </div>
                 <div className="lg:col-span-1">
@@ -238,7 +278,7 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
                                 zoomControl: true,
                             }}
                           >
-                            {filteredProperties.map(prop => (
+                            {displayedProperties.map(prop => (
                               <Marker 
                                 key={prop.id} 
                                 position={{ lat: prop.lat, lng: prop.lng }}

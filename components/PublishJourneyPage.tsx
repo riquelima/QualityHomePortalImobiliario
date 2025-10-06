@@ -2,6 +2,8 @@
 
 
 
+
+
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Header from './Header';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -186,6 +188,10 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
     const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
     const [cityAutocomplete, setCityAutocomplete] = useState<any>(null);
     const [streetAutocomplete, setStreetAutocomplete] = useState<any>(null);
+
+    useEffect(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, [step]);
 
     const { isLoaded, loadError } = useJsApiLoader({
         id: 'google-map-script',

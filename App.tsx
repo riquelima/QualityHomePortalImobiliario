@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
@@ -44,6 +45,8 @@ export interface ModalConfig {
   message: string;
   onConfirm?: () => void;
 }
+
+const PAGE_SIZE = 6;
 
 // ====================================================================================
 // DEVELOPMENT DATABASE SEEDING FUNCTION
@@ -255,6 +258,11 @@ const App: React.FC = () => {
   const [initialFetchSuccess, setInitialFetchSuccess] = useState(false);
   const [activeTab, setActiveTab] = useState<'venda' | 'aluguel' | 'temporada'>('venda');
   const [isGettingLocation, setIsGettingLocation] = useState(false);
+  
+  // Infinite Scroll State
+  const [displayedProperties, setDisplayedProperties] = useState<Property[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
 
 
   const totalUnreadChatsCount = chatSessions.filter(s => s.unreadCount > 0).length;
@@ -1028,6 +1036,37 @@ const App: React.FC = () => {
     return properties.filter(p => p.tipo_operacao === activeTab);
   }, [properties, activeTab]);
 
+  useEffect(() => {
+    setDisplayedProperties(filteredPropertiesForHome.slice(0, PAGE_SIZE));
+    setCurrentPage(1);
+  }, [filteredPropertiesForHome]);
+  
+  const loadMoreProperties = useCallback(() => {
+    if (isFetchingMore || filteredPropertiesForHome.length === 0) return;
+  
+    setIsFetchingMore(true);
+  
+    setTimeout(() => {
+      const nextPage = currentPage + 1;
+      const start = currentPage * PAGE_SIZE;
+      const end = start + PAGE_SIZE;
+      
+      let newItems = filteredPropertiesForHome.slice(start, end);
+  
+      if (newItems.length === 0 && filteredPropertiesForHome.length > 0) {
+        // Loop back to the beginning
+        newItems = filteredPropertiesForHome.slice(0, PAGE_SIZE);
+        setCurrentPage(1);
+      } else {
+        setCurrentPage(nextPage);
+      }
+  
+      setDisplayedProperties(prev => [...prev, ...newItems]);
+      setIsFetchingMore(false);
+    }, 500);
+  }, [isFetchingMore, currentPage, filteredPropertiesForHome]);
+
+
   const renderCurrentPage = () => {
     const headerProps = {
       navigateHome, onPublishAdClick: handlePublishClick, onAccessClick: () => openLoginModal('default'),
@@ -1051,7 +1090,7 @@ const App: React.FC = () => {
         case 'propertyDetail':
           const property = properties.find(p => p.id === pageState.propertyId);
           if (!property) { navigateHome(); return null; }
-          return <PropertyDetailPage property={property} onBack={() => window.history.back()} isFavorite={favorites.includes(property.id)} onToggleFavorite={toggleFavorite} onStartChat={handleStartChat} {...headerProps} />;
+          return <PropertyDetailPage property={property} onBack={navigateHome} isFavorite={favorites.includes(property.id)} onToggleFavorite={toggleFavorite} onStartChat={handleStartChat} {...headerProps} />;
         case 'favorites':
             const favoriteProperties = properties.filter(p => favorites.includes(p.id));
             return <FavoritesPage onBack={navigateHome} properties={favoriteProperties} onViewDetails={navigateToPropertyDetail} favorites={favorites} onToggleFavorite={toggleFavorite} onContactClick={openContactModal} {...headerProps} />;
@@ -1098,12 +1137,15 @@ const App: React.FC = () => {
                 ) : null}
 
                 <PropertyListings 
-                  properties={filteredPropertiesForHome} 
+                  properties={displayedProperties} 
                   onViewDetails={navigateToPropertyDetail} 
                   favorites={favorites} 
                   onToggleFavorite={toggleFavorite} 
                   isLoading={isLoading && !initialFetchSuccess} 
-                  onContactClick={openContactModal} 
+                  onContactClick={openContactModal}
+                  loadMore={loadMoreProperties}
+                  isFetchingMore={isFetchingMore}
+                  hasMore={filteredPropertiesForHome.length > 0}
                 />
               </main>
               <footer className="bg-brand-light-gray text-brand-gray py-8 text-center mt-20">
