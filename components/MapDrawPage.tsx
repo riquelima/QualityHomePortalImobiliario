@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { GoogleMap, useJsApiLoader, Marker, Circle, DrawingManager } from '@react-google-maps/api';
 import type { Property } from '../types';
@@ -51,6 +52,17 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewD
   const onLoad = useCallback(function callback(mapInstance: any) {
     setMap(mapInstance);
   }, []);
+
+  useEffect(() => {
+    if (map && userLocation) {
+        map.panTo({ lat: userLocation.lat, lng: userLocation.lng });
+        if (initialMapMode === 'proximity') {
+            map.setZoom(14);
+        } else {
+            map.setZoom(13);
+        }
+    }
+  }, [map, userLocation, initialMapMode]);
 
   const onUnmount = useCallback(function callback() {
     setMap(null);
@@ -108,10 +120,8 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewD
       setPropertiesInZone(foundProperties);
       setIsSidebarOpen(foundProperties.length > 0);
     }
-    // Disable drawing mode after one circle is drawn
-    if (map) {
-      circle.setMap(null); // The DrawingManager adds the circle, we want to control it via state
-    }
+    // The DrawingManager adds the circle, we want to control it via state so we remove the manager's overlay.
+    circle.setMap(null);
   };
   
   const handleStartDrawing = () => {
@@ -163,8 +173,11 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewD
           <DrawingManager
             onCircleComplete={onCircleComplete}
             options={{
-              drawingControl: false,
-              // FIX: Access google.maps through window object to resolve missing namespace error.
+              drawingControl: true,
+              drawingControlOptions: {
+                position: (window as any).google.maps.ControlPosition.TOP_CENTER,
+                drawingModes: [(window as any).google.maps.drawing.OverlayType.CIRCLE],
+              },
               drawingMode: (window as any).google.maps.drawing.OverlayType.CIRCLE,
               circleOptions: {
                 fillColor: '#D81B2B',
