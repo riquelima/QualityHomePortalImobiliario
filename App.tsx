@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
@@ -36,6 +37,7 @@ interface PageState {
   propertyId?: number;
   chatSessionId?: string;
   propertyToEdit?: Property;
+  initialMapMode?: 'draw' | 'proximity';
 }
 
 export interface ModalConfig {
@@ -699,7 +701,9 @@ const App: React.FC = () => {
     };
   }, [isAuthReady, user]);
 
-  const navigateToMap = useCallback((location: { lat: number; lng: number } | null = null) => setPageState({ page: 'map', userLocation: location }), []);
+  const navigateToMap = useCallback((location: { lat: number; lng: number } | null = null, mode: 'draw' | 'proximity' = 'proximity') => {
+    setPageState({ page: 'map', userLocation: location, initialMapMode: mode });
+  }, []);
   const navigateToPublish = () => setPageState({ page: 'publish', userLocation: null });
   
   const navigateToSearchResults = (query: string) => setPageState({ page: 'searchResults', userLocation: null, searchQuery: query });
@@ -1080,7 +1084,7 @@ const App: React.FC = () => {
 
     const pageContent = () => {
       switch (pageState.page) {
-        case 'map': return <MapDrawPage onBack={navigateHome} userLocation={pageState.userLocation} onViewDetails={navigateToPropertyDetail} favorites={favorites} onToggleFavorite={toggleFavorite} properties={properties} onContactClick={openContactModal} />;
+        case 'map': return <MapDrawPage onBack={navigateHome} userLocation={pageState.userLocation} initialMapMode={pageState.initialMapMode} onViewDetails={navigateToPropertyDetail} favorites={favorites} onToggleFavorite={toggleFavorite} properties={properties} onContactClick={openContactModal} />;
         case 'publish': return <PublishAdPage onBack={navigateHome} onPublishAdClick={handlePublishClick} onOpenLoginModal={() => openLoginModal('publish')} onNavigateToJourney={navigateToPublishJourney} {...headerProps} />;
         case 'publish-journey': case 'edit-journey': return <PublishJourneyPage deviceLocation={deviceLocation} propertyToEdit={pageState.page === 'edit-journey' ? pageState.propertyToEdit : null} onBack={navigateHome} onAddProperty={handleAddProperty} onUpdateProperty={handleUpdateProperty} onPublishError={handlePublishError} onRequestModal={showModal} onOpenLoginModal={openLoginModal} {...headerProps} />;
         case 'searchResults':
@@ -1116,7 +1120,7 @@ const App: React.FC = () => {
               <main>
                 <Hero 
                     deviceLocation={deviceLocation} 
-                    onDrawOnMapClick={() => navigateToMap(deviceLocation)} 
+                    onDrawOnMapClick={() => navigateToMap(deviceLocation, 'draw')} 
                     onSearchNearMe={handleSearchNearMeClick} 
                     isSearchingNearMe={isGettingLocation}
                     onSearchSubmit={navigateToSearchResults}

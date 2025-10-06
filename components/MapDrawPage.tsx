@@ -16,6 +16,7 @@ interface MapDrawPageProps {
   onToggleFavorite: (id: number) => void;
   properties: Property[];
   onContactClick: (property: Property) => void;
+  initialMapMode?: 'draw' | 'proximity';
 }
 
 interface PropertyWithDistance extends Property {
@@ -29,14 +30,14 @@ const containerStyle = {
 
 const libraries: ('drawing' | 'places' | 'visualization')[] = ['drawing', 'places', 'visualization'];
 
-const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewDetails, favorites, onToggleFavorite, properties, onContactClick }) => {
+const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewDetails, favorites, onToggleFavorite, properties, onContactClick, initialMapMode = 'proximity' }) => {
   const { t } = useLanguage();
   // FIX: Replace google.maps.Map with any to resolve missing namespace error.
   const [map, setMap] = useState<any | null>(null);
   const [propertiesInZone, setPropertiesInZone] = useState<PropertyWithDistance[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
-  const [isDrawing, setIsDrawing] = useState(false);
+  const [isDrawing, setIsDrawing] = useState(initialMapMode === 'draw');
   // FIX: Replace google.maps.LatLngLiteral with any to resolve missing namespace error.
   const [drawnCircle, setDrawnCircle] = useState<{center: any, radius: number} | null>(null);
 
@@ -65,7 +66,7 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewD
   // Effect for userLocation search
   useEffect(() => {
     // FIX: Access google.maps through window object to resolve missing namespace error.
-    if (isLoaded && userLocation && (window as any).google?.maps?.geometry) {
+    if (isLoaded && userLocation && initialMapMode === 'proximity' && (window as any).google?.maps?.geometry) {
       const searchRadius = 5000; // 5km
       // FIX: Access google.maps through window object to resolve missing namespace error.
       const userLatLng = new (window as any).google.maps.LatLng(userLocation.lat, userLocation.lng);
@@ -84,7 +85,7 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewD
       setPropertiesInZone(foundProperties);
       setIsSidebarOpen(foundProperties.length > 0);
     }
-  }, [isLoaded, userLocation, properties]);
+  }, [isLoaded, userLocation, properties, initialMapMode]);
   
   // FIX: Replace google.maps.Circle with any to resolve missing namespace error.
   const onCircleComplete = (circle: any) => {
@@ -158,7 +159,7 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewD
         {userLocation && <Marker position={userLocation} icon={{ path: (window as any).google.maps.SymbolPath.CIRCLE, scale: 8, fillColor: '#4285F4', fillOpacity: 1, strokeColor: 'white', strokeWeight: 2 }} />}
         
         {/* Drawing Manager */}
-        {!userLocation && isDrawing && (
+        {isDrawing && (
           <DrawingManager
             onCircleComplete={onCircleComplete}
             options={{
@@ -205,44 +206,42 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewD
             <div className="text-sm mb-4">
                 <span onClick={onBack} className="text-brand-red hover:underline cursor-pointer">{t('map.breadcrumbs.home')}</span>
                 <span className="text-brand-gray mx-2">&gt;</span>
-                <span className="text-brand-dark font-medium">{userLocation ? t('map.breadcrumbs.proximitySearch') : t('map.breadcrumbs.drawOnMap')}</span>
+                <span className="text-brand-dark font-medium">{initialMapMode === 'proximity' ? t('map.breadcrumbs.proximitySearch') : t('map.breadcrumbs.drawOnMap')}</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold text-brand-navy">
-              {userLocation ? t('map.title.proximity') : t('map.title.draw')}
+              {initialMapMode === 'proximity' ? t('map.title.proximity') : t('map.title.draw')}
             </h1>
         </div>
       </div>
 
-      {!userLocation && (
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10">
-            {!isDrawing && !drawnCircle && (
-                <button
-                    onClick={handleStartDrawing}
-                    className="bg-brand-red hover:opacity-90 text-white font-bold py-3 px-6 rounded-full shadow-2xl transition duration-300 flex items-center space-x-2"
-                >
-                    <DrawIcon className="w-5 h-5" />
-                    <span>{t('map.drawButton')}</span>
-                </button>
-            )}
-            {isDrawing && (
-                <div className="bg-white text-brand-dark font-bold py-3 px-6 rounded-full shadow-2xl animate-pulse">
-                    <span>{t('map.drawingInProgress')}</span>
-                </div>
-            )}
-            {drawnCircle && (
-                <button
-                    onClick={handleClearDrawing}
-                    className="bg-brand-dark hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-full shadow-2xl transition duration-300 flex items-center space-x-2"
-                >
-                    <CloseIcon className="w-5 h-5"/>
-                    <span>{t('map.clearButton')}</span>
-                </button>
-            )}
-        </div>
-      )}
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10">
+          {!isDrawing && !drawnCircle && (
+              <button
+                  onClick={handleStartDrawing}
+                  className="bg-brand-red hover:opacity-90 text-white font-bold py-3 px-6 rounded-full shadow-2xl transition duration-300 flex items-center space-x-2"
+              >
+                  <DrawIcon className="w-5 h-5" />
+                  <span>{t('map.drawButton')}</span>
+              </button>
+          )}
+          {isDrawing && (
+              <div className="bg-white text-brand-dark font-bold py-3 px-6 rounded-full shadow-2xl animate-pulse">
+                  <span>{t('map.drawingInProgress')}</span>
+              </div>
+          )}
+          {drawnCircle && (
+              <button
+                  onClick={handleClearDrawing}
+                  className="bg-brand-dark hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-full shadow-2xl transition duration-300 flex items-center space-x-2"
+              >
+                  <CloseIcon className="w-5 h-5"/>
+                  <span>{t('map.clearButton')}</span>
+              </button>
+          )}
+      </div>
       
-      {userLocation && propertiesInZone.length > 0 && !selectedProperty && (
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10">
+      {initialMapMode === 'proximity' && propertiesInZone.length > 0 && !selectedProperty && (
+        <div className="absolute bottom-8 right-4 z-10">
           <button
             onClick={() => setIsSidebarOpen(prev => !prev)}
             className="bg-brand-navy hover:bg-brand-dark text-white font-bold py-3 px-6 rounded-full shadow-2xl transition duration-300"
@@ -297,7 +296,7 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewD
                 <div className="md:hidden w-12 h-1.5 bg-gray-300 rounded-full mx-auto mb-2 cursor-grab" />
                 <div className="flex justify-between items-center">
                     <h3 className="text-lg sm:text-xl font-bold text-brand-navy">
-                        {userLocation 
+                        {initialMapMode === 'proximity'
                             ? t('map.resultsPanel.proximityTitle', { count: propertiesInZone.length, radius: 5 })
                             : t('map.resultsPanel.title', { count: propertiesInZone.length })
                         }
