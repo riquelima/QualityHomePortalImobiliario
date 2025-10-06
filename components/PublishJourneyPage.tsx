@@ -1,5 +1,7 @@
 
 
+
+
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Header from './Header';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -177,7 +179,6 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
     const [filesToRemove, setFilesToRemove] = useState<string[]>([]);
 
     // UI State
-    const [isLocationPermissionModalOpen, setIsLocationPermissionModalOpen] = useState(!propertyToEdit);
     const [isLocationConfirmationModalOpen, setLocationConfirmationModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isVerifyingAddress, setIsVerifyingAddress] = useState(false);
@@ -662,43 +663,6 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
             setIsGeneratingDescription(false);
         }
     }, [formData, t, onRequestModal]);
-
-    const handleAcceptLocation = () => {
-        setIsLocationPermissionModalOpen(false);
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                async (position) => {
-                    const { latitude, longitude } = position.coords;
-                    try {
-                        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`);
-                        const data = await response.json();
-                        if (data && data.address) {
-                            const city = data.address.city || data.address.town || data.address.village;
-                            const stateName = data.address.state;
-                            const stateMap: { [key: string]: string } = {
-                                'Acre': 'AC', 'Alagoas': 'AL', 'Amapá': 'AP', 'Amazonas': 'AM', 'Bahia': 'BA',
-                                'Ceará': 'CE', 'Distrito Federal': 'DF', 'Espírito Santo': 'ES', 'Goiás': 'GO',
-                                'Maranhão': 'MA', 'Mato Grosso': 'MT', 'Mato Grosso do Sul': 'MS', 'Minas Gerais': 'MG',
-                                'Pará': 'PA', 'Paraíba': 'PB', 'Paraná': 'PR', 'Pernambuco': 'PE', 'Piauí': 'PI',
-                                'Rio de Janeiro': 'RJ', 'Rio Grande do Norte': 'RN', 'Rio Grande do Sul': 'RS',
-                                'Rondônia': 'RO', 'Roraima': 'RR', 'Santa Catarina': 'SC', 'São Paulo': 'SP',
-                                'Sergipe': 'SE', 'Tocantins': 'TO'
-                            };
-                            const stateAbbr = stateMap[stateName] || stateName;
-                            if (city && stateAbbr) {
-                                setFormData(prev => ({ ...prev, city: `${city}, ${stateAbbr}` }));
-                            }
-                        }
-                    } catch (error) {
-                        console.error("Erro na geocodificação reversa:", error);
-                    }
-                },
-                (error) => {
-                    console.error("Erro de geolocalização:", error);
-                }
-            );
-        }
-    };
 
     const onCityLoad = (autocomplete: any) => {
         setCityAutocomplete(autocomplete);
@@ -1259,17 +1223,6 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                 isLoaded={isLoaded}
                 loadError={loadError}
             />
-
-            {isLocationPermissionModalOpen && (
-                 <div className="fixed bottom-4 right-4 z-50 bg-white shadow-2xl rounded-lg p-6 max-w-sm w-11/12">
-                     <h3 className="font-bold text-brand-navy mb-2">{t('publishJourney.locationPermissionModal.title')}</h3>
-                     <p className="text-sm text-brand-gray mb-4">{t('publishJourney.locationPermissionModal.message')}</p>
-                     <div className="flex gap-3">
-                         <button onClick={() => setIsLocationPermissionModalOpen(false)} className="flex-1 text-sm bg-gray-200 text-brand-dark font-semibold py-2 px-4 rounded-md hover:bg-gray-300">Não, obrigado</button>
-                         <button onClick={handleAcceptLocation} className="flex-1 text-sm bg-brand-red text-white font-semibold py-2 px-4 rounded-md hover:opacity-90">Aceitar</button>
-                     </div>
-                 </div>
-            )}
         </div>
     );
 };

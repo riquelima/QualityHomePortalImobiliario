@@ -1039,7 +1039,7 @@ const App: React.FC = () => {
               <main>
                 <Hero 
                     deviceLocation={deviceLocation} 
-                    onDrawOnMapClick={() => navigateToMap()} 
+                    onDrawOnMapClick={() => navigateToMap(deviceLocation)} 
                     onSearchNearMe={(location) => navigateToMap(location)} 
                     onGeolocationError={openGeoErrorModal} 
                     onSearchSubmit={navigateToSearchResults}

@@ -1,5 +1,7 @@
 
 
+
+
 import React, { useState, useRef, useEffect } from 'react';
 import SearchIcon from './icons/SearchIcon';
 import ChevronDownIcon from './icons/ChevronDownIcon';
@@ -53,7 +55,6 @@ const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe, onGeoloca
   
   const [heroTitle, setHeroTitle] = useState(t('hero.defaultTitle'));
   const [isLoadingTitle, setIsLoadingTitle] = useState(true);
-  const [isDrawPermissionModalOpen, setIsDrawPermissionModalOpen] = useState(false);
 
   // Efeito para gerar título dinâmico com a IA do Gemini
   useEffect(() => {
@@ -107,16 +108,6 @@ const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe, onGeoloca
 
   const handleDrawOnMapClick = () => {
     setIsDropdownOpen(false);
-    setIsDrawPermissionModalOpen(true);
-  };
-
-  const handlePermissionAccept = () => {
-    setIsDrawPermissionModalOpen(false);
-    handleSearchNearMe();
-  };
-
-  const handlePermissionDeny = () => {
-    setIsDrawPermissionModalOpen(false);
     onDrawOnMapClick();
   };
 
@@ -222,22 +213,6 @@ const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe, onGeoloca
           </form>
         </div>
       </div>
-       {isDrawPermissionModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm" role="dialog" aria-modal="true">
-            <div className="relative bg-white rounded-lg shadow-xl w-11/12 max-w-md p-6 sm:p-8 m-4 transform transition-all text-center">
-                <h3 className="text-xl font-bold text-brand-navy mb-4">{t('hero.locationPermissionModal.title')}</h3>
-                <p className="text-brand-gray mb-6">{t('hero.locationPermissionModal.message')}</p>
-                <div className="flex flex-col sm:flex-row gap-3">
-                    <button onClick={handlePermissionDeny} className="flex-1 order-2 sm:order-1 text-sm bg-gray-200 text-brand-dark font-semibold py-3 px-4 rounded-md hover:bg-gray-300 transition-colors">
-                        {t('hero.locationPermissionModal.denyButton')}
-                    </button>
-                    <button onClick={handlePermissionAccept} className="flex-1 order-1 sm:order-2 text-sm bg-brand-red text-white font-semibold py-3 px-4 rounded-md hover:opacity-90 transition-colors">
-                        {t('hero.locationPermissionModal.acceptButton')}
-                    </button>
-                </div>
-            </div>
-        </div>
-      )}
     </div>
   );
 };
