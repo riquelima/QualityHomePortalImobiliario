@@ -286,16 +286,30 @@ const App: React.FC = () => {
     console.time('fetchAllData');
 
     try {
-        let propertyQuery = supabase.from('imoveis').select('*, perfis:anunciante_id(*), midias_imovel(*)');
+        let query = supabase
+            .from('imoveis')
+            .select(`
+                *,
+                perfis:anunciante_id(*),
+                midias_imovel(*)
+            `);
+        
         if (currentUser) {
-            propertyQuery = propertyQuery.or(`status.eq.ativo,anunciante_id.eq.${currentUser.id}`);
+            // Fetch active properties OR properties owned by the current user
+            query = query.or(`status.eq.ativo,anunciante_id.eq.${currentUser.id}`);
         } else {
-            propertyQuery = propertyQuery.eq('status', 'ativo');
+            // Fetch only active properties for guests
+            query = query.eq('status', 'ativo');
         }
-        const { data: propertiesData, error: propertiesError } = await propertyQuery;
-        if (propertiesError) throw propertiesError;
 
-        const coreProperties = (propertiesData || []).map((db: any): Property => {
+        const { data: dbProperties, error: propertiesError } = await query;
+        
+        if (propertiesError) {
+            // This is where CORS errors will be thrown
+            throw propertiesError;
+        }
+
+        const coreProperties = (dbProperties || []).map((db: any): Property => {
             const ownerProfileData = db.perfis as Profile | undefined;
             const ownerProfile = ownerProfileData ? { ...ownerProfileData, phone: ownerProfileData.telefone } : undefined;
             
@@ -318,16 +332,19 @@ const App: React.FC = () => {
 
     } catch (error: any) {
         console.error('Falha ao buscar imóveis:', error);
-        if (initialFetchSuccess) {
+
+        if (initialFetchSuccess) { // Handle general sync errors after initial load
             showModal({
                 type: 'error',
                 title: 'Erro de Sincronização',
-                message: 'Não foi possível atualizar a lista de imóveis. Os dados exibidos podem estar desatualizados. Por favor, verifique sua conexão com a internet.'
+                message: 'Não foi possível atualizar a lista de imóveis. Os dados exibidos podem estar desatualizados. Verifique sua conexão.'
             });
-        } else {
+        } else { // Handle initial load failure
+            // This will catch the CORS error on initial load
             setFetchError(t('systemModal.fetchError'));
             setProperties([]);
         }
+        
         if (!options.skipChats) setIsLoading(false);
     }
 
@@ -375,7 +392,7 @@ const App: React.FC = () => {
 
     console.timeEnd('fetchAllData');
     fetchingRef.current = false;
-  }, [t, showModal]);
+  }, [t, showModal, initialFetchSuccess]);
   
   const navigateToPublishJourney = () => setPageState({ page: 'publish-journey', userLocation: null });
   

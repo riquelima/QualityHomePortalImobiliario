@@ -477,31 +477,7 @@ const ptTranslations = {
     "errorDetails": "Detalhes do erro",
     "logoutError": "Não foi possível encerrar a sessão. Por favor, tente novamente.",
     "favoriteErrorAdd": "Não foi possível adicionar o imóvel aos favoritos. Tente novamente.",
-    "favoriteErrorRemove": "Não foi possível remover o imóvel dos favoritos. Tente novamente.",
-    "corsError": {
-      "title": "Ação Necessária: Configurar o CORS no Supabase",
-      "description": "Seu aplicativo não pode carregar os anúncios porque o servidor Supabase está bloqueando a conexão por segurança. As alternativas que você encontrou (Edge Functions/Proxies) são soluções avançadas, mas desnecessárias para este problema, que pode ser resolvido com uma configuração simples.",
-      "fixInstruction": "A interface do Supabase pode mudar, mas a configuração está sempre na seção de API. Siga estes passos atualizados e mais detalhados:",
-      "step1": "<strong>1. Acesse seu Projeto:</strong> Faça login em <a href='https://supabase.com/' target='_blank' rel='noopener noreferrer'>supabase.com</a> e navegue até o seu projeto.",
-      "step2": "<strong>2. Encontre as Configurações de API:</strong> Na barra lateral esquerda, procure por um <strong>ícone de engrenagem</strong> (Configurações do Projeto). Clique nele.",
-      "step3": "<strong>3. Vá para a Seção API:</strong> No menu de configurações, clique em <strong>'API'</strong>.",
-      "step4": "<strong>4. Adicione a URL do seu site:</strong> Role a página para baixo até encontrar a seção chamada <strong>'Configuration'</strong> e o campo <strong>'CORS Origins'</strong>. É uma caixa de texto.",
-      "step5": "<strong>5. Cole a URL:</strong> Adicione a URL exata onde seu site está rodando. Para esta visualização, a URL é:",
-      "step6_code": "<strong>6. Adicione outras URLs (Recomendado):</strong> Pressione Enter após cada URL. É uma boa prática adicionar também as seguintes para cobrir todos os ambientes:",
-      "step6_urls": "<li><code>http://localhost:3000</code> (para desenvolvimento local)</li><li>Padrões para Vercel/Netlify, como <code>https://*.vercel.app</code></li>",
-      "step7": "<strong>7. Salve as Alterações:</strong> No <strong>canto inferior direito</strong> da página, você encontrará um botão <strong>'Save'</strong>. Clique nele para aplicar as mudanças.",
-      "step8": "<strong>8. Recarregue a Página:</strong> Volte para esta página e atualize-a. Os anúncios devem carregar normalmente.",
-      "afterFix": "Se ainda tiver dúvidas, consulte a <a href='https://supabase.com/docs/guides/api/cors' target='_blank' rel='noopener noreferrer'>documentação oficial do Supabase sobre CORS</a>, que está sempre atualizada."
-    },
-    "syncError": {
-      "title": "Ação Necessária: Falha ao Carregar Imóveis",
-      "description": "A conexão com o servidor foi bem-sucedida, mas nenhum imóvel foi retornado. A causa mais comum é uma configuração de 'Row Level Security' (RLS) no Supabase que está bloqueando o acesso aos dados.",
-      "fixInstruction": "Para resolver, por favor, verifique suas políticas de RLS:",
-      "step1": "Acesse seu projeto no Supabase e vá para 'Authentication' > 'Policies'.",
-      "step2": "Encontre a tabela 'imoveis' e verifique se existe uma política que permite a leitura (SELECT) para usuários não autenticados (role 'anon').",
-      "step3": "Se não houver, crie uma nova política para SELECT com a expressão 'USING (true)' para permitir que todos leiam os anúncios.",
-      "afterFix": "Após salvar a política, recarregue esta página."
-    }
+    "favoriteErrorRemove": "Não foi possível remover o imóvel dos favoritos. Tente novamente."
   },
   "documentsForSalePage": {
     "title": "Documentos Necessários para a Venda",
@@ -792,7 +768,7 @@ const enTranslations = {
       "aiDescriptionError": "Could not generate a description. Please check your connection or try again.",
       "apartmentCharacteristics": "Property characteristics",
       "landCharacteristics": "Land Characteristics",
-      "topography": "Topography",
+      "topografia": "Topography",
       "flat": "Flat",
       "uphill": "Uphill",
       "downhill": "Downhill",
@@ -1019,31 +995,7 @@ const enTranslations = {
     "errorDetails": "Error details",
     "logoutError": "Could not sign out. Please try again.",
     "favoriteErrorAdd": "Could not add property to favorites. Please try again.",
-    "favoriteErrorRemove": "Could not remove property from favorites. Please try again.",
-    "corsError": {
-      "title": "Action Required: Configure CORS in Supabase",
-      "description": "Your app can't load listings because the Supabase server is blocking the connection for security. The alternatives you've found (Edge Functions/Proxies) are advanced solutions but are unnecessary for this problem, which can be solved with a simple configuration.",
-      "fixInstruction": "The Supabase dashboard UI can change, but the setting is always in the API section. Please follow these updated, more detailed steps:",
-      "step1": "<strong>1. Access Your Project:</strong> Log in at <a href='https://supabase.com/' target='_blank' rel='noopener noreferrer'>supabase.com</a> and navigate to your project.",
-      "step2": "<strong>2. Find API Settings:</strong> In the left sidebar, look for a <strong>gear icon</strong> (Project Settings). Click on it.",
-      "step3": "<strong>3. Go to the API Section:</strong> In the settings menu, click on <strong>'API'</strong>.",
-      "step4": "<strong>4. Add Your Site's URL:</strong> Scroll down the page until you find the section named <strong>'Configuration'</strong> and the <strong>'CORS Origins'</strong> field. It's a text box.",
-      "step5": "<strong>5. Paste the URL:</strong> Add the exact URL where your site is running. For this preview, the URL is:",
-      "step6_code": "<strong>6. Add Other URLs (Recommended):</strong> Press Enter after each URL. It's good practice to also add the following to cover all environments:",
-      "step6_urls": "<li><code>http://localhost:3000</code> (for local development)</li><li>Patterns for Vercel/Netlify, like <code>https://*.vercel.app</code></li>",
-      "step7": "<strong>7. Save Changes:</strong> At the <strong>bottom right</strong> of the page, you will find a <strong>'Save'</strong> button. Click it to apply the changes.",
-      "step8": "<strong>8. Reload the Page:</strong> Return to this page and refresh it. The listings should now load correctly.",
-      "afterFix": "If you still have questions, refer to the <a href='https://supabase.com/docs/guides/api/cors' target='_blank' rel='noopener noreferrer'>official Supabase documentation on CORS</a>, which is always up-to-date."
-    },
-    "syncError": {
-      "title": "Action Required: Failed to Load Properties",
-      "description": "The connection to the server was successful, but no properties were returned. The most common cause is a 'Row Level Security' (RLS) policy in Supabase that is blocking access to the data.",
-      "fixInstruction": "To resolve this, please check your RLS policies:",
-      "step1": "Go to your project in Supabase and navigate to 'Authentication' > 'Policies'.",
-      "step2": "Find the 'imoveis' table and check if a policy exists that allows read access (SELECT) for non-authenticated users (role 'anon').",
-      "step3": "If not, create a new policy for SELECT with the expression 'USING (true)' to allow everyone to read the listings.",
-      "afterFix": "After saving the policy, reload this page."
-    }
+    "favoriteErrorRemove": "Could not remove property from favorites. Please try again."
   },
   "documentsForSalePage": {
     "title": "Necessary Documents for Sale",
