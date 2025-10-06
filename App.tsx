@@ -255,8 +255,6 @@ const App: React.FC = () => {
   const fetchingRef = useRef(false);
   const [contactModalProperty, setContactModalProperty] = useState<Property | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
-  const [isCorsError, setIsCorsError] = useState(false);
-  const [isSyncError, setIsSyncError] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
   const [isSplashFading, setIsSplashFading] = useState(false);
   const [deviceLocation, setDeviceLocation] = useState<{ lat: number; lng: number } | null>(null);
@@ -310,8 +308,6 @@ const App: React.FC = () => {
         
         setProperties(coreProperties);
         setFetchError(null);
-        setIsCorsError(false);
-        setIsSyncError(false);
         setInitialFetchSuccess(true);
         if (!options.skipChats) setIsLoading(false);
 
@@ -324,23 +320,7 @@ const App: React.FC = () => {
                 message: 'Não foi possível atualizar a lista de imóveis. Os dados exibidos podem estar desatualizados. Por favor, verifique sua conexão com a internet.'
             });
         } else {
-            if (error?.message) {
-                 if (error.message.includes('SYNC_ERROR')) {
-                    setIsSyncError(true);
-                    setFetchError(t('systemModal.syncError.title'));
-                } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-                    setIsCorsError(true);
-                    setFetchError(t('systemModal.corsError.title'));
-                } else {
-                    setIsCorsError(false);
-                    setIsSyncError(false);
-                    setFetchError(error.message);
-                }
-            } else {
-                setIsCorsError(false);
-                setIsSyncError(false);
-                setFetchError('An unknown error occurred while fetching data.');
-            }
+            setFetchError(t('systemModal.fetchError'));
             setProperties([]);
         }
         if (!options.skipChats) setIsLoading(false);
@@ -716,23 +696,6 @@ const App: React.FC = () => {
     };
   }, [isAuthReady, user]);
 
-  useEffect(() => {
-    if (!isLoading) return;
-    const timeoutId = setTimeout(() => {
-      // Only trigger timeout if it's the very first fetch that's failing.
-      if (!initialFetchSuccess) {
-        console.warn("Initial fetch timeout reached. This is likely a CORS or network configuration issue.");
-        // Re-use the CORS error UI as it's the most likely cause for a timeout on a new production deployment.
-        setIsCorsError(true);
-        setFetchError(t('systemModal.corsError.title'));
-        setIsLoading(false);
-        fetchingRef.current = false;
-      }
-    }, 15000); // Increased timeout to 15s to be more lenient on slow networks.
-
-    return () => clearTimeout(timeoutId);
-  }, [isLoading, initialFetchSuccess, t]);
-  
   const navigateToMap = (location: { lat: number; lng: number } | null = null) => setPageState({ page: 'map', userLocation: location });
   const navigateToPublish = () => setPageState({ page: 'publish', userLocation: null });
   
@@ -1084,68 +1047,7 @@ const App: React.FC = () => {
                     onTabChange={setActiveTab}
                 />
                 
-                {isCorsError ? (
-                  <section className="bg-white pt-16 sm:pt-20">
-                    <div className="container mx-auto px-4 sm:px-6">
-                      <div className="text-left p-6 sm:p-8 bg-orange-50 border-l-4 border-orange-400 rounded-r-lg">
-                          <div className="flex">
-                              <div className="flex-shrink-0">
-                                  <WarningIcon className="h-6 w-6 text-orange-400" />
-                              </div>
-                              <div className="ml-3">
-                                  <h3 className="text-lg font-bold text-orange-800">{t('systemModal.corsError.title')}</h3>
-                                  <div className="mt-2 text-sm text-orange-700 space-y-3">
-                                      <div className="prose prose-sm max-w-none text-orange-700 [&_a]:text-orange-600 [&_a]:underline [&_strong]:text-orange-800 [&_strong]:font-bold [&_code]:text-orange-900 [&_code]:bg-orange-200 [&_code]:p-1 [&_code]:rounded">
-                                          <p dangerouslySetInnerHTML={{ __html: t('systemModal.corsError.description') }} />
-                                          <p dangerouslySetInnerHTML={{ __html: t('systemModal.corsError.fixInstruction') }} />
-                                          <ol>
-                                              <li dangerouslySetInnerHTML={{ __html: t('systemModal.corsError.step1') }} />
-                                              <li dangerouslySetInnerHTML={{ __html: t('systemModal.corsError.step2') }} />
-                                              <li dangerouslySetInnerHTML={{ __html: t('systemModal.corsError.step3') }} />
-                                              <li dangerouslySetInnerHTML={{ __html: t('systemModal.corsError.step4') }} />
-                                              <li dangerouslySetInnerHTML={{ __html: t('systemModal.corsError.step5') }} />
-                                              <div className="not-prose pl-8 my-2">
-                                                  <code className="text-xs bg-orange-100 p-1 rounded font-mono break-all">{window.location.origin}</code>
-                                              </div>
-                                              <li dangerouslySetInnerHTML={{ __html: t('systemModal.corsError.step6_code')}} />
-                                              <ul className="not-prose list-disc list-inside pl-8 space-y-1 my-2" dangerouslySetInnerHTML={{ __html: t('systemModal.corsError.step6_urls')}} />
-                                              <li dangerouslySetInnerHTML={{ __html: t('systemModal.corsError.step7') }} />
-                                              <li dangerouslySetInnerHTML={{ __html: t('systemModal.corsError.step8') }} />
-                                          </ol>
-                                          <p dangerouslySetInnerHTML={{ __html: t('systemModal.corsError.afterFix') }} />
-                                      </div>
-                                  </div>
-                              </div>
-                          </div>
-                      </div>
-                    </div>
-                  </section>
-                ) : isSyncError ? (
-                  <section className="bg-white pt-16 sm:pt-20">
-                    <div className="container mx-auto px-4 sm:px-6">
-                      <div className="text-left p-6 sm:p-8 bg-orange-50 border-l-4 border-orange-400 rounded-r-lg">
-                          <div className="flex">
-                              <div className="flex-shrink-0">
-                                  <WarningIcon className="h-6 w-6 text-orange-400" />
-                              </div>
-                              <div className="ml-3">
-                                  <h3 className="text-lg font-bold text-orange-800">{t('systemModal.syncError.title')}</h3>
-                                  <div className="mt-2 text-sm text-orange-700 space-y-3">
-                                      <p>{t('systemModal.syncError.description')}</p>
-                                      <p className="font-semibold">{t('systemModal.syncError.fixInstruction')}</p>
-                                      <ol className="list-decimal list-inside space-y-2 pl-2">
-                                          <li>{t('systemModal.syncError.step1')}</li>
-                                          <li>{t('systemModal.syncError.step2')}</li>
-                                          <li>{t('systemModal.syncError.step3')}</li>
-                                      </ol>
-                                      <p>{t('systemModal.syncError.afterFix')}</p>
-                                  </div>
-                              </div>
-                          </div>
-                      </div>
-                    </div>
-                  </section>
-                ) : fetchError && !isLoading && properties.length === 0 ? (
+                {fetchError && !isLoading && properties.length === 0 ? (
                   <section className="bg-white pt-16 sm:pt-20">
                     <div className="container mx-auto px-4 sm:px-6">
                       <div className="text-center py-16 bg-red-50 border border-red-200 rounded-lg">
