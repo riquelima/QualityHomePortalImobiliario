@@ -1,9 +1,3 @@
-
-
-
-
-
-
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
@@ -260,6 +254,7 @@ const App: React.FC = () => {
   const [deviceLocation, setDeviceLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [initialFetchSuccess, setInitialFetchSuccess] = useState(false);
   const [activeTab, setActiveTab] = useState<'venda' | 'aluguel' | 'temporada'>('venda');
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
 
 
   const totalUnreadChatsCount = chatSessions.filter(s => s.unreadCount > 0).length;
@@ -696,7 +691,7 @@ const App: React.FC = () => {
     };
   }, [isAuthReady, user]);
 
-  const navigateToMap = (location: { lat: number; lng: number } | null = null) => setPageState({ page: 'map', userLocation: location });
+  const navigateToMap = useCallback((location: { lat: number; lng: number } | null = null) => setPageState({ page: 'map', userLocation: location }), []);
   const navigateToPublish = () => setPageState({ page: 'publish', userLocation: null });
   
   const navigateToSearchResults = (query: string) => setPageState({ page: 'searchResults', userLocation: null, searchQuery: query });
@@ -724,8 +719,51 @@ const App: React.FC = () => {
     else openLoginModal('publish');
   };
   
-  const openGeoErrorModal = () => setIsGeoErrorModalOpen(true);
+  const openGeoErrorModal = useCallback(() => setIsGeoErrorModalOpen(true), []);
   const closeGeoErrorModal = () => setIsGeoErrorModalOpen(false);
+
+  const handleSearchNearMeClick = useCallback(() => {
+    if (deviceLocation) {
+      navigateToMap(deviceLocation);
+      return;
+    }
+
+    const tryToGetLocation = () => {
+        if (!navigator.geolocation) {
+            openGeoErrorModal();
+            return;
+        }
+
+        setIsGettingLocation(true);
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const { latitude, longitude } = position.coords;
+                const newLocation = { lat: latitude, lng: longitude };
+                setDeviceLocation(newLocation);
+                navigateToMap(newLocation);
+                setIsGettingLocation(false);
+            },
+            (error) => {
+                console.error("Geolocation error on 'Search Near Me' click:", error);
+                openGeoErrorModal();
+                setIsGettingLocation(false);
+            },
+            { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
+        );
+    };
+
+    if (navigator.permissions) {
+        navigator.permissions.query({ name: 'geolocation' }).then((permissionStatus) => {
+            if (permissionStatus.state === 'denied') {
+                openGeoErrorModal();
+                return;
+            }
+            tryToGetLocation();
+        });
+    } else {
+        tryToGetLocation();
+    }
+  }, [deviceLocation, navigateToMap, openGeoErrorModal]);
 
   const handleLogout = () => {
     setUser(null);
@@ -1040,8 +1078,8 @@ const App: React.FC = () => {
                 <Hero 
                     deviceLocation={deviceLocation} 
                     onDrawOnMapClick={() => navigateToMap(deviceLocation)} 
-                    onSearchNearMe={(location) => navigateToMap(location)} 
-                    onGeolocationError={openGeoErrorModal} 
+                    onSearchNearMe={handleSearchNearMeClick} 
+                    isSearchingNearMe={isGettingLocation}
                     onSearchSubmit={navigateToSearchResults}
                     activeTab={activeTab}
                     onTabChange={setActiveTab}

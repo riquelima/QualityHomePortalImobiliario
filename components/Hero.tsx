@@ -1,7 +1,3 @@
-
-
-
-
 import React, { useState, useRef, useEffect } from 'react';
 import SearchIcon from './icons/SearchIcon';
 import ChevronDownIcon from './icons/ChevronDownIcon';
@@ -12,12 +8,12 @@ import { useLanguage } from '../contexts/LanguageContext';
 
 interface HeroProps {
   onDrawOnMapClick: () => void;
-  onSearchNearMe: (location: { lat: number, lng: number }) => void;
-  onGeolocationError: () => void;
+  onSearchNearMe: () => void;
   onSearchSubmit: (query: string) => void;
   deviceLocation: { lat: number; lng: number } | null;
   activeTab: 'venda' | 'aluguel' | 'temporada';
   onTabChange: (tab: 'venda' | 'aluguel' | 'temporada') => void;
+  isSearchingNearMe: boolean;
 }
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || 'AIzaSyCsX9l10XCu3TtSCU1BSx-qOYrwUKYw2xk' });
@@ -46,9 +42,8 @@ const generateContentWithRetry = async (prompt: string, maxRetries = 3) => {
 };
 
 
-const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe, onGeolocationError, onSearchSubmit, deviceLocation, activeTab, onTabChange }) => {
+const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe, onSearchSubmit, deviceLocation, activeTab, onTabChange, isSearchingNearMe }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isSearchingNearMe, setIsSearchingNearMe] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const { t, language } = useLanguage();
@@ -113,15 +108,7 @@ const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe, onGeoloca
 
   const handleSearchNearMe = () => {
     setIsDropdownOpen(false);
-    if (deviceLocation) {
-        setIsSearchingNearMe(true);
-        setTimeout(() => { // Simulate small delay for better UX
-            onSearchNearMe(deviceLocation);
-            setIsSearchingNearMe(false);
-        }, 300);
-    } else {
-        onGeolocationError();
-    }
+    onSearchNearMe();
   };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
