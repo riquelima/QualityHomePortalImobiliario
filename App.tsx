@@ -1,5 +1,7 @@
 
 
+
+
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
@@ -286,26 +288,22 @@ const App: React.FC = () => {
     console.time('fetchAllData');
 
     try {
-        let query = supabase
-            .from('imoveis')
-            .select(`
-                *,
-                perfis:anunciante_id(*),
-                midias_imovel(*)
-            `);
-        
+        // Reverted from Edge Function to a direct client-side query to resolve function invocation errors.
+        let propertyQuery = supabase
+          .from('imoveis')
+          .select('*, perfis:anunciante_id(*), midias_imovel(*)');
+
         if (currentUser) {
-            // Fetch active properties OR properties owned by the current user
-            query = query.or(`status.eq.ativo,anunciante_id.eq.${currentUser.id}`);
+            // Fetch active properties OR properties owned by the current user (even if inactive)
+            propertyQuery = propertyQuery.or(`status.eq.ativo,anunciante_id.eq.${currentUser.id}`);
         } else {
-            // Fetch only active properties for guests
-            query = query.eq('status', 'ativo');
+            // Fetch only active properties for anonymous users
+            propertyQuery = propertyQuery.eq('status', 'ativo');
         }
 
-        const { data: dbProperties, error: propertiesError } = await query;
+        const { data: dbProperties, error: propertiesError } = await propertyQuery;
         
         if (propertiesError) {
-            // This is where CORS errors will be thrown
             throw propertiesError;
         }
 
