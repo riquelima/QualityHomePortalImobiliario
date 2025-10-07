@@ -4,6 +4,8 @@
 
 
 
+
+
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Header from './Header';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -490,7 +492,12 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                 const fileName = `${user.id}/${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
                 const path = fileName;
                 
-                const { error: uploadError } = await supabase.storage.from('midia').upload(path, file);
+                // FIX: Explicitly set contentType and disable upsert for a more robust upload.
+                // This can prevent hangs related to server-side content type inference.
+                const { error: uploadError } = await supabase.storage.from('midia').upload(path, file, {
+                    contentType: file.type,
+                    upsert: false,
+                });
     
                 if (uploadError) {
                     // If one upload fails, clean up what was already uploaded in this attempt.
