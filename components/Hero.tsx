@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import SearchIcon from './icons/SearchIcon';
 import ChevronDownIcon from './icons/ChevronDownIcon';
@@ -45,11 +46,18 @@ const generateContentWithRetry = async (prompt: string, maxRetries = 3) => {
 const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe, onSearchSubmit, deviceLocation, activeTab, onTabChange, isSearchingNearMe }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedType, setSelectedType] = useState('Casa');
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const { t, language } = useLanguage();
   
   const [heroTitle, setHeroTitle] = useState(t('hero.defaultTitle'));
   const [isLoadingTitle, setIsLoadingTitle] = useState(true);
+
+  const propertyOptions = {
+    venda: ['Casa', 'Apartamento', 'Área', 'Sítio', 'Fazenda', 'Escritório', 'Galpão'],
+    aluguel: ['Casa', 'Apartamento', 'Galpão'],
+    temporada: ['Casa', 'Apartamento'],
+  };
 
   // Efeito para gerar título dinâmico com a IA do Gemini
   useEffect(() => {
@@ -88,6 +96,13 @@ const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe, onSearchS
     };
   }, [t, language]);
 
+  // Reset property type selection when tab changes
+  useEffect(() => {
+    const optionsForTab = propertyOptions[activeTab];
+    if (optionsForTab && optionsForTab.length > 0) {
+      setSelectedType(optionsForTab[0]);
+    }
+  }, [activeTab]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -152,10 +167,14 @@ const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe, onSearchS
 
           <form className="flex flex-col md:flex-row items-center gap-2" onSubmit={handleSearchSubmit}>
             <div className="relative w-full md:w-auto">
-              <select className="w-full md:w-52 appearance-none bg-white border border-gray-300 rounded-md px-4 py-3 pr-8 focus:outline-none focus:ring-2 focus:ring-brand-red text-brand-dark">
-                <option>{t('hero.propertyTypes.housesAndApts')}</option>
-                <option>{t('hero.propertyTypes.offices')}</option>
-                <option>{t('hero.propertyTypes.garages')}</option>
+              <select 
+                value={selectedType}
+                onChange={(e) => setSelectedType(e.target.value)}
+                className="w-full md:w-52 appearance-none bg-white border border-gray-300 rounded-md px-4 py-3 pr-8 focus:outline-none focus:ring-2 focus:ring-brand-red text-brand-dark"
+              >
+                {propertyOptions[activeTab].map(type => (
+                  <option key={type} value={type}>{type}</option>
+                ))}
               </select>
               <ChevronDownIcon className="w-5 h-5 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
