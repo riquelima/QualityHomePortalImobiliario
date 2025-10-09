@@ -303,7 +303,7 @@ const ExplorePage: React.FC<ExplorePageProps> = (props) => {
                     >
                       <input 
                         type="text" 
-                        placeholder={t('hero.location.Placeholder')}
+                        placeholder={t('hero.locationPlaceholder')}
                         className="w-full pl-12 pr-4 py-2.5 rounded-lg text-brand-dark border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-red"
                         value={searchQuery}
                         onChange={handleSearchInputChange}
