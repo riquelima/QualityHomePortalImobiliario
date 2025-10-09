@@ -1,5 +1,4 @@
-
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { GoogleMap, useJsApiLoader, Marker, Circle, DrawingManager } from '@react-google-maps/api';
 import type { Property } from '../types';
 import PropertyCard from './PropertyCard';
@@ -13,10 +12,7 @@ interface MapDrawPageProps {
   onBack: () => void;
   userLocation?: { lat: number; lng: number } | null;
   onViewDetails: (id: number) => void;
-  favorites: number[];
-  onToggleFavorite: (id: number) => void;
   properties: Property[];
-  onContactClick: (property: Property) => void;
   initialMapMode?: 'draw' | 'proximity';
 }
 
@@ -31,16 +27,18 @@ const containerStyle = {
 
 const libraries: ('drawing' | 'places' | 'visualization')[] = ['drawing', 'places', 'visualization'];
 
-const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewDetails, favorites, onToggleFavorite, properties, onContactClick, initialMapMode = 'proximity' }) => {
+const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewDetails, properties, initialMapMode = 'proximity' }) => {
   const { t } = useLanguage();
-  // FIX: Replace google.maps.Map with any to resolve missing namespace error.
   const [map, setMap] = useState<any | null>(null);
   const [propertiesInZone, setPropertiesInZone] = useState<PropertyWithDistance[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [isDrawing, setIsDrawing] = useState(initialMapMode === 'draw');
-  // FIX: Replace google.maps.LatLngLiteral with any to resolve missing namespace error.
   const [drawnCircle, setDrawnCircle] = useState<{center: any, radius: number} | null>(null);
+  
+  const [mapCenter, setMapCenter] = useState(userLocation || { lat: -12.9777, lng: -38.5016 });
+  const [zoom, setZoom] = useState(userLocation ? (initialMapMode === 'proximity' ? 14 : 13) : 13);
+
 
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script',
@@ -48,21 +46,16 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewD
     libraries,
   });
 
-  // FIX: Replace google.maps.Map with any to resolve missing namespace error.
   const onLoad = useCallback(function callback(mapInstance: any) {
     setMap(mapInstance);
   }, []);
 
   useEffect(() => {
-    if (map && userLocation) {
-        map.panTo({ lat: userLocation.lat, lng: userLocation.lng });
-        if (initialMapMode === 'proximity') {
-            map.setZoom(14);
-        } else {
-            map.setZoom(13);
-        }
+    if (userLocation) {
+        setMapCenter(userLocation);
+        setZoom(initialMapMode === 'proximity' ? 14 : 13);
     }
-  }, [map, userLocation, initialMapMode]);
+  }, [userLocation, initialMapMode]);
 
   const onUnmount = useCallback(function callback() {
     setMap(null);
@@ -75,19 +68,14 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewD
     }
   }, [map]);
 
-  // Effect for userLocation search
   useEffect(() => {
-    // FIX: Access google.maps through window object to resolve missing namespace error.
     if (isLoaded && userLocation && initialMapMode === 'proximity' && (window as any).google?.maps?.geometry) {
       const searchRadius = 5000; // 5km
-      // FIX: Access google.maps through window object to resolve missing namespace error.
       const userLatLng = new (window as any).google.maps.LatLng(userLocation.lat, userLocation.lng);
       
       const foundProperties: PropertyWithDistance[] = properties
         .map(prop => {
-          // FIX: Access google.maps through window object to resolve missing namespace error.
           const propLatLng = new (window as any).google.maps.LatLng(prop.lat, prop.lng);
-          // FIX: Access google.maps through window object to resolve missing namespace error.
           const distance = (window as any).google.maps.geometry.spherical.computeDistanceBetween(userLatLng, propLatLng);
           return { ...prop, distance };
         })
@@ -99,19 +87,15 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewD
     }
   }, [isLoaded, userLocation, properties, initialMapMode]);
   
-  // FIX: Replace google.maps.Circle with any to resolve missing namespace error.
   const onCircleComplete = (circle: any) => {
     const radius = circle.getRadius();
     const center = circle.getCenter();
     setIsDrawing(false);
 
-    // FIX: Access google.maps through window object to resolve missing namespace error.
     if (center && radius && (window as any).google?.maps?.geometry) {
       setDrawnCircle({ center: center.toJSON(), radius });
       const foundProperties: PropertyWithDistance[] = properties.map(prop => {
-        // FIX: Access google.maps through window object to resolve missing namespace error.
         const propLatLng = new (window as any).google.maps.LatLng(prop.lat, prop.lng);
-        // FIX: Access google.maps through window object to resolve missing namespace error.
         const distance = (window as any).google.maps.geometry.spherical.computeDistanceBetween(center, propLatLng);
         return { ...prop, distance };
       }).filter(prop => prop.distance <= radius)
@@ -120,7 +104,6 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewD
       setPropertiesInZone(foundProperties);
       setIsSidebarOpen(foundProperties.length > 0);
     }
-    // The DrawingManager adds the circle, we want to control it via state so we remove the manager's overlay.
     circle.setMap(null);
   };
   
@@ -143,8 +126,8 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewD
     return (
       <GoogleMap
         mapContainerStyle={containerStyle}
-        center={userLocation || { lat: -12.9777, lng: -38.5016 }}
-        zoom={13}
+        center={mapCenter}
+        zoom={zoom}
         onLoad={onLoad}
         onUnmount={onUnmount}
         options={{
@@ -155,7 +138,6 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewD
         }}
         onClick={() => setSelectedProperty(null)}
       >
-        {/* Markers */}
         {properties.map(prop => (
           <Marker 
             key={prop.id} 
@@ -164,11 +146,8 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewD
           />
         ))}
 
-        {/* User Location Marker */}
-        {/* FIX: Access google.maps through window object to resolve missing namespace error. */}
         {userLocation && <Marker position={userLocation} icon={{ path: (window as any).google.maps.SymbolPath.CIRCLE, scale: 8, fillColor: '#4285F4', fillOpacity: 1, strokeColor: 'white', strokeWeight: 2 }} />}
         
-        {/* Drawing Manager */}
         {isDrawing && (
           <DrawingManager
             onCircleComplete={onCircleComplete}
@@ -192,7 +171,6 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewD
           />
         )}
         
-        {/* Drawn Circle from state */}
         {drawnCircle && (
           <Circle
             center={drawnCircle.center}
@@ -213,7 +191,6 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewD
     <div className="fixed inset-0 bg-white z-[100]">
       {renderMap()}
 
-      {/* UI Overlay */}
       <div className="absolute top-0 left-0 w-full p-4 md:p-6 z-10 bg-gradient-to-b from-white/80 to-transparent pointer-events-none">
          <div className="container mx-auto pointer-events-auto">
             <div className="text-sm mb-4">
@@ -264,7 +241,6 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewD
         </div>
       )}
       
-      {/* Selected Property Card Overlay */}
       {selectedProperty && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-sm z-10 animate-fadeIn">
           <div className="relative">
@@ -272,9 +248,6 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewD
               key={selectedProperty.id}
               property={selectedProperty}
               onViewDetails={onViewDetails}
-              isFavorite={favorites.includes(selectedProperty.id)}
-              onToggleFavorite={onToggleFavorite}
-              onContactClick={onContactClick}
             />
             <button
               onClick={(e) => { e.stopPropagation(); setSelectedProperty(null); }}
@@ -325,9 +298,6 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewD
                             key={prop.id} 
                             property={prop} 
                             onViewDetails={onViewDetails}
-                            isFavorite={favorites.includes(prop.id)}
-                            onToggleFavorite={onToggleFavorite}
-                            onContactClick={onContactClick}
                         />
                     ))
                 ) : (

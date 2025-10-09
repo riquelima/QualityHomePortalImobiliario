@@ -2,10 +2,10 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="https://i.postimg.cc/4dqSTCqs/logo-Browser.png" />
-    <link rel="apple-touch-icon" href="https://i.imgur.com/FuxDdyF.png" />
-    <link rel="icon" type="image/png" sizes="192x192" href="https://i.imgur.com/FuxDdyF.png" />
-    <link rel="icon" type="image/png" sizes="512x512" href="https://i.imgur.com/FuxDdyF.png" />
+    <link rel="icon" type="image/png" href="https://i.postimg.cc/QNJ63Www/logo.png" />
+    <link rel="apple-touch-icon" href="https://i.postimg.cc/QNJ63Www/logo.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="https://i.postimg.cc/QNJ63Www/logo.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="https://i.postimg.cc/QNJ63Www/logo.png" />
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -31,6 +31,15 @@
       }
       .animate-slow-pulse {
         animation: slow-pulse 2s ease-in-out infinite;
+      }
+      /* Property card animation */
+      @keyframes card-fade-in {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .card-animate {
+        animation: card-fade-in 0.5s ease-out forwards;
+        opacity: 0; /* Start hidden */
       }
     </style>
 

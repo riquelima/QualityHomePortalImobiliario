@@ -1,40 +1,23 @@
-
-
 import React, { useState } from 'react';
 import Header from './Header';
-import type { Property, User, Profile } from '../types';
+import type { Property } from '../types';
 import { useLanguage } from '../contexts/LanguageContext';
 import LocationIcon from './icons/LocationIcon';
 import BedIcon from './icons/BedIcon';
 import BathIcon from './icons/BathIcon';
 import AreaIcon from './icons/AreaIcon';
-import HeartIcon from './icons/HeartIcon';
-import HeartFilledIcon from './icons/HeartFilledIcon';
-import ContactModal from './ContactModal';
 import FeatureIcon from './FeatureIcon';
-
+import ShareIcon from './icons/ShareIcon';
 
 interface PropertyDetailPageProps {
   property: Property;
   onBack: () => void;
-  onPublishAdClick: () => void;
-  onAccessClick: () => void;
-  user: User | null;
-  profile: Profile | null;
-  onLogout: () => void;
-  isFavorite: boolean;
-  onToggleFavorite: (id: number) => void;
-  onNavigateToFavorites: () => void;
-  onStartChat: (property: Property) => void;
-  onNavigateToChatList: () => void;
-  // FIX: Add onNavigateToMyAds prop to resolve typing error.
-  onNavigateToMyAds: () => void;
+  onShare: (id: number) => void;
+  navigateHome: () => void;
   onNavigateToAllListings: () => void;
-  unreadCount: number;
-  // FIX: Added missing props for Header.
   navigateToGuideToSell: () => void;
   navigateToDocumentsForSale: () => void;
-  navigateHome: () => void;
+  isAdminLoggedIn?: boolean;
 }
 
 const currencyConfig = {
@@ -43,68 +26,37 @@ const currencyConfig = {
   es: { locale: 'es-ES', currency: 'EUR' },
 };
 
-const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({
-  property,
-  onBack,
-  onPublishAdClick,
-  onAccessClick,
-  user,
-  profile,
-  onLogout,
-  isFavorite,
-  onToggleFavorite,
-  onNavigateToFavorites,
-  onStartChat,
-  onNavigateToChatList,
-  onNavigateToMyAds,
-  onNavigateToAllListings,
-  unreadCount,
-  navigateToGuideToSell,
-  navigateToDocumentsForSale,
-  navigateHome
-}) => {
+const PropertyDetailPage: React.FC<PropertyDetailPageProps> = (props) => {
+  const { property, onBack, onShare } = props;
   const { t, language } = useLanguage();
   
   const placeholderImage = 'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1';
   const displayImages = property.images && property.images.length > 0 ? property.images : [placeholderImage];
 
   const [selectedImage, setSelectedImage] = useState(displayImages[0]);
-  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
 
   const { locale, currency } = currencyConfig[language as keyof typeof currencyConfig];
-  const formattedPrice = new Intl.NumberFormat(locale, {
-    style: 'currency',
-    currency: currency,
-  }).format(property.price);
   
-  const formattedCondoFee = property.taxa_condominio ? new Intl.NumberFormat(locale, {
-    style: 'currency',
-    currency: currency,
-  }).format(property.taxa_condominio) : null;
+  const formattedPrice = typeof property.price === 'number'
+    ? new Intl.NumberFormat(locale, {
+        style: 'currency',
+        currency: currency,
+      }).format(property.price)
+    : 'Preço a consultar';
+  
+  const formattedCondoFee = typeof property.taxa_condominio === 'number'
+    ? new Intl.NumberFormat(locale, {
+        style: 'currency',
+        currency: currency,
+      }).format(property.taxa_condominio)
+    : null;
 
 
   return (
     <>
     <div className="bg-brand-light-gray min-h-screen">
-      {/* FIX: Pass onNavigateToMyAds prop to Header. */}
-      {/* FIX: Pass navigateHome prop to Header. */}
-      <Header
-        onPublishAdClick={onPublishAdClick}
-        onAccessClick={onAccessClick}
-        user={user}
-        profile={profile}
-        onLogout={onLogout}
-        onNavigateToFavorites={onNavigateToFavorites}
-        onNavigateToChatList={onNavigateToChatList}
-        onNavigateToMyAds={onNavigateToMyAds}
-        onNavigateToAllListings={onNavigateToAllListings}
-        unreadCount={unreadCount}
-        navigateToGuideToSell={navigateToGuideToSell}
-        navigateToDocumentsForSale={navigateToDocumentsForSale}
-        navigateHome={navigateHome}
-      />
+      <Header {...props} />
       <main className="container mx-auto px-4 sm:px-6 py-8">
-        {/* Breadcrumbs */}
         <div className="text-sm mb-6">
           <button onClick={onBack} className="text-brand-red hover:underline cursor-pointer">
             {t('map.breadcrumbs.home')}
@@ -225,7 +177,17 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({
           <aside className="lg:col-span-1">
             <div className="sticky top-24">
               <div className="bg-white p-6 rounded-lg shadow-md">
-                <h1 className="text-2xl sm:text-3xl font-bold text-brand-navy mb-2 leading-tight">{property.title}</h1>
+                <div className="flex justify-between items-start">
+                  <h1 className="flex-1 pr-4 text-2xl sm:text-3xl font-bold text-brand-navy mb-2 leading-tight">{property.title}</h1>
+                  <button 
+                    onClick={() => onShare(property.id)}
+                    className="flex-shrink-0 bg-gray-200 hover:bg-gray-300 text-brand-dark p-2 rounded-full transition duration-300"
+                    aria-label="Compartilhar"
+                    title="Compartilhar"
+                  >
+                    <ShareIcon className="w-6 h-6" />
+                  </button>
+                </div>
                 <div className="flex items-center text-brand-gray mb-4">
                   <LocationIcon className="w-5 h-5 mr-2 flex-shrink-0" />
                   <p className="text-sm">{property.address}</p>
@@ -237,7 +199,6 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({
                     {t('propertyDetail.condoFee')}: {formattedCondoFee}
                   </p>
                 )}
-
                 
                 <h2 className="text-lg sm:text-xl font-bold text-brand-navy mb-4 border-t pt-4">{t('propertyDetail.details')}</h2>
                 <div className="grid grid-cols-3 gap-4 text-center mb-6">
@@ -257,23 +218,6 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({
                     </div>
                 </div>
 
-                <div className="flex flex-col space-y-3">
-                    {property.owner && (
-                      <button 
-                        onClick={() => setIsContactModalOpen(true)}
-                        className="w-full bg-brand-red hover:opacity-90 text-white font-bold py-3 px-4 rounded-md transition duration-300">
-                          {t('propertyCard.contact')}
-                      </button>
-                    )}
-                    <button 
-                      onClick={() => onToggleFavorite(property.id)}
-                      className="w-full bg-gray-200 hover:bg-gray-300 text-brand-dark font-medium py-3 px-4 rounded-md transition duration-300 flex items-center justify-center space-x-2"
-                    >
-                        {isFavorite ? <HeartFilledIcon className="w-5 h-5 text-brand-red" /> : <HeartIcon className="w-5 h-f" />}
-                        <span>{isFavorite ? t('propertyDetail.removeFromFavorites') : t('propertyDetail.addToFavorites')}</span>
-                    </button>
-                </div>
-
               </div>
             </div>
           </aside>
@@ -290,16 +234,6 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({
         </div>
       </footer>
     </div>
-    <ContactModal 
-      isOpen={isContactModalOpen} 
-      onClose={() => setIsContactModalOpen(false)}
-      owner={property.owner}
-      propertyTitle={property.title}
-      onStartChat={() => {
-        onStartChat(property);
-        setIsContactModalOpen(false);
-      }}
-    />
     </>
   );
 };

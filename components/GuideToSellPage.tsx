@@ -1,23 +1,12 @@
 import React from 'react';
 import Header from './Header';
 import { useLanguage } from '../contexts/LanguageContext';
-import type { User, Profile } from '../types';
 
 interface GuideToSellPageProps {
   onBack: () => void;
-  onPublishAdClick: () => void;
-  onAccessClick: () => void;
-  user: User | null;
-  profile: Profile | null;
-  onLogout: () => void;
-  onNavigateToFavorites: () => void;
-  onNavigateToChatList: () => void;
-  onNavigateToMyAds: () => void;
   onNavigateToAllListings: () => void;
-  unreadCount: number;
   navigateToGuideToSell: () => void;
   navigateToDocumentsForSale: () => void;
-  // FIX: Add missing navigateHome prop for Header.
   navigateHome: () => void;
 }
 

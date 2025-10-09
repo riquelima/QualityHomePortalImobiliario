@@ -1,7 +1,4 @@
-
-
-import React, { useRef, useEffect, useCallback } from 'react';
-// FIX: Removed unused import of PropertyStatus.
+import React from 'react';
 import type { Property } from '../types';
 import PropertyCard from './PropertyCard';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -11,11 +8,10 @@ import SpinnerIcon from './icons/SpinnerIcon';
 interface PropertyListingsProps {
   properties: Property[];
   onViewDetails: (id: number) => void;
-  favorites: number[];
-  onToggleFavorite: (id: number) => void;
+  onShare: (id: number) => void;
   isLoading: boolean;
   title?: string;
-  onContactClick: (property: Property) => void;
+  description?: string;
   noResultsTitle?: string;
   noResultsDescription?: string;
   loadMore: () => void;
@@ -37,57 +33,38 @@ const SkeletonCard: React.FC = () => (
             </div>
             <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
                 <div className="bg-gray-300 h-10 w-full rounded-md"></div>
-                <div className="bg-gray-300 h-10 w-full rounded-md"></div>
             </div>
         </div>
     </div>
 );
 
 
-const PropertyListings: React.FC<PropertyListingsProps> = ({ properties, onViewDetails, favorites, onToggleFavorite, isLoading, title, onContactClick, noResultsTitle, noResultsDescription, loadMore, isFetchingMore, hasMore }) => {
+const PropertyListings: React.FC<PropertyListingsProps> = ({ properties, onViewDetails, onShare, isLoading, title, description, noResultsTitle, noResultsDescription, loadMore, isFetchingMore, hasMore }) => {
   const { t } = useLanguage();
-  const loader = useRef(null);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-        (entries) => {
-            if (entries[0].isIntersecting && hasMore && !isFetchingMore) {
-                loadMore();
-            }
-        },
-        { rootMargin: "200px" }
-    );
-    const currentLoader = loader.current;
-    if (currentLoader) {
-        observer.observe(currentLoader);
-    }
-    return () => {
-        if (currentLoader) {
-            observer.unobserve(currentLoader);
-        }
-    };
-  }, [hasMore, isFetchingMore, loadMore]);
 
   return (
-    <section className="bg-white py-16 sm:py-20">
+    <section className="bg-white py-20 sm:py-24">
       <div className="container mx-auto px-4 sm:px-6">
-        <h2 className="text-3xl sm:text-4xl font-bold text-brand-navy text-center mb-4">{title || t('listings.title')}</h2>
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-brand-navy text-center mb-4">{title || t('listings.title')}</h2>
         <p className="text-base sm:text-lg text-brand-gray text-center max-w-2xl mx-auto mb-12">
-          {t('listings.description')}
+          {description || t('listings.description')}
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
           {isLoading ? (
             Array.from({ length: 6 }).map((_, index) => <SkeletonCard key={index} />)
           ) : properties.length > 0 ? (
             properties.map((property, index) => (
-              <PropertyCard 
-                key={`${property.id}-${index}`} 
-                property={property} 
-                onViewDetails={onViewDetails}
-                isFavorite={favorites.includes(property.id)}
-                onToggleFavorite={onToggleFavorite}
-                onContactClick={onContactClick}
-              />
+              <div 
+                key={`${property.id}-${index}`}
+                className="card-animate" 
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                <PropertyCard 
+                  property={property} 
+                  onViewDetails={onViewDetails}
+                  onShare={onShare}
+                />
+              </div>
             ))
           ) : (
              <div className="md:col-span-2 lg:col-span-3 text-center py-16 bg-brand-light-gray rounded-lg">
@@ -98,11 +75,15 @@ const PropertyListings: React.FC<PropertyListingsProps> = ({ properties, onViewD
           )}
         </div>
         
-        <div ref={loader} className="h-10" />
-        {isFetchingMore && (
-            <div className="flex justify-center items-center py-8">
-                <SpinnerIcon className="w-10 h-10 animate-spin text-brand-red" />
-            </div>
+        {hasMore && !isLoading && (
+          <div className="text-center mt-12">
+            <button
+              onClick={loadMore}
+              className="bg-brand-red hover:opacity-90 text-white font-bold py-3 px-8 rounded-md transition duration-300"
+            >
+              {t('listings.viewAll')}
+            </button>
+          </div>
         )}
       </div>
     </section>

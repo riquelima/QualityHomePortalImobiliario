@@ -1,18 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
-import UserIcon from './icons/UserIcon';
 import FlagBRIcon from './icons/FlagBRIcon';
 import FlagUSIcon from './icons/FlagUSIcon';
 import FlagESIcon from './icons/FlagESIcon';
 import ChevronDownIcon from './icons/ChevronDownIcon';
 import HamburgerIcon from './icons/HamburgerIcon';
 import CloseIcon from './icons/CloseIcon';
-import AdsIcon from './icons/AdsIcon';
-import BellIcon from './icons/BellIcon';
-import HeartIcon from './icons/HeartIcon';
-import ChatIcon from './icons/ChatIcon';
 import LogoutIcon from './icons/LogoutIcon';
 import { useLanguage } from '../contexts/LanguageContext';
-import type { User, Profile } from '../types';
 import CheckIcon from './icons/CheckIcon';
 
 const languageMap = {
@@ -22,53 +16,30 @@ const languageMap = {
 };
 
 interface HeaderProps {
-  onPublishAdClick: () => void;
-  onAccessClick: () => void;
-  user: User | null;
-  profile: Profile | null;
-  onLogout: () => void;
-  onNavigateToFavorites: () => void;
-  onNavigateToChatList: () => void;
-  onNavigateToMyAds: () => void;
-  onNavigateToAllListings: () => void;
-  unreadCount: number;
+  onNavigateToBuy: () => void;
+  onNavigateToRent: () => void;
+  onNavigateToSeason: () => void;
   navigateToGuideToSell: () => void;
   navigateToDocumentsForSale: () => void;
   navigateHome: () => void;
+  isAdminLoggedIn?: boolean;
+  onAdminLogout?: () => void;
+  onNavigateToAdminDashboard?: () => void;
 }
 
-// Helper function outside the component
-const getInitials = (name: string) => {
-    if (!name) return '';
-    return name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
-}
-
-const Header: React.FC<HeaderProps> = ({ navigateHome, onPublishAdClick, onAccessClick, user, profile, onLogout, onNavigateToFavorites, onNavigateToChatList, onNavigateToMyAds, onNavigateToAllListings, unreadCount, navigateToGuideToSell, navigateToDocumentsForSale }) => {
+const Header: React.FC<HeaderProps> = ({ navigateHome, onNavigateToBuy, onNavigateToRent, onNavigateToSeason, navigateToGuideToSell, navigateToDocumentsForSale, isAdminLoggedIn, onAdminLogout, onNavigateToAdminDashboard }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
-  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
-  const [isOwnersDropdownOpen, setIsOwnersDropdownOpen] = useState(false);
-  const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false); // State for search submenu
-  const [isMobileOwnersMenuOpen, setIsMobileOwnersMenuOpen] = useState(false);
-  const [isMobileSearchMenuOpen, setIsMobileSearchMenuOpen] = useState(false); // State for mobile search submenu
   const [isMobileLangMenuOpen, setIsMobileLangMenuOpen] = useState(false);
   const langDropdownRef = useRef<HTMLDivElement>(null);
-  const userDropdownRef = useRef<HTMLDivElement>(null);
   const { language, changeLanguage, t } = useLanguage();
 
   const CurrentFlag = languageMap[language as keyof typeof languageMap].Flag;
   
-  const userName = profile?.nome_completo || user?.email || 'Usuário';
-  const userPicture = profile?.url_foto_perfil || user?.user_metadata?.picture;
-  const userInitials = getInitials(userName);
-
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (langDropdownRef.current && !langDropdownRef.current.contains(event.target as Node)) {
         setIsLangDropdownOpen(false);
-      }
-      if (userDropdownRef.current && !userDropdownRef.current.contains(event.target as Node)) {
-        setIsUserDropdownOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -84,83 +55,19 @@ const Header: React.FC<HeaderProps> = ({ navigateHome, onPublishAdClick, onAcces
           {/* Logo */}
           <div className="flex-shrink-0">
              <a href="#" onClick={(e) => { e.preventDefault(); navigateHome(); }} className="block transition-transform duration-300 hover:scale-105">
-               <img src="https://i.imgur.com/FuxDdyF.png" alt="Quallity Home Logo" className="h-16 sm:h-20" />
+               <img src="https://i.postimg.cc/QNJ63Www/logo.png" alt="Quallity Home Logo" className="h-16 sm:h-20" />
              </a>
           </div>
 
           {/* Desktop Navigation Links (Centered) */}
           <div className="hidden md:flex flex-grow items-center justify-center space-x-6 text-sm">
-               <div 
-                className="relative"
-                onMouseEnter={() => setIsOwnersDropdownOpen(true)}
-                onMouseLeave={() => setIsOwnersDropdownOpen(false)}
-              >
-                <a href="#" className="text-brand-dark hover:text-brand-red transition duration-300 py-4">{t('header.nav.owners')}</a>
-                <div className={`absolute top-full left-1/2 -translate-x-1/2 mt-0 w-max bg-white rounded-b-lg shadow-2xl border-t-4 border-brand-red z-30 p-8 transition-all duration-200 ease-out transform origin-top ${isOwnersDropdownOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}>
-                    <div className="grid grid-cols-3 gap-x-16 gap-y-8 text-left">
-                      {/* Vender */}
-                      <div className="space-y-4">
-                        <h3 className="font-bold text-brand-dark text-base">{t('header.ownersDropdown.sell.title')}</h3>
-                        <ul className="space-y-3 text-sm">
-                          <li><a href="#" onClick={(e) => { e.preventDefault(); onPublishAdClick(); }} className="text-brand-gray hover:text-brand-red">{t('header.ownersDropdown.sell.publish')}</a></li>
-                          <li><a href="#" onClick={(e) => { e.preventDefault(); navigateToGuideToSell(); }} className="text-brand-gray hover:text-brand-red">{t('header.ownersDropdown.sell.guide')}</a></li>
-                          <li><a href="#" onClick={(e) => { e.preventDefault(); navigateToDocumentsForSale(); }} className="text-brand-gray hover:text-brand-red">{t('header.ownersDropdown.sell.documents')}</a></li>
-                        </ul>
-                      </div>
-                      {/* Colocar para arrendamento */}
-                      <div className="space-y-4">
-                        <h3 className="font-bold text-brand-dark text-base">{t('header.ownersDropdown.rent.title')}</h3>
-                        <ul className="space-y-3 text-sm">
-                          <li><a href="#" onClick={(e) => { e.preventDefault(); onPublishAdClick(); }} className="text-brand-gray hover:text-brand-red">{t('header.ownersDropdown.rent.publish')}</a></li>
-                        </ul>
-                      </div>
-                      {/* Para a tua habitação */}
-                      <div className="space-y-4">
-                        <h3 className="font-bold text-brand-dark text-base">{t('header.ownersDropdown.forYourHome.title')}</h3>
-                        <ul className="space-y-3 text-sm">
-                          <li><a href="#" onClick={(e) => { e.preventDefault(); onNavigateToMyAds(); }} className="text-brand-gray hover:text-brand-red">{t('header.ownersDropdown.forYourHome.ownerArea')}</a></li>
-                        </ul>
-                      </div>
-                    </div>
-                </div>
-              </div>
-              <div 
-                className="relative"
-                onMouseEnter={() => setIsSearchDropdownOpen(true)}
-                onMouseLeave={() => setIsSearchDropdownOpen(false)}
-              >
-                <a href="#" className="text-brand-dark hover:text-brand-red transition duration-300 py-4 border-b-2 border-transparent hover:border-brand-red">{t('header.nav.search')}</a>
-                <div className={`absolute top-full left-1/2 -translate-x-1/2 mt-0 w-max bg-white rounded-b-lg shadow-2xl border-t-4 border-brand-red z-30 p-8 transition-all duration-200 ease-out transform origin-top ${isSearchDropdownOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}>
-                    <div className="grid grid-cols-2 gap-x-16 gap-y-8 text-left">
-                      {/* Procurar para comprar */}
-                      <div className="space-y-4">
-                        <h3 className="font-bold text-brand-dark text-base">{t('header.searchDropdown.buy.title')}</h3>
-                        <ul className="space-y-3 text-sm">
-                          <li><a href="#" onClick={(e) => { e.preventDefault(); onNavigateToAllListings(); }} className="text-brand-gray hover:text-brand-red">{t('header.searchDropdown.buy.explore')}</a></li>
-                        </ul>
-                      </div>
-                      {/* Procurar para arrendar */}
-                      <div className="space-y-4">
-                        <h3 className="font-bold text-brand-dark text-base">{t('header.searchDropdown.rent.title')}</h3>
-                        <ul className="space-y-3 text-sm">
-                          <li><a href="#" onClick={(e) => { e.preventDefault(); onNavigateToAllListings(); }} className="text-brand-gray hover:text-brand-red">{t('header.searchDropdown.rent.explore')}</a></li>
-                        </ul>
-                      </div>
-                    </div>
-                </div>
-              </div>
-            </div>
+              <a href="#" onClick={(e) => { e.preventDefault(); onNavigateToBuy(); }} className="text-brand-dark hover:text-brand-red transition duration-300 py-4 border-b-2 border-transparent hover:border-brand-red">{t('header.nav.buy')}</a>
+              <a href="#" onClick={(e) => { e.preventDefault(); onNavigateToRent(); }} className="text-brand-dark hover:text-brand-red transition duration-300 py-4 border-b-2 border-transparent hover:border-brand-red">{t('header.nav.rent')}</a>
+              <a href="#" onClick={(e) => { e.preventDefault(); onNavigateToSeason(); }} className="text-brand-dark hover:text-brand-red transition duration-300 py-4 border-b-2 border-transparent hover:border-brand-red">{t('header.nav.season')}</a>
+          </div>
 
           {/* Right side actions */}
           <div className="flex-shrink-0 flex items-center space-x-2 sm:space-x-4 text-sm">
-            {/* Desktop "Publique" button */}
-            <button 
-              onClick={onPublishAdClick}
-              className="hidden md:block px-4 py-2 border border-brand-gray rounded-md hover:border-brand-dark transition duration-300"
-            >
-              {t('header.publishAd')}
-            </button>
-            
             {/* Language Selector */}
             <div className="relative hidden md:block" ref={langDropdownRef}>
               <button onClick={() => setIsLangDropdownOpen(prev => !prev)} className="flex items-center space-x-1">
@@ -183,72 +90,15 @@ const Header: React.FC<HeaderProps> = ({ navigateHome, onPublishAdClick, onAcces
                   ))}
               </div>
             </div>
-            
-            {/* User/Login Link */}
-            {user ? (
-              <div className="relative" ref={userDropdownRef}>
-                <button onClick={() => setIsUserDropdownOpen(prev => !prev)} className="flex items-center space-x-2">
-                  {userPicture ? (
-                      <img src={userPicture} alt={userName} className="w-8 h-8 rounded-full" />
-                  ) : (
-                      <span className="flex items-center justify-center w-8 h-8 rounded-full bg-brand-gray text-white font-bold text-sm">
-                          {userInitials}
-                      </span>
-                  )}
-                  <span className="hidden md:inline font-medium">{userName.split(' ')[0]}</span>
-                  <ChevronDownIcon className="w-4 h-4 text-brand-gray" />
-                </button>
-                <div className={`absolute top-full right-0 mt-2 w-64 sm:w-72 bg-white rounded-md shadow-lg border z-20 transition-all duration-200 ease-out transform origin-top-right ${isUserDropdownOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}>
-                    <div className="px-4 py-4 border-b flex items-center space-x-3">
-                      {userPicture ? (
-                          <img src={userPicture} alt={userName} className="w-10 h-10 rounded-full" />
-                      ) : (
-                          <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-brand-gray text-white font-bold">
-                              {userInitials}
-                          </div>
-                      )}
-                      <div>
-                        <p className="text-sm font-bold text-brand-dark truncate">{userName}</p>
-                        <a href="#" onClick={(e) => { e.preventDefault(); onNavigateToMyAds(); setIsUserDropdownOpen(false); }} className="text-xs text-brand-red hover:underline">{t('header.myAccount')}</a>
-                      </div>
-                    </div>
-                    <nav className="py-2">
-                      <button onClick={(e) => { e.preventDefault(); onNavigateToMyAds(); setIsUserDropdownOpen(false); }} className="w-full text-left flex items-center px-4 py-2 text-sm text-brand-dark hover:bg-gray-100">
-                          <AdsIcon className="w-5 h-5 mr-3 text-brand-gray" />
-                          <span>{t('header.ads')}</span>
-                      </button>
-                      <a href="#" onClick={(e) => { e.preventDefault(); onNavigateToFavorites(); setIsUserDropdownOpen(false); }} className="flex items-center px-4 py-2 text-sm text-brand-dark hover:bg-gray-100">
-                          <HeartIcon className="w-5 h-5 mr-3 text-brand-gray" />
-                          <span>{t('header.favorites')}</span>
-                      </a>
-                      <a href="#" onClick={(e) => { e.preventDefault(); onNavigateToChatList(); setIsUserDropdownOpen(false); }} className="relative flex items-center px-4 py-2 text-sm text-brand-dark hover:bg-gray-100 w-full">
-                          <ChatIcon className="w-5 h-5 mr-3 text-brand-gray" />
-                          <span>{t('header.chat')}</span>
-                          {unreadCount > 0 && (
-                            <span className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 bg-brand-red rounded-full text-white text-xs flex items-center justify-center font-bold">{unreadCount}</span>
-                          )}
-                      </a>
-                    </nav>
-                    <div className="border-t">
-                      <button 
-                        onClick={() => {
-                          onLogout();
-                          setIsUserDropdownOpen(false);
-                        }}
-                        className="w-full flex items-center px-4 py-3 text-sm text-brand-dark hover:bg-gray-100"
-                      >
-                        <LogoutIcon className="w-5 h-5 mr-3 text-brand-gray" />
-                        <span>{t('header.logout')}</span>
-                      </button>
-                    </div>
-                </div>
+
+            {/* Admin Links */}
+            {isAdminLoggedIn && (
+              <div className="hidden md:flex items-center space-x-4">
+                <a href="#" onClick={(e) => { e.preventDefault(); onNavigateToAdminDashboard && onNavigateToAdminDashboard(); }} className="font-semibold text-brand-dark hover:text-brand-red transition duration-300">Painel</a>
+                <button onClick={onAdminLogout} className="text-brand-gray hover:text-brand-red transition duration-300">Sair</button>
               </div>
-            ) : (
-              <button onClick={onAccessClick} className="flex items-center space-x-2 hover:text-brand-red transition duration-300">
-                <UserIcon className="w-6 h-6" />
-                <span className="hidden md:inline">{t('header.access')}</span>
-              </button>
             )}
+
 
             {/* Hamburger Menu Button */}
             <button className="md:hidden" onClick={() => setIsMenuOpen(true)} aria-label={t('header.openMenu')}>
@@ -278,93 +128,21 @@ const Header: React.FC<HeaderProps> = ({ navigateHome, onPublishAdClick, onAcces
           </button>
         </div>
         <nav className="flex flex-col p-4 space-y-2">
-          <div>
-              <button
-                  onClick={() => setIsMobileOwnersMenuOpen(prev => !prev)}
-                  className="w-full flex justify-between items-center text-brand-dark hover:text-brand-red transition duration-300 p-3"
-              >
-                  <span className="text-lg">{t('header.nav.owners')}</span>
-                  <ChevronDownIcon className={`w-5 h-5 transition-transform duration-300 ${isMobileOwnersMenuOpen ? 'rotate-180' : ''}`} />
-              </button>
-              <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isMobileOwnersMenuOpen ? 'max-h-screen' : 'max-h-0'}`}>
-                  <div className="pl-4 mt-2 space-y-3">
-                      {/* Vender */}
-                      <div className="space-y-1">
-                          <h3 className="font-bold text-brand-dark text-md">{t('header.ownersDropdown.sell.title')}</h3>
-                          <ul className="space-y-1 pl-2 text-md">
-                              <li><a href="#" onClick={(e) => { e.preventDefault(); onPublishAdClick(); setIsMenuOpen(false); }} className="text-brand-gray hover:text-brand-red block py-3">{t('header.ownersDropdown.sell.publish')}</a></li>
-                              <li><a href="#" onClick={(e) => { e.preventDefault(); navigateToGuideToSell(); setIsMenuOpen(false); }} className="text-brand-gray hover:text-brand-red block py-3">{t('header.ownersDropdown.sell.guide')}</a></li>
-                              <li><a href="#" onClick={(e) => { e.preventDefault(); navigateToDocumentsForSale(); setIsMenuOpen(false); }} className="text-brand-gray hover:text-brand-red block py-3">{t('header.ownersDropdown.sell.documents')}</a></li>
-                          </ul>
-                      </div>
-                      {/* Colocar para arrendamento */}
-                      <div className="space-y-1">
-                          <h3 className="font-bold text-brand-dark text-md">{t('header.ownersDropdown.rent.title')}</h3>
-                          <ul className="space-y-1 pl-2 text-md">
-                              <li><a href="#" onClick={(e) => { e.preventDefault(); onPublishAdClick(); setIsMenuOpen(false); }} className="text-brand-gray hover:text-brand-red block py-3">{t('header.ownersDropdown.rent.publish')}</a></li>
-                          </ul>
-                      </div>
-                      {/* Para a tua habitação */}
-                      <div className="space-y-1">
-                          <h3 className="font-bold text-brand-dark text-md">{t('header.ownersDropdown.forYourHome.title')}</h3>
-                          <ul className="space-y-1 pl-2 text-md">
-                              <li><a href="#" onClick={(e) => { e.preventDefault(); onNavigateToMyAds(); setIsMenuOpen(false); }} className="text-brand-gray hover:text-brand-red block py-3">{t('header.ownersDropdown.forYourHome.ownerArea')}</a></li>
-                          </ul>
-                      </div>
-                  </div>
-              </div>
-          </div>
-          <div>
-              <button
-                  onClick={() => setIsMobileSearchMenuOpen(prev => !prev)}
-                  className="w-full flex justify-between items-center text-brand-dark hover:text-brand-red transition duration-300 p-3"
-              >
-                  <span className="text-lg">{t('header.nav.search')}</span>
-                  <ChevronDownIcon className={`w-5 h-5 transition-transform duration-300 ${isMobileSearchMenuOpen ? 'rotate-180' : ''}`} />
-              </button>
-               <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isMobileSearchMenuOpen ? 'max-h-screen' : 'max-h-0'}`}>
-                  <div className="pl-4 mt-2 space-y-3">
-                      {/* Procurar para comprar */}
-                      <div className="space-y-1">
-                          <h3 className="font-bold text-brand-dark text-md">{t('header.searchDropdown.buy.title')}</h3>
-                          <ul className="space-y-1 pl-2 text-md">
-                              <li><a href="#" onClick={(e) => { e.preventDefault(); onNavigateToAllListings(); setIsMenuOpen(false); }} className="text-brand-gray hover:text-brand-red block py-3">{t('header.searchDropdown.buy.explore')}</a></li>
-                          </ul>
-                      </div>
-                      {/* Procurar para alugar */}
-                      <div className="space-y-1">
-                          <h3 className="font-bold text-brand-dark text-md">{t('header.searchDropdown.rent.title')}</h3>
-                          <ul className="space-y-1 pl-2 text-md">
-                              <li><a href="#" onClick={(e) => { e.preventDefault(); onNavigateToAllListings(); setIsMenuOpen(false); }} className="text-brand-gray hover:text-brand-red block py-3">{t('header.searchDropdown.rent.explore')}</a></li>
-                          </ul>
-                      </div>
-                  </div>
-              </div>
-          </div>
+           <a href="#" onClick={(e) => { e.preventDefault(); onNavigateToBuy(); setIsMenuOpen(false); }} className="w-full text-left flex items-center text-brand-dark hover:text-brand-red transition duration-300 p-3 text-lg">{t('header.nav.buy')}</a>
+           <a href="#" onClick={(e) => { e.preventDefault(); onNavigateToRent(); setIsMenuOpen(false); }} className="w-full text-left flex items-center text-brand-dark hover:text-brand-red transition duration-300 p-3 text-lg">{t('header.nav.rent')}</a>
+           <a href="#" onClick={(e) => { e.preventDefault(); onNavigateToSeason(); setIsMenuOpen(false); }} className="w-full text-left flex items-center text-brand-dark hover:text-brand-red transition duration-300 p-3 text-lg">{t('header.nav.season')}</a>
           <hr className="my-2" />
 
-          {/* User links for mobile */}
-          {user ? (
+          {/* Admin links for mobile */}
+          {isAdminLoggedIn && (
             <>
-              <button onClick={() => { onNavigateToMyAds(); setIsMenuOpen(false); }} className="w-full text-left flex items-center text-brand-dark hover:text-brand-red transition duration-300 p-3 text-lg">
-                  <AdsIcon className="w-6 h-6 mr-3 text-brand-gray" />
-                  <span>{t('header.ads')}</span>
-              </button>
-              <button onClick={() => { onNavigateToFavorites(); setIsMenuOpen(false); }} className="w-full text-left flex items-center text-brand-dark hover:text-brand-red transition duration-300 p-3 text-lg">
-                  <HeartIcon className="w-6 h-6 mr-3 text-brand-gray" />
-                  <span>{t('header.favorites')}</span>
-              </button>
-              <button onClick={() => { onNavigateToChatList(); setIsMenuOpen(false); }} className="relative w-full text-left flex items-center text-brand-dark hover:text-brand-red transition duration-300 p-3 text-lg">
-                  <ChatIcon className="w-6 h-6 mr-3 text-brand-gray" />
-                  <span>{t('header.chat')}</span>
-                  {unreadCount > 0 && (
-                      <span className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 bg-brand-red rounded-full text-white text-sm flex items-center justify-center font-bold">{unreadCount}</span>
-                  )}
+               <button onClick={() => { onNavigateToAdminDashboard && onNavigateToAdminDashboard(); setIsMenuOpen(false); }} className="w-full text-left flex items-center text-brand-dark hover:text-brand-red transition duration-300 p-3 text-lg">
+                  Painel de Anúncios
               </button>
               <hr className="my-2" />
               <button
                 onClick={() => {
-                  onLogout();
+                  onAdminLogout && onAdminLogout();
                   setIsMenuOpen(false);
                 }}
                 className="w-full text-left flex items-center text-brand-dark hover:text-brand-red transition duration-300 p-3 text-lg"
@@ -373,11 +151,6 @@ const Header: React.FC<HeaderProps> = ({ navigateHome, onPublishAdClick, onAcces
                 <span>{t('header.logout')}</span>
               </button>
             </>
-          ) : (
-            <button onClick={() => { onAccessClick(); setIsMenuOpen(false); }} className="w-full text-left flex items-center text-brand-dark hover:text-brand-red transition duration-300 p-3 text-lg">
-              <UserIcon className="w-6 h-6 mr-3 text-brand-gray" />
-              <span>{t('header.access')}</span>
-            </button>
           )}
           
           {/* Mobile Language Selector */}
@@ -411,13 +184,6 @@ const Header: React.FC<HeaderProps> = ({ navigateHome, onPublishAdClick, onAcces
                 </div>
             </div>
         </div>
-
-          <button 
-            onClick={() => { onPublishAdClick(); setIsMenuOpen(false); }}
-            className="w-full text-center mt-4 px-4 py-3 bg-brand-red text-white rounded-md hover:opacity-90 transition duration-300 text-lg"
-          >
-            {t('header.publishAd')}
-          </button>
         </nav>
       </aside>
     </>

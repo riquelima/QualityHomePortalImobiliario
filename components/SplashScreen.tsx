@@ -11,7 +11,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ isFadingOut }) => {
       aria-hidden={isFadingOut}
     >
       <img 
-        src="https://i.imgur.com/FuxDdyF.png" 
+        src="https://i.postimg.cc/QNJ63Www/logo.png" 
         alt="Quallity Home Logo" 
         className="h-32 sm:h-40 animate-slow-pulse"
       />

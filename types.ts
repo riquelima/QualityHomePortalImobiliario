@@ -1,5 +1,4 @@
 
-
 import type { User } from '@supabase/supabase-js';
 
 export { User };
@@ -76,26 +75,4 @@ export interface Property {
   zoneamento?: string;
   murado?: boolean;
   em_condominio?: boolean;
-}
-
-export interface Message {
-  id: number | string;
-  senderId: string;
-  text: string;
-  timestamp: Date;
-  isRead: boolean;
-}
-
-export interface ChatSession {
-  id: string;
-  imovel_id: number;
-  participants: {
-    [key: string]: {
-        id: string,
-        nome_completo: string,
-        url_foto_perfil?: string;
-    }
-  };
-  messages: Message[];
-  unreadCount: number;
 }

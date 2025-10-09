@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import Header from './Header';
 import PropertyListings from './PropertyListings';
-import type { Property, User, Profile } from '../types';
+import type { Property } from '../types';
 import { useLanguage } from '../contexts/LanguageContext';
 import SearchIcon from './icons/SearchIcon';
 import { GoogleMap, useJsApiLoader, Marker, InfoWindow, Autocomplete } from '@react-google-maps/api';
@@ -10,26 +9,16 @@ import { GoogleMap, useJsApiLoader, Marker, InfoWindow, Autocomplete } from '@re
 interface AllListingsPageProps {
   onBack: () => void;
   properties: Property[];
-  onPublishAdClick: () => void;
-  onAccessClick: () => void;
-  user: User | null;
-  profile: Profile | null;
-  onLogout: () => void;
   onViewDetails: (id: number) => void;
-  favorites: number[];
-  onToggleFavorite: (id: number) => void;
-  onNavigateToFavorites: () => void;
-  onNavigateToChatList: () => void;
-  onNavigateToMyAds: () => void;
+  onShare: (id: number) => void;
   onSearchSubmit: (query: string) => void;
-  onNavigateToAllListings: () => void;
-  unreadCount: number;
   onGeolocationError: () => void;
-  onContactClick: (property: Property) => void;
+  deviceLocation: { lat: number; lng: number } | null;
+  // Header props
+  navigateHome: () => void;
+  onNavigateToAllListings: () => void;
   navigateToGuideToSell: () => void;
   navigateToDocumentsForSale: () => void;
-  navigateHome: () => void;
-  deviceLocation: { lat: number; lng: number } | null;
 }
 
 const containerStyle = {
@@ -38,7 +27,6 @@ const containerStyle = {
 };
 
 const libraries: ('drawing' | 'places' | 'visualization')[] = ['drawing', 'places', 'visualization'];
-const PAGE_SIZE = 9;
 
 const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
   const { t } = useLanguage();
@@ -47,14 +35,10 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
   const [filteredProperties, setFilteredProperties] = useState<Property[]>([]);
   
   const [map, setMap] = useState<any | null>(null);
-  const [mapCenter, setMapCenter] = useState<{lat: number, lng: number}>({lat: -12.9777, lng: -38.5016}); // Default to Salvador
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [autocomplete, setAutocomplete] = useState<any | null>(null);
-
-  // Infinite Scroll State
-  const [displayedProperties, setDisplayedProperties] = useState<Property[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const [mapCenter, setMapCenter] = useState<{lat: number, lng: number}>(props.deviceLocation || {lat: -12.9777, lng: -38.5016});
+  const [zoom, setZoom] = useState(props.deviceLocation ? 14 : 13);
 
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script',
@@ -91,40 +75,10 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
   }, [searchQuery, activeTab, props.properties]);
 
   useEffect(() => {
-    setDisplayedProperties(filteredProperties.slice(0, PAGE_SIZE));
-    setCurrentPage(1);
-  }, [filteredProperties]);
-
-  const loadMoreProperties = useCallback(() => {
-    if (isFetchingMore || filteredProperties.length === 0) return;
-  
-    setIsFetchingMore(true);
-  
-    setTimeout(() => {
-      const nextPage = currentPage + 1;
-      const start = currentPage * PAGE_SIZE;
-      const end = start + PAGE_SIZE;
-      
-      let newItems = filteredProperties.slice(start, end);
-  
-      if (newItems.length === 0 && filteredProperties.length > 0) {
-        // Loop back to the beginning
-        newItems = filteredProperties.slice(0, PAGE_SIZE);
-        setCurrentPage(1);
-      } else {
-        setCurrentPage(nextPage);
-      }
-  
-      setDisplayedProperties(prev => [...prev, ...newItems]);
-      setIsFetchingMore(false);
-    }, 500);
-  }, [isFetchingMore, currentPage, filteredProperties]);
-
-
-  useEffect(() => {
-    if (props.deviceLocation) {
+     if (props.deviceLocation) {
         setMapCenter(props.deviceLocation);
-    }
+        setZoom(14);
+     }
   }, [props.deviceLocation]);
   
   const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -133,8 +87,6 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
   
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // The search logic is already handled by the useEffect on searchQuery change.
-    // This function can remain to prevent default form submission.
   };
 
   const onMarkerClick = useCallback((property: Property) => {
@@ -177,12 +129,8 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
         if (place.geometry && place.geometry.location) {
           const lat = place.geometry.location.lat();
           const lng = place.geometry.location.lng();
-          const newCenter = { lat, lng };
-          setMapCenter(newCenter);
-          if (map) {
-            map.panTo(newCenter);
-            map.setZoom(15);
-          }
+          setMapCenter({ lat, lng });
+          setZoom(15);
         }
       }
     } else {
@@ -197,7 +145,7 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
       <main className="flex-grow">
         <section className="bg-white py-12">
           <div className="container mx-auto px-4 sm:px-6 text-center">
-            <img src="https://i.imgur.com/FuxDdyF.png" alt="Quallity Home Logo" className="h-24 mx-auto mb-4" />
+            <img src="https://i.postimg.cc/QNJ63Www/logo.png" alt="Quallity Home Logo" className="h-24 mx-auto mb-4" />
             <h1 className="text-3xl sm:text-4xl font-bold text-brand-navy mb-4">{t('header.searchDropdown.buy.explore')}</h1>
             
             <div className="flex justify-center border-b mb-6 max-w-2xl mx-auto">
@@ -248,18 +196,16 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2">
                      <PropertyListings 
-                        properties={displayedProperties} 
+                        properties={filteredProperties} 
                         onViewDetails={props.onViewDetails} 
-                        favorites={props.favorites} 
-                        onToggleFavorite={props.onToggleFavorite} 
+                        onShare={props.onShare}
                         isLoading={false} 
-                        onContactClick={props.onContactClick}
                         title={t('listings.foundTitle')}
                         noResultsTitle="Nenhum imóvel encontrado"
                         noResultsDescription="Tente ajustar seus filtros ou pesquisar por uma localização diferente."
-                        loadMore={loadMoreProperties}
-                        isFetchingMore={isFetchingMore}
-                        hasMore={filteredProperties.length > 0}
+                        loadMore={() => {}}
+                        isFetchingMore={false}
+                        hasMore={false}
                     />
                 </div>
                 <div className="lg:col-span-1">
@@ -268,7 +214,7 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
                           <GoogleMap
                             mapContainerStyle={containerStyle}
                             center={mapCenter}
-                            zoom={13}
+                            zoom={zoom}
                             onLoad={onLoad}
                             onUnmount={onUnmount}
                              options={{
@@ -278,7 +224,7 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
                                 zoomControl: true,
                             }}
                           >
-                            {displayedProperties.map(prop => (
+                            {filteredProperties.map(prop => (
                               <Marker 
                                 key={prop.id} 
                                 position={{ lat: prop.lat, lng: prop.lng }}
