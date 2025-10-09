@@ -54,6 +54,7 @@ const ExplorePage: React.FC<ExplorePageProps> = (props) => {
   const [zoom, setZoom] = useState(props.deviceLocation ? 14 : 13);
   
   const [isMobileMapVisible, setIsMobileMapVisible] = useState(false);
+  const [isDesktopView, setIsDesktopView] = useState(window.innerWidth >= 1024);
 
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script',
@@ -67,6 +68,14 @@ const ExplorePage: React.FC<ExplorePageProps> = (props) => {
 
   const onUnmount = useCallback(function callback() {
     setMap(null);
+  }, []);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsDesktopView(window.innerWidth >= 1024);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   useEffect(() => {
@@ -294,7 +303,7 @@ const ExplorePage: React.FC<ExplorePageProps> = (props) => {
                     >
                       <input 
                         type="text" 
-                        placeholder={t('hero.locationPlaceholder')}
+                        placeholder={t('hero.location.Placeholder')}
                         className="w-full pl-12 pr-4 py-2.5 rounded-lg text-brand-dark border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-red"
                         value={searchQuery}
                         onChange={handleSearchInputChange}
@@ -308,7 +317,10 @@ const ExplorePage: React.FC<ExplorePageProps> = (props) => {
       <main ref={mainContainerRef} className="flex-grow flex flex-col lg:flex-row overflow-hidden">
         
         {/* List Container */}
-        <div style={{ width: listWidth }} className="flex flex-col lg:w-auto flex-shrink-0 h-full bg-white lg:border-r">
+        <div
+          style={isDesktopView ? { width: listWidth } : {}}
+          className="w-full lg:w-auto flex flex-col flex-shrink-0 h-full bg-white lg:border-r"
+        >
           <div className="overflow-y-auto">
             <div className="p-4 space-y-4">
                 <h2 className="text-lg font-bold text-brand-navy">{t('listings.foundTitle')} ({filteredProperties.length})</h2>

@@ -6,6 +6,20 @@ const ptTranslations = {
     "title": "Lar dos sonhos? Encontre aqui.",
     "description": "Explore nossa seleção exclusiva de imóveis que combinam luxo, conforto e localização privilegiada."
   },
+  "hero": {
+    "defaultTitle": "O seu novo lar está aqui",
+    "geminiPrompt": "Gere um título curto e inspirador para um portal imobiliário de luxo em português do Brasil. O título deve ser sofisticado e convidativo, com no máximo 8 palavras. Retorne apenas o título, sem aspas.",
+    "tabs": {
+      "buy": "Comprar",
+      "rent": "Alugar",
+      "season": "Temporada"
+    },
+    "locationPlaceholder": "Digite a Cidade",
+    "drawOnMap": "Desenhar no mapa",
+    "searchNearMe": "Buscar perto de mim",
+    "loadingLocation": "Buscando localização...",
+    "searchButton": "Buscar"
+  },
   "initialGeolocationModal": {
     "title": "Usar sua localização?",
     "message": "Para aprimorar sua experiência e mostrar imóveis perto de você, podemos usar sua localização. Seus dados exatos nunca são compartilhados.",
@@ -334,6 +348,20 @@ const enTranslations = {
   "home": {
     "title": "Dream home? Find it here.",
     "description": "Explore our exclusive selection of properties that combine luxury, comfort, and prime location."
+  },
+  "hero": {
+    "defaultTitle": "Your new home is here",
+    "geminiPrompt": "Generate a short and inspiring title for a luxury real estate portal in English. The title should be sophisticated and inviting, with a maximum of 8 words. Return only the title, without quotes.",
+    "tabs": {
+      "buy": "Buy",
+      "rent": "Rent",
+      "season": "Seasonal"
+    },
+    "locationPlaceholder": "Enter the City",
+    "drawOnMap": "Draw on map",
+    "searchNearMe": "Search near me",
+    "loadingLocation": "Fetching location...",
+    "searchButton": "Search"
   },
   "initialGeolocationModal": {
     "title": "Use your location?",
