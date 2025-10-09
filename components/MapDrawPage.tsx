@@ -12,6 +12,7 @@ interface MapDrawPageProps {
   onBack: () => void;
   userLocation?: { lat: number; lng: number } | null;
   onViewDetails: (id: number) => void;
+  onShare: (id: number) => void;
   properties: Property[];
   initialMapMode?: 'draw' | 'proximity';
 }
@@ -27,7 +28,7 @@ const containerStyle = {
 
 const libraries: ('drawing' | 'places' | 'visualization')[] = ['drawing', 'places', 'visualization'];
 
-const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewDetails, properties, initialMapMode = 'proximity' }) => {
+const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewDetails, onShare, properties, initialMapMode = 'proximity' }) => {
   const { t } = useLanguage();
   const [map, setMap] = useState<any | null>(null);
   const [propertiesInZone, setPropertiesInZone] = useState<PropertyWithDistance[]>([]);
@@ -242,12 +243,13 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewD
       )}
       
       {selectedProperty && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-sm z-10 animate-fadeIn">
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-sm z-10 page-fade-in">
           <div className="relative">
             <PropertyCard
               key={selectedProperty.id}
               property={selectedProperty}
               onViewDetails={onViewDetails}
+              onShare={onShare}
             />
             <button
               onClick={(e) => { e.stopPropagation(); setSelectedProperty(null); }}
@@ -298,6 +300,7 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewD
                             key={prop.id} 
                             property={prop} 
                             onViewDetails={onViewDetails}
+                            onShare={onShare}
                         />
                     ))
                 ) : (

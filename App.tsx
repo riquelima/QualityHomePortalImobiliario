@@ -382,7 +382,7 @@ const App: React.FC = () => {
           </>
         );
       case 'map':
-        return <MapDrawPage onBack={() => navigateTo('home')} userLocation={pageState.userLocation} onViewDetails={handleViewDetails} properties={publicProperties} initialMapMode={pageState.initialMapMode} />;
+        return <MapDrawPage onBack={() => navigateTo('home')} userLocation={pageState.userLocation} onViewDetails={handleViewDetails} onShare={handleShareProperty} properties={publicProperties} initialMapMode={pageState.initialMapMode} />;
       case 'publish-journey':
       case 'edit-journey':
         return <PublishJourneyPage onBack={(status) => navigateTo('adminDashboard', { showAdminSuccessBanner: status })} onAddProperty={fetchProperties} onUpdateProperty={fetchProperties} onPublishError={(msg) => setModalConfig({isOpen: true, type: 'error', title: 'Error', message: msg})} propertyToEdit={pageState.propertyToEdit} onRequestModal={setModalConfig} deviceLocation={deviceLocation} />;

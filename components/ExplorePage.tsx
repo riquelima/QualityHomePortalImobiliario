@@ -7,6 +7,7 @@ import SearchIcon from './icons/SearchIcon';
 import { GoogleMap, useJsApiLoader, Marker, InfoWindow, Autocomplete } from '@react-google-maps/api';
 import SpinnerIcon from './icons/SpinnerIcon';
 import MapIcon from './icons/MapIcon';
+import ShareIcon from './icons/ShareIcon';
 
 interface ExplorePageProps {
   onBack: () => void;
@@ -208,13 +209,22 @@ const ExplorePage: React.FC<ExplorePageProps> = (props) => {
             >
               <div className="w-48 p-1">
                 <img src={selectedProperty.images?.[0] || 'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg'} alt={selectedProperty.title} className="w-full h-24 object-cover rounded mb-2" />
-                <h3 className="font-bold text-sm mb-1 truncate">{selectedProperty.title}</h3>
-                <button
-                  onClick={() => props.onViewDetails(selectedProperty.id)}
-                  className="w-full bg-brand-red text-white text-xs font-bold py-1 px-2 rounded hover:opacity-90"
-                >
-                  {t('propertyCard.details')}
-                </button>
+                <h3 className="font-bold text-sm mb-2 truncate">{selectedProperty.title}</h3>
+                <div className="flex gap-2">
+                    <button
+                      onClick={() => props.onViewDetails(selectedProperty.id)}
+                      className="w-full bg-brand-red text-white text-xs font-bold py-1.5 px-2 rounded hover:opacity-90"
+                    >
+                      {t('propertyCard.details')}
+                    </button>
+                    <button
+                      onClick={() => props.onShare(selectedProperty.id)}
+                      className="flex-shrink-0 bg-gray-200 hover:bg-gray-300 p-1.5 rounded"
+                      aria-label="Compartilhar"
+                    >
+                        <ShareIcon className="w-4 h-4"/>
+                    </button>
+                </div>
               </div>
             </InfoWindow>
           )}
@@ -259,19 +269,19 @@ const ExplorePage: React.FC<ExplorePageProps> = (props) => {
                       onClick={() => setActiveTab('venda')}
                       className={`px-4 py-2 text-sm font-medium transition-colors duration-200 rounded-l-lg ${activeTab === 'venda' ? 'bg-brand-navy text-white' : 'bg-white text-brand-dark hover:bg-gray-50'}`}
                     >
-                      {t('hero.tabs.buy')}
+                      {t('header.nav.buy')}
                     </button>
                     <button 
                       onClick={() => setActiveTab('aluguel')}
                       className={`px-4 py-2 text-sm font-medium transition-colors duration-200 border-l border-r ${activeTab === 'aluguel' ? 'bg-brand-navy text-white' : 'bg-white text-brand-dark hover:bg-gray-50'}`}
                     >
-                      {t('hero.tabs.rent')}
+                      {t('header.nav.rent')}
                     </button>
                     <button 
                       onClick={() => setActiveTab('temporada')}
                       className={`px-4 py-2 text-sm font-medium transition-colors duration-200 rounded-r-lg ${activeTab === 'temporada' ? 'bg-brand-navy text-white' : 'bg-white text-brand-dark hover:bg-gray-50'}`}
                     >
-                      {t('hero.tabs.season')}
+                      {t('header.nav.season')}
                     </button>
                 </div>
                 <form className="relative flex-grow" onSubmit={(e) => e.preventDefault()}>
