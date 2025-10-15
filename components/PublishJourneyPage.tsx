@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
-import type { Property, Media } from '../types';
+import type { Property, Media, User } from '../types';
 import BoltIcon from './icons/BoltIcon';
 import BriefcaseIcon from './icons/BriefcaseIcon';
 import LocationConfirmationModal from './LocationConfirmationModal';
@@ -35,6 +34,7 @@ interface PublishJourneyPageProps {
   propertyToEdit?: Property | null;
   onRequestModal: (config: ModalRequestConfig) => void;
   deviceLocation: { lat: number; lng: number } | null;
+  adminUser: User | null;
 }
 
 const libraries: ('drawing' | 'places' | 'visualization')[] = ['drawing', 'places', 'visualization'];
@@ -91,7 +91,7 @@ const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title
 
 export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
     const { t } = useLanguage();
-    const { onBack, onAddProperty, onUpdateProperty, onPublishError, propertyToEdit, deviceLocation, onRequestModal } = props;
+    const { onBack, onAddProperty, onUpdateProperty, onPublishError, propertyToEdit, deviceLocation, onRequestModal, adminUser } = props;
     
     // Form State
     const [formData, setFormData] = useState({
@@ -393,10 +393,10 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
         setIsSubmitting(true);
     
         try {
-            const { data: { user }, error: userError } = await supabase.auth.getUser();
-            if (userError || !user) {
-                throw new Error("Usuário não autenticado. Por favor, faça login novamente.");
+            if (!adminUser) {
+                throw new Error("Sessão de administrador inválida. Por favor, faça login novamente.");
             }
+            const user = adminUser;
 
             const newFilesToUpload = files.filter(f => f instanceof File) as File[];
             const uploadedUrls: { url: string; type: 'imagem' | 'video'; }[] = [];

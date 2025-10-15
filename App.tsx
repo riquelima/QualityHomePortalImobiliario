@@ -394,7 +394,7 @@ const App: React.FC = () => {
         return <MapDrawPage onBack={() => navigateTo('home')} userLocation={pageState.userLocation} onViewDetails={handleViewDetails} onShare={handleShareProperty} properties={publicProperties} initialMapMode={pageState.initialMapMode} />;
       case 'publish-journey':
       case 'edit-journey':
-        return <PublishJourneyPage onBack={(status) => navigateTo('adminDashboard', { showAdminSuccessBanner: status })} onAddProperty={fetchProperties} onUpdateProperty={fetchProperties} onPublishError={(msg) => setModalConfig({isOpen: true, type: 'error', title: 'Error', message: msg})} propertyToEdit={pageState.propertyToEdit} onRequestModal={setModalConfig} deviceLocation={deviceLocation} />;
+        return <PublishJourneyPage onBack={(status) => navigateTo('adminDashboard', { showAdminSuccessBanner: status })} onAddProperty={fetchProperties} onUpdateProperty={fetchProperties} onPublishError={(msg) => setModalConfig({isOpen: true, type: 'error', title: 'Error', message: msg})} propertyToEdit={pageState.propertyToEdit} onRequestModal={setModalConfig} deviceLocation={deviceLocation} adminUser={adminUser} />;
       case 'searchResults':
          const searchFiltered = publicProperties.filter(p => 
             (p.address.toLowerCase().includes(pageState.searchQuery?.toLowerCase() || '')) || 
