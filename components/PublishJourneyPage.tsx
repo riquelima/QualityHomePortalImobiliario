@@ -15,7 +15,6 @@ import { GoogleGenAI } from '@google/genai';
 import AIIcon from './icons/AIIcon';
 import SpinnerIcon from './icons/SpinnerIcon';
 import { Autocomplete, useJsApiLoader } from '@react-google-maps/api';
-import { QUALLITY_HOME_USER_ID } from '../config';
 // FIX: Import LocationIcon to fix "Cannot find name 'LocationIcon'" error.
 import LocationIcon from './icons/LocationIcon';
 
@@ -394,6 +393,11 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
         setIsSubmitting(true);
     
         try {
+            const { data: { user }, error: userError } = await supabase.auth.getUser();
+            if (userError || !user) {
+                throw new Error("Usuário não autenticado. Por favor, faça login novamente.");
+            }
+
             const newFilesToUpload = files.filter(f => f instanceof File) as File[];
             const uploadedUrls: { url: string; type: 'imagem' | 'video'; }[] = [];
             const uploadedPaths: string[] = [];
@@ -424,7 +428,7 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
             }
     
             const propertyDataForDb = {
-                anunciante_id: QUALLITY_HOME_USER_ID,
+                anunciante_id: user.id,
                 titulo: formData.title,
                 descricao: formData.description,
                 endereco_completo: formData.verifiedAddress,

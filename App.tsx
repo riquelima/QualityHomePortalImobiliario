@@ -16,7 +16,7 @@ import DocumentsForSalePage from './components/DocumentsForSalePage';
 import SplashScreen from './components/SplashScreen';
 import AdminLoginPage from './components/AdminLoginPage';
 import { supabase } from './supabaseClient';
-import type { Property, Media } from './types';
+import type { Property, Media, User } from './types';
 import { useLanguage } from './contexts/LanguageContext';
 import { QUALLITY_HOME_USER_ID } from './config';
 import LockIcon from './components/icons/LockIcon';
@@ -126,6 +126,7 @@ const App: React.FC = () => {
   const [modalConfig, setModalConfig] = useState<ModalConfig>({ isOpen: false, type: 'success', title: '', message: '' });
 
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
+  const [adminUser, setAdminUser] = useState<User | null>(null);
 
   const fetchProperties = useCallback(async () => {
     setIsLoading(true);
@@ -212,14 +213,24 @@ const App: React.FC = () => {
         (window as any).seedDatabase = seedDatabase;
     }
 
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      const user = session?.user ?? null;
+      setAdminUser(user);
+      setIsAdminLoggedIn(!!user);
+    });
+
     window.addEventListener('popstate', handlePopState);
     return () => {
         window.removeEventListener('popstate', handlePopState);
+        authListener?.subscription.unsubscribe();
     };
   }, [fetchProperties, handleAllowGeolocation, handlePopState]);
   
   const publicProperties = useMemo(() => allProperties.filter(p => p.status === 'ativo'), [allProperties]);
-  const adminProperties = useMemo(() => allProperties.filter(p => p.anunciante_id === QUALLITY_HOME_USER_ID), [allProperties]);
+  const adminProperties = useMemo(() => {
+    if (!adminUser) return [];
+    return allProperties.filter(p => p.anunciante_id === adminUser.id);
+  }, [allProperties, adminUser]);
 
   const handleDenyGeolocation = () => setGeolocationModalOpen(false);
 
@@ -252,14 +263,12 @@ const App: React.FC = () => {
 
   const handleAdminLogin = (success: boolean) => {
     if (success) {
-      setIsAdminLoggedIn(true);
       navigateTo('adminDashboard');
     }
   };
   
   const handleAdminLogout = async () => {
     await supabase.auth.signOut();
-    setIsAdminLoggedIn(false);
     navigateTo('home');
   };
 

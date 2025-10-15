@@ -1,7 +1,8 @@
 
-import type { User } from '@supabase/supabase-js';
+import type { User as SupabaseUser } from '@supabase/supabase-js';
 
-export { User };
+// Re-exporting SupabaseUser as User for local use
+export type User = SupabaseUser;
 
 export interface Profile {
   id: string; // UUID from auth.users
