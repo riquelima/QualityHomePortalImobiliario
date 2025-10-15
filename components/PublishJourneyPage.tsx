@@ -396,7 +396,6 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
             if (!adminUser) {
                 throw new Error("Sessão de administrador inválida. Por favor, faça login novamente.");
             }
-            const user = adminUser;
 
             const newFilesToUpload = files.filter(f => f instanceof File) as File[];
             const uploadedUrls: { url: string; type: 'imagem' | 'video'; }[] = [];
@@ -428,7 +427,6 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
             }
     
             const propertyDataForDb = {
-                anunciante_id: user.id,
                 titulo: formData.title,
                 descricao: formData.description,
                 endereco_completo: formData.verifiedAddress,

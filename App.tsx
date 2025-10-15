@@ -229,7 +229,7 @@ const App: React.FC = () => {
   const publicProperties = useMemo(() => allProperties.filter(p => p.status === 'ativo'), [allProperties]);
   const adminProperties = useMemo(() => {
     if (!adminUser) return [];
-    return allProperties.filter(p => p.anunciante_id === adminUser.id);
+    return allProperties;
   }, [allProperties, adminUser]);
 
   const handleDenyGeolocation = () => setGeolocationModalOpen(false);
