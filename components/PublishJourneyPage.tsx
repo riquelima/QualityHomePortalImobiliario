@@ -502,6 +502,18 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
             } else {
                 const { data: insertedProperty, error } = await supabase.from('imoveis').insert(propertyDataForDb).select('id').single();
                 if (error) throw error;
+
+                // Generate and save the share URL
+                const shareUrl = `${window.location.origin}${window.location.pathname}?page=propertyDetail&propertyId=${insertedProperty.id}`;
+                const { error: updateError } = await supabase
+                    .from('imoveis')
+                    .update({ share_url: shareUrl })
+                    .eq('id', insertedProperty.id);
+
+                if (updateError) {
+                    // Log the error, but don't block the user flow as the property is already created.
+                    console.error('Failed to save share URL:', updateError.message);
+                }
                 
                 if (uploadedUrls.length > 0) {
                     const mediaToInsert = uploadedUrls.map(media => ({

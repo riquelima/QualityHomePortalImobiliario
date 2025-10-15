@@ -35,6 +35,7 @@ export interface Property {
   quartos: number;
   banheiros: number;
   area_bruta: number;
+  share_url?: string;
   // Mapeando para o front-end
   bedrooms: number;
   bathrooms: number;
