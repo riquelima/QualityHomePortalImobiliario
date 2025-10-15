@@ -129,7 +129,10 @@ const App: React.FC = () => {
   const [adminUser, setAdminUser] = useState<User | null>(null);
 
   const fetchProperties = useCallback(async () => {
-    setIsLoading(true);
+    // Only set loading true on initial fetch
+    if (allProperties.length === 0) {
+      setIsLoading(true);
+    }
     const { data, error } = await supabase
       .from('imoveis')
       .select('*, midias_imovel (id, url, tipo)');
@@ -156,7 +159,7 @@ const App: React.FC = () => {
       setAllProperties(formattedProperties);
     }
     setIsLoading(false);
-  }, [t]);
+  }, [t, allProperties.length]);
 
   const handleAllowGeolocation = useCallback(() => {
     setGeolocationModalOpen(false);
@@ -245,10 +248,23 @@ const App: React.FC = () => {
       }
     });
 
+    // Real-time subscription for properties
+    const propertyChanges = supabase
+      .channel('imoveis-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'imoveis' },
+        (payload) => {
+          fetchProperties();
+        }
+      )
+      .subscribe();
+
     window.addEventListener('popstate', handlePopState);
     return () => {
         window.removeEventListener('popstate', handlePopState);
         authListener?.subscription.unsubscribe();
+        supabase.removeChannel(propertyChanges);
     };
   }, [fetchProperties, handleAllowGeolocation, handlePopState]);
   
