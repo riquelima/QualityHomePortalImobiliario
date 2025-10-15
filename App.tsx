@@ -213,10 +213,36 @@ const App: React.FC = () => {
         (window as any).seedDatabase = seedDatabase;
     }
 
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
       const user = session?.user ?? null;
       setAdminUser(user);
       setIsAdminLoggedIn(!!user);
+
+      // Self-healing: Ensure a profile exists for the logged-in admin.
+      if (user) {
+        const { data: profile, error } = await supabase
+          .from('perfis')
+          .select('id')
+          .eq('id', user.id)
+          .single();
+
+        // "PGRST116" is the error code for "no rows found".
+        if (error && error.code === 'PGRST116') {
+          // Profile doesn't exist, create it.
+          const { error: insertError } = await supabase
+            .from('perfis')
+            .insert({
+              id: user.id,
+              nome_completo: user.email?.split('@')[0] || 'Admin Quallity Home',
+            });
+          
+          if (insertError) {
+            console.error('Error auto-creating user profile:', insertError);
+          }
+        } else if (error) {
+            console.error('Error checking for user profile:', error);
+        }
+      }
     });
 
     window.addEventListener('popstate', handlePopState);

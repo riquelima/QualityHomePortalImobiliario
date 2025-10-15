@@ -6,8 +6,8 @@ export type User = SupabaseUser;
 
 export interface Profile {
   id: string; // UUID from auth.users
-  nome_completo: string;
-  url_foto_perfil: string;
+  nome_completo?: string | null;
+  url_foto_perfil?: string | null;
   telefone?: string;
 }
 

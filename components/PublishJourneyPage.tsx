@@ -16,7 +16,6 @@ import SpinnerIcon from './icons/SpinnerIcon';
 import { Autocomplete, useJsApiLoader } from '@react-google-maps/api';
 // FIX: Import LocationIcon to fix "Cannot find name 'LocationIcon'" error.
 import LocationIcon from './icons/LocationIcon';
-import { QUALLITY_HOME_USER_ID } from '../config';
 
 type MediaItem = File | (Media & { type: 'existing' });
 
@@ -428,7 +427,7 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
             }
     
             const propertyDataForDb = {
-                anunciante_id: QUALLITY_HOME_USER_ID,
+                anunciante_id: adminUser.id,
                 titulo: formData.title,
                 descricao: formData.description,
                 endereco_completo: formData.verifiedAddress,
