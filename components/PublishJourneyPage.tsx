@@ -16,6 +16,7 @@ import SpinnerIcon from './icons/SpinnerIcon';
 import { Autocomplete, useJsApiLoader } from '@react-google-maps/api';
 // FIX: Import LocationIcon to fix "Cannot find name 'LocationIcon'" error.
 import LocationIcon from './icons/LocationIcon';
+import { PRODUCTION_URL } from '../config';
 
 type MediaItem = File | (Media & { type: 'existing' });
 
@@ -503,8 +504,8 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                 const { data: insertedProperty, error } = await supabase.from('imoveis').insert(propertyDataForDb).select('id').single();
                 if (error) throw error;
 
-                // Generate and save the share URL
-                const shareUrl = `${window.location.origin}${window.location.pathname}?page=propertyDetail&propertyId=${insertedProperty.id}`;
+                // Generate and save the share URL with the production domain
+                const shareUrl = `${PRODUCTION_URL}/?page=propertyDetail&propertyId=${insertedProperty.id}`;
                 const { error: updateError } = await supabase
                     .from('imoveis')
                     .update({ share_url: shareUrl })

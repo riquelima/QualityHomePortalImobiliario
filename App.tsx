@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Header from './components/Header';
 import PropertyListings from './components/PropertyListings';
@@ -18,7 +19,7 @@ import AdminLoginPage from './components/AdminLoginPage';
 import { supabase } from './supabaseClient';
 import type { Property, Media, User } from './types';
 import { useLanguage } from './contexts/LanguageContext';
-import { QUALLITY_HOME_USER_ID } from './config';
+import { QUALLITY_HOME_USER_ID, PRODUCTION_URL } from './config';
 import LockIcon from './components/icons/LockIcon';
 
 interface PageState {
@@ -129,10 +130,6 @@ const App: React.FC = () => {
   const [adminUser, setAdminUser] = useState<User | null>(null);
 
   const fetchProperties = useCallback(async () => {
-    // Only set loading true on initial fetch
-    if (allProperties.length === 0) {
-      setIsLoading(true);
-    }
     const { data, error } = await supabase
       .from('imoveis')
       .select('*, midias_imovel (id, url, tipo)');
@@ -140,10 +137,12 @@ const App: React.FC = () => {
     if (error) {
       console.error("Error fetching properties:", error);
       setModalConfig({ isOpen: true, type: 'error', title: t('systemModal.errorTitle'), message: t('systemModal.fetchError') });
-    } else {
+      return;
+    }
+    
+    if (Array.isArray(data)) {
       const formattedProperties: Property[] = data.map((p: any) => ({
         ...p,
-        // Frontend compatibility mappings
         bedrooms: p.quartos,
         bathrooms: p.banheiros,
         area: p.area_bruta,
@@ -153,13 +152,12 @@ const App: React.FC = () => {
         lng: p.longitude,
         price: p.preco,
         description: p.descricao,
-        images: p.midias_imovel.filter((m: Media) => m.tipo === 'imagem').map((m: Media) => m.url),
-        videos: p.midias_imovel.filter((m: Media) => m.tipo === 'video').map((m: Media) => m.url),
+        images: (p.midias_imovel || []).filter((m: Media) => m.tipo === 'imagem').map((m: Media) => m.url),
+        videos: (p.midias_imovel || []).filter((m: Media) => m.tipo === 'video').map((m: Media) => m.url),
       }));
       setAllProperties(formattedProperties);
     }
-    setIsLoading(false);
-  }, [t, allProperties.length]);
+  }, [t]);
 
   const handleAllowGeolocation = useCallback(() => {
     setGeolocationModalOpen(false);
@@ -196,7 +194,13 @@ const App: React.FC = () => {
         navigatedFromUrl = true;
     }
     
-    fetchProperties();
+    const initialFetch = async () => {
+      setIsLoading(true);
+      await fetchProperties();
+      setIsLoading(false);
+    };
+    initialFetch();
+    
     setTimeout(() => {
         setIsSplashScreenFading(true);
         setTimeout(() => setShowSplashScreen(false), 500);
@@ -315,7 +319,7 @@ const App: React.FC = () => {
   };
 
   const handleShareProperty = (propertyId: number) => {
-    const url = `${window.location.origin}${window.location.pathname}?page=propertyDetail&propertyId=${propertyId}`;
+    const url = `${PRODUCTION_URL}/?page=propertyDetail&propertyId=${propertyId}`;
     navigator.clipboard.writeText(url).then(() => {
         setModalConfig({
             isOpen: true,
