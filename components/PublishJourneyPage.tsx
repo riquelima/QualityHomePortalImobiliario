@@ -398,33 +398,42 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
             }
 
             const newFilesToUpload = files.filter(f => f instanceof File) as File[];
-            const uploadedUrls: { url: string; type: 'imagem' | 'video'; }[] = [];
-            const uploadedPaths: string[] = [];
-    
-            for (const file of newFilesToUpload) {
+            
+            // Step 1: Generate unique paths for all new files first.
+            const filesToProcess = newFilesToUpload.map(file => {
                 const fileExt = file.name.split('.').pop();
                 const fileName = `quallity-home/${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
-                const path = fileName;
-                
-                const { error: uploadError } = await supabase.storage.from('midia').upload(path, file, {
+                return { file, path: fileName };
+            });
+
+            // Step 2: Create an array of upload promises to run in parallel.
+            const uploadPromises = filesToProcess.map(({ file, path }) => 
+                supabase.storage.from('midia').upload(path, file, {
                     contentType: file.type,
                     upsert: false,
-                });
-    
-                if (uploadError) {
-                    if (uploadedPaths.length > 0) {
-                        await supabase.storage.from('midia').remove(uploadedPaths);
-                    }
-                    throw uploadError;
+                })
+            );
+
+            const uploadResults = await Promise.all(uploadPromises);
+
+            // Step 3: Check for any errors. If an upload failed, clean up all files from this batch.
+            const firstError = uploadResults.find(result => result.error)?.error;
+            if (firstError) {
+                const pathsToRemove = filesToProcess.map(f => f.path);
+                if (pathsToRemove.length > 0) {
+                    await supabase.storage.from('midia').remove(pathsToRemove);
                 }
-    
-                const { data } = supabase.storage.from('midia').getPublicUrl(path);
-                uploadedUrls.push({
-                    url: data.publicUrl,
-                    type: file.type.startsWith('video') ? 'video' : 'imagem'
-                });
-                uploadedPaths.push(path);
+                throw firstError;
             }
+            
+            // Step 4: If all uploads were successful, get their public URLs.
+            const uploadedUrls = filesToProcess.map(({ file, path }) => {
+                const { data } = supabase.storage.from('midia').getPublicUrl(path);
+                return {
+                    url: data.publicUrl,
+                    type: (file.type.startsWith('video') ? 'video' : 'imagem') as 'imagem' | 'video'
+                };
+            });
     
             const propertyDataForDb = {
                 anunciante_id: adminUser.id,
