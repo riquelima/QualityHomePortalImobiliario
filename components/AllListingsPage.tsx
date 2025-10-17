@@ -19,6 +19,13 @@ interface AllListingsPageProps {
   onNavigateToAllListings: () => void;
   navigateToGuideToSell: () => void;
   navigateToDocumentsForSale: () => void;
+  // FIX: Add missing props required by the Header component.
+  onNavigateToBuy: () => void;
+  onNavigateToRent: () => void;
+  onNavigateToSeason: () => void;
+  isAdminLoggedIn?: boolean;
+  onAdminLogout?: () => void;
+  onNavigateToAdminDashboard?: () => void;
 }
 
 const containerStyle = {
@@ -204,7 +211,6 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
                         noResultsTitle="Nenhum imóvel encontrado"
                         noResultsDescription="Tente ajustar seus filtros ou pesquisar por uma localização diferente."
                         loadMore={() => {}}
-                        isFetchingMore={false}
                         hasMore={false}
                     />
                 </div>

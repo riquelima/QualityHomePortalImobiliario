@@ -8,6 +8,13 @@ interface DocumentsForSalePageProps {
   navigateToGuideToSell: () => void;
   navigateToDocumentsForSale: () => void;
   navigateHome: () => void;
+  // FIX: Add missing props required by the Header component.
+  onNavigateToBuy: () => void;
+  onNavigateToRent: () => void;
+  onNavigateToSeason: () => void;
+  isAdminLoggedIn?: boolean;
+  onAdminLogout?: () => void;
+  onNavigateToAdminDashboard?: () => void;
 }
 
 const DocumentSection: React.FC<{ title: string; items: string[] }> = ({ title, items }) => (

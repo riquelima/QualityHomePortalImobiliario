@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Header from './components/Header';
 import PropertyListings from './components/PropertyListings';
@@ -21,6 +22,7 @@ import type { Property, Media, User } from './types';
 import { useLanguage } from './contexts/LanguageContext';
 import { QUALLITY_HOME_USER_ID, PRODUCTION_URL } from './config';
 import LockIcon from './components/icons/LockIcon';
+import SpinnerIcon from './components/icons/SpinnerIcon';
 
 interface PageState {
   page: 'home' | 'map' | 'publish-journey' | 'searchResults' | 'propertyDetail' | 'edit-journey' | 'allListings' | 'guideToSell' | 'documentsForSale' | 'adminLogin' | 'adminDashboard' | 'explore';
@@ -115,8 +117,13 @@ const seedDatabase = async () => {
 const App: React.FC = () => {
   const { t } = useLanguage();
   const [pageState, setPageState] = useState<PageState>({ page: 'home', userLocation: null });
+  
+  // State refactor for performance: featured for initial load, all for background load.
+  const [featuredProperties, setFeaturedProperties] = useState<Property[]>([]);
   const [allProperties, setAllProperties] = useState<Property[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true); // Tracks initial featured properties load
+  const [areAllPropertiesLoaded, setAreAllPropertiesLoaded] = useState(false);
+  
   const [isSplashScreenFading, setIsSplashScreenFading] = useState(false);
   const [showSplashScreen, setShowSplashScreen] = useState(true);
   
@@ -129,35 +136,60 @@ const App: React.FC = () => {
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
   const [adminUser, setAdminUser] = useState<User | null>(null);
 
-  const fetchProperties = useCallback(async () => {
+  const formatProperties = (data: any[]): Property[] => {
+    if (!Array.isArray(data)) return [];
+    return data.map((p: any) => ({
+      ...p,
+      bedrooms: p.quartos,
+      bathrooms: p.banheiros,
+      area: p.area_bruta,
+      address: p.endereco_completo,
+      title: p.titulo,
+      lat: p.latitude,
+      lng: p.longitude,
+      price: p.preco,
+      description: p.descricao,
+      images: (p.midias_imovel || []).filter((m: Media) => m.tipo === 'imagem').map((m: Media) => m.url),
+      videos: (p.midias_imovel || []).filter((m: Media) => m.tipo === 'video').map((m: Media) => m.url),
+    }));
+  };
+
+  const fetchFeaturedProperties = useCallback(async () => {
     const { data, error } = await supabase
       .from('imoveis')
-      .select('*, midias_imovel (id, url, tipo)');
+      .select('*, midias_imovel (id, url, tipo)')
+      .eq('status', 'ativo')
+      .order('id', { ascending: false })
+      .limit(PAGE_SIZE);
 
     if (error) {
-      console.error("Error fetching properties:", error);
+      console.error("Error fetching featured properties:", error);
+      return; // Don't show a modal, homepage can be empty if this fails.
+    }
+    setFeaturedProperties(formatProperties(data));
+  }, []);
+
+  const fetchAllProperties = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('imoveis')
+      .select('*, midias_imovel (id, url, tipo)')
+      .order('id', { ascending: false });
+
+    if (error) {
+      console.error("Error fetching all properties:", error);
       setModalConfig({ isOpen: true, type: 'error', title: t('systemModal.errorTitle'), message: t('systemModal.fetchError') });
       return;
     }
-    
-    if (Array.isArray(data)) {
-      const formattedProperties: Property[] = data.map((p: any) => ({
-        ...p,
-        bedrooms: p.quartos,
-        bathrooms: p.banheiros,
-        area: p.area_bruta,
-        address: p.endereco_completo,
-        title: p.titulo,
-        lat: p.latitude,
-        lng: p.longitude,
-        price: p.preco,
-        description: p.descricao,
-        images: (p.midias_imovel || []).filter((m: Media) => m.tipo === 'imagem').map((m: Media) => m.url),
-        videos: (p.midias_imovel || []).filter((m: Media) => m.tipo === 'video').map((m: Media) => m.url),
-      }));
-      setAllProperties(formattedProperties);
-    }
+    setAllProperties(formatProperties(data));
+    setAreAllPropertiesLoaded(true);
   }, [t]);
+  
+  const refreshAllData = useCallback(async () => {
+    // Fetch all first to get the freshest full list, then update the featured list from it.
+    await fetchAllProperties();
+    await fetchFeaturedProperties();
+  }, [fetchAllProperties, fetchFeaturedProperties]);
+
 
   const handleAllowGeolocation = useCallback(() => {
     setGeolocationModalOpen(false);
@@ -196,8 +228,10 @@ const App: React.FC = () => {
     
     const initialFetch = async () => {
       setIsLoading(true);
-      await fetchProperties();
+      await fetchFeaturedProperties();
       setIsLoading(false);
+      // Fetch all other properties in the background for other pages
+      fetchAllProperties();
     };
     initialFetch();
     
@@ -225,7 +259,6 @@ const App: React.FC = () => {
       setAdminUser(user);
       setIsAdminLoggedIn(!!user);
 
-      // Self-healing: Ensure a profile exists for the logged-in admin.
       if (user) {
         const { data: profile, error } = await supabase
           .from('perfis')
@@ -233,9 +266,7 @@ const App: React.FC = () => {
           .eq('id', user.id)
           .single();
 
-        // "PGRST116" is the error code for "no rows found".
         if (error && error.code === 'PGRST116') {
-          // Profile doesn't exist, create it.
           const { error: insertError } = await supabase
             .from('perfis')
             .insert({
@@ -252,14 +283,13 @@ const App: React.FC = () => {
       }
     });
 
-    // Real-time subscription for properties
     const propertyChanges = supabase
       .channel('imoveis-changes')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'imoveis' },
         (payload) => {
-          fetchProperties();
+          refreshAllData();
         }
       )
       .subscribe();
@@ -270,7 +300,7 @@ const App: React.FC = () => {
         authListener?.subscription.unsubscribe();
         supabase.removeChannel(propertyChanges);
     };
-  }, [fetchProperties, handleAllowGeolocation, handlePopState]);
+  }, [fetchFeaturedProperties, fetchAllProperties, refreshAllData, handleAllowGeolocation, handlePopState]);
   
   const publicProperties = useMemo(() => allProperties.filter(p => p.status === 'ativo'), [allProperties]);
   const adminProperties = useMemo(() => {
@@ -366,7 +396,7 @@ const App: React.FC = () => {
       setModalConfig({ isOpen: true, type: 'error', title: t('systemModal.errorTitle'), message: t('myAdsPage.adDeletedError') });
     } else {
       setModalConfig({ isOpen: true, type: 'success', title: t('systemModal.successTitle'), message: t('myAdsPage.adDeletedSuccess') });
-      fetchProperties();
+      refreshAllData();
     }
   };
 
@@ -382,10 +412,11 @@ const App: React.FC = () => {
 
   const selectedProperty = useMemo(() => {
     if (pageState.page === 'propertyDetail' && pageState.propertyId) {
-      return allProperties.find(p => p.id === pageState.propertyId);
+      // Check all properties first, as it's the most complete list. Fallback to featured.
+      return allProperties.find(p => p.id === pageState.propertyId) || featuredProperties.find(p => p.id === pageState.propertyId);
     }
     return null;
-  }, [pageState, allProperties]);
+  }, [pageState, allProperties, featuredProperties]);
 
   const renderPage = () => {
     const commonHeaderProps = {
@@ -408,13 +439,12 @@ const App: React.FC = () => {
             <PropertyListings
               title={t('home.title')}
               description={t('home.description')}
-              properties={publicProperties.slice(0, PAGE_SIZE)}
+              properties={featuredProperties}
               onViewDetails={handleViewDetails}
               onShare={handleShareProperty}
               isLoading={isLoading}
               loadMore={() => navigateTo('explore')}
-              isFetchingMore={false}
-              hasMore={publicProperties.length > PAGE_SIZE}
+              hasMore={true}
             />
             <footer className="bg-white text-brand-gray py-8 text-center relative">
               <div className="container mx-auto px-4 sm:px-6">
@@ -440,7 +470,10 @@ const App: React.FC = () => {
         return <MapDrawPage onBack={() => navigateTo('home')} userLocation={pageState.userLocation} onViewDetails={handleViewDetails} onShare={handleShareProperty} properties={publicProperties} initialMapMode={pageState.initialMapMode} />;
       case 'publish-journey':
       case 'edit-journey':
-        return <PublishJourneyPage onBack={(status) => navigateTo('adminDashboard', { showAdminSuccessBanner: status })} onAddProperty={fetchProperties} onUpdateProperty={fetchProperties} onPublishError={(msg) => setModalConfig({isOpen: true, type: 'error', title: 'Error', message: msg})} propertyToEdit={pageState.propertyToEdit} onRequestModal={setModalConfig} deviceLocation={deviceLocation} adminUser={adminUser} />;
+        // FIX: The `setModalConfig` function expects a full `ModalConfig` object, but `PublishJourneyPage`
+        // calls its `onRequestModal` prop with an object missing the `isOpen` property. This wrapper
+        // function correctly constructs the full object before updating the state.
+        return <PublishJourneyPage onBack={(status) => navigateTo('adminDashboard', { showAdminSuccessBanner: status })} onAddProperty={refreshAllData} onUpdateProperty={refreshAllData} onPublishError={(msg) => setModalConfig({isOpen: true, type: 'error', title: 'Error', message: msg})} propertyToEdit={pageState.propertyToEdit} onRequestModal={(config) => setModalConfig({ ...config, isOpen: true })} deviceLocation={deviceLocation} adminUser={adminUser} />;
       case 'searchResults':
          const searchFiltered = publicProperties.filter(p => 
             (p.address.toLowerCase().includes(pageState.searchQuery?.toLowerCase() || '')) || 
@@ -448,16 +481,23 @@ const App: React.FC = () => {
         );
         return <SearchResultsPage onBack={() => navigateTo('home')} searchQuery={pageState.searchQuery || ''} properties={searchFiltered} onViewDetails={handleViewDetails} onShare={handleShareProperty} {...commonHeaderProps} onNavigateToAllListings={() => navigateTo('allListings')} />;
       case 'propertyDetail':
+        if (!selectedProperty && !areAllPropertiesLoaded) {
+          return (
+            <div className="flex items-center justify-center h-screen bg-brand-light-gray">
+              <SpinnerIcon className="w-12 h-12 animate-spin text-brand-gray" />
+            </div>
+          );
+        }
         if (!selectedProperty) return <div>{t('listings.noResults.title')}</div>;
-        return <PropertyDetailPage property={selectedProperty} onBack={() => navigateTo('home')} onShare={handleShareProperty} {...commonHeaderProps} />;
+        return <PropertyDetailPage property={selectedProperty} onBack={() => navigateTo('home')} onShare={handleShareProperty} {...commonHeaderProps} onNavigateToAllListings={() => navigateTo('allListings')} />;
       case 'allListings':
         return <AllListingsPage properties={publicProperties} onViewDetails={handleViewDetails} onShare={handleShareProperty} onSearchSubmit={handleSearchSubmit} deviceLocation={deviceLocation} onGeolocationError={() => setGeolocationErrorModalOpen(true)} onBack={() => navigateTo('home')} {...commonHeaderProps} onNavigateToAllListings={() => navigateTo('allListings')} />;
       case 'explore':
         return <ExplorePage initialOperation={pageState.exploreOperation} properties={publicProperties} onViewDetails={handleViewDetails} onShare={handleShareProperty} onSearchSubmit={handleSearchSubmit} deviceLocation={deviceLocation} onGeolocationError={() => setGeolocationErrorModalOpen(true)} onBack={() => navigateTo('home')} {...commonHeaderProps} />;
       case 'guideToSell':
-        return <GuideToSellPage onBack={() => navigateTo('home')} {...commonHeaderProps} />;
+        return <GuideToSellPage onBack={() => navigateTo('home')} {...commonHeaderProps} onNavigateToAllListings={() => navigateTo('allListings')} />;
       case 'documentsForSale':
-        return <DocumentsForSalePage onBack={() => navigateTo('home')} {...commonHeaderProps} />;
+        return <DocumentsForSalePage onBack={() => navigateTo('home')} {...commonHeaderProps} onNavigateToAllListings={() => navigateTo('allListings')} />;
       case 'adminLogin':
         return <AdminLoginPage onAdminLogin={handleAdminLogin} />;
       case 'adminDashboard':

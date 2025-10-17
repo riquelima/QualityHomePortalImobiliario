@@ -479,13 +479,13 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                 
                 if (filesToRemove.length > 0) {
                     const { error: storageError } = await supabase.storage.from('midia').remove(filesToRemove);
-                    if (storageError) console.error("Failed to remove old files from storage:", storageError);
+                    if (storageError) throw new Error(`Falha ao remover mídia antiga do armazenamento: ${storageError.message}`);
                     
                     const supabaseStorageUrl = 'https://ckzhvurabmhvteekyjxg.supabase.co/storage/v1/object/public/midia/';
                     const urlsToRemove = filesToRemove.map(path => `${supabaseStorageUrl}${path}`);
                     if (urlsToRemove.length > 0) {
                         const { error: dbDeleteError } = await supabase.from('midias_imovel').delete().in('url', urlsToRemove);
-                        if (dbDeleteError) console.error("Failed to delete media from DB:", dbDeleteError);
+                        if (dbDeleteError) throw new Error(`Falha ao remover mídia antiga do banco de dados: ${dbDeleteError.message}`);
                     }
                 }
     

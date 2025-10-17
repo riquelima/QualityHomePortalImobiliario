@@ -8,6 +8,13 @@ interface GuideToSellPageProps {
   navigateToGuideToSell: () => void;
   navigateToDocumentsForSale: () => void;
   navigateHome: () => void;
+  // FIX: Add missing props required by the Header component.
+  onNavigateToBuy: () => void;
+  onNavigateToRent: () => void;
+  onNavigateToSeason: () => void;
+  isAdminLoggedIn?: boolean;
+  onAdminLogout?: () => void;
+  onNavigateToAdminDashboard?: () => void;
 }
 
 const GuideToSellPage: React.FC<GuideToSellPageProps> = (props) => {

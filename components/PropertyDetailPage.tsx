@@ -18,6 +18,12 @@ interface PropertyDetailPageProps {
   navigateToGuideToSell: () => void;
   navigateToDocumentsForSale: () => void;
   isAdminLoggedIn?: boolean;
+  // FIX: Add missing props required by the Header component.
+  onNavigateToBuy: () => void;
+  onNavigateToRent: () => void;
+  onNavigateToSeason: () => void;
+  onAdminLogout?: () => void;
+  onNavigateToAdminDashboard?: () => void;
 }
 
 const currencyConfig = {

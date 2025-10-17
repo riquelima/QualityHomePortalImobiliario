@@ -16,6 +16,13 @@ interface SearchResultsPageProps {
   onNavigateToAllListings: () => void;
   navigateToGuideToSell: () => void;
   navigateToDocumentsForSale: () => void;
+  // FIX: Add missing props required by the Header component.
+  onNavigateToBuy: () => void;
+  onNavigateToRent: () => void;
+  onNavigateToSeason: () => void;
+  isAdminLoggedIn?: boolean;
+  onAdminLogout?: () => void;
+  onNavigateToAdminDashboard?: () => void;
 }
 
 const SearchResultsPage: React.FC<SearchResultsPageProps> = (props) => {

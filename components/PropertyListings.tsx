@@ -15,7 +15,6 @@ interface PropertyListingsProps {
   noResultsTitle?: string;
   noResultsDescription?: string;
   loadMore: () => void;
-  isFetchingMore: boolean;
   hasMore: boolean;
 }
 
@@ -39,7 +38,7 @@ const SkeletonCard: React.FC = () => (
 );
 
 
-const PropertyListings: React.FC<PropertyListingsProps> = ({ properties, onViewDetails, onShare, isLoading, title, description, noResultsTitle, noResultsDescription, loadMore, isFetchingMore, hasMore }) => {
+const PropertyListings: React.FC<PropertyListingsProps> = ({ properties, onViewDetails, onShare, isLoading, title, description, noResultsTitle, noResultsDescription, loadMore, hasMore }) => {
   const { t } = useLanguage();
 
   return (
