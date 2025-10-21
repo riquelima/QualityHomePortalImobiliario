@@ -2,6 +2,7 @@ import React from 'react';
 import AdsIcon from '../icons/AdsIcon';
 import PlusIcon from '../icons/PlusIcon';
 import LogoutIcon from '../icons/LogoutIcon';
+import CloseIcon from '../icons/CloseIcon';
 
 interface AdminSidebarProps {
   activeSection: 'dashboard' | 'properties' | 'publish';

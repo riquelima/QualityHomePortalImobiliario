@@ -48,7 +48,7 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = (props) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   // Configurar gestos para swipe para voltar
-  const { bindGestures } = useGestures({
+  const { bindGestures, gestureState } = useGestures({
     onSwipeRight: () => {
       // Só permite voltar se não estiver na galeria
       if (!isGalleryOpen) {

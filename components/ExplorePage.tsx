@@ -12,6 +12,20 @@ import MapIcon from './icons/MapIcon';
 import ShareIcon from './icons/ShareIcon';
 import ChevronDownIcon from './icons/ChevronDownIcon';
 
+interface Filters {
+  priceMin: string;
+  priceMax: string;
+  bedrooms: string;
+  bathrooms: string;
+  propertyType: string;
+  hasElevator: string;
+  acceptsFinancing: string;
+  allowsPets: string;
+  availableDates: string[];
+  minDays: string;
+  maxGuests: string;
+}
+
 interface ExplorePageProps {
   onBack: () => void;
   properties: Property[];
@@ -115,10 +129,10 @@ const ExplorePage: React.FC<ExplorePageProps> = (props) => {
 
   // Função para filtrar propriedades por tipo de operação
   const filterProperties = useCallback((properties: Property[], operation: string, query: string) => {
-    console.log('=== FILTRANDO PROPRIEDADES ===');
-    console.log('Total de propriedades:', properties.length);
-    console.log('Operação desejada:', operation);
-    console.log('Query de busca:', query);
+    // console.log('=== FILTRANDO PROPRIEDADES ===');
+    // console.log('Total de propriedades:', properties.length);
+    // console.log('Operação desejada:', operation);
+    // console.log('Query de busca:', query);
 
     const lowerQuery = query.toLowerCase();
     const keywords = lowerQuery.split(/[\s,]+/).filter(Boolean);
@@ -127,19 +141,19 @@ const ExplorePage: React.FC<ExplorePageProps> = (props) => {
         // 1. Verificar se a propriedade tem coordenadas válidas para o mapa
         const hasValidCoords = (p.latitude && p.longitude) || (p.lat && p.lng);
         if (!hasValidCoords) {
-          console.warn('❌ Propriedade sem coordenadas válidas:', p.id, p.title || p.titulo);
+          // console.warn('❌ Propriedade sem coordenadas válidas:', p.id, p.title || p.titulo);
           return false;
         }
 
         // 2. Verificar se a propriedade está ativa
         if (p.status && p.status !== 'ativo') {
-          console.warn('❌ Propriedade inativa:', p.id, p.status);
+          // console.warn('❌ Propriedade inativa:', p.id, p.status);
           return false;
         }
 
         // 3. FILTRO PRINCIPAL: Verificar tipo de operação
         let operationMatch = false;
-        const propertyOperation = p.tipo_operacao || p.operation_type;
+        const propertyOperation = p.tipo_operacao;
         
         if (propertyOperation) {
           // Comparação exata do tipo de operação
@@ -165,10 +179,10 @@ const ExplorePage: React.FC<ExplorePageProps> = (props) => {
         return true;
     });
 
-    console.log('=== RESULTADO DA FILTRAGEM ===');
-    console.log(`Propriedades filtradas: ${filtered.length} de ${properties.length}`);
-    console.log('Operação:', operation);
-    console.log('================================');
+    // console.log('=== RESULTADO DA FILTRAGEM ===');
+    // console.log(`Propriedades filtradas: ${filtered.length} de ${properties.length}`);
+    // console.log('Operação:', operation);
+    // console.log('================================');
 
     return filtered;
   }, []);
@@ -193,7 +207,7 @@ const ExplorePage: React.FC<ExplorePageProps> = (props) => {
   // Efeito para garantir inicialização
   useEffect(() => {
     if (props.properties.length > 0 && filteredProperties.length === 0 && searchQuery === '') {
-      console.log('🚀 Forçando inicialização - tentando carregar propriedades para:', activeTab);
+      // console.log('🚀 Forçando inicialização - tentando carregar propriedades para:', activeTab);
       const defaultFiltered = filterProperties(props.properties, activeTab, '');
       
       if (defaultFiltered.length > 0) {
@@ -201,9 +215,9 @@ const ExplorePage: React.FC<ExplorePageProps> = (props) => {
         const initialItems = defaultFiltered.slice(0, ITEMS_PER_PAGE);
         setDisplayedProperties(initialItems);
         setHasMore(defaultFiltered.length > ITEMS_PER_PAGE);
-        console.log('✅ Propriedades carregadas para', activeTab, ':', defaultFiltered.length);
+        // console.log('✅ Propriedades carregadas para', activeTab, ':', defaultFiltered.length);
       } else {
-        console.log('⚠️ Nenhuma propriedade encontrada para', activeTab);
+        // console.log('⚠️ Nenhuma propriedade encontrada para', activeTab);
       }
     }
   }, [props.properties, filteredProperties.length, searchQuery, activeTab, filterProperties]);
@@ -292,6 +306,29 @@ const ExplorePage: React.FC<ExplorePageProps> = (props) => {
         }
       }
     }
+  };
+
+  const handleFilterChange = (key: keyof Filters, value: string) => {
+    setFilters(prev => ({
+      ...prev,
+      [key]: value
+    }));
+  };
+
+  const clearFilters = () => {
+    setFilters({
+      priceMin: '',
+      priceMax: '',
+      bedrooms: '',
+      bathrooms: '',
+      propertyType: '',
+      hasElevator: '',
+      acceptsFinancing: '',
+      allowsPets: '',
+      availableDates: [],
+      minDays: '',
+      maxGuests: ''
+    });
   };
 
   // Textos atrativos para cada operação
@@ -694,7 +731,7 @@ const ExplorePage: React.FC<ExplorePageProps> = (props) => {
                 <button
                   key={tab}
                   onClick={() => {
-                    console.log('🔄 Mudando aba para:', tab);
+                    // console.log('🔄 Mudando aba para:', tab);
                     setActiveTab(tab);
                   }}
                   className={`px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-semibold text-sm sm:text-base transition-all duration-300 ${
@@ -913,27 +950,3 @@ const ExplorePage: React.FC<ExplorePageProps> = (props) => {
 };
 
 export default ExplorePage;
-
-
-const handleFilterChange = (key: keyof Filters, value: string) => {
-  setFilters(prev => ({
-    ...prev,
-    [key]: value
-  }));
-};
-
-const clearFilters = () => {
-  setFilters({
-    priceMin: '',
-    priceMax: '',
-    bedrooms: '',
-    bathrooms: '',
-    propertyType: '',
-    hasElevator: '',
-    acceptsFinancing: '',
-    allowsPets: '',
-    availableDates: [],
-    minDays: '',
-    maxGuests: ''
-  });
-};

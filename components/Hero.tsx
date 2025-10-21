@@ -4,7 +4,7 @@ import SearchIcon from './icons/SearchIcon';
 import ChevronDownIcon from './icons/ChevronDownIcon';
 import DrawIcon from './icons/DrawIcon';
 import GeoIcon from './icons/GeoIcon';
-import { GoogleGenAI } from '@google/genai';
+// import { GoogleGenAI } from '@google/genai';
 import { useLanguage } from '../contexts/LanguageContext';
 
 interface HeroProps {
@@ -17,9 +17,12 @@ interface HeroProps {
   isSearchingNearMe: boolean;
 }
 
-const ai = new GoogleGenAI({ apiKey: 'AIzaSyCIo_bzvu_Uh0XbXiGYJ7zqni9dz6OTjlU' });
+// const ai = new GoogleGenAI({ apiKey: 'AIzaSyCIo_bzvu_Uh0XbXiGYJ7zqni9dz6OTjlU' });
 
 const generateContentWithRetry = async (prompt: string, maxRetries = 3) => {
+  // Temporarily disabled due to API compatibility issues
+  return "Funcionalidade de IA temporariamente desabilitada";
+  /*
   let attempt = 0;
   while (attempt < maxRetries) {
     try {
@@ -39,6 +42,7 @@ const generateContentWithRetry = async (prompt: string, maxRetries = 3) => {
     }
   }
   throw new Error("Failed to generate content after multiple retries.");
+  */
 };
 
 const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe, onSearchSubmit, deviceLocation, activeTab, onTabChange, isSearchingNearMe }) => {
