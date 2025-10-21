@@ -97,6 +97,13 @@ const ExplorePage: React.FC<ExplorePageProps> = (props) => {
       // Simular atualização da aplicação
       window.location.reload();
     },
+    excludeSelectors: [
+      '[data-testid="google-map"]', // Container do Google Maps
+      '.gm-style', // Classe padrão do Google Maps
+      '.gm-style *', // Todos os elementos filhos do Google Maps
+      '.pac-container', // Container do autocomplete do Google Maps
+      '.pac-container *', // Elementos filhos do autocomplete
+    ],
   });
 
   const { isLoaded, loadError } = useJsApiLoader({
@@ -518,27 +525,28 @@ const ExplorePage: React.FC<ExplorePageProps> = (props) => {
   const renderMapContent = () => (
     <>
       {isLoaded ? (
-        <GoogleMap
-          mapContainerStyle={containerStyle}
-          center={mapCenter}
-          zoom={zoom}
-          onLoad={onLoad}
-          onUnmount={onUnmount}
-          options={{
-            zoomControl: true,
-            streetViewControl: false,
-            mapTypeControl: false,
-            fullscreenControl: true,
-            scrollwheel: true,
-            gestureHandling: 'greedy',
-            styles: [
-              {
-                featureType: 'poi',
-                elementType: 'labels',
-                stylers: [{ visibility: 'off' }]
-              }
-            ]
-          }}
+        <div data-testid="google-map" style={{ width: '100%', height: '100%' }}>
+          <GoogleMap
+            mapContainerStyle={containerStyle}
+            center={mapCenter}
+            zoom={zoom}
+            onLoad={onLoad}
+            onUnmount={onUnmount}
+            options={{
+              zoomControl: true,
+              streetViewControl: false,
+              mapTypeControl: false,
+              fullscreenControl: true,
+              scrollwheel: true,
+              gestureHandling: 'greedy',
+              styles: [
+                {
+                  featureType: 'poi',
+                  elementType: 'labels',
+                  stylers: [{ visibility: 'off' }]
+                }
+              ]
+            }}
         >
           {filteredProperties.map(property => {
             const lat = property.lat || property.latitude;
@@ -670,6 +678,7 @@ const ExplorePage: React.FC<ExplorePageProps> = (props) => {
             </InfoWindow>
           )}
         </GoogleMap>
+        </div>
       ) : loadError ? (
         <div className="flex items-center justify-center h-full bg-gray-100">
           <p className="text-gray-500">Erro ao carregar o mapa</p>

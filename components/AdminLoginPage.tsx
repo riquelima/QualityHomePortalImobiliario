@@ -1,6 +1,5 @@
 
 import React, { useState } from 'react';
-import SpinnerIcon from './icons/SpinnerIcon';
 
 interface AdminLoginPageProps {
   onAdminLogin: (success: boolean) => void;
@@ -65,7 +64,11 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onAdminLogin }) => {
             disabled={isLoading}
             className="w-full bg-brand-navy hover:bg-brand-dark text-white font-bold py-3 rounded-md transition-colors flex justify-center items-center disabled:opacity-75 disabled:cursor-wait"
           >
-            {isLoading ? <SpinnerIcon className="w-5 h-5 animate-spin" /> : 'Entrar'}
+            {isLoading ? (
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            ) : (
+              'Entrar'
+            )}
           </button>
         </form>
       </div>

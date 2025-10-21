@@ -9,6 +9,7 @@ export interface GestureConfig {
   minSwipeDistance?: number;
   pullToRefreshThreshold?: number;
   enablePullToRefresh?: boolean;
+  excludeSelectors?: string[]; // Seletores CSS de elementos que devem ser excluídos dos gestos
 }
 
 export interface GestureState {
@@ -41,6 +42,7 @@ export const useGestures = (config: GestureConfig = {}) => {
     minSwipeDistance = getResponsiveDistance(50),
     pullToRefreshThreshold = getResponsiveDistance(80),
     enablePullToRefresh = false,
+    excludeSelectors = [],
   } = config;
 
   const [gestureState, setGestureState] = useState<GestureState>({
@@ -57,6 +59,20 @@ export const useGestures = (config: GestureConfig = {}) => {
   const lastMoveTime = useRef<number>(0);
   const animationFrameRef = useRef<number | null>(null);
 
+  // Função para verificar se o elemento tocado deve ser excluído dos gestos
+  const isExcludedElement = useCallback((target: EventTarget | null): boolean => {
+    if (!target || excludeSelectors.length === 0) return false;
+    
+    const element = target as Element;
+    return excludeSelectors.some(selector => {
+      try {
+        return element.closest(selector) !== null;
+      } catch (e) {
+        return false;
+      }
+    });
+  }, [excludeSelectors]);
+
   // Throttle para touchmove (limitar a 60fps)
   const throttledSetGestureState = useCallback((updater: (prev: GestureState) => GestureState) => {
     if (animationFrameRef.current) {
@@ -68,6 +84,11 @@ export const useGestures = (config: GestureConfig = {}) => {
   }, []);
 
   const handleTouchStart = (e: TouchEvent) => {
+    // Verificar se o toque está em um elemento excluído
+    if (isExcludedElement(e.target)) {
+      return;
+    }
+
     const touch = e.touches[0];
     touchStartRef.current = {
       x: touch.clientX,
@@ -83,6 +104,11 @@ export const useGestures = (config: GestureConfig = {}) => {
 
   const handleTouchMove = (e: TouchEvent) => {
     if (!touchStartRef.current) return;
+
+    // Verificar se o toque está em um elemento excluído
+    if (isExcludedElement(e.target)) {
+      return;
+    }
 
     // Throttle touchmove events
     const now = Date.now();
