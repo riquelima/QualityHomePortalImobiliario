@@ -110,9 +110,25 @@ const ExplorePage: React.FC<ExplorePageProps> = (props) => {
     id: 'google-map-script',
     googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY || 'AIzaSyDukeY7JJI9UkHIFbsCZOrjPDRukqvUOfA',
     libraries,
+    preventGoogleFontsLoading: true, // Evita carregar fontes desnecessárias
   });
   
   const onLoad = useCallback(function callback(mapInstance: any) {
+    // Otimizações para performance mobile
+    mapInstance.setOptions({
+      disableDefaultUI: window.innerWidth < 768, // Remove UI no mobile
+      gestureHandling: 'cooperative', // Melhora gestos no mobile
+      maxZoom: 18,
+      minZoom: 10,
+      restriction: {
+        latLngBounds: {
+          north: -8.0,
+          south: -18.0,
+          west: -48.0,
+          east: -34.0,
+        },
+      },
+    });
     setMap(mapInstance);
   }, []);
 
@@ -246,22 +262,38 @@ const ExplorePage: React.FC<ExplorePageProps> = (props) => {
     }, 500);
   }, [displayedProperties.length, filteredProperties, hasMore, isLoadingMore]);
 
-  // Scroll infinito
+  // Scroll infinito com debounce para melhor performance
   useEffect(() => {
     const container = listContainerRef.current;
     if (!container) return;
 
+    let scrollTimeout: NodeJS.Timeout;
+    let lastScrollTime = 0;
+
     const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } = container;
-      const isNearBottom = scrollTop + clientHeight >= scrollHeight - 100;
+      const now = Date.now();
       
-      if (isNearBottom && hasMore && !isLoadingMore) {
-        loadMoreItems();
-      }
+      // Throttle: limita a frequência de execução
+      if (now - lastScrollTime < 100) return;
+      lastScrollTime = now;
+
+      // Debounce: só executa após parar de fazer scroll
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        const { scrollTop, scrollHeight, clientHeight } = container;
+        const isNearBottom = scrollTop + clientHeight >= scrollHeight - 150;
+        
+        if (isNearBottom && hasMore && !isLoadingMore) {
+          loadMoreItems();
+        }
+      }, 150);
     };
 
-    container.addEventListener('scroll', handleScroll);
-    return () => container.removeEventListener('scroll', handleScroll);
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      container.removeEventListener('scroll', handleScroll);
+      clearTimeout(scrollTimeout);
+    };
   }, [hasMore, isLoadingMore, loadMoreItems]);
   
   const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -273,8 +305,11 @@ const ExplorePage: React.FC<ExplorePageProps> = (props) => {
     if(map) {
       const lat = property.lat || property.latitude;
       const lng = property.lng || property.longitude;
-      map.panTo({ lat, lng });
-      map.setZoom(16);
+      // Usar requestAnimationFrame para suavizar animações
+      requestAnimationFrame(() => {
+        map.panTo({ lat, lng });
+        map.setZoom(16);
+      });
     }
   }, [map]);
 
@@ -548,7 +583,8 @@ const ExplorePage: React.FC<ExplorePageProps> = (props) => {
               ]
             }}
         >
-          {filteredProperties.map(property => {
+          {/* Limitar marcadores para melhor performance - máximo 50 no mobile, 100 no desktop */}
+          {filteredProperties.slice(0, window.innerWidth < 768 ? 50 : 100).map(property => {
             const lat = property.lat || property.latitude;
             const lng = property.lng || property.longitude;
             
@@ -564,14 +600,14 @@ const ExplorePage: React.FC<ExplorePageProps> = (props) => {
                 onClick={() => onMarkerClick(property)}
                 icon={{
                   url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-                    <svg width="32" height="40" viewBox="0 0 32 40" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M16 0C7.163 0 0 7.163 0 16c0 16 16 24 16 24s16-8 16-24C32 7.163 24.837 0 16 0z" fill="#EA4335"/>
-                      <circle cx="16" cy="16" r="8" fill="#FFFFFF"/>
-                      <circle cx="16" cy="16" r="4" fill="#EA4335"/>
+                    <svg width="24" height="30" viewBox="0 0 24 30" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 0C5.372 0 0 5.372 0 12c0 12 12 18 12 18s12-6 12-18C24 5.372 18.628 0 12 0z" fill="#EA4335"/>
+                      <circle cx="12" cy="12" r="6" fill="#FFFFFF"/>
+                      <circle cx="12" cy="12" r="3" fill="#EA4335"/>
                     </svg>
                   `),
-                  scaledSize: new window.google.maps.Size(32, 40),
-                  anchor: new window.google.maps.Point(16, 40)
+                  scaledSize: new window.google.maps.Size(24, 30), // Marcadores menores para mobile
+                  anchor: new window.google.maps.Point(12, 30)
                 }}
               />
             );

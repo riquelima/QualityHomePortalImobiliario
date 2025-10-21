@@ -110,9 +110,9 @@ export const useGestures = (config: GestureConfig = {}) => {
       return;
     }
 
-    // Throttle touchmove events
+    // Throttle touchmove events mais agressivo para mobile
     const now = Date.now();
-    if (now - lastMoveTime.current < 16) return; // ~60fps
+    if (now - lastMoveTime.current < 32) return; // ~30fps para melhor performance
     lastMoveTime.current = now;
 
     const touch = e.touches[0];
@@ -126,9 +126,12 @@ export const useGestures = (config: GestureConfig = {}) => {
     const absX = Math.abs(deltaX);
     const absY = Math.abs(deltaY);
     
-    // Pull to refresh logic
-    if (enablePullToRefresh && deltaY > 0 && window.scrollY === 0) {
-      e.preventDefault();
+    // Pull to refresh logic - só previne default quando necessário
+    if (enablePullToRefresh && deltaY > 0 && window.scrollY === 0 && absY > absX) {
+      // Só previne default se for realmente um pull to refresh
+      if (deltaY > 20) {
+        e.preventDefault();
+      }
       const pullDistance = Math.min(deltaY * 0.5, pullToRefreshThreshold * 1.5);
       const progress = Math.min(pullDistance / pullToRefreshThreshold, 1);
       throttledSetGestureState(prev => ({ 
@@ -139,8 +142,8 @@ export const useGestures = (config: GestureConfig = {}) => {
         isDragging: true 
       }));
     }
-    // Swipe feedback logic
-    else if (absX > absY && absX > 20) {
+    // Swipe feedback logic - só para gestos horizontais claros
+    else if (absX > absY && absX > 30) {
       const progress = Math.min(absX / minSwipeDistance, 1);
       const gestureType = deltaX > 0 ? 'swipe-back' : 'swipe-next';
       throttledSetGestureState(prev => ({ 
@@ -236,8 +239,10 @@ export const useGestures = (config: GestureConfig = {}) => {
 
     if (element) {
       elementRef.current = element;
-      element.addEventListener('touchstart', handleTouchStart, { passive: false });
-      element.addEventListener('touchmove', handleTouchMove, { passive: false });
+      // Usar passive: true para melhor performance, exceto quando pull-to-refresh está ativo
+      const touchMoveOptions = enablePullToRefresh ? { passive: false } : { passive: true };
+      element.addEventListener('touchstart', handleTouchStart, { passive: true });
+      element.addEventListener('touchmove', handleTouchMove, touchMoveOptions);
       element.addEventListener('touchend', handleTouchEnd, { passive: true });
     }
   };
