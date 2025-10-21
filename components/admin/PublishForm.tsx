@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import type { Property, User } from '../../types';
 import { supabase } from '../../supabaseClient';
-import { PRODUCTION_URL } from '../../config';
+import { PRODUCTION_URL, QUALLITY_HOME_USER_ID } from '../../config';
 import PlusIcon from '../icons/PlusIcon';
 import MinusIcon from '../icons/MinusIcon';
 import PhotoIcon from '../icons/PhotoIcon';
@@ -207,7 +207,7 @@ export const PublishForm: React.FC<PublishFormProps> = ({
         aceita_financiamento: formData.acceptsFinancing,
         situacao_ocupacao: formData.occupationSituation,
         status: 'ativo',
-        usuario_id: adminUser?.id
+        usuario_id: QUALLITY_HOME_USER_ID
       };
 
       if (propertyToEdit) {

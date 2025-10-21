@@ -276,34 +276,19 @@ const App: React.FC = () => {
         (window as any).seedDatabase = seedDatabase;
     }
 
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      const user = session?.user ?? null;
-      setAdminUser(user);
-      setIsAdminLoggedIn(!!user);
-
-      if (user) {
-        const { data: profile, error } = await supabase
-          .from('perfis')
-          .select('id')
-          .eq('id', user.id)
-          .single();
-
-        if (error && error.code === 'PGRST116') {
-          const { error: insertError } = await supabase
-            .from('perfis')
-            .insert({
-              id: user.id,
-              nome_completo: user.email?.split('@')[0] || 'Admin Quallity Home',
-            });
-          
-          if (insertError) {
-            console.error('Error auto-creating user profile:', insertError);
-          }
-        } else if (error) {
-            console.error('Error checking for user profile:', error);
-        }
-      }
-    });
+    // Verificar se há uma sessão de admin salva no localStorage
+    const savedAdminSession = localStorage.getItem('adminLoggedIn');
+    if (savedAdminSession === 'true') {
+      setIsAdminLoggedIn(true);
+      setAdminUser({
+        id: 'admin-quallity',
+        email: 'quallity@admin.com',
+        user_metadata: {},
+        app_metadata: {},
+        aud: 'authenticated',
+        created_at: new Date().toISOString()
+      });
+    }
 
     const propertyChanges = supabase
       .channel('imoveis-changes')
@@ -319,7 +304,6 @@ const App: React.FC = () => {
     window.addEventListener('popstate', handlePopState);
     return () => {
         window.removeEventListener('popstate', handlePopState);
-        authListener?.subscription.unsubscribe();
         supabase.removeChannel(propertyChanges);
     };
   }, [fetchFeaturedProperties, fetchAllProperties, refreshAllData, handleAllowGeolocation, handlePopState]);
@@ -327,13 +311,15 @@ const App: React.FC = () => {
   const publicProperties = useMemo(() => allProperties.filter(p => p.status === 'ativo'), [allProperties]);
   const adminProperties = useMemo(() => {
     if (!adminUser) return [];
-    return allProperties;
+    return allProperties.filter(p => p.anunciante_id === QUALLITY_HOME_USER_ID);
   }, [allProperties, adminUser]);
 
   const handleDenyGeolocation = () => setGeolocationModalOpen(false);
 
   const navigateTo = (page: PageState['page'], extraState: Partial<Omit<PageState, 'page'>> = {}) => {
+    console.log('navigateTo called with page:', page, 'extraState:', extraState);
     setPageState(prev => ({ ...prev, page, ...extraState }));
+    console.log('pageState updated');
     window.scrollTo(0, 0);
 
     const url = new URL(window.location.href);
@@ -349,6 +335,7 @@ const App: React.FC = () => {
         url.search = newParams.toString();
         window.history.pushState({}, '', url);
     }
+    console.log('navigateTo completed');
   };
   
   const handleSearchSubmit = (query: string) => navigateTo('searchResults', { searchQuery: query });
@@ -360,16 +347,36 @@ const App: React.FC = () => {
   const handleNavigateToSeason = () => navigateTo('explore', { exploreOperation: 'temporada' });
 
   const handleAdminLogin = (success: boolean) => {
+    console.log('handleAdminLogin called with success:', success);
     if (success) {
-      // Aguarda um pouco para garantir que o estado de autenticação seja atualizado
-      setTimeout(() => {
-        navigateTo('adminDashboard');
-      }, 100);
+      console.log('Login successful, setting up admin session...');
+      // Salvar sessão no localStorage
+      localStorage.setItem('adminLoggedIn', 'true');
+      console.log('localStorage set');
+      setIsAdminLoggedIn(true);
+      console.log('isAdminLoggedIn set to true');
+      setAdminUser({
+        id: 'admin-quallity',
+        email: 'quallity@admin.com',
+        user_metadata: {},
+        app_metadata: {},
+        aud: 'authenticated',
+        created_at: new Date().toISOString()
+      });
+      console.log('adminUser set');
+      console.log('Navigating to adminDashboard...');
+      navigateTo('adminDashboard');
+      console.log('Navigation completed');
+    } else {
+      console.log('Login failed');
     }
   };
   
-  const handleAdminLogout = async () => {
-    await supabase.auth.signOut();
+  const handleAdminLogout = () => {
+    // Remover sessão do localStorage
+    localStorage.removeItem('adminLoggedIn');
+    setIsAdminLoggedIn(false);
+    setAdminUser(null);
     navigateTo('home');
   };
 
@@ -526,6 +533,7 @@ const App: React.FC = () => {
       case 'adminLogin':
         return <AdminLoginPage onAdminLogin={handleAdminLogin} />;
       case 'adminDashboard':
+        console.log('Rendering adminDashboard, adminUser:', adminUser, 'adminProperties:', adminProperties);
         return <MyAdsPage 
                   showSuccessBanner={pageState.showAdminSuccessBanner}
                   onDismissSuccessBanner={() => setPageState(prev => ({ ...prev, showAdminSuccessBanner: undefined }))}
@@ -537,6 +545,11 @@ const App: React.FC = () => {
                   onPublishClick={() => navigateTo('publish-journey')}
                   onAdminLogout={handleAdminLogout}
                   onShareProperty={handleShareProperty}
+                  adminUser={adminUser}
+                  onAddProperty={refreshAllData}
+                  onUpdateProperty={refreshAllData}
+                  onPublishError={(msg) => setModalConfig({isOpen: true, type: 'error', title: 'Error', message: msg})}
+                  propertyToEdit={pageState.propertyToEdit}
                 />;
       default:
         const homeHeaderProps = {

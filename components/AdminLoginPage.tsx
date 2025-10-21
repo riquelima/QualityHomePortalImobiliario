@@ -1,6 +1,5 @@
 
 import React, { useState } from 'react';
-import { supabase } from '../supabaseClient';
 import SpinnerIcon from './icons/SpinnerIcon';
 
 interface AdminLoginPageProps {
@@ -18,24 +17,17 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onAdminLogin }) => {
     setIsLoading(true);
     setError('');
 
-    try {
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+    // Simular um pequeno delay para mostrar o loading
+    await new Promise(resolve => setTimeout(resolve, 500));
 
-      if (signInError) {
-        setError('Credenciais inválidas. Verifique seu email e senha.');
-        onAdminLogin(false);
-      } else {
-        onAdminLogin(true);
-      }
-    } catch (error) {
-      console.error('Erro durante o login:', error);
-      setError('Erro de conexão. Tente novamente.');
-      onAdminLogin(false);
-    } finally {
+    // Verificar credenciais hardcoded
+    if (email === 'quallity@admin.com' && password === '1234') {
       setIsLoading(false);
+      onAdminLogin(true);
+    } else {
+      setIsLoading(false);
+      setError('Credenciais inválidas. Verifique seu email e senha.');
+      onAdminLogin(false);
     }
   };
 

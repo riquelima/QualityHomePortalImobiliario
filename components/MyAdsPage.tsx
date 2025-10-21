@@ -96,6 +96,7 @@ const MyAdsPage: React.FC<MyAdsPageProps> = ({
         onPublishError={onPublishError}
         onPublishSuccess={handlePublishSuccess}
         propertyToEdit={propertyToEdit}
+        onBack={onBack}
       />
     </div>
   );
