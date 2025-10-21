@@ -155,33 +155,49 @@ const App: React.FC = () => {
   };
 
   const fetchFeaturedProperties = useCallback(async () => {
-    const { data, error } = await supabase
-      .from('imoveis')
-      .select('*, midias_imovel (id, url, tipo)')
-      .eq('status', 'ativo')
-      .order('id', { ascending: false })
-      .limit(PAGE_SIZE);
+    try {
+      const { data, error } = await supabase
+        .from('imoveis')
+        .select('*, midias_imovel (id, url, tipo)')
+        .eq('status', 'ativo')
+        .order('id', { ascending: false })
+        .limit(PAGE_SIZE);
 
-    if (error) {
-      console.error("Error fetching featured properties:", error);
-      return; // Don't show a modal, homepage can be empty if this fails.
+      if (error) {
+        console.error("Error fetching featured properties:", error);
+        setFeaturedProperties([]); // Set empty array instead of returning early
+        return;
+      }
+      
+      setFeaturedProperties(formatProperties(data || []));
+    } catch (error) {
+      console.error("Unexpected error fetching featured properties:", error);
+      setFeaturedProperties([]); // Ensure we always set some value
     }
-    setFeaturedProperties(formatProperties(data));
   }, []);
 
   const fetchAllProperties = useCallback(async () => {
-    const { data, error } = await supabase
-      .from('imoveis')
-      .select('*, midias_imovel (id, url, tipo)')
-      .order('id', { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from('imoveis')
+        .select('*, midias_imovel (id, url, tipo)')
+        .order('id', { ascending: false });
 
-    if (error) {
-      console.error("Error fetching all properties:", error);
-      setModalConfig({ isOpen: true, type: 'error', title: t('systemModal.errorTitle'), message: t('systemModal.fetchError') });
-      return;
+      if (error) {
+        console.error("Error fetching all properties:", error);
+        setModalConfig({ isOpen: true, type: 'error', title: t('systemModal.errorTitle'), message: t('systemModal.fetchError') });
+        setAllProperties([]); // Set empty array even on error
+        setAreAllPropertiesLoaded(true); // Mark as loaded to prevent infinite loading
+        return;
+      }
+      
+      setAllProperties(formatProperties(data || []));
+      setAreAllPropertiesLoaded(true);
+    } catch (error) {
+      console.error("Unexpected error fetching all properties:", error);
+      setAllProperties([]); // Ensure we always set some value
+      setAreAllPropertiesLoaded(true); // Mark as loaded to prevent infinite loading
     }
-    setAllProperties(formatProperties(data));
-    setAreAllPropertiesLoaded(true);
   }, [t]);
   
   const refreshAllData = useCallback(async () => {
@@ -227,11 +243,17 @@ const App: React.FC = () => {
     }
     
     const initialFetch = async () => {
-      setIsLoading(true);
-      await fetchFeaturedProperties();
-      setIsLoading(false);
-      // Fetch all other properties in the background for other pages
-      fetchAllProperties();
+      try {
+        setIsLoading(true);
+        await fetchFeaturedProperties();
+        // Fetch all other properties in the background for other pages
+        fetchAllProperties();
+      } catch (error) {
+        console.error("Error in initial fetch:", error);
+      } finally {
+        // Always reset loading state, regardless of success or failure
+        setIsLoading(false);
+      }
     };
     initialFetch();
     
@@ -339,7 +361,10 @@ const App: React.FC = () => {
 
   const handleAdminLogin = (success: boolean) => {
     if (success) {
-      navigateTo('adminDashboard');
+      // Aguarda um pouco para garantir que o estado de autenticação seja atualizado
+      setTimeout(() => {
+        navigateTo('adminDashboard');
+      }, 100);
     }
   };
   
@@ -446,12 +471,12 @@ const App: React.FC = () => {
               loadMore={() => navigateTo('explore')}
               hasMore={true}
             />
-            <footer className="bg-white text-brand-gray py-8 text-center relative">
+            <footer className="bg-white text-gray-600 py-4 text-center relative border-t">
               <div className="container mx-auto px-4 sm:px-6">
                 <a 
                   href="#" 
                   onClick={(e) => { e.preventDefault(); navigateTo('adminLogin'); }} 
-                  className="absolute right-4 sm:right-6 bottom-8 text-brand-gray hover:text-brand-dark transition-colors"
+                  className="absolute right-4 sm:right-6 bottom-4 text-gray-400 hover:text-gray-600 transition-colors"
                   aria-label="Acesso Restrito"
                   title="Acesso Restrito"
                 >
@@ -459,8 +484,8 @@ const App: React.FC = () => {
                 </a>
                 
                 <p>&copy; {new Date().getFullYear()} {t('footer.text')}</p>
-                <div className="mt-4 flex justify-center items-center space-x-4">
-                    <a href="https://www.instagram.com/portalimobiliarioquallityhome/" target="_blank" rel="noopener noreferrer" aria-label="Siga-nos no Instagram" className="inline-block hover:opacity-75 transition-opacity"><img src="https://cdn-icons-png.flaticon.com/512/3621/3621435.png" alt="Instagram" className="h-8 w-8" /></a>
+                <div className="mt-2 flex justify-center items-center space-x-4">
+                    <a href="https://www.instagram.com/portalimobiliarioquallityhome/" target="_blank" rel="noopener noreferrer" aria-label="Siga-nos no Instagram" className="inline-block hover:opacity-75 transition-opacity"><img src="https://cdn-icons-png.flaticon.com/512/3621/3621435.png" alt="Instagram" className="h-6 w-6" /></a>
                 </div>
               </div>
             </footer>

@@ -18,17 +18,24 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onAdminLogin }) => {
     setIsLoading(true);
     setError('');
 
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    setIsLoading(false);
-    if (signInError) {
-      setError('Credenciais inválidas. Verifique seu email e senha.');
+      if (signInError) {
+        setError('Credenciais inválidas. Verifique seu email e senha.');
+        onAdminLogin(false);
+      } else {
+        onAdminLogin(true);
+      }
+    } catch (error) {
+      console.error('Erro durante o login:', error);
+      setError('Erro de conexão. Tente novamente.');
       onAdminLogin(false);
-    } else {
-      onAdminLogin(true);
+    } finally {
+      setIsLoading(false);
     }
   };
 

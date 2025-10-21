@@ -19,66 +19,79 @@ interface PropertyListingsProps {
 }
 
 const SkeletonCard: React.FC = () => (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 animate-pulse">
-        <div className="bg-gray-300 h-56 w-full"></div>
-        <div className="p-4 sm:p-6">
-            <div className="bg-gray-300 h-6 w-3/4 rounded mb-2"></div>
-            <div className="bg-gray-300 h-4 w-full rounded mb-4"></div>
-            <div className="bg-gray-300 h-8 w-1/2 rounded mb-4"></div>
-            <div className="grid grid-cols-3 gap-2 sm:gap-4 border-t border-b border-gray-200 py-4 mb-4">
-                <div className="bg-gray-300 h-10 rounded"></div>
-                <div className="bg-gray-300 h-10 rounded"></div>
-                <div className="bg-gray-300 h-10 rounded"></div>
+    <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200 animate-pulse">
+        <div className="bg-gray-200 h-56 w-full"></div>
+        <div className="p-5">
+            <div className="bg-gray-200 h-5 w-3/4 rounded mb-3"></div>
+            <div className="bg-gray-200 h-4 w-full rounded mb-4"></div>
+            <div className="bg-gray-200 h-6 w-1/2 rounded mb-6"></div>
+            <div className="grid grid-cols-3 gap-4 mb-6">
+                <div className="bg-gray-200 h-16 rounded-lg"></div>
+                <div className="bg-gray-200 h-16 rounded-lg"></div>
+                <div className="bg-gray-200 h-16 rounded-lg"></div>
             </div>
-            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-                <div className="bg-gray-300 h-10 w-full rounded-md"></div>
+            <div className="flex gap-3">
+                <div className="bg-gray-200 h-12 flex-1 rounded-lg"></div>
+                <div className="bg-gray-200 h-12 w-12 rounded-lg"></div>
             </div>
         </div>
     </div>
 );
 
-
 const PropertyListings: React.FC<PropertyListingsProps> = ({ properties, onViewDetails, onShare, isLoading, title, description, noResultsTitle, noResultsDescription, loadMore, hasMore }) => {
   const { t } = useLanguage();
 
   return (
-    <section className="bg-white py-20 sm:py-24">
-      <div className="container mx-auto px-4 sm:px-6">
-        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-brand-navy text-center mb-4">{title || t('listings.title')}</h2>
-        <p className="text-base sm:text-lg text-brand-gray text-center max-w-2xl mx-auto mb-12">
-          {description || t('listings.description')}
-        </p>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+    <section className="bg-white py-16 sm:py-20 lg:py-24">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Cabeçalho minimalista */}
+        <div className="text-center mb-12 sm:mb-16">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-blue-900 mb-4 sm:mb-6">
+            {title || t('listings.title')}
+          </h2>
+          <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto">
+            {description || t('listings.description')}
+          </p>
+        </div>
+
+        {/* Grid de propriedades */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
           {isLoading ? (
-            Array.from({ length: 6 }).map((_, index) => <SkeletonCard key={index} />)
+            Array.from({ length: 6 }).map((_, index) => (
+              <SkeletonCard key={index} />
+            ))
           ) : properties.length > 0 ? (
             properties.map((property, index) => (
-              <div 
+              <PropertyCard 
                 key={`${property.id}-${index}`}
-                className="card-animate" 
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
-                <PropertyCard 
-                  property={property} 
-                  onViewDetails={onViewDetails}
-                  onShare={onShare}
-                />
-              </div>
+                property={property} 
+                onViewDetails={onViewDetails}
+                onShare={onShare}
+              />
             ))
           ) : (
-             <div className="md:col-span-2 lg:col-span-3 text-center py-16 bg-brand-light-gray rounded-lg">
-                <SearchIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-brand-navy mb-2">{noResultsTitle || t('listings.noResults.title')}</h3>
-                <p className="text-brand-gray max-w-md mx-auto">{noResultsDescription || t('listings.noResults.description')}</p>
+             <div className="sm:col-span-2 lg:col-span-3 text-center py-20 bg-gray-50 rounded-2xl border border-gray-200">
+                <div className="max-w-md mx-auto">
+                  <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <SearchIcon className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                    {noResultsTitle || t('listings.noResults.title')}
+                  </h3>
+                  <p className="text-gray-600">
+                    {noResultsDescription || t('listings.noResults.description')}
+                  </p>
+                </div>
              </div>
           )}
         </div>
         
+        {/* Botão "Ver mais" minimalista */}
         {hasMore && !isLoading && (
-          <div className="text-center mt-12">
+          <div className="text-center mt-16">
             <button
               onClick={loadMore}
-              className="bg-brand-red hover:opacity-90 text-white font-bold py-3 px-8 rounded-md transition duration-300"
+              className="bg-red-600 hover:bg-red-700 text-white font-semibold py-4 px-8 rounded-lg transition-all duration-300"
             >
               {t('listings.viewAll')}
             </button>

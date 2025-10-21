@@ -17,23 +17,22 @@ interface HeroProps {
   isSearchingNearMe: boolean;
 }
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || 'AIzaSyCsX9l10XCu3TtSCU1BSx-qOYrwUKYw2xk' });
+const ai = new GoogleGenAI({ apiKey: 'AIzaSyCIo_bzvu_Uh0XbXiGYJ7zqni9dz6OTjlU' });
 
 const generateContentWithRetry = async (prompt: string, maxRetries = 3) => {
   let attempt = 0;
   while (attempt < maxRetries) {
     try {
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: { parts: [{ text: prompt }] },
-      });
-      return response; // Success
+      const model = ai.getGenerativeModel({ model: 'gemini-pro' });
+      const response = await model.generateContent(prompt);
+      const text = response.response.text();
+      return text;
     } catch (error) {
       attempt++;
       console.warn(`Gemini API call attempt ${attempt} failed:`, error);
       if (attempt >= maxRetries) {
         console.error("Gemini API call failed after all retries.");
-        throw error; // Rethrow error after last attempt
+        throw error;
       }
       const delay = Math.pow(2, attempt) * 1000; // Exponential backoff: 2s, 4s
       await new Promise(resolve => setTimeout(resolve, delay));
@@ -42,7 +41,6 @@ const generateContentWithRetry = async (prompt: string, maxRetries = 3) => {
   throw new Error("Failed to generate content after multiple retries.");
 };
 
-
 const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe, onSearchSubmit, deviceLocation, activeTab, onTabChange, isSearchingNearMe }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -50,8 +48,11 @@ const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe, onSearchS
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const { t, language } = useLanguage();
   
-  const [heroTitle, setHeroTitle] = useState(t('hero.defaultTitle'));
-  const [isLoadingTitle, setIsLoadingTitle] = useState(true);
+  // Estados para título e descrição gerados pela IA
+  const [heroTitle, setHeroTitle] = useState('Encontre seu lar dos sonhos');
+  const [heroDescription, setHeroDescription] = useState('Explore nossa seleção exclusiva de imóveis que combinam luxo, conforto e localização privilegiada.');
+  const [isLoadingTitle, setIsLoadingTitle] = useState(false);
+  const [isLoadingDescription, setIsLoadingDescription] = useState(false);
 
   const propertyOptions = {
     venda: ['Casa', 'Apartamento', 'Área', 'Sítio', 'Fazenda', 'Escritório', 'Galpão'],
@@ -59,164 +60,234 @@ const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe, onSearchS
     temporada: ['Casa', 'Apartamento'],
   };
 
-  // Efeito para gerar título dinâmico com a IA do Gemini
-  useEffect(() => {
-    let isCancelled = false;
-
-    setHeroTitle(t('hero.defaultTitle'));
+  // Função para gerar título dinâmico
+  const generateTitle = async () => {
     setIsLoadingTitle(true);
-
-    const generateTitle = async () => {
-      try {
-        const prompt = t('hero.geminiPrompt');
-        
-        const response = await generateContentWithRetry(prompt);
-
-        if (isCancelled || !response) return;
-
-        const text = response.text.trim();
-        if (text) {
-          setHeroTitle(text.replace(/["']/g, ""));
-        }
-      } catch (error) {
-        if (!isCancelled) {
-          console.error("Erro ao gerar título com a IA:", error);
-        }
-      } finally {
-        if (!isCancelled) {
-          setIsLoadingTitle(false);
-        }
+    try {
+      const prompt = `Gere um título atrativo e curto para um portal imobiliário. 
+      O título deve:
+      - Ter no máximo 6 palavras
+      - Ser inspirador e relacionado a encontrar imóveis
+      - Caber em uma única linha
+      - Ser em português brasileiro
+      - Não usar aspas ou caracteres especiais
+      
+      Exemplos de estilo: "Encontre seu lar dos sonhos", "Seu novo lar te espera", "Descubra o imóvel ideal"
+      
+      Responda apenas com o título, sem explicações.`;
+      
+      const generatedTitle = await generateContentWithRetry(prompt);
+      if (generatedTitle && generatedTitle.trim()) {
+        setHeroTitle(generatedTitle.trim().replace(/["']/g, ""));
       }
-    };
+    } catch (error) {
+      console.error("Erro ao gerar título:", error);
+      // Mantém o título atual se houver erro
+    } finally {
+      setIsLoadingTitle(false);
+    }
+  };
 
+  // Função para gerar descrição dinâmica
+  const generateDescription = async () => {
+    setIsLoadingDescription(true);
+    try {
+      const prompt = `Gere uma descrição curta e atrativa para um portal imobiliário.
+      A descrição deve:
+      - Ter no máximo 15 palavras
+      - Caber em no máximo duas linhas
+      - Ser inspiradora e relacionada a imóveis
+      - Ser em português brasileiro
+      - Não usar aspas ou caracteres especiais
+      - Mencionar qualidade, conforto ou localização
+      
+      Exemplos de estilo: "Explore nossa seleção exclusiva de imóveis que combinam luxo, conforto e localização privilegiada", "Descubra propriedades únicas com a melhor localização e acabamento premium"
+      
+      Responda apenas com a descrição, sem explicações.`;
+      
+      const generatedDescription = await generateContentWithRetry(prompt);
+      if (generatedDescription && generatedDescription.trim()) {
+        setHeroDescription(generatedDescription.trim().replace(/["']/g, ""));
+      }
+    } catch (error) {
+      console.error("Erro ao gerar descrição:", error);
+      // Mantém a descrição atual se houver erro
+    } finally {
+      setIsLoadingDescription(false);
+    }
+  };
+
+  // Efeito para gerar conteúdo quando a página carrega ou é atualizada
+  useEffect(() => {
     generateTitle();
-
-    return () => {
-      isCancelled = true;
-    };
-  }, [t, language]);
+    generateDescription();
+  }, []); // Executa apenas uma vez quando o componente monta
 
   // Reset property type selection when tab changes
   useEffect(() => {
-    const optionsForTab = propertyOptions[activeTab];
-    if (optionsForTab && optionsForTab.length > 0) {
-      setSelectedType(optionsForTab[0]);
+    const availableTypes = propertyOptions[activeTab];
+    if (!availableTypes.includes(selectedType)) {
+      setSelectedType(availableTypes[0]);
     }
-  }, [activeTab]);
+  }, [activeTab, selectedType]);
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      onSearchSubmit(`${selectedType} ${searchQuery.trim()}`);
+    }
+  };
+
+  const handleClickOutside = (event: MouseEvent) => {
+    if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+      setIsDropdownOpen(false);
+    }
+  };
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
-        setIsDropdownOpen(false);
-      }
-    };
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
 
-  const handleDrawOnMapClick = () => {
-    setIsDropdownOpen(false);
-    onDrawOnMapClick();
-  };
-
-  const handleSearchNearMe = () => {
-    setIsDropdownOpen(false);
-    onSearchNearMe();
-  };
-
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      onSearchSubmit(searchQuery.trim());
-    }
-  };
-
   return (
-    <div 
-      className="relative h-[550px] w-full flex items-center justify-center text-center bg-cover bg-center"
-      style={{ backgroundImage: "url('https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2')" }}
-    >
-      <div className="relative z-20 p-6 md:p-8 bg-white/95 backdrop-blur-sm rounded-lg shadow-2xl w-11/12 max-w-4xl">
-        <h1 className={`text-3xl sm:text-4xl lg:text-5xl font-bold text-brand-navy mb-6 transition-opacity duration-300 ${isLoadingTitle ? 'opacity-75 animate-pulse' : 'opacity-100'}`}>
-          {heroTitle}
-        </h1>
-        
-        <div className="bg-white p-2 rounded-lg">
-          <div className="flex flex-wrap border-b mb-4">
-            <button 
-              onClick={() => onTabChange('venda')}
-              className={`px-4 sm:px-6 py-2 text-base sm:text-lg font-medium transition-colors duration-300 ${activeTab === 'venda' ? 'border-b-4 border-brand-red text-brand-dark' : 'text-brand-gray'}`}
-            >
-              {t('hero.tabs.buy')}
-            </button>
-            <button 
-              onClick={() => onTabChange('aluguel')}
-              className={`px-4 sm:px-6 py-2 text-base sm:text-lg font-medium transition-colors duration-300 ${activeTab === 'aluguel' ? 'border-b-4 border-brand-red text-brand-dark' : 'text-brand-gray'}`}
-            >
-              {t('hero.tabs.rent')}
-            </button>
-            <button 
-              onClick={() => onTabChange('temporada')}
-              className={`px-4 sm:px-6 py-2 text-base sm:text-lg font-medium transition-colors duration-300 ${activeTab === 'temporada' ? 'border-b-4 border-brand-red text-brand-dark' : 'text-brand-gray'}`}
-            >
-              {t('hero.tabs.season')}
-            </button>
+    <div className="relative min-h-screen flex items-center justify-center bg-white">
+      {/* Main content */}
+      <div className="relative z-10 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-20">
+        <div className="text-center mb-12 sm:mb-16">
+          {/* Hero title gerado pela IA */}
+          <div className="mb-8 sm:mb-12">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-blue-900 leading-tight mb-4">
+              {isLoadingTitle ? (
+                <span className="inline-flex items-center">
+                  <span>Encontre seu</span>
+                  <span className="ml-3 w-6 h-6 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></span>
+                </span>
+              ) : (
+                heroTitle
+              )}
+            </h1>
+            {/* Descrição gerada pela IA */}
+            <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto">
+              {isLoadingDescription ? (
+                <span className="inline-flex items-center">
+                  <span>Carregando descrição</span>
+                  <span className="ml-2 w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></span>
+                </span>
+              ) : (
+                heroDescription
+              )}
+            </p>
           </div>
 
-          <form className="flex flex-col md:flex-row items-center gap-2" onSubmit={handleSearchSubmit}>
-            <div className="relative w-full md:w-auto">
-              <select 
-                value={selectedType}
-                onChange={(e) => setSelectedType(e.target.value)}
-                className="w-full md:w-52 appearance-none bg-white border border-gray-300 rounded-md px-4 py-3 pr-8 focus:outline-none focus:ring-2 focus:ring-brand-red text-brand-dark"
-              >
-                {propertyOptions[activeTab].map(type => (
-                  <option key={type} value={type}>{type}</option>
-                ))}
-              </select>
-              <ChevronDownIcon className="w-5 h-5 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          {/* Tabs minimalistas */}
+          <div className="flex justify-center mb-8 sm:mb-12">
+            <div className="flex bg-gray-100 rounded-xl p-1">
+              {(['venda', 'aluguel', 'temporada'] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => onTabChange(tab)}
+                  className={`px-6 sm:px-8 py-3 rounded-lg font-semibold text-sm sm:text-base transition-all duration-300 ${
+                    activeTab === tab
+                      ? tab === 'aluguel' 
+                        ? 'bg-blue-900 text-white'
+                        : 'bg-red-600 text-white'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  {t(`hero.tabs.${tab}`)}
+                </button>
+              ))}
             </div>
-            <div className="relative w-full md:flex-grow" ref={searchContainerRef}>
-              <SearchIcon className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 z-10"/>
-              <input 
-                type="text" 
-                placeholder={t('hero.locationPlaceholder')}
-                className="w-full px-10 py-3 rounded-md text-brand-dark border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-red"
-                onFocus={() => setIsDropdownOpen(true)}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              {isDropdownOpen && (
-                <div className="absolute top-full left-0 w-full bg-white border border-gray-200 rounded-b-md shadow-lg z-20 text-left">
-                   <button 
+          </div>
+
+          {/* Formulário de busca minimalista */}
+          <div className="max-w-4xl mx-auto">
+            <form onSubmit={handleSearchSubmit} className="bg-white border-2 border-gray-200 rounded-2xl p-4 sm:p-6 shadow-lg">
+              <div className="flex flex-col lg:flex-row gap-4">
+                {/* Seletor de tipo */}
+                <div className="relative flex-shrink-0" ref={searchContainerRef}>
+                  <button
                     type="button"
-                    onClick={handleDrawOnMapClick}
-                    className="w-full flex items-center px-4 py-3 text-brand-dark hover:bg-gray-100 transition-colors duration-200"
+                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                    className="w-full lg:w-auto flex items-center justify-between px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 transition-all duration-300 hover:border-gray-300 min-w-[160px]"
                   >
-                    <DrawIcon className="w-5 h-5 mr-3 text-brand-gray"/>
-                    <span>{t('hero.drawOnMap')}</span>
+                    <span className="font-medium text-gray-700">{selectedType}</span>
+                    <ChevronDownIcon className={`w-4 h-4 text-gray-500 transition-transform duration-300 ${isDropdownOpen ? 'rotate-180' : ''}`} />
                   </button>
-                  <button 
-                    type="button"
-                    onClick={handleSearchNearMe}
-                    disabled={isSearchingNearMe}
-                    className="w-full flex items-center px-4 py-3 text-brand-dark hover:bg-gray-100 transition-colors duration-200 disabled:opacity-50 disabled:cursor-wait"
-                  >
-                    <GeoIcon className="w-5 h-5 mr-3 text-brand-gray"/>
-                    <span>{isSearchingNearMe ? t('hero.loadingLocation') : t('hero.searchNearMe')}</span>
-                  </button>
+                  
+                  {isDropdownOpen && (
+                    <div className="absolute top-full left-0 right-0 lg:right-auto lg:w-48 mt-2 bg-white rounded-xl shadow-xl border border-gray-200 z-20 overflow-hidden">
+                      {propertyOptions[activeTab].map((type) => (
+                        <button
+                          key={type}
+                          type="button"
+                          onClick={() => {
+                            setSelectedType(type);
+                            setIsDropdownOpen(false);
+                          }}
+                          className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors duration-200 text-gray-700"
+                        >
+                          {type}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              )}
+
+                {/* Campo de busca */}
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder={t('hero.searchPlaceholder')}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-red-600 focus:ring-2 focus:ring-red-100 transition-all duration-300 text-gray-700 placeholder-gray-400"
+                  />
+                </div>
+
+                {/* Botão de busca */}
+                <button
+                  type="submit"
+                  className="flex items-center justify-center px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold transition-all duration-300"
+                >
+                  <SearchIcon className="w-5 h-5 mr-2" />
+                  <span className="hidden sm:inline">{t('hero.searchButton')}</span>
+                  <span className="sm:hidden">Buscar</span>
+                </button>
+              </div>
+            </form>
+
+            {/* Botões de ação minimalistas */}
+            <div className="flex flex-col sm:flex-row gap-4 mt-8 justify-center">
+              <button
+                onClick={onDrawOnMapClick}
+                className="flex items-center justify-center px-6 py-3 border-2 border-blue-900 text-blue-900 hover:bg-blue-900 hover:text-white rounded-xl font-semibold transition-all duration-300"
+              >
+                <DrawIcon className="w-5 h-5 mr-3" />
+                {t('hero.drawOnMap')}
+              </button>
+
+              <button
+                onClick={onSearchNearMe}
+                disabled={isSearchingNearMe}
+                className="flex items-center justify-center px-6 py-3 border-2 border-gray-300 text-gray-700 hover:border-blue-900 hover:text-blue-900 rounded-xl font-semibold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSearchingNearMe ? (
+                  <>
+                    <div className="w-5 h-5 mr-3 border-2 border-blue-900 border-t-transparent rounded-full animate-spin"></div>
+                    {t('hero.searching')}
+                  </>
+                ) : (
+                  <>
+                    <GeoIcon className="w-5 h-5 mr-3" />
+                    {t('hero.searchNearMe')}
+                  </>
+                )}
+              </button>
             </div>
-            <button 
-              type="submit"
-              className="w-full md:w-auto bg-brand-red hover:opacity-90 text-white font-bold py-3 px-10 rounded-md transition duration-300"
-            >
-              {t('hero.searchButton')}
-            </button>
-          </form>
+          </div>
         </div>
       </div>
     </div>

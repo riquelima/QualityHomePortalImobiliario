@@ -1,26 +1,34 @@
 
 import React from 'react';
 
-const BedIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-    strokeWidth={2}
-    {...props}
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+interface BedIconProps extends React.HTMLAttributes<HTMLImageElement> {
+  className?: string;
+}
+
+const BedIcon: React.FC<BedIconProps> = ({ className, style, ...props }) => {
+  // Função para converter classe de cor em filtro CSS
+  const getColorFilter = (className: string) => {
+    if (className?.includes('text-red-600')) {
+      return 'brightness(0) saturate(100%) invert(17%) sepia(95%) saturate(7471%) hue-rotate(356deg) brightness(91%) contrast(135%)';
+    }
+    if (className?.includes('text-blue-900')) {
+      return 'brightness(0) saturate(100%) invert(12%) sepia(87%) saturate(4466%) hue-rotate(224deg) brightness(89%) contrast(107%)';
+    }
+    return 'brightness(0) saturate(100%)'; // Preto por padrão
+  };
+
+  return (
+    <img
+      src="https://static.thenounproject.com/png/bedroom-icon-7701005-512.png"
+      alt="Quartos"
+      className={className}
+      style={{ 
+        filter: getColorFilter(className || ''),
+        ...style 
+      }}
+      {...props}
     />
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      d="M18 14v-4c0-1.105-.895-2-2-2h-4a2 2 0 00-2 2v4"
-    />
-  </svg>
-);
+  );
+};
 
 export default BedIcon;
