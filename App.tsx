@@ -9,14 +9,15 @@ import GeolocationErrorModal from './components/GeolocationErrorModal';
 import InitialGeolocationModal from './components/InitialGeolocationModal';
 import SearchResultsPage from './components/SearchResultsPage';
 import PropertyDetailPage from './components/PropertyDetailPage';
-import MyAdsPage from './components/MyAdsPage';
 import SystemModal from './components/SystemModal';
 import AllListingsPage from './components/AllListingsPage';
 import ExplorePage from './components/ExplorePage';
 import GuideToSellPage from './components/GuideToSellPage';
 import DocumentsForSalePage from './components/DocumentsForSalePage';
 import SplashScreen from './components/SplashScreen';
-import AdminLoginPage from './components/AdminLoginPage';
+import AdminLoginPage from './components/admin/AdminLoginPage';
+import AdminLayout from './components/admin/AdminLayout';
+import PublishPropertyPage from './pages/PublishPropertyPage';
 import { supabase } from './supabaseClient';
 import type { Property, Media, User } from './types';
 import { useLanguage } from './contexts/LanguageContext';
@@ -25,7 +26,7 @@ import LockIcon from './components/icons/LockIcon';
 import SpinnerIcon from './components/icons/SpinnerIcon';
 
 interface PageState {
-  page: 'home' | 'map' | 'publish-journey' | 'searchResults' | 'propertyDetail' | 'edit-journey' | 'allListings' | 'guideToSell' | 'documentsForSale' | 'adminLogin' | 'adminDashboard' | 'explore';
+  page: 'home' | 'map' | 'publish-journey' | 'searchResults' | 'propertyDetail' | 'edit-journey' | 'allListings' | 'guideToSell' | 'documentsForSale' | 'adminLogin' | 'adminDashboard' | 'explore' | 'publish';
   userLocation: { lat: number; lng: number } | null;
   searchQuery?: string;
   propertyId?: number;
@@ -133,6 +134,19 @@ const App: React.FC = () => {
   
   const [modalConfig, setModalConfig] = useState<ModalConfig>({ isOpen: false, type: 'success', title: '', message: '' });
 
+  // Error state management
+  const [errorState, setErrorState] = useState<{
+    hasError: boolean;
+    errorType: 'network' | 'data' | 'auth' | 'general';
+    errorMessage: string;
+    retryAction?: () => void;
+  }>({
+    hasError: false,
+    errorType: 'general',
+    errorMessage: '',
+    retryAction: undefined
+  });
+
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
   const [adminUser, setAdminUser] = useState<User | null>(null);
 
@@ -154,51 +168,119 @@ const App: React.FC = () => {
     }));
   };
 
+  // Error handling helper
+  const handleError = useCallback((
+    error: any, 
+    errorType: 'network' | 'data' | 'auth' | 'general' = 'general',
+    retryAction?: () => void,
+    showModal: boolean = true
+  ) => {
+    console.error(`${errorType} error:`, error);
+    
+    let errorMessage = t('systemModal.generalError');
+    
+    switch (errorType) {
+      case 'network':
+        errorMessage = t('systemModal.networkError');
+        break;
+      case 'data':
+        errorMessage = t('systemModal.dataError');
+        break;
+      case 'auth':
+        errorMessage = t('systemModal.authError');
+        break;
+      default:
+        errorMessage = error?.message || t('systemModal.generalError');
+    }
+
+    setErrorState({
+      hasError: true,
+      errorType,
+      errorMessage,
+      retryAction
+    });
+
+    if (showModal) {
+      setModalConfig({
+        isOpen: true,
+        type: 'error',
+        title: t('systemModal.errorTitle'),
+        message: errorMessage,
+        onConfirm: retryAction
+      });
+    }
+  }, [t]);
+
+  const clearError = useCallback(() => {
+    setErrorState({
+      hasError: false,
+      errorType: 'general',
+      errorMessage: '',
+      retryAction: undefined
+    });
+  }, []);
+
   const fetchFeaturedProperties = useCallback(async () => {
     try {
+      clearError(); // Clear any previous errors
       const { data, error } = await supabase
         .from('imoveis')
         .select('*, midias_imovel (id, url, tipo)')
         .eq('status', 'ativo')
-        .order('id', { ascending: false })
+        .order('data_publicacao', { ascending: false })
         .limit(PAGE_SIZE);
 
       if (error) {
-        console.error("Error fetching featured properties:", error);
+        handleError(error, 'data', () => fetchFeaturedProperties(), false);
         setFeaturedProperties([]); // Set empty array instead of returning early
         return;
       }
       
       setFeaturedProperties(formatProperties(data || []));
     } catch (error) {
-      console.error("Unexpected error fetching featured properties:", error);
+      handleError(error, 'network', () => fetchFeaturedProperties(), false);
       setFeaturedProperties([]); // Ensure we always set some value
     }
-  }, []);
+  }, [handleError, clearError]);
 
-  const fetchAllProperties = useCallback(async () => {
+  const fetchAllProperties = useCallback(async (loadMore = false) => {
     try {
+      if (!loadMore) clearError(); // Clear errors only on initial load
+      const currentCount = loadMore ? allProperties.length : 0;
       const { data, error } = await supabase
         .from('imoveis')
         .select('*, midias_imovel (id, url, tipo)')
-        .order('id', { ascending: false });
+        .order('data_publicacao', { ascending: false })
+        .range(currentCount, currentCount + PAGE_SIZE - 1);
 
       if (error) {
-        console.error("Error fetching all properties:", error);
-        setModalConfig({ isOpen: true, type: 'error', title: t('systemModal.errorTitle'), message: t('systemModal.fetchError') });
-        setAllProperties([]); // Set empty array even on error
+        const retryAction = () => fetchAllProperties(loadMore);
+        handleError(error, 'data', retryAction, !loadMore);
+        if (!loadMore) {
+          setAllProperties([]); // Set empty array even on error
+        }
         setAreAllPropertiesLoaded(true); // Mark as loaded to prevent infinite loading
         return;
       }
       
-      setAllProperties(formatProperties(data || []));
-      setAreAllPropertiesLoaded(true);
+      const newProperties = formatProperties(data || []);
+      if (loadMore) {
+        setAllProperties(prev => [...prev, ...newProperties]);
+      } else {
+        setAllProperties(newProperties);
+      }
+      
+      // If we got fewer properties than PAGE_SIZE, we've reached the end
+      setAreAllPropertiesLoaded(newProperties.length < PAGE_SIZE);
     } catch (error) {
-      console.error("Unexpected error fetching all properties:", error);
-      setAllProperties([]); // Ensure we always set some value
+      const retryAction = () => fetchAllProperties(loadMore);
+      handleError(error, 'network', retryAction, !loadMore);
+      if (!loadMore) {
+        setAllProperties([]); // Ensure we always set some value
+      }
       setAreAllPropertiesLoaded(true); // Mark as loaded to prevent infinite loading
     }
-  }, [t]);
+  }, [t, allProperties.length, handleError, clearError]);
   
   const refreshAllData = useCallback(async () => {
     // Fetch all first to get the freshest full list, then update the featured list from it.
@@ -229,6 +311,26 @@ const App: React.FC = () => {
       } else {
           setPageState(prev => ({ ...prev, page: 'home' }));
       }
+  }, []);
+
+  // useEffect separado para verificar sessão de admin salva
+  useEffect(() => {
+    const savedAdminSession = localStorage.getItem('adminLoggedIn');
+    if (savedAdminSession === 'true') {
+      setIsAdminLoggedIn(true);
+      setAdminUser({
+        id: 'admin-quallity',
+        email: 'quallity@admin.com',
+        user_metadata: {},
+        app_metadata: {},
+        aud: 'authenticated',
+        created_at: new Date().toISOString()
+      });
+      // Usar setTimeout para evitar problemas de renderização
+      setTimeout(() => {
+        navigateTo('adminDashboard');
+      }, 0);
+    }
   }, []);
 
   useEffect(() => {
@@ -274,20 +376,6 @@ const App: React.FC = () => {
 
     if (typeof window !== 'undefined') {
         (window as any).seedDatabase = seedDatabase;
-    }
-
-    // Verificar se há uma sessão de admin salva no localStorage
-    const savedAdminSession = localStorage.getItem('adminLoggedIn');
-    if (savedAdminSession === 'true') {
-      setIsAdminLoggedIn(true);
-      setAdminUser({
-        id: 'admin-quallity',
-        email: 'quallity@admin.com',
-        user_metadata: {},
-        app_metadata: {},
-        aud: 'authenticated',
-        created_at: new Date().toISOString()
-      });
     }
 
     const propertyChanges = supabase
@@ -346,38 +434,56 @@ const App: React.FC = () => {
   const handleNavigateToRent = () => navigateTo('explore', { exploreOperation: 'aluguel' });
   const handleNavigateToSeason = () => navigateTo('explore', { exploreOperation: 'temporada' });
 
-  const handleAdminLogin = (success: boolean) => {
-    console.log('handleAdminLogin called with success:', success);
-    if (success) {
-      console.log('Login successful, setting up admin session...');
-      // Salvar sessão no localStorage
-      localStorage.setItem('adminLoggedIn', 'true');
-      console.log('localStorage set');
-      setIsAdminLoggedIn(true);
-      console.log('isAdminLoggedIn set to true');
-      setAdminUser({
-        id: 'admin-quallity',
-        email: 'quallity@admin.com',
-        user_metadata: {},
-        app_metadata: {},
-        aud: 'authenticated',
-        created_at: new Date().toISOString()
-      });
-      console.log('adminUser set');
-      console.log('Navigating to adminDashboard...');
-      navigateTo('adminDashboard');
-      console.log('Navigation completed');
-    } else {
-      console.log('Login failed');
+  const loadMoreProperties = useCallback(async () => {
+    if (!areAllPropertiesLoaded && !isLoading) {
+      setIsLoading(true);
+      try {
+        await fetchAllProperties(true);
+      } catch (error) {
+        handleError(error, 'network', () => loadMoreProperties(), true);
+      } finally {
+        setIsLoading(false);
+      }
     }
+  }, [areAllPropertiesLoaded, isLoading, fetchAllProperties, handleError]);
+
+  const handleAdminLogin = () => {
+    console.log('handleAdminLogin called - admin authenticated successfully');
+    setIsAdminLoggedIn(true);
+    console.log('isAdminLoggedIn set to true');
+    
+    // Salvar no localStorage
+    localStorage.setItem('adminLoggedIn', 'true');
+    
+    // Criar um usuário admin compatível com o tipo User existente
+    setAdminUser({
+      id: 'admin-authenticated',
+      email: 'admin@qualityhome.com',
+      user_metadata: {},
+      app_metadata: {},
+      aud: 'authenticated',
+      created_at: new Date().toISOString()
+    });
+    console.log('adminUser set');
+    console.log('Navigating to adminDashboard...');
+    
+    // Usar setTimeout para evitar problemas de renderização
+    setTimeout(() => {
+      navigateTo('adminDashboard');
+    }, 0);
+    console.log('Navigation completed');
   };
   
   const handleAdminLogout = () => {
-    // Remover sessão do localStorage
-    localStorage.removeItem('adminLoggedIn');
+    console.log('Admin logout initiated');
     setIsAdminLoggedIn(false);
     setAdminUser(null);
+    
+    // Remover do localStorage
+    localStorage.removeItem('adminLoggedIn');
+    
     navigateTo('home');
+    console.log('Admin logout completed');
   };
 
   const handleShareProperty = (propertyId: number) => {
@@ -458,6 +564,7 @@ const App: React.FC = () => {
       onNavigateToSeason: handleNavigateToSeason,
       navigateToGuideToSell: () => navigateTo('guideToSell'),
       navigateToDocumentsForSale: () => navigateTo('documentsForSale'),
+      onNavigateToPublish: () => navigateTo('publish'),
       isAdminLoggedIn,
       onAdminLogout: handleAdminLogout,
       onNavigateToAdminDashboard: () => navigateTo('adminDashboard'),
@@ -523,34 +630,35 @@ const App: React.FC = () => {
         if (!selectedProperty) return <div>{t('listings.noResults.title')}</div>;
         return <PropertyDetailPage property={selectedProperty} onBack={() => navigateTo('home')} onShare={handleShareProperty} {...commonHeaderProps} onNavigateToAllListings={() => navigateTo('allListings')} />;
       case 'allListings':
-        return <AllListingsPage properties={publicProperties} onViewDetails={handleViewDetails} onShare={handleShareProperty} onSearchSubmit={handleSearchSubmit} deviceLocation={deviceLocation} onGeolocationError={() => setGeolocationErrorModalOpen(true)} onBack={() => navigateTo('home')} {...commonHeaderProps} onNavigateToAllListings={() => navigateTo('allListings')} />;
+        return <AllListingsPage properties={publicProperties} onViewDetails={handleViewDetails} onShare={handleShareProperty} onSearchSubmit={handleSearchSubmit} deviceLocation={deviceLocation} onGeolocationError={() => setGeolocationErrorModalOpen(true)} onBack={() => navigateTo('home')} {...commonHeaderProps} onNavigateToAllListings={() => navigateTo('allListings')} loadMoreProperties={loadMoreProperties} hasMoreProperties={!areAllPropertiesLoaded} isLoadingMore={isLoading} />;
       case 'explore':
-        return <ExplorePage initialOperation={pageState.exploreOperation} properties={publicProperties} onViewDetails={handleViewDetails} onShare={handleShareProperty} onSearchSubmit={handleSearchSubmit} deviceLocation={deviceLocation} onGeolocationError={() => setGeolocationErrorModalOpen(true)} onBack={() => navigateTo('home')} {...commonHeaderProps} />;
+          return <ExplorePage initialOperation={pageState.exploreOperation} properties={publicProperties} onViewDetails={handleViewDetails} onShare={handleShareProperty} onSearchSubmit={handleSearchSubmit} deviceLocation={deviceLocation} onGeolocationError={() => setGeolocationErrorModalOpen(true)} onBack={() => navigateTo('home')} {...commonHeaderProps} loadMoreProperties={loadMoreProperties} hasMoreProperties={!areAllPropertiesLoaded} isLoadingMore={isLoading} />;
       case 'guideToSell':
         return <GuideToSellPage onBack={() => navigateTo('home')} {...commonHeaderProps} onNavigateToAllListings={() => navigateTo('allListings')} />;
       case 'documentsForSale':
         return <DocumentsForSalePage onBack={() => navigateTo('home')} {...commonHeaderProps} onNavigateToAllListings={() => navigateTo('allListings')} />;
       case 'adminLogin':
-        return <AdminLoginPage onAdminLogin={handleAdminLogin} />;
+        return <AdminLoginPage onLogin={handleAdminLogin} />;
       case 'adminDashboard':
         console.log('Rendering adminDashboard, adminUser:', adminUser, 'adminProperties:', adminProperties);
-        return <MyAdsPage 
-                  showSuccessBanner={pageState.showAdminSuccessBanner}
-                  onDismissSuccessBanner={() => setPageState(prev => ({ ...prev, showAdminSuccessBanner: undefined }))}
-                  onBack={() => navigateTo('home')} 
-                  properties={adminProperties} 
-                  onViewDetails={handleViewDetails} 
-                  onDeleteProperty={confirmDeleteProperty}
-                  onEditProperty={(prop) => navigateTo('edit-journey', { propertyToEdit: prop })}
-                  onPublishClick={() => navigateTo('publish-journey')}
-                  onAdminLogout={handleAdminLogout}
-                  onShareProperty={handleShareProperty}
-                  adminUser={adminUser}
-                  onAddProperty={refreshAllData}
-                  onUpdateProperty={refreshAllData}
-                  onPublishError={(msg) => setModalConfig({isOpen: true, type: 'error', title: 'Error', message: msg})}
-                  propertyToEdit={pageState.propertyToEdit}
-                />;
+        return (
+          <AdminLayout 
+            onViewDetails={handleViewDetails} 
+            onEditProperty={(prop) => setPageState(prev => ({ ...prev, propertyToEdit: prop }))}
+            onPublishClick={() => navigateTo('publish-journey')}
+            onAdminLogout={handleAdminLogout}
+            onShareProperty={handleShareProperty}
+            adminUser={adminUser}
+            onAddProperty={refreshAllData}
+            onUpdateProperty={refreshAllData}
+            onPublishError={(msg) => setModalConfig({isOpen: true, type: 'error', title: 'Error', message: msg})}
+            onPublishSuccess={(status) => setPageState(prev => ({ ...prev, showAdminSuccessBanner: status }))}
+            propertyToEdit={pageState.propertyToEdit}
+            onBack={() => navigateTo('home')}
+          />
+        );
+      case 'publish':
+        return <PublishPropertyPage />;
       default:
         const homeHeaderProps = {
             ...commonHeaderProps,
