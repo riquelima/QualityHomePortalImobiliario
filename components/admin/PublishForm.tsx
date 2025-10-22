@@ -1,694 +1,952 @@
-import React, { useState, useCallback } from 'react';
-import { useLanguage } from '../../contexts/LanguageContext';
-import type { Property, User } from '../../types';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../../supabaseClient';
-import { PRODUCTION_URL, QUALLITY_HOME_USER_ID } from '../../config';
-import PlusIcon from '../icons/PlusIcon';
-import MinusIcon from '../icons/MinusIcon';
-import PhotoIcon from '../icons/PhotoIcon';
-import CloseIcon from '../icons/CloseIcon';
-import SpinnerIcon from '../icons/SpinnerIcon';
-import AIIcon from '../icons/AIIcon';
-import { GoogleGenAI } from '@google/genai';
+import { useLanguage } from '../../contexts/LanguageContext';
 
-interface PublishFormProps {
-  onBack: () => void;
-  onSuccess: (status: 'published' | 'updated') => void;
-  onError: (message: string) => void;
-  propertyToEdit?: Property | null;
-  adminUser: User | null;
+interface PropertyFormData {
+  titulo: string;
+  descricao: string;
+  endereco_completo: string;
+  cidade: string;
+  rua: string;
+  numero: string;
+  preco: number;
+  tipo_operacao: 'venda' | 'aluguel' | 'temporada';
+  tipo_imovel: string;
+  quartos: number;
+  banheiros: number;
+  area_bruta: number;
+  area_util: number;
+  possui_elevador: boolean;
+  taxa_condominio: number;
+  caracteristicas_imovel: string[];
+  caracteristicas_condominio: string[];
+  situacao_ocupacao: string;
+  valor_iptu: number;
+  aceita_financiamento: boolean;
+  condicoes_aluguel: string[];
+  permite_animais: boolean;
+  minimo_diarias: number;
+  maximo_hospedes: number;
+  taxa_limpeza: number;
+  datas_disponiveis: string[];
+  topografia: string;
+  zoneamento: string;
+  murado: boolean;
+  em_condominio: boolean;
+  images: any[];
+  videos: any[];
 }
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || 'AIzaSyCsX9l10XCu3TtSCU1BSx-qOYrwUKYw2xk' });
-
-const generateContentWithRetry = async (prompt: string, maxRetries = 3) => {
-  let attempt = 0;
-  while (attempt < maxRetries) {
-    try {
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: { parts: [{ text: prompt }] },
-      });
-      return response;
-    } catch (error) {
-      attempt++;
-      if (attempt >= maxRetries) throw error;
-      const delay = Math.pow(2, attempt) * 1000;
-      await new Promise(resolve => setTimeout(resolve, delay));
-    }
-  }
-  throw new Error("Failed to generate content after multiple retries.");
-};
-
-const formatPrice = (price: number | null | undefined): string => {
-  if (price === null || price === undefined || isNaN(price)) return '';
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  }).format(price);
-};
-
-const unformatCurrencyForSubmission = (value: string): number | null => {
-  if (!value || typeof value !== 'string') return null;
-  const numberString = value.replace(/[R$\s.]/g, '').replace(',', '.');
-  const numberValue = parseFloat(numberString);
-  return isNaN(numberValue) ? null : numberValue;
-};
-
-export const PublishForm: React.FC<PublishFormProps> = ({
-  onBack,
-  onSuccess,
-  onError,
-  propertyToEdit,
-  adminUser
-}) => {
+const PublishForm: React.FC = () => {
   const { t } = useLanguage();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
-
-  const [formData, setFormData] = useState({
-    propertyType: propertyToEdit?.tipo_imovel || 'Apartamento',
-    operation: propertyToEdit?.tipo_operacao || 'venda',
-    city: propertyToEdit?.cidade || '',
-    street: propertyToEdit?.rua || '',
-    number: propertyToEdit?.numero || '',
-    title: propertyToEdit?.titulo || '',
-    description: propertyToEdit?.descricao || '',
-    grossArea: propertyToEdit?.area_bruta ? String(propertyToEdit.area_bruta) : '',
-    netArea: propertyToEdit?.area_util ? String(propertyToEdit.area_util) : '',
-    bedrooms: propertyToEdit?.quartos || 1,
-    bathrooms: propertyToEdit?.banheiros || 1,
-    salePrice: propertyToEdit?.tipo_operacao === 'venda' ? formatPrice(propertyToEdit.preco) : '',
-    monthlyRent: propertyToEdit?.tipo_operacao === 'aluguel' ? formatPrice(propertyToEdit.preco) : '',
-    dailyRate: propertyToEdit?.tipo_operacao === 'temporada' ? formatPrice(propertyToEdit.preco) : '',
-    condoFee: propertyToEdit?.taxa_condominio ? formatPrice(propertyToEdit.taxa_condominio) : '',
-    iptuAnnual: propertyToEdit?.valor_iptu && propertyToEdit.tipo_operacao === 'venda' ? formatPrice(propertyToEdit.valor_iptu) : '',
-    iptuMonthly: propertyToEdit?.valor_iptu && propertyToEdit.tipo_operacao !== 'venda' ? formatPrice(propertyToEdit.valor_iptu) : '',
-    homeFeatures: propertyToEdit?.caracteristicas_imovel || [],
-    buildingFeatures: propertyToEdit?.caracteristicas_condominio || [],
-    hasElevator: propertyToEdit?.possui_elevador ?? null,
-    acceptsFinancing: propertyToEdit?.aceita_financiamento ?? null,
-    occupationSituation: propertyToEdit?.situacao_ocupacao || 'vacant',
-    coordinates: propertyToEdit ? { lat: propertyToEdit.latitude, lng: propertyToEdit.longitude } : null,
+  const [submitMessage, setSubmitMessage] = useState('');
+  
+  const [formData, setFormData] = useState<PropertyFormData>({
+    titulo: '',
+    descricao: '',
+    endereco_completo: '',
+    cidade: '',
+    rua: '',
+    numero: '',
+    preco: 0,
+    tipo_operacao: 'venda',
+    tipo_imovel: '',
+    quartos: 0,
+    banheiros: 0,
+    area_bruta: 0,
+    area_util: 0,
+    possui_elevador: false,
+    taxa_condominio: 0,
+    caracteristicas_imovel: [],
+    caracteristicas_condominio: [],
+    situacao_ocupacao: '',
+    valor_iptu: 0,
+    aceita_financiamento: false,
+    condicoes_aluguel: [],
+    permite_animais: false,
+    minimo_diarias: 1,
+    maximo_hospedes: 1,
+    taxa_limpeza: 0,
+    datas_disponiveis: [],
+    topografia: '',
+    zoneamento: '',
+    murado: false,
+    em_condominio: false,
+    images: [],
+    videos: []
   });
 
-  const handleInputChange = (field: string, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [videoFiles, setVideoFiles] = useState<File[]>([]);
 
-  const handleFeatureToggle = (feature: string, type: 'home' | 'building') => {
-    const field = type === 'home' ? 'homeFeatures' : 'buildingFeatures';
+  const tiposImovel = [
+    'Apartamento', 'Casa', 'Sobrado', 'Cobertura', 'Studio', 'Loft',
+    'Terreno', 'Chácara', 'Sítio', 'Fazenda', 'Comercial', 'Industrial'
+  ];
+
+  const caracteristicasImovelOptions = [
+    'Varanda', 'Sacada', 'Churrasqueira', 'Lareira', 'Jardim',
+    'Quintal', 'Área de serviço', 'Despensa', 'Closet', 'Suíte',
+    'Hidromassagem', 'Ar condicionado', 'Aquecimento', 'Mobiliado'
+  ];
+
+  const caracteristicasCondominioOptions = [
+    'Piscina', 'Academia', 'Salão de festas', 'Playground', 'Quadra',
+    'Sauna', 'Spa', 'Cinema', 'Brinquedoteca', 'Coworking',
+    'Pet place', 'Bike place', 'Portaria 24h', 'Segurança'
+  ];
+
+  const condicoesAluguelOptions = [
+    'Sem fiador', 'Com fiador', 'Seguro fiança', 'Depósito caução',
+    'Renda comprovada', 'Sem comprovação de renda'
+  ];
+
+  const handleInputChange = (field: keyof PropertyFormData, value: any) => {
     setFormData(prev => ({
       ...prev,
-      [field]: prev[field].includes(feature)
-        ? prev[field].filter(f => f !== feature)
-        : [...prev[field], feature]
+      [field]: value
     }));
   };
 
-  const generateAIDescription = useCallback(async () => {
-    if (!formData.title) return;
-    
-    setIsGeneratingDescription(true);
-    try {
-      const details = `
-        Tipo: ${formData.propertyType}
-        Operação: ${formData.operation}
-        Localização: ${formData.city}, ${formData.street}, ${formData.number}
-        Quartos: ${formData.bedrooms}
-        Banheiros: ${formData.bathrooms}
-        Área Bruta: ${formData.grossArea}m²
-        Área Útil: ${formData.netArea}m²
-        Características: ${formData.homeFeatures.join(', ')}
-        Condomínio: ${formData.buildingFeatures.join(', ')}
-      `;
-      
-      const prompt = `Crie uma descrição atrativa para este imóvel: ${details}. Mantenha profissional e convidativa.`;
-      const response = await generateContentWithRetry(prompt);
-      
-      if (response?.text) {
-        handleInputChange('description', response.text.trim());
-      }
-    } catch (error) {
-      console.error("Erro ao gerar descrição:", error);
-    } finally {
-      setIsGeneratingDescription(false);
-    }
-  }, [formData]);
-
-  const handleFileUpload = (files: FileList) => {
-    const newFiles = Array.from(files).slice(0, 10 - uploadedFiles.length);
-    setUploadedFiles(prev => [...prev, ...newFiles]);
+  const handleArrayChange = (field: keyof PropertyFormData, value: string, checked: boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: checked 
+        ? [...(prev[field] as string[]), value]
+        : (prev[field] as string[]).filter(item => item !== value)
+    }));
   };
 
-  const removeFile = (index: number) => {
-    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const files = Array.from(e.target.files);
+      setImageFiles(prev => [...prev, ...files]);
+    }
+  };
+
+  const handleVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const files = Array.from(e.target.files);
+      setVideoFiles(prev => [...prev, ...files]);
+    }
+  };
+
+  const uploadFiles = async (files: File[], bucket: string) => {
+    const uploadedUrls = [];
+    
+    for (const file of files) {
+      const fileName = `${Date.now()}_${file.name}`;
+      const { data, error } = await supabase.storage
+        .from(bucket)
+        .upload(fileName, file);
+      
+      if (error) {
+        console.error('Erro no upload:', error);
+        continue;
+      }
+      
+      const { data: { publicUrl } } = supabase.storage
+        .from(bucket)
+        .getPublicUrl(fileName);
+      
+      uploadedUrls.push(publicUrl);
+    }
+    
+    return uploadedUrls;
+  };
+
+  const validateStep = (step: number): boolean => {
+    switch (step) {
+      case 1:
+        return !!(formData.titulo && formData.tipo_operacao && formData.tipo_imovel && formData.preco);
+      case 2:
+        return !!(formData.endereco_completo && formData.cidade);
+      case 3:
+        return formData.quartos >= 0 && formData.banheiros >= 0;
+      case 4:
+        return true; // Características são opcionais
+      case 5:
+        return true; // Mídias são opcionais
+      default:
+        return true;
+    }
   };
 
   const handleSubmit = async () => {
-    if (!formData.title || !formData.description || !formData.city) {
-      onError('Por favor, preencha todos os campos obrigatórios.');
+    if (!validateStep(currentStep)) {
+      setSubmitMessage('Por favor, preencha todos os campos obrigatórios.');
       return;
     }
 
     setIsSubmitting(true);
+    setSubmitMessage('');
+
     try {
       // Upload de imagens
-      const uploadedUrls: Array<{ url: string; type: string }> = [];
-      
-      for (const file of uploadedFiles) {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Date.now()}-${Math.random()}.${fileExt}`;
-        const filePath = `property-images/${fileName}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from('property-images')
-          .upload(filePath, file);
-
-        if (uploadError) throw uploadError;
-
-        const { data: { publicUrl } } = supabase.storage
-          .from('property-images')
-          .getPublicUrl(filePath);
-
-        uploadedUrls.push({
-          url: publicUrl,
-          type: file.type.startsWith('video/') ? 'video' : 'image'
-        });
+      let imageUrls = [];
+      if (imageFiles.length > 0) {
+        imageUrls = await uploadFiles(imageFiles, 'property-images');
       }
 
-      // Preparar dados para o banco
+      // Upload de vídeos
+      let videoUrls = [];
+      if (videoFiles.length > 0) {
+        videoUrls = await uploadFiles(videoFiles, 'property-videos');
+      }
+
+      // Obter usuário atual
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('Usuário não autenticado');
+      }
+
+      // Preparar dados para inserção
       const propertyData = {
-        tipo_imovel: formData.propertyType,
-        tipo_operacao: formData.operation,
-        titulo: formData.title,
-        descricao: formData.description,
-        cidade: formData.city,
-        rua: formData.street,
-        numero: formData.number,
-        endereco_completo: `${formData.street}, ${formData.number}, ${formData.city}`,
-        latitude: formData.coordinates?.lat || 0,
-        longitude: formData.coordinates?.lng || 0,
-        quartos: formData.bedrooms,
-        banheiros: formData.bathrooms,
-        area_bruta: formData.grossArea ? Number(formData.grossArea) : null,
-        area_util: formData.netArea ? Number(formData.netArea) : null,
-        preco: unformatCurrencyForSubmission(
-          formData.operation === 'venda' ? formData.salePrice :
-          formData.operation === 'aluguel' ? formData.monthlyRent : formData.dailyRate
-        ),
-        taxa_condominio: unformatCurrencyForSubmission(formData.condoFee),
-        valor_iptu: unformatCurrencyForSubmission(formData.iptuAnnual || formData.iptuMonthly),
-        caracteristicas_imovel: formData.homeFeatures,
-        caracteristicas_condominio: formData.buildingFeatures,
-        possui_elevador: formData.hasElevator,
-        aceita_financiamento: formData.acceptsFinancing,
-        situacao_ocupacao: formData.occupationSituation,
-        status: 'ativo',
-        usuario_id: QUALLITY_HOME_USER_ID
+        ...formData,
+        anunciante_id: user.id,
+        images: imageUrls.length > 0 ? imageUrls : null,
+        videos: videoUrls.length > 0 ? videoUrls : null,
+        status: 'ativo'
       };
 
-      if (propertyToEdit) {
-        // Atualizar propriedade existente
-        const { error } = await supabase
-          .from('imoveis')
-          .update(propertyData)
-          .eq('id', propertyToEdit.id);
-        
-        if (error) throw error;
-        
-        // Atualizar mídias se necessário
-        if (uploadedUrls.length > 0) {
-          const mediaToInsert = uploadedUrls.map(media => ({
-            imovel_id: propertyToEdit.id,
-            url: media.url,
-            tipo: media.type
-          }));
-          
-          const { error: mediaError } = await supabase
-            .from('midias_imovel')
-            .insert(mediaToInsert);
-          
-          if (mediaError) throw mediaError;
-        }
-        
-        onSuccess('updated');
-      } else {
-        // Criar nova propriedade
-        const { data: insertedProperty, error } = await supabase
-          .from('imoveis')
-          .insert(propertyData)
-          .select('id')
-          .single();
-        
-        if (error) throw error;
+      // Inserir propriedade
+      const { data, error } = await supabase
+        .from('imoveis')
+        .insert([propertyData])
+        .select()
+        .single();
 
-        // Gerar URL de compartilhamento
-        const shareUrl = `${PRODUCTION_URL}/?page=propertyDetail&propertyId=${insertedProperty.id}`;
-        await supabase
-          .from('imoveis')
-          .update({ share_url: shareUrl })
-          .eq('id', insertedProperty.id);
-
-        // Inserir mídias
-        if (uploadedUrls.length > 0) {
-          const mediaToInsert = uploadedUrls.map(media => ({
-            imovel_id: insertedProperty.id,
-            url: media.url,
-            tipo: media.type
-          }));
-          
-          const { error: mediaError } = await supabase
-            .from('midias_imovel')
-            .insert(mediaToInsert);
-          
-          if (mediaError) throw mediaError;
-        }
-        
-        onSuccess('published');
+      if (error) {
+        throw error;
       }
-    } catch (error: any) {
-      console.error('Erro ao salvar propriedade:', error);
-      onError(error.message || 'Erro ao salvar propriedade');
+
+      // Inserir mídias na tabela midias_imovel se necessário
+      if (imageUrls.length > 0) {
+        const mediaInserts = imageUrls.map((url, index) => ({
+          imovel_id: data.id,
+          url: url,
+          tipo: 'imagem',
+          ordem: index
+        }));
+
+        await supabase
+          .from('midias_imovel')
+          .insert(mediaInserts);
+      }
+
+      if (videoUrls.length > 0) {
+        const videoInserts = videoUrls.map((url, index) => ({
+          imovel_id: data.id,
+          url: url,
+          tipo: 'video',
+          ordem: index
+        }));
+
+        await supabase
+          .from('midias_imovel')
+          .insert(videoInserts);
+      }
+
+      setSubmitMessage('Anúncio publicado com sucesso!');
+      
+      // Reset form
+      setFormData({
+        titulo: '',
+        descricao: '',
+        endereco_completo: '',
+        cidade: '',
+        rua: '',
+        numero: '',
+        preco: 0,
+        tipo_operacao: 'venda',
+        tipo_imovel: '',
+        quartos: 0,
+        banheiros: 0,
+        area_bruta: 0,
+        area_util: 0,
+        possui_elevador: false,
+        taxa_condominio: 0,
+        caracteristicas_imovel: [],
+        caracteristicas_condominio: [],
+        situacao_ocupacao: '',
+        valor_iptu: 0,
+        aceita_financiamento: false,
+        condicoes_aluguel: [],
+        permite_animais: false,
+        minimo_diarias: 1,
+        maximo_hospedes: 1,
+        taxa_limpeza: 0,
+        datas_disponiveis: [],
+        topografia: '',
+        zoneamento: '',
+        murado: false,
+        em_condominio: false,
+        images: [],
+        videos: []
+      });
+      setImageFiles([]);
+      setVideoFiles([]);
+      setCurrentStep(1);
+
+    } catch (error) {
+      console.error('Erro ao publicar anúncio:', error);
+      setSubmitMessage('Erro ao publicar anúncio. Tente novamente.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, 3));
-  const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 1));
+  const nextStep = () => {
+    if (validateStep(currentStep)) {
+      setCurrentStep(prev => Math.min(prev + 1, 5));
+      setSubmitMessage('');
+    } else {
+      setSubmitMessage('Por favor, preencha todos os campos obrigatórios antes de continuar.');
+    }
+  };
+
+  const prevStep = () => {
+    setCurrentStep(prev => Math.max(prev - 1, 1));
+    setSubmitMessage('');
+  };
+
+  const renderStep1 = () => (
+    <div className="space-y-6">
+      <h3 className="text-xl font-semibold text-gray-800">Informações Básicas</h3>
+      
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Título do Anúncio *
+        </label>
+        <input
+          type="text"
+          value={formData.titulo}
+          onChange={(e) => handleInputChange('titulo', e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Ex: Apartamento 3 quartos com vista para o mar"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Tipo de Operação *
+        </label>
+        <select
+          value={formData.tipo_operacao}
+          onChange={(e) => handleInputChange('tipo_operacao', e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="venda">Venda</option>
+          <option value="aluguel">Aluguel</option>
+          <option value="temporada">Temporada</option>
+        </select>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Tipo de Imóvel *
+        </label>
+        <select
+          value={formData.tipo_imovel}
+          onChange={(e) => handleInputChange('tipo_imovel', e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="">Selecione o tipo</option>
+          {tiposImovel.map(tipo => (
+            <option key={tipo} value={tipo}>{tipo}</option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Preço (R$) *
+        </label>
+        <input
+          type="number"
+          value={formData.preco}
+          onChange={(e) => handleInputChange('preco', parseFloat(e.target.value) || 0)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="0"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Descrição
+        </label>
+        <textarea
+          value={formData.descricao}
+          onChange={(e) => handleInputChange('descricao', e.target.value)}
+          rows={4}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Descreva as principais características do imóvel..."
+        />
+      </div>
+    </div>
+  );
+
+  const renderStep2 = () => (
+    <div className="space-y-6">
+      <h3 className="text-xl font-semibold text-gray-800">Localização</h3>
+      
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Endereço Completo *
+        </label>
+        <input
+          type="text"
+          value={formData.endereco_completo}
+          onChange={(e) => handleInputChange('endereco_completo', e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Rua, número, bairro, cidade, estado"
+        />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Cidade *
+          </label>
+          <input
+            type="text"
+            value={formData.cidade}
+            onChange={(e) => handleInputChange('cidade', e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Nome da cidade"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Rua
+          </label>
+          <input
+            type="text"
+            value={formData.rua}
+            onChange={(e) => handleInputChange('rua', e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Nome da rua"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Número
+          </label>
+          <input
+            type="text"
+            value={formData.numero}
+            onChange={(e) => handleInputChange('numero', e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="123"
+          />
+        </div>
+
+
+      </div>
+    </div>
+  );
+
+  const renderStep3 = () => (
+    <div className="space-y-6">
+      <h3 className="text-xl font-semibold text-gray-800">Características do Imóvel</h3>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Quartos
+          </label>
+          <input
+            type="number"
+            value={formData.quartos}
+            onChange={(e) => handleInputChange('quartos', parseInt(e.target.value) || 0)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            min="0"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Banheiros
+          </label>
+          <input
+            type="number"
+            value={formData.banheiros}
+            onChange={(e) => handleInputChange('banheiros', parseInt(e.target.value) || 0)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            min="0"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Área Bruta (m²)
+          </label>
+          <input
+            type="number"
+            value={formData.area_bruta}
+            onChange={(e) => handleInputChange('area_bruta', parseInt(e.target.value) || 0)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            min="0"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Área Útil (m²)
+          </label>
+          <input
+            type="number"
+            value={formData.area_util}
+            onChange={(e) => handleInputChange('area_util', parseInt(e.target.value) || 0)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            min="0"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Taxa de Condomínio (R$)
+          </label>
+          <input
+            type="number"
+            value={formData.taxa_condominio}
+            onChange={(e) => handleInputChange('taxa_condominio', parseFloat(e.target.value) || 0)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            min="0"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Valor IPTU (R$)
+          </label>
+          <input
+            type="number"
+            value={formData.valor_iptu}
+            onChange={(e) => handleInputChange('valor_iptu', parseFloat(e.target.value) || 0)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            min="0"
+          />
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <div className="flex items-center">
+          <input
+            type="checkbox"
+            id="possui_elevador"
+            checked={formData.possui_elevador}
+            onChange={(e) => handleInputChange('possui_elevador', e.target.checked)}
+            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+          />
+          <label htmlFor="possui_elevador" className="ml-2 block text-sm text-gray-900">
+            Possui Elevador
+          </label>
+        </div>
+
+        <div className="flex items-center">
+          <input
+            type="checkbox"
+            id="aceita_financiamento"
+            checked={formData.aceita_financiamento}
+            onChange={(e) => handleInputChange('aceita_financiamento', e.target.checked)}
+            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+          />
+          <label htmlFor="aceita_financiamento" className="ml-2 block text-sm text-gray-900">
+            Aceita Financiamento
+          </label>
+        </div>
+
+        <div className="flex items-center">
+          <input
+            type="checkbox"
+            id="permite_animais"
+            checked={formData.permite_animais}
+            onChange={(e) => handleInputChange('permite_animais', e.target.checked)}
+            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+          />
+          <label htmlFor="permite_animais" className="ml-2 block text-sm text-gray-900">
+            Permite Animais
+          </label>
+        </div>
+
+        <div className="flex items-center">
+          <input
+            type="checkbox"
+            id="murado"
+            checked={formData.murado}
+            onChange={(e) => handleInputChange('murado', e.target.checked)}
+            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+          />
+          <label htmlFor="murado" className="ml-2 block text-sm text-gray-900">
+            Murado
+          </label>
+        </div>
+
+        <div className="flex items-center">
+          <input
+            type="checkbox"
+            id="em_condominio"
+            checked={formData.em_condominio}
+            onChange={(e) => handleInputChange('em_condominio', e.target.checked)}
+            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+          />
+          <label htmlFor="em_condominio" className="ml-2 block text-sm text-gray-900">
+            Em Condomínio
+          </label>
+        </div>
+      </div>
+
+      {formData.tipo_operacao === 'temporada' && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Mínimo de Diárias
+            </label>
+            <input
+              type="number"
+              value={formData.minimo_diarias}
+              onChange={(e) => handleInputChange('minimo_diarias', parseInt(e.target.value) || 1)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              min="1"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Máximo de Hóspedes
+            </label>
+            <input
+              type="number"
+              value={formData.maximo_hospedes}
+              onChange={(e) => handleInputChange('maximo_hospedes', parseInt(e.target.value) || 1)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              min="1"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Taxa de Limpeza (R$)
+            </label>
+            <input
+              type="number"
+              value={formData.taxa_limpeza}
+              onChange={(e) => handleInputChange('taxa_limpeza', parseFloat(e.target.value) || 0)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              min="0"
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  const renderStep4 = () => (
+    <div className="space-y-6">
+      <h3 className="text-xl font-semibold text-gray-800">Características e Comodidades</h3>
+      
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-3">
+          Características do Imóvel
+        </label>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+          {caracteristicasImovelOptions.map(caracteristica => (
+            <div key={caracteristica} className="flex items-center">
+              <input
+                type="checkbox"
+                id={`imovel_${caracteristica}`}
+                checked={formData.caracteristicas_imovel.includes(caracteristica)}
+                onChange={(e) => handleArrayChange('caracteristicas_imovel', caracteristica, e.target.checked)}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <label htmlFor={`imovel_${caracteristica}`} className="ml-2 block text-sm text-gray-900">
+                {caracteristica}
+              </label>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-3">
+          Características do Condomínio
+        </label>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+          {caracteristicasCondominioOptions.map(caracteristica => (
+            <div key={caracteristica} className="flex items-center">
+              <input
+                type="checkbox"
+                id={`condominio_${caracteristica}`}
+                checked={formData.caracteristicas_condominio.includes(caracteristica)}
+                onChange={(e) => handleArrayChange('caracteristicas_condominio', caracteristica, e.target.checked)}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <label htmlFor={`condominio_${caracteristica}`} className="ml-2 block text-sm text-gray-900">
+                {caracteristica}
+              </label>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {formData.tipo_operacao === 'aluguel' && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-3">
+            Condições de Aluguel
+          </label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            {condicoesAluguelOptions.map(condicao => (
+              <div key={condicao} className="flex items-center">
+                <input
+                  type="checkbox"
+                  id={`aluguel_${condicao}`}
+                  checked={formData.condicoes_aluguel.includes(condicao)}
+                  onChange={(e) => handleArrayChange('condicoes_aluguel', condicao, e.target.checked)}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <label htmlFor={`aluguel_${condicao}`} className="ml-2 block text-sm text-gray-900">
+                  {condicao}
+                </label>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Situação de Ocupação
+          </label>
+          <select
+            value={formData.situacao_ocupacao}
+            onChange={(e) => handleInputChange('situacao_ocupacao', e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">Selecione</option>
+            <option value="vago">Vago</option>
+            <option value="ocupado">Ocupado</option>
+            <option value="em_reforma">Em Reforma</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Topografia
+          </label>
+          <select
+            value={formData.topografia}
+            onChange={(e) => handleInputChange('topografia', e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">Selecione</option>
+            <option value="plano">Plano</option>
+            <option value="aclive">Aclive</option>
+            <option value="declive">Declive</option>
+            <option value="irregular">Irregular</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Zoneamento
+        </label>
+        <input
+          type="text"
+          value={formData.zoneamento}
+          onChange={(e) => handleInputChange('zoneamento', e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Ex: Residencial, Comercial, Misto"
+        />
+      </div>
+    </div>
+  );
+
+  const renderStep5 = () => (
+    <div className="space-y-6">
+      <h3 className="text-xl font-semibold text-gray-800">Fotos e Vídeos</h3>
+      
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Fotos do Imóvel
+        </label>
+        <input
+          type="file"
+          multiple
+          accept="image/*"
+          onChange={handleImageUpload}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        {imageFiles.length > 0 && (
+          <div className="mt-2">
+            <p className="text-sm text-gray-600">{imageFiles.length} foto(s) selecionada(s)</p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2">
+              {imageFiles.map((file, index) => (
+                <div key={index} className="relative">
+                  <img
+                    src={URL.createObjectURL(file)}
+                    alt={`Preview ${index}`}
+                    className="w-full h-20 object-cover rounded"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setImageFiles(prev => prev.filter((_, i) => i !== index))}
+                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Vídeos do Imóvel
+        </label>
+        <input
+          type="file"
+          multiple
+          accept="video/*"
+          onChange={handleVideoUpload}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        {videoFiles.length > 0 && (
+          <div className="mt-2">
+            <p className="text-sm text-gray-600">{videoFiles.length} vídeo(s) selecionado(s)</p>
+            <div className="space-y-2 mt-2">
+              {videoFiles.map((file, index) => (
+                <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                  <span className="text-sm text-gray-700">{file.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => setVideoFiles(prev => prev.filter((_, i) => i !== index))}
+                    className="bg-red-500 text-white rounded px-2 py-1 text-xs"
+                  >
+                    Remover
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 
   return (
-    <div className="max-w-4xl mx-auto p-4 lg:p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6 lg:mb-8">
-        <div>
-          <h1 className="text-xl lg:text-2xl font-bold text-gray-900">
-            {propertyToEdit ? 'Editar Anúncio' : 'Publicar Novo Anúncio'}
-          </h1>
-          <p className="text-sm lg:text-base text-gray-600 mt-1">
-            {propertyToEdit ? 'Atualize as informações do seu anúncio' : 'Crie um anúncio atrativo para seu imóvel'}
-          </p>
+    <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-lg">
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold text-gray-800 mb-4">Publicar Novo Anúncio</h2>
+        
+        {/* Progress Bar */}
+        <div className="flex items-center mb-6">
+          {[1, 2, 3, 4, 5].map((step) => (
+            <div key={step} className="flex items-center">
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                  step <= currentStep
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-300 text-gray-600'
+                }`}
+              >
+                {step}
+              </div>
+              {step < 5 && (
+                <div
+                  className={`w-12 h-1 ${
+                    step < currentStep ? 'bg-blue-600' : 'bg-gray-300'
+                  }`}
+                />
+              )}
+            </div>
+          ))}
         </div>
-        <button
-          onClick={onBack}
-          className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-        >
-          <CloseIcon className="w-5 h-5 lg:w-6 lg:h-6" />
-        </button>
+
+        {/* Step Labels */}
+        <div className="grid grid-cols-5 gap-2 text-xs text-center text-gray-600 mb-6">
+          <div>Básico</div>
+          <div>Localização</div>
+          <div>Características</div>
+          <div>Comodidades</div>
+          <div>Mídias</div>
+        </div>
       </div>
 
-      {/* Progress Steps */}
-      <div className="flex items-center justify-center mb-6 lg:mb-8">
-        {[1, 2, 3].map((step) => (
-          <div key={step} className="flex items-center">
-            <div
-              className={`w-8 h-8 lg:w-10 lg:h-10 rounded-full flex items-center justify-center text-xs lg:text-sm font-medium ${
-                step <= currentStep
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-200 text-gray-600'
+      {/* Form Steps */}
+      <div className="mb-8">
+        {currentStep === 1 && renderStep1()}
+        {currentStep === 2 && renderStep2()}
+        {currentStep === 3 && renderStep3()}
+        {currentStep === 4 && renderStep4()}
+        {currentStep === 5 && renderStep5()}
+      </div>
+
+      {/* Navigation Buttons */}
+      <div className="flex justify-between items-center">
+        <button
+          type="button"
+          onClick={prevStep}
+          disabled={currentStep === 1}
+          className={`px-6 py-2 rounded-md font-medium ${
+            currentStep === 1
+              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              : 'bg-gray-600 text-white hover:bg-gray-700'
+          }`}
+        >
+          Anterior
+        </button>
+
+        <div className="flex space-x-4">
+          {currentStep < 5 ? (
+            <button
+              type="button"
+              onClick={nextStep}
+              className="px-6 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700"
+            >
+              Próximo
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              className={`px-6 py-2 rounded-md font-medium ${
+                isSubmitting
+                  ? 'bg-gray-400 text-gray-700 cursor-not-allowed'
+                  : 'bg-green-600 text-white hover:bg-green-700'
               }`}
             >
-              {step}
-            </div>
-            {step < 3 && (
-              <div
-                className={`w-8 lg:w-16 h-1 mx-1 lg:mx-2 ${
-                  step < currentStep ? 'bg-blue-600' : 'bg-gray-200'
-                }`}
-              />
-            )}
-          </div>
-        ))}
+              {isSubmitting ? 'Publicando...' : 'Publicar Anúncio'}
+            </button>
+          )}
+        </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border p-4 lg:p-6">
-        {/* Step 1: Informações Básicas */}
-        {currentStep === 1 && (
-          <div className="space-y-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">Informações Básicas</h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Tipo de Imóvel
-                </label>
-                <select
-                  value={formData.propertyType}
-                  onChange={(e) => handleInputChange('propertyType', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="Apartamento">Apartamento</option>
-                  <option value="Casa">Casa</option>
-                  <option value="Terreno">Terreno</option>
-                  <option value="Comercial">Comercial</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Operação
-                </label>
-                <select
-                  value={formData.operation}
-                  onChange={(e) => handleInputChange('operation', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="venda">Venda</option>
-                  <option value="aluguel">Aluguel</option>
-                  <option value="temporada">Temporada</option>
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Título do Anúncio
-              </label>
-              <input
-                type="text"
-                value={formData.title}
-                onChange={(e) => handleInputChange('title', e.target.value)}
-                placeholder="Ex: Apartamento incrível com vista para o mar"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Cidade
-                </label>
-                <input
-                  type="text"
-                  value={formData.city}
-                  onChange={(e) => handleInputChange('city', e.target.value)}
-                  placeholder="Salvador"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Rua
-                </label>
-                <input
-                  type="text"
-                  value={formData.street}
-                  onChange={(e) => handleInputChange('street', e.target.value)}
-                  placeholder="Rua das Flores"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Número
-                </label>
-                <input
-                  type="text"
-                  value={formData.number}
-                  onChange={(e) => handleInputChange('number', e.target.value)}
-                  placeholder="123"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end">
-              <button
-                onClick={nextStep}
-                disabled={!formData.title || !formData.city}
-                className="px-4 lg:px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm lg:text-base"
-              >
-                Próximo
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Step 2: Detalhes */}
-        {currentStep === 2 && (
-          <div className="space-y-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">Detalhes do Imóvel</h2>
-            
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Quartos
-                </label>
-                <div className="flex items-center space-x-2">
-                  <button
-                    type="button"
-                    onClick={() => handleInputChange('bedrooms', Math.max(0, formData.bedrooms - 1))}
-                    className="p-1 rounded-md border border-gray-300 hover:bg-gray-50"
-                  >
-                    <MinusIcon className="w-4 h-4" />
-                  </button>
-                  <span className="px-3 py-1 border border-gray-300 rounded-md text-center min-w-[50px]">
-                    {formData.bedrooms}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => handleInputChange('bedrooms', formData.bedrooms + 1)}
-                    className="p-1 rounded-md border border-gray-300 hover:bg-gray-50"
-                  >
-                    <PlusIcon className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Banheiros
-                </label>
-                <div className="flex items-center space-x-2">
-                  <button
-                    type="button"
-                    onClick={() => handleInputChange('bathrooms', Math.max(1, formData.bathrooms - 1))}
-                    className="p-1 rounded-md border border-gray-300 hover:bg-gray-50"
-                  >
-                    <MinusIcon className="w-4 h-4" />
-                  </button>
-                  <span className="px-3 py-1 border border-gray-300 rounded-md text-center min-w-[50px]">
-                    {formData.bathrooms}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => handleInputChange('bathrooms', formData.bathrooms + 1)}
-                    className="p-1 rounded-md border border-gray-300 hover:bg-gray-50"
-                  >
-                    <PlusIcon className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Área Bruta (m²)
-                </label>
-                <input
-                  type="number"
-                  value={formData.grossArea}
-                  onChange={(e) => handleInputChange('grossArea', e.target.value)}
-                  placeholder="120"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Área Útil (m²)
-                </label>
-                <input
-                  type="number"
-                  value={formData.netArea}
-                  onChange={(e) => handleInputChange('netArea', e.target.value)}
-                  placeholder="100"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
-              {formData.operation === 'venda' && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Preço de Venda
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.salePrice}
-                    onChange={(e) => handleInputChange('salePrice', e.target.value)}
-                    placeholder="R$ 500.000"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              )}
-
-              {formData.operation === 'aluguel' && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Aluguel Mensal
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.monthlyRent}
-                    onChange={(e) => handleInputChange('monthlyRent', e.target.value)}
-                    placeholder="R$ 2.500"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              )}
-
-              {formData.operation === 'temporada' && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Diária
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.dailyRate}
-                    onChange={(e) => handleInputChange('dailyRate', e.target.value)}
-                    placeholder="R$ 150"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              )}
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Taxa de Condomínio
-                </label>
-                <input
-                  type="text"
-                  value={formData.condoFee}
-                  onChange={(e) => handleInputChange('condoFee', e.target.value)}
-                  placeholder="R$ 300"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-
-            <div className="relative">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Descrição
-              </label>
-              <textarea
-                value={formData.description}
-                onChange={(e) => handleInputChange('description', e.target.value)}
-                placeholder="Descreva as principais características do imóvel..."
-                rows={4}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <button
-                type="button"
-                onClick={generateAIDescription}
-                disabled={isGeneratingDescription || !formData.title}
-                className="absolute bottom-2 right-2 bg-blue-100 text-blue-700 text-xs font-semibold px-2 py-1 rounded-md flex items-center hover:bg-blue-200 disabled:opacity-50"
-              >
-                {isGeneratingDescription ? (
-                  <SpinnerIcon className="w-4 h-4 animate-spin mr-1" />
-                ) : (
-                  <AIIcon className="w-4 h-4 mr-1" />
-                )}
-                Gerar com IA
-              </button>
-            </div>
-
-            <div className="flex justify-between">
-              <button
-                onClick={prevStep}
-                className="px-4 lg:px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 text-sm lg:text-base"
-              >
-                Anterior
-              </button>
-              <button
-                onClick={nextStep}
-                className="px-4 lg:px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm lg:text-base"
-              >
-                Próximo
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Step 3: Fotos */}
-        {currentStep === 3 && (
-          <div className="space-y-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">Fotos do Imóvel</h2>
-            
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-              <PhotoIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600 mb-4">
-                Arraste e solte suas fotos aqui ou clique para selecionar
-              </p>
-              <input
-                type="file"
-                multiple
-                accept="image/*,video/*"
-                onChange={(e) => e.target.files && handleFileUpload(e.target.files)}
-                className="hidden"
-                id="file-upload"
-              />
-              <label
-                htmlFor="file-upload"
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 cursor-pointer"
-              >
-                Selecionar Arquivos
-              </label>
-              <p className="text-xs text-gray-500 mt-2">
-                Máximo 10 arquivos. Formatos: JPG, PNG, MP4
-              </p>
-            </div>
-
-            {uploadedFiles.length > 0 && (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 lg:gap-4">
-                {uploadedFiles.map((file, index) => (
-                  <div key={index} className="relative group">
-                    <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden">
-                      {file.type.startsWith('image/') ? (
-                        <img
-                          src={URL.createObjectURL(file)}
-                          alt={`Upload ${index + 1}`}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <PhotoIcon className="w-8 h-8 text-gray-400" />
-                        </div>
-                      )}
-                    </div>
-                    <button
-                      onClick={() => removeFile(index)}
-                      className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <CloseIcon className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            <div className="flex flex-col sm:flex-row justify-between gap-3 sm:gap-0">
-              <button
-                onClick={prevStep}
-                className="px-4 lg:px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 text-sm lg:text-base order-2 sm:order-1"
-              >
-                Anterior
-              </button>
-              <button
-                onClick={handleSubmit}
-                disabled={isSubmitting}
-                className="px-4 lg:px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 flex items-center justify-center text-sm lg:text-base order-1 sm:order-2"
-              >
-                {isSubmitting && <SpinnerIcon className="w-4 h-4 animate-spin mr-2" />}
-                {propertyToEdit ? 'Atualizar Anúncio' : 'Publicar Anúncio'}
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
+      {/* Submit Message */}
+      {submitMessage && (
+        <div className={`mt-4 p-3 rounded-md text-center ${
+          submitMessage.includes('sucesso')
+            ? 'bg-green-100 text-green-800'
+            : 'bg-red-100 text-red-800'
+        }`}>
+          {submitMessage}
+        </div>
+      )}
     </div>
   );
 };
