@@ -16,7 +16,9 @@ import SpinnerIcon from './icons/SpinnerIcon';
 import { Autocomplete, useJsApiLoader } from '@react-google-maps/api';
 // FIX: Import LocationIcon to fix "Cannot find name 'LocationIcon'" error.
 import LocationIcon from './icons/LocationIcon';
-import { PRODUCTION_URL, QUALLITY_HOME_USER_ID } from '../config';
+import { PRODUCTION_URL, QUALLITY_HOME_USER_ID, GOOGLE_MAPS_API_KEY } from '../config';
+import AddressSearchByCEP from './AddressSearchByCEP';
+import { validateMediaFiles, type ValidationResult } from '../utils/mediaValidation';
 
 type MediaItem = File | (Media & { type: 'existing' });
 
@@ -122,6 +124,14 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
         isGatedCommunity: null as boolean | null,
     });
 
+    const [address, setAddress] = useState({
+        street: '',
+        neighborhood: '',
+        city: '',
+        state: '',
+        cep: ''
+    });
+
     const [files, setFiles] = useState<(File | { id: number, url: string, tipo: string, type: 'existing' })[]>([]);
     const [filesToRemove, setFilesToRemove] = useState<string[]>([]);
 
@@ -139,7 +149,7 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
 
     const { isLoaded, loadError } = useJsApiLoader({
         id: 'google-map-script',
-        googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY || 'AIzaSyDukeY7JJI9UkHIFbsCZOrjPDRukqvUOfA',
+        googleMapsApiKey: GOOGLE_MAPS_API_KEY,
         libraries,
     });
 
@@ -158,26 +168,34 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
     };
     
     const validateDetails = useCallback(() => {
+        console.log('Validando título:', formData.title, 'Comprimento:', formData.title.trim().length);
         if (formData.title.trim().length < 10) {
+            console.log('Erro: Título muito curto');
             onRequestModal({ type: 'error', title: t('systemModal.errorTitle'), message: t('publishJourney.errors.titleTooShort') });
             return false;
         }
+        
         const priceForOperation = {
             venda: formData.salePrice,
             aluguel: formData.monthlyRent,
             temporada: formData.dailyRate
         }[formData.operation];
-    
+        
+        console.log('Validando preço para operação:', formData.operation, 'Preço:', priceForOperation);
         if (!priceForOperation || !unformatCurrencyForSubmission(priceForOperation)) {
-             onRequestModal({ type: 'error', title: 'Preço Obrigatório', message: 'Por favor, preencha o valor principal para o tipo de operação selecionado (Venda, Aluguel ou Diária).' });
-             return false;
+            console.log('Erro: Preço inválido ou vazio');
+            onRequestModal({ type: 'error', title: 'Preço Obrigatório', message: 'Por favor, preencha o valor principal para o tipo de operação selecionado (Venda, Aluguel ou Diária).' });
+            return false;
         }
-    
+        
+        console.log('Validando área bruta:', formData.grossArea);
         if (!formData.grossArea) {
+            console.log('Erro: Área bruta vazia');
             onRequestModal({ type: 'error', title: 'Área Obrigatória', message: 'Por favor, informe a área bruta do imóvel.' });
             return false;
         }
 
+        console.log('Validação passou com sucesso');
         return true;
     }, [formData.title, formData.operation, formData.salePrice, formData.monthlyRent, formData.dailyRate, formData.grossArea, onRequestModal, t]);
 
@@ -359,20 +377,42 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
         setLocationConfirmationModalOpen(false);
     };
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
             const newFiles = Array.from(e.target.files);
             
-            if (files.length + newFiles.length > MAX_FILES) {
+            // Validate files
+            const validation = await validateMediaFiles(newFiles, files.length);
+            
+            if (!validation.isValid) {
+                // Show error for the first validation error
+                const firstError = validation.errors[0];
                 onRequestModal({
                     type: 'error',
-                    title: t('publishJourney.limitExceeded.title'),
-                    message: t('publishJourney.limitExceeded.message', { count: MAX_FILES }),
+                    title: t('mediaValidation.validationFailed'),
+                    message: t(`mediaValidation.${firstError.type}`, firstError.context || {}),
                 });
+                
+                // If some files are valid, show additional message
+                if (validation.validFiles.length > 0) {
+                    setTimeout(() => {
+                        onRequestModal({
+                            type: 'error',
+                            title: t('mediaValidation.someFilesRejected'),
+                            message: `${validation.errors.length} arquivo(s) rejeitado(s), ${validation.validFiles.length} arquivo(s) adicionado(s).`,
+                        });
+                    }, 2000);
+                }
+                
+                // Add only valid files
+                if (validation.validFiles.length > 0) {
+                    setFiles(prev => [...prev, ...validation.validFiles]);
+                }
                 return;
             }
             
-            setFiles(prev => [...prev, ...newFiles]);
+            // All files are valid
+            setFiles(prev => [...prev, ...validation.validFiles]);
         }
     };
     
@@ -644,17 +684,34 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
         }
     }
     
+    const handleAddressChange = (newAddress: any) => {
+        setAddress(newAddress);
+        setFormData(prev => ({
+            ...prev,
+            city: `${newAddress.city} - ${newAddress.state}`,
+            street: newAddress.street,
+        }));
+    };
+
     const handleFormSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        console.log('Form submit iniciado');
+        
         if (!formData.isAddressVerified) {
+            console.log('Erro: Endereço não verificado');
             onRequestModal({ type: 'error', title: 'Endereço Pendente', message: 'Por favor, verifique o endereço do imóvel antes de continuar.' });
             const locationElement = document.getElementById('location-section');
             locationElement?.scrollIntoView({ behavior: 'smooth' });
             return;
         }
+        
+        console.log('Validando detalhes...');
         if (!validateDetails()) {
+            console.log('Erro: Validação de detalhes falhou');
             return;
         }
+        
+        console.log('Iniciando submissão...');
         handleSubmitJourney();
     };
 
@@ -663,7 +720,10 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
         <div className="bg-brand-light-gray min-h-screen">
             <div className="container mx-auto px-4 sm:px-6 py-8">
                 <div className="text-sm mb-6">
-                    <span onClick={() => onBack()} className="text-brand-red hover:underline cursor-pointer">
+                    <span onClick={() => {
+                        console.log('Breadcrumb clicado - navegando de volta');
+                        onBack();
+                    }} className="text-brand-red hover:underline cursor-pointer">
                         {t('myAdsPage.breadcrumb')}
                     </span>
                     <span className="text-brand-gray mx-2">&gt;</span>
@@ -675,13 +735,13 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                          <Section title="Informações Principais">
                             <h3 className="text-lg font-semibold text-brand-navy mb-4">{t('publishJourney.form.operation.label')}</h3>
                             <div className="grid grid-cols-3 gap-2 mb-8">
-                                <button type="button" onClick={() => setFormData(p => ({...p, operation: 'venda'}))} className={`p-4 border rounded-lg text-center transition-colors ${formData.operation === 'venda' ? 'bg-brand-red text-white border-brand-red' : 'bg-white hover:border-brand-dark'}`}>
+                                <button type="button" onClick={() => setFormData(p => ({...p, operation: 'venda'}))} className={`p-4 border rounded-lg text-center transition-colors ${formData.operation === 'venda' ? 'bg-red-600 text-white border-red-600' : 'bg-white hover:border-brand-dark'}`}>
                                     <span className="font-medium">{t('publishJourney.form.operation.sell')}</span>
                                 </button>
-                                <button type="button" onClick={() => setFormData(p => ({...p, operation: 'aluguel'}))} className={`p-4 border rounded-lg text-center transition-colors ${formData.operation === 'aluguel' ? 'bg-brand-red text-white border-brand-red' : 'bg-white hover:border-brand-dark'}`}>
+                                <button type="button" onClick={() => setFormData(p => ({...p, operation: 'aluguel'}))} className={`p-4 border rounded-lg text-center transition-colors ${formData.operation === 'aluguel' ? 'bg-red-600 text-white border-red-600' : 'bg-white hover:border-brand-dark'}`}>
                                     <span className="font-medium">{t('publishJourney.form.operation.rent')}</span>
                                 </button>
-                                <button type="button" onClick={() => setFormData(p => ({...p, operation: 'temporada'}))} className={`p-4 border rounded-lg text-center transition-colors ${formData.operation === 'temporada' ? 'bg-brand-red text-white border-brand-red' : 'bg-white hover:border-brand-dark'}`}>
+                                <button type="button" onClick={() => setFormData(p => ({...p, operation: 'temporada'}))} className={`p-4 border rounded-lg text-center transition-colors ${formData.operation === 'temporada' ? 'bg-red-600 text-white border-red-600' : 'bg-white hover:border-brand-dark'}`}>
                                     <span className="font-medium">{t('publishJourney.form.operation.season')}</span>
                                 </button>
                             </div>
@@ -706,6 +766,7 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                                 </div>
                              ) : (
                                 <div>
+                                    <AddressSearchByCEP onAddressChange={handleAddressChange} />
                                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                         <div className="sm:col-span-3">
                                             <label htmlFor="city" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.form.location.city')}</label>
@@ -983,10 +1044,13 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                         </Section>
                         
                         <div className="mt-8 flex flex-col sm:flex-row gap-4">
-                            <button type="button" onClick={() => onBack()} className="flex-1 order-2 sm:order-1 text-center bg-gray-200 text-brand-dark font-bold py-3 px-4 rounded-md hover:bg-gray-300 transition-opacity">
-                                Cancelar
-                            </button>
-                            <button type="submit" disabled={isSubmitting} className="flex-1 order-1 sm:order-2 bg-brand-red text-white font-bold py-3 px-4 rounded-md hover:opacity-90 transition-opacity disabled:bg-gray-400 disabled:cursor-wait flex items-center justify-center">
+                            <button type="button" onClick={() => {
+                    console.log('Botão Cancelar clicado');
+                    onBack();
+                }} className="flex-1 order-2 sm:order-1 text-center bg-gray-200 text-brand-dark font-bold py-3 px-4 rounded-md hover:bg-gray-300 transition-opacity">
+                    Cancelar
+                </button>
+                            <button type="submit" disabled={isSubmitting} className="flex-1 order-1 sm:order-2 bg-red-600 text-white font-bold py-3 px-4 rounded-md hover:bg-red-700 transition-colors disabled:bg-gray-400 disabled:cursor-wait flex items-center justify-center shadow-md">
                                 {isSubmitting && <SpinnerIcon className="w-5 h-5 animate-spin mr-2" />}
                                 {isSubmitting
                                     ? (propertyToEdit ? t('publishJourney.photosForm.updatingButton') : t('publishJourney.photosForm.publishingButton'))

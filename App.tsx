@@ -12,6 +12,7 @@ import PropertyDetailPage from './components/PropertyDetailPage';
 import SystemModal from './components/SystemModal';
 import AllListingsPage from './components/AllListingsPage';
 import ExplorePage from './components/ExplorePage';
+import AdvancedSearchPage from './components/AdvancedSearchPage';
 import GuideToSellPage from './components/GuideToSellPage';
 import DocumentsForSalePage from './components/DocumentsForSalePage';
 import SplashScreen from './components/SplashScreen';
@@ -26,7 +27,7 @@ import LockIcon from './components/icons/LockIcon';
 import SpinnerIcon from './components/icons/SpinnerIcon';
 
 interface PageState {
-  page: 'home' | 'map' | 'publish-journey' | 'searchResults' | 'propertyDetail' | 'edit-journey' | 'allListings' | 'guideToSell' | 'documentsForSale' | 'adminLogin' | 'adminDashboard' | 'explore' | 'publish';
+  page: 'home' | 'map' | 'publish-journey' | 'searchResults' | 'propertyDetail' | 'edit-journey' | 'allListings' | 'guideToSell' | 'documentsForSale' | 'adminLogin' | 'adminDashboard' | 'explore' | 'publish' | 'advancedSearch';
   userLocation: { lat: number; lng: number } | null;
   searchQuery?: string;
   propertyId?: number;
@@ -564,7 +565,7 @@ const App: React.FC = () => {
       onNavigateToSeason: handleNavigateToSeason,
       navigateToGuideToSell: () => navigateTo('guideToSell'),
       navigateToDocumentsForSale: () => navigateTo('documentsForSale'),
-      onNavigateToPublish: () => navigateTo('publish'),
+
       isAdminLoggedIn,
       onAdminLogout: handleAdminLogout,
       onNavigateToAdminDashboard: () => navigateTo('adminDashboard'),
@@ -612,7 +613,11 @@ const App: React.FC = () => {
         // FIX: The `setModalConfig` function expects a full `ModalConfig` object, but `PublishJourneyPage`
         // calls its `onRequestModal` prop with an object missing the `isOpen` property. This wrapper
         // function correctly constructs the full object before updating the state.
-        return <PublishJourneyPage onBack={(status) => navigateTo('adminDashboard', { showAdminSuccessBanner: status })} onAddProperty={refreshAllData} onUpdateProperty={refreshAllData} onPublishError={(msg) => setModalConfig({isOpen: true, type: 'error', title: 'Error', message: msg})} propertyToEdit={pageState.propertyToEdit} onRequestModal={(config) => setModalConfig({ ...config, isOpen: true })} deviceLocation={deviceLocation} adminUser={adminUser} />;
+        return <PublishJourneyPage onBack={(status) => {
+          console.log('onBack chamado com status:', status);
+          console.trace('Stack trace do onBack');
+          navigateTo('adminDashboard', { showAdminSuccessBanner: status });
+        }} onAddProperty={refreshAllData} onUpdateProperty={refreshAllData} onPublishError={(msg) => setModalConfig({isOpen: true, type: 'error', title: 'Error', message: msg})} propertyToEdit={pageState.propertyToEdit} onRequestModal={(config) => setModalConfig({ ...config, isOpen: true })} deviceLocation={deviceLocation} adminUser={adminUser} />;
       case 'searchResults':
          const searchFiltered = publicProperties.filter(p => 
             (p.address.toLowerCase().includes(pageState.searchQuery?.toLowerCase() || '')) || 
@@ -633,6 +638,8 @@ const App: React.FC = () => {
         return <AllListingsPage properties={publicProperties} onViewDetails={handleViewDetails} onShare={handleShareProperty} onSearchSubmit={handleSearchSubmit} deviceLocation={deviceLocation} onGeolocationError={() => setGeolocationErrorModalOpen(true)} onBack={() => navigateTo('home')} {...commonHeaderProps} onNavigateToAllListings={() => navigateTo('allListings')} loadMoreProperties={loadMoreProperties} hasMoreProperties={!areAllPropertiesLoaded} isLoadingMore={isLoading} />;
       case 'explore':
           return <ExplorePage initialOperation={pageState.exploreOperation} properties={publicProperties} onViewDetails={handleViewDetails} onShare={handleShareProperty} onSearchSubmit={handleSearchSubmit} deviceLocation={deviceLocation} onGeolocationError={() => setGeolocationErrorModalOpen(true)} onBack={() => navigateTo('home')} {...commonHeaderProps} loadMoreProperties={loadMoreProperties} hasMoreProperties={!areAllPropertiesLoaded} isLoadingMore={isLoading} />;
+      case 'advancedSearch':
+          return <AdvancedSearchPage properties={publicProperties} onViewDetails={handleViewDetails} onShare={handleShareProperty} onSearchSubmit={handleSearchSubmit} onBack={() => navigateTo('home')} {...commonHeaderProps} loadMoreProperties={loadMoreProperties} hasMoreProperties={!areAllPropertiesLoaded} isLoadingMore={isLoading} />;
       case 'guideToSell':
         return <GuideToSellPage onBack={() => navigateTo('home')} {...commonHeaderProps} onNavigateToAllListings={() => navigateTo('allListings')} />;
       case 'documentsForSale':
@@ -658,7 +665,7 @@ const App: React.FC = () => {
           />
         );
       case 'publish':
-        return <PublishPropertyPage />;
+        return <PublishPropertyPage onNavigateToAdminLogin={() => navigateTo('adminLogin')} />;
       default:
         const homeHeaderProps = {
             ...commonHeaderProps,
