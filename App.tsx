@@ -13,7 +13,6 @@ import {
   SystemModal,
   AllListingsPage,
   ExplorePage,
-  AdvancedSearchPage,
   GuideToSellPage,
   DocumentsForSalePage,
   SplashScreen,
@@ -29,7 +28,7 @@ import { useLanguage } from './contexts/LanguageContext';
 import { QUALLITY_HOME_USER_ID, PRODUCTION_URL } from './config';
 
 interface PageState {
-  page: 'home' | 'map' | 'publish-journey' | 'searchResults' | 'propertyDetail' | 'edit-journey' | 'allListings' | 'guideToSell' | 'documentsForSale' | 'adminLogin' | 'adminDashboard' | 'explore' | 'publish' | 'advancedSearch';
+  page: 'home' | 'map' | 'publish-journey' | 'searchResults' | 'propertyDetail' | 'edit-journey' | 'allListings' | 'guideToSell' | 'documentsForSale' | 'adminLogin' | 'adminDashboard' | 'explore' | 'publish';
   userLocation: { lat: number; lng: number } | null;
   searchQuery?: string;
   propertyId?: number;
@@ -640,8 +639,6 @@ const App: React.FC = () => {
         return <AllListingsPage properties={publicProperties} onViewDetails={handleViewDetails} onShare={handleShareProperty} onSearchSubmit={handleSearchSubmit} deviceLocation={deviceLocation} onGeolocationError={() => setGeolocationErrorModalOpen(true)} onBack={() => navigateTo('home')} {...commonHeaderProps} onNavigateToAllListings={() => navigateTo('allListings')} loadMoreProperties={loadMoreProperties} hasMoreProperties={!areAllPropertiesLoaded} isLoadingMore={isLoading} />;
       case 'explore':
           return <ExplorePage initialOperation={pageState.exploreOperation} properties={publicProperties} onViewDetails={handleViewDetails} onShare={handleShareProperty} onSearchSubmit={handleSearchSubmit} deviceLocation={deviceLocation} onGeolocationError={() => setGeolocationErrorModalOpen(true)} onBack={() => navigateTo('home')} {...commonHeaderProps} loadMoreProperties={loadMoreProperties} hasMoreProperties={!areAllPropertiesLoaded} isLoadingMore={isLoading} />;
-      case 'advancedSearch':
-          return <AdvancedSearchPage properties={publicProperties} onViewDetails={handleViewDetails} onShare={handleShareProperty} onSearchSubmit={handleSearchSubmit} onBack={() => navigateTo('home')} {...commonHeaderProps} loadMoreProperties={loadMoreProperties} hasMoreProperties={!areAllPropertiesLoaded} isLoadingMore={isLoading} />;
       case 'guideToSell':
         return <GuideToSellPage onBack={() => navigateTo('home')} {...commonHeaderProps} onNavigateToAllListings={() => navigateTo('allListings')} />;
       case 'documentsForSale':

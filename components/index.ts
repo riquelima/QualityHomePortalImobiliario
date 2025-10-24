@@ -10,7 +10,6 @@ export { default as PropertyDetailPage } from './PropertyDetailPage';
 export { default as SystemModal } from './SystemModal';
 export { default as AllListingsPage } from './AllListingsPage';
 export { default as ExplorePage } from './ExplorePage';
-export { default as AdvancedSearchPage } from './AdvancedSearchPage';
 export { default as GuideToSellPage } from './GuideToSellPage';
 export { default as DocumentsForSalePage } from './DocumentsForSalePage';
 export { default as SplashScreen } from './SplashScreen';
