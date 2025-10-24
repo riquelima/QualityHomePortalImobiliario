@@ -120,6 +120,18 @@ const PublishForm: React.FC = () => {
     }));
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      // Só permite submissão se estivermos no último passo
+      if (currentStep === 5) {
+        handleSubmit();
+      } else {
+        nextStep();
+      }
+    }
+  };
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const files = Array.from(e.target.files);
@@ -873,10 +885,16 @@ const PublishForm: React.FC = () => {
     </div>
   );
 
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Não faz nada - previne submissão automática
+  };
+
   return (
     <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-lg">
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">Publicar Novo Anúncio</h2>
+      <form onSubmit={handleFormSubmit} onKeyDown={handleKeyDown}>
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">Publicar Novo Anúncio</h2>
         
         {/* Progress Bar */}
         <div className="flex items-center mb-6">
@@ -972,6 +990,7 @@ const PublishForm: React.FC = () => {
           {submitMessage}
         </div>
       )}
+      </form>
     </div>
   );
 };
