@@ -20,8 +20,17 @@ export default defineConfig(({ mode }) => {
       resolve: {
         alias: {
           '@': path.resolve(__dirname, '.'),
+          '@components': path.resolve(__dirname, './components'),
         },
-        extensions: ['.ts', '.tsx', '.js', '.jsx', '.json']
+        extensions: ['.tsx', '.ts', '.jsx', '.js', '.json']
+      },
+      build: {
+        rollupOptions: {
+          external: [],
+          output: {
+            manualChunks: undefined
+          }
+        }
       }
     };
 });

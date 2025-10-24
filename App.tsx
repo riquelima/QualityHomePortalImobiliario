@@ -12,7 +12,7 @@ import PropertyDetailPage from './components/PropertyDetailPage';
 import SystemModal from './components/SystemModal';
 import AllListingsPage from './components/AllListingsPage';
 import ExplorePage from './components/ExplorePage';
-import AdvancedSearchPage from './components/AdvancedSearchPage.tsx';
+import AdvancedSearchPage from './components/AdvancedSearchPage';
 import GuideToSellPage from './components/GuideToSellPage';
 import DocumentsForSalePage from './components/DocumentsForSalePage';
 import SplashScreen from './components/SplashScreen';
