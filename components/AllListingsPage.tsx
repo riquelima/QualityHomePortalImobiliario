@@ -5,6 +5,7 @@ import type { Property } from '../types';
 import { useLanguage } from '../contexts/LanguageContext';
 import SearchIcon from './icons/SearchIcon';
 import { GoogleMap, useJsApiLoader, Marker, InfoWindow, Autocomplete } from '@react-google-maps/api';
+import { GOOGLE_MAPS_API_KEY } from '../config';
 
 interface AllListingsPageProps {
   onBack: () => void;
@@ -14,6 +15,9 @@ interface AllListingsPageProps {
   onSearchSubmit: (query: string) => void;
   onGeolocationError: () => void;
   deviceLocation: { lat: number; lng: number } | null;
+  loadMoreProperties: () => Promise<void>;
+  hasMoreProperties: boolean;
+  isLoadingMore: boolean;
   // Header props
   navigateHome: () => void;
   onNavigateToAllListings: () => void;
@@ -49,7 +53,7 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
 
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script',
-    googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY || 'AIzaSyDukeY7JJI9UkHIFbsCZOrjPDRukqvUOfA',
+    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
     libraries,
   });
   
@@ -206,12 +210,12 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
                         properties={filteredProperties} 
                         onViewDetails={props.onViewDetails} 
                         onShare={props.onShare}
-                        isLoading={false} 
+                        isLoading={props.isLoadingMore} 
                         title={t('listings.foundTitle')}
                         noResultsTitle="Nenhum imóvel encontrado"
                         noResultsDescription="Tente ajustar seus filtros ou pesquisar por uma localização diferente."
-                        loadMore={() => {}}
-                        hasMore={false}
+                        loadMore={props.loadMoreProperties}
+                        hasMore={props.hasMoreProperties}
                     />
                 </div>
                 <div className="lg:col-span-1">

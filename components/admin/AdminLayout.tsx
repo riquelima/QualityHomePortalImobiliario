@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AdminSidebar from './AdminSidebar';
 import AdminDashboard from './AdminDashboard';
-import PropertyManagement from './PropertyManagement';
-import PublishForm from './PublishForm';
+import PropertyManagementNew from './PropertyManagementNew';
+import { PropertyForm } from './PropertyForm';
+import { adminAuthService, AdminUser } from '../../services/adminAuth';
 import type { Property, User } from '../../types';
+import { supabase } from '../../supabaseClient';
 
 interface AdminLayoutProps {
-  properties: Property[];
   onViewDetails: (id: number) => void;
-  onDeleteProperty: (id: number) => void;
   onEditProperty: (property: Property) => void;
   onPublishClick: () => void;
   onAdminLogout: () => void;
@@ -22,11 +22,8 @@ interface AdminLayoutProps {
   onBack: () => void;
 }
 
-export const AdminLayout: React.FC<AdminLayoutProps> = ({
-  properties,
+const AdminLayout: React.FC<AdminLayoutProps> = ({
   onViewDetails,
-  onDeleteProperty,
-  onEditProperty,
   onPublishClick,
   onAdminLogout,
   onShareProperty,
@@ -35,14 +32,58 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   onUpdateProperty,
   onPublishError,
   onPublishSuccess,
-  propertyToEdit,
   onBack
 }) => {
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [propertyToEdit, setPropertyToEdit] = useState<Property | null>(null);
   const [activeSection, setActiveSection] = useState<'dashboard' | 'properties' | 'publish'>('dashboard');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [currentAdmin, setCurrentAdmin] = useState<AdminUser | null>(null);
+
+  useEffect(() => {
+    const admin = adminAuthService.getCurrentAdmin();
+    setCurrentAdmin(admin);
+    fetchProperties();
+  }, []);
+
+  const fetchProperties = async () => {
+    const { data, error } = await supabase.from('imoveis').select('*');
+    if (data) {
+      setProperties(data);
+    }
+    if (error) {
+      console.error('Error fetching properties:', error);
+    }
+  };
+
+  const handleDeleteProperty = async (id: number) => {
+    if (window.confirm('Tem certeza que deseja excluir este imóvel?')) {
+      const { error } = await supabase.from('imoveis').delete().match({ id });
+      if (error) {
+        console.error('Error deleting property:', error);
+        // Adicionar notificação de erro para o usuário
+      } else {
+        fetchProperties();
+        // Adicionar notificação de sucesso para o usuário
+      }
+    }
+  };
+
+  const handleEditProperty = (property: Property) => {
+    setPropertyToEdit(property);
+    setActiveSection('publish');
+  };
 
   const handleSectionChange = (section: 'dashboard' | 'properties' | 'publish') => {
+    if (section !== 'publish') {
+      setPropertyToEdit(null);
+    }
     setActiveSection(section);
+  };
+
+  const handleLogout = () => {
+    adminAuthService.logout();
+    onAdminLogout();
   };
 
   const renderContent = () => {
@@ -58,26 +99,22 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
         );
       case 'properties':
         return (
-          <PropertyManagement
-            properties={properties}
+          <PropertyManagementNew
             onViewDetails={onViewDetails}
-            onDeleteProperty={onDeleteProperty}
-            onEditProperty={(property) => {
-              onEditProperty(property);
-              setActiveSection('publish');
-            }}
+            onDeleteProperty={handleDeleteProperty}
+            onEditProperty={handleEditProperty}
             onShareProperty={onShareProperty}
-            onPublishNew={() => setActiveSection('publish')}
             onSectionChange={handleSectionChange}
           />
         );
       case 'publish':
         return (
-          <PublishForm
-            onBack={() => setActiveSection('dashboard')}
+          <PropertyForm
+            onBack={() => handleSectionChange('dashboard')}
             onSuccess={(status) => {
               onPublishSuccess(status);
-              setActiveSection('dashboard');
+              fetchProperties();
+              handleSectionChange('dashboard');
             }}
             onError={onPublishError}
             propertyToEdit={propertyToEdit}
@@ -106,9 +143,10 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
         <AdminSidebar
           activeSection={activeSection}
           onSectionChange={handleSectionChange}
-          onLogout={onAdminLogout}
+          onLogout={handleLogout}
           isCollapsed={isSidebarCollapsed}
           onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+          currentAdmin={currentAdmin}
         />
       </div>
 
@@ -126,9 +164,11 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
               </svg>
             </button>
             <div className="flex items-center space-x-2">
-              <div className="w-6 h-6 bg-red-600 rounded-md flex items-center justify-center">
-                <span className="text-white font-bold text-xs">QH</span>
-              </div>
+              <img 
+                src="https://i.postimg.cc/QNJ63Www/logo.png" 
+                alt="Quallity Home Logo" 
+                className="h-8 w-auto"
+              />
               <h1 className="text-lg font-semibold text-gray-900">Admin</h1>
             </div>
             <div className="w-10" /> {/* Spacer */}
@@ -138,13 +178,11 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
         {/* Desktop Header */}
         <div className="hidden lg:block bg-white shadow-sm border-b border-gray-200 px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <h2 className="text-xl font-semibold text-gray-900">
-                {activeSection === 'dashboard' && 'Dashboard'}
-                {activeSection === 'properties' && 'Gerenciar Anúncios'}
-                {activeSection === 'publish' && 'Publicar Anúncio'}
-              </h2>
-            </div>
+            <h2 className="text-xl font-semibold text-gray-900">
+              {activeSection === 'dashboard' && 'Dashboard'}
+              {activeSection === 'properties' && 'Gerenciar Anúncios'}
+              {activeSection === 'publish' && 'Novo Anúncio'}
+            </h2>
             
             <div className="flex items-center space-x-4">
               {/* Notifications */}
@@ -157,9 +195,11 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
               
               {/* User Menu */}
               <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-brand-red rounded-full flex items-center justify-center">
-                  <span className="text-white text-sm font-medium">A</span>
-                </div>
+                <img 
+                  src="https://i.postimg.cc/QNJ63Www/logo.png" 
+                  alt="Quallity Home Logo" 
+                  className="h-8 w-8 rounded-full object-cover"
+                />
                 <span className="text-sm font-medium text-gray-700">Administrador</span>
               </div>
               
@@ -174,10 +214,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
         </div>
 
         {/* Content Area */}
-        <main className="flex-1 overflow-auto bg-gray-50">
-          <div className="min-h-full">
-            {renderContent()}
-          </div>
+        <main className="flex-1 overflow-auto bg-gray-50 min-h-full">
+          {renderContent()}
         </main>
       </div>
     </div>

@@ -19,33 +19,33 @@ const StatCard: React.FC<StatCardProps> = ({
   color = 'blue' 
 }) => {
   const colorClasses = {
-    blue: 'bg-blue-50 text-blue-600 border-blue-200',
-    green: 'bg-green-50 text-green-600 border-green-200',
-    red: 'bg-red-50 text-red-600 border-red-200',
-    purple: 'bg-purple-50 text-purple-600 border-purple-200',
-    orange: 'bg-orange-50 text-orange-600 border-orange-200',
+    blue: { bg: 'bg-blue-100', text: 'text-blue-600' },
+    green: { bg: 'bg-green-100', text: 'text-green-600' },
+    red: { bg: 'bg-red-100', text: 'text-red-600' },
+    purple: { bg: 'bg-purple-100', text: 'text-purple-600' },
+    orange: { bg: 'bg-orange-100', text: 'text-orange-600' },
   };
 
+  const selectedColor = colorClasses[color];
+
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 lg:p-6 hover:shadow-md transition-shadow">
-      <div className="flex items-center justify-between">
-        <div className="flex-1 min-w-0">
-          <p className="text-xs lg:text-sm font-medium text-gray-600 mb-1 truncate">{title}</p>
-          <p className="text-lg lg:text-2xl font-bold text-gray-900">{value}</p>
-          {trend && (
-            <div className="flex items-center mt-1 lg:mt-2">
-              <span className={`text-xs lg:text-sm font-medium ${
-                trend.isPositive ? 'text-green-600' : 'text-red-600'
-              }`}>
-                {trend.isPositive ? '+' : ''}{trend.value}%
-              </span>
-              <span className="text-xs text-gray-500 ml-1">vs mês anterior</span>
-            </div>
-          )}
-        </div>
-        <div className={`p-2 lg:p-3 rounded-lg ${colorClasses[color]} flex-shrink-0 ml-2`}>
+    <div className="bg-white rounded-lg shadow-md p-6 flex items-center space-x-6 hover:shadow-lg transition-shadow duration-300">
+      <div className={`p-4 rounded-full ${selectedColor.bg}`}>
+        <div className={`w-8 h-8 ${selectedColor.text}`}>
           {icon}
         </div>
+      </div>
+      <div className="flex-1">
+        <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">{title}</p>
+        <p className="text-3xl font-bold text-gray-800">{value}</p>
+        {trend && (
+          <div className="flex items-center mt-1 text-sm">
+            <span className={`font-semibold ${trend.isPositive ? 'text-green-500' : 'text-red-500'}`}>
+              {trend.isPositive ? '▲' : '▼'} {trend.value}%
+            </span>
+            <span className="text-gray-400 ml-2">no último mês</span>
+          </div>
+        )}
       </div>
     </div>
   );

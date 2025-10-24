@@ -3,7 +3,7 @@ import type { Property } from '../types';
 import PropertyCard from './PropertyCard';
 import { useLanguage } from '../contexts/LanguageContext';
 import SearchIcon from './icons/SearchIcon';
-import SpinnerIcon from './icons/SpinnerIcon';
+import LoadingIndicator from './LoadingIndicator';
 
 interface PropertyListingsProps {
   properties: Property[];
@@ -57,9 +57,9 @@ const PropertyListings: React.FC<PropertyListingsProps> = ({ properties, onViewD
         {/* Grid de propriedades */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
           {isLoading ? (
-            Array.from({ length: 6 }).map((_, index) => (
-              <SkeletonCard key={index} />
-            ))
+            <div className="sm:col-span-2 lg:col-span-3">
+              <LoadingIndicator type="initialLoad" size="large" />
+            </div>
           ) : properties.length > 0 ? (
             properties.map((property, index) => (
               <PropertyCard 

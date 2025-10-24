@@ -1,0 +1,16 @@
+{
+  "status": "commited",
+  "type": "frontend",
+  "scope": "codebase",
+  "localEndpoint": "http://localhost:4173",
+  "executionArgs": {
+    "projectName": "QualityHomePortalImobiliario",
+    "projectPath": "C:\\Users\\henri\\OneDrive\\Área de Trabalho\\QualityHomePortalImobiliario",
+    "testIds": [],
+    "additionalInstruction": "Validate all import errors and build issues that could affect Vercel deployment",
+    "envs": {
+      "API_KEY": "sk-user-PXTeGAvSLs_WycY_nFIbjSIL6gS8HsoMbqLls7qem90WUuQ10SYn61gRb-1SraAgjxrwP5DLKitIUYD9fMD6ll_CnCPlYXWq3Qq4-TDrDjCqTjSqFtBIv5TyEcJpZJvHp_E"
+    }
+  },
+  "proxy": "http://0a25bd30-e6d6-4a25-ac40-875c59a6f08f:i1wmv4k9FR5xf0Q0wqvXgCANUMbXR9Un@tun.testsprite.com:8080"
+}

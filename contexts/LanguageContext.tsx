@@ -30,7 +30,8 @@ const ptTranslations = {
     "nav": {
       "buy": "Comprar",
       "rent": "Alugar",
-      "season": "Temporada"
+      "season": "Temporada",
+      "advancedSearch": "Busca Avançada"
     },
     "openMenu": "Abrir menu",
     "closeMenu": "Fechar menu",
@@ -234,6 +235,19 @@ const ptTranslations = {
       "updatingButton": "Atualizando...",
       "removeFile": "Remover arquivo"
     },
+    "mediaValidation": {
+      "dangerousFile": "Tipo de arquivo não permitido por motivos de segurança",
+      "unsupportedType": "Tipo de arquivo não suportado. Use apenas imagens (JPG, PNG, WebP, GIF) ou vídeos (MP4, MOV, AVI, WebM)",
+      "imageTooLarge": "Imagem muito grande. Tamanho máximo: 32MB",
+      "videoTooLarge": "Vídeo muito grande. Tamanho máximo: 600MB",
+      "tooManyFiles": "Máximo de 10 arquivos permitidos",
+      "unreadableFile": "Não foi possível ler o arquivo",
+      "invalidImage": "Arquivo não é uma imagem válida",
+      "invalidVideo": "Arquivo não é um vídeo válido",
+      "readError": "Erro ao ler o arquivo",
+      "validationFailed": "Falha na validação do arquivo",
+      "someFilesRejected": "Alguns arquivos foram rejeitados devido a problemas de validação"
+    },
     "locationConfirmationModal": {
       "title": "A localização está correta?",
       "subtitle": "Se não estiver bem localizado, você pode arrastar o marcador para a posição correta.",
@@ -304,7 +318,19 @@ const ptTranslations = {
     "linkCopiedTitle": "Link Copiado!",
     "linkCopiedMessage": "O link do imóvel foi copiado para sua área de transferência.",
     "linkCopyErrorTitle": "Erro ao Copiar",
-    "linkCopyErrorMessage": "Não foi possível copiar o link. Tente novamente."
+    "linkCopyErrorMessage": "Não foi possível copiar o link. Tente novamente.",
+    "networkError": "Erro de conexão. Verifique sua internet e tente novamente.",
+    "dataError": "Erro ao processar dados. Tente novamente em alguns instantes.",
+    "authError": "Erro de autenticação. Faça login novamente.",
+    "generalError": "Ocorreu um erro inesperado. Tente novamente.",
+    "loadMoreError": "Erro ao carregar mais imóveis. Tente novamente."
+  },
+  "loading": {
+    "general": "Carregando...",
+    "initialLoad": "Carregando imóveis...",
+    "loadingMore": "Carregando mais imóveis...",
+    "refreshing": "Atualizando dados...",
+    "searching": "Buscando imóveis..."
   },
   "documentsForSalePage": {
     "title": "Documentos Necessários para a Venda",
@@ -373,7 +399,8 @@ const enTranslations = {
     "nav": {
       "buy": "Buy",
       "rent": "Rent",
-      "season": "Seasonal"
+      "season": "Seasonal",
+      "advancedSearch": "Advanced Search"
     },
     "openMenu": "Open menu",
     "closeMenu": "Close menu",
@@ -577,6 +604,19 @@ const enTranslations = {
       "updatingButton": "Updating...",
       "removeFile": "Remove file"
     },
+    "mediaValidation": {
+      "dangerousFile": "File type not allowed for security reasons",
+      "unsupportedType": "Unsupported file type. Use only images (JPG, PNG, WebP, GIF) or videos (MP4, MOV, AVI, WebM)",
+      "imageTooLarge": "Image too large. Maximum size: 32MB",
+      "videoTooLarge": "Video too large. Maximum size: 600MB",
+      "tooManyFiles": "Maximum of 10 files allowed",
+      "unreadableFile": "Could not read the file",
+      "invalidImage": "File is not a valid image",
+      "invalidVideo": "File is not a valid video",
+      "readError": "Error reading the file",
+      "validationFailed": "File validation failed",
+      "someFilesRejected": "Some files were rejected due to validation issues"
+    },
     "locationConfirmationModal": {
       "title": "Is this the right place?",
       "subtitle": "If it's not well-located, you can drag the pin to the correct position.",
@@ -647,7 +687,19 @@ const enTranslations = {
     "linkCopiedTitle": "Link Copied!",
     "linkCopiedMessage": "The property link has been copied to your clipboard.",
     "linkCopyErrorTitle": "Copy Error",
-    "linkCopyErrorMessage": "Could not copy the link. Please try again."
+    "linkCopyErrorMessage": "Could not copy the link. Please try again.",
+    "networkError": "Connection error. Check your internet and try again.",
+    "dataError": "Error processing data. Please try again in a few moments.",
+    "authError": "Authentication error. Please log in again.",
+    "generalError": "An unexpected error occurred. Please try again.",
+    "loadMoreError": "Error loading more properties. Please try again."
+  },
+  "loading": {
+    "general": "Loading...",
+    "initialLoad": "Loading properties...",
+    "loadingMore": "Loading more properties...",
+    "refreshing": "Refreshing data...",
+    "searching": "Searching properties..."
   },
   "documentsForSalePage": {
     "title": "Necessary Documents for Sale",

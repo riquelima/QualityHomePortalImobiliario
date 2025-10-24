@@ -48,7 +48,7 @@ const GeolocationErrorModal: React.FC<GeolocationErrorModalProps> = ({ isOpen, o
         <button
           type="button"
           onClick={onClose}
-          className="w-full bg-brand-red text-white font-bold py-3 px-4 rounded-md hover:opacity-90 transition-opacity"
+          className="w-full bg-red-600 text-white font-bold py-3 px-4 rounded-md hover:bg-red-700 transition-colors shadow-md"
         >
           {t('geolocationErrorModal.closeButton')}
         </button>

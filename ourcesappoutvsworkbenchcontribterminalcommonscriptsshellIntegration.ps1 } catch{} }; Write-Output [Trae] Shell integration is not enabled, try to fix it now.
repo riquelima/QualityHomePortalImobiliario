@@ -1,0 +1,30 @@
+[33mdb183ad[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m fix: Corrige problemas de performance no mobile - ExplorePage otimizado
+[33mee1c421[m chore: Restaura versão oficial com interface azul marinho - versão estável
+[33m54ab0b8[m fix: Corrige gestos no mapa mobile e erro React #130 no login admin
+[33m9bcb9a6[m feat: Implementa sistema de autenticação simplificado para admin
+[33mfd97825[m fix: Corrigir erros TypeScript e problemas de funcionalidade
+[33m3cc8adf[m fix: Corrige carregamento infinito no login do admin
+[33m59ea14b[m refactor: Update project name and metadata
+[33m774e56a[m fix: Refactor property loading and header props
+[33mb8b5355[m feat: Use production URL for share links
+[33me551fdb[m feat: Add share URL generation for properties
+[33ma2a0127[m feat: Implement real-time property updates
+[33m1d6bb1f[m feat: Optimize file upload with parallel processing
+[33m7063e21[m feat: Auto-create user profiles on login
+[33m0c11b82[m feat: Include advertiser ID in property data
+[33m46d16e1[m feat: Show all properties to admin
+[33meec51e7[m feat(PublishJourneyPage): Pass admin user data to page
+[33m82718d2[m feat: Implement admin authentication and user management
+[33m913fcb1[m refactor: Update location placeholder key and ShareIcon implementation
+[33m37d464f[m feat: Enhance hero section with new translations and mobile responsiveness
+[33mb885f9a[m feat(map): Add share functionality to map view
+[33m35cb3b5[m refactor: Update project name and branding
+[33md67614f[m feat(Hero): Add property type selection logic
+[33mba831cb[m fix: Improve Supabase media upload robustness
+[33maed1671[m feat: Bypass Supabase cache for all requests
+[33m2e0bcf8[m feat(supabase): Disable client-side caching
+[33m55f8974[m feat: Revert to client-side Supabase queries
+[33mc2e0d9a[m feat(map): Pan to user location and set zoom level
+[33me1c0a80[m feat: Simplify property fetching and remove CORS workaround
+[33m8a68c76[m feat(map): Add initial map mode for proximity or drawing
+[33md3d6d37[m feat: Implement infinite scroll for property listings

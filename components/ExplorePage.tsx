@@ -7,10 +7,14 @@ import { useGestures } from '../hooks/useGestures';
 import GestureIndicator from './GestureIndicator';
 import SearchIcon from './icons/SearchIcon';
 import { GoogleMap, useJsApiLoader, Marker, InfoWindow, Autocomplete } from '@react-google-maps/api';
+import { GOOGLE_MAPS_API_KEY } from '../config';
 import SpinnerIcon from './icons/SpinnerIcon';
+import LoadingIndicator from './LoadingIndicator';
 import MapIcon from './icons/MapIcon';
 import ShareIcon from './icons/ShareIcon';
 import ChevronDownIcon from './icons/ChevronDownIcon';
+import ZoomInIcon from './icons/ZoomInIcon';
+import ZoomOutIcon from './icons/ZoomOutIcon';
 
 interface Filters {
   priceMin: string;
@@ -35,6 +39,9 @@ interface ExplorePageProps {
   onGeolocationError: () => void;
   deviceLocation: { lat: number; lng: number } | null;
   initialOperation?: 'venda' | 'aluguel' | 'temporada';
+  loadMoreProperties: () => Promise<void>;
+  hasMoreProperties: boolean;
+  isLoadingMore: boolean;
   // Header props
   navigateHome: () => void;
   onNavigateToBuy: () => void;
@@ -108,7 +115,7 @@ const ExplorePage: React.FC<ExplorePageProps> = (props) => {
 
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script',
-    googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY || 'AIzaSyDukeY7JJI9UkHIFbsCZOrjPDRukqvUOfA',
+    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
     libraries,
     preventGoogleFontsLoading: true, // Evita carregar fontes desnecessárias
   });
@@ -246,21 +253,25 @@ const ExplorePage: React.FC<ExplorePageProps> = (props) => {
   }, [props.properties, filteredProperties.length, searchQuery, activeTab, filterProperties]);
 
   // Função para carregar mais itens
-  const loadMoreItems = useCallback(() => {
-    if (isLoadingMore || !hasMore) return;
+  const loadMoreItems = useCallback(async () => {
+    if (props.isLoadingMore || !hasMore) return;
     
-    setIsLoadingMore(true);
+    // Se ainda há itens locais para mostrar, mostra eles primeiro
+    const currentLength = displayedProperties.length;
+    const nextItems = filteredProperties.slice(currentLength, currentLength + ITEMS_PER_PAGE);
     
-    // Simular delay de carregamento
-    setTimeout(() => {
-      const currentLength = displayedProperties.length;
-      const nextItems = filteredProperties.slice(currentLength, currentLength + ITEMS_PER_PAGE);
-      
+    if (nextItems.length > 0) {
       setDisplayedProperties(prev => [...prev, ...nextItems]);
-      setHasMore(currentLength + nextItems.length < filteredProperties.length);
-      setIsLoadingMore(false);
-    }, 500);
-  }, [displayedProperties.length, filteredProperties, hasMore, isLoadingMore]);
+      setHasMore(currentLength + nextItems.length < filteredProperties.length || props.hasMoreProperties);
+    } else if (props.hasMoreProperties) {
+      // Se não há mais itens locais, carrega mais do servidor
+      try {
+        await props.loadMoreProperties();
+      } catch (error) {
+        console.error('Erro ao carregar mais propriedades:', error);
+      }
+    }
+  }, [displayedProperties.length, filteredProperties, hasMore, props]);
 
   // Scroll infinito com debounce para melhor performance
   useEffect(() => {
@@ -283,7 +294,7 @@ const ExplorePage: React.FC<ExplorePageProps> = (props) => {
         const { scrollTop, scrollHeight, clientHeight } = container;
         const isNearBottom = scrollTop + clientHeight >= scrollHeight - 150;
         
-        if (isNearBottom && hasMore && !isLoadingMore) {
+        if (isNearBottom && hasMore && !props.isLoadingMore) {
           loadMoreItems();
         }
       }, 150);
@@ -294,7 +305,7 @@ const ExplorePage: React.FC<ExplorePageProps> = (props) => {
       container.removeEventListener('scroll', handleScroll);
       clearTimeout(scrollTimeout);
     };
-  }, [hasMore, isLoadingMore, loadMoreItems]);
+  }, [hasMore, props.isLoadingMore, loadMoreItems]);
   
   const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       setSearchQuery(e.target.value);
@@ -316,6 +327,21 @@ const ExplorePage: React.FC<ExplorePageProps> = (props) => {
   const onInfoWindowClose = useCallback(() => {
     setSelectedProperty(null);
   }, []);
+
+  // Funções de zoom customizadas
+  const handleZoomIn = useCallback(() => {
+    if (map) {
+      const currentZoom = map.getZoom();
+      map.setZoom(Math.min(currentZoom + 1, 18));
+    }
+  }, [map]);
+
+  const handleZoomOut = useCallback(() => {
+    if (map) {
+      const currentZoom = map.getZoom();
+      map.setZoom(Math.max(currentZoom - 1, 10));
+    }
+  }, [map]);
   
   const onAutocompleteLoad = (autocompleteInstance: any) => {
     setAutocomplete(autocompleteInstance);
@@ -568,7 +594,7 @@ const ExplorePage: React.FC<ExplorePageProps> = (props) => {
             onLoad={onLoad}
             onUnmount={onUnmount}
             options={{
-              zoomControl: true,
+              zoomControl: false,
               streetViewControl: false,
               mapTypeControl: false,
               fullscreenControl: true,
@@ -714,6 +740,26 @@ const ExplorePage: React.FC<ExplorePageProps> = (props) => {
             </InfoWindow>
           )}
         </GoogleMap>
+        
+        {/* Botões de Zoom Customizados */}
+        <div className="absolute top-4 right-4 z-10 flex flex-col gap-2">
+          <button
+            onClick={handleZoomIn}
+            className="bg-white hover:bg-gray-50 text-gray-700 p-3 rounded-lg shadow-lg border border-gray-200 transition-all duration-200 hover:shadow-xl"
+            aria-label="Zoom In"
+            title="Aumentar zoom"
+          >
+            <ZoomInIcon className="w-5 h-5" />
+          </button>
+          <button
+            onClick={handleZoomOut}
+            className="bg-white hover:bg-gray-50 text-gray-700 p-3 rounded-lg shadow-lg border border-gray-200 transition-all duration-200 hover:shadow-xl"
+            aria-label="Zoom Out"
+            title="Diminuir zoom"
+          >
+            <ZoomOutIcon className="w-5 h-5" />
+          </button>
+        </div>
         </div>
       ) : loadError ? (
         <div className="flex items-center justify-center h-full bg-gray-100">
@@ -908,7 +954,7 @@ const ExplorePage: React.FC<ExplorePageProps> = (props) => {
               style={{ height: 'calc(100vh - 280px)' }}
             >
               {displayedProperties.length > 0 ? (
-                <div className="p-4 space-y-4">
+                <div className="p-4 grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
                   {displayedProperties.map(property => (
                     <div 
                       key={property.id} 
@@ -924,14 +970,12 @@ const ExplorePage: React.FC<ExplorePageProps> = (props) => {
                   ))}
                   
                   {/* Loading indicator */}
-                  {isLoadingMore && (
-                    <div className="flex justify-center py-4">
-                      <SpinnerIcon className="w-6 h-6 text-blue-900 animate-spin" />
-                    </div>
+                  {props.isLoadingMore && (
+                    <LoadingIndicator type="loadMore" size="medium" />
                   )}
                   
                   {/* End message */}
-                  {!hasMore && displayedProperties.length > 0 && (
+                  {!hasMore && !props.hasMoreProperties && displayedProperties.length > 0 && (
                     <div className="text-center py-4 text-gray-500 text-sm">
                       Todos os imóveis foram carregados
                     </div>

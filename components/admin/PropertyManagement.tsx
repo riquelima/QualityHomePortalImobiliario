@@ -1,9 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { supabase } from '../../supabaseClient';
 import PlusIcon from '../icons/PlusIcon';
 import type { Property } from '../../types';
 
 interface PropertyManagementProps {
-  properties: Property[];
   onViewDetails: (id: number) => void;
   onDeleteProperty: (id: number) => void;
   onEditProperty: (property: Property) => void;
@@ -12,13 +12,15 @@ interface PropertyManagementProps {
 }
 
 const PropertyManagement: React.FC<PropertyManagementProps> = ({
-  properties,
   onViewDetails,
   onDeleteProperty,
   onEditProperty,
   onShareProperty,
   onSectionChange
 }) => {
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'pending' | 'sold'>('all');
   const [typeFilter, setTypeFilter] = useState<'all' | 'casa' | 'apartamento' | 'terreno' | 'comercial'>('all');
@@ -26,6 +28,29 @@ const PropertyManagement: React.FC<PropertyManagementProps> = ({
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [selectedProperties, setSelectedProperties] = useState<number[]>([]);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+
+  useEffect(() => {
+    const fetchProperties = async () => {
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('imoveis')
+          .select('*');
+
+        if (error) {
+          throw error;
+        }
+
+        setProperties(data || []);
+      } catch (error: any) {
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProperties();
+  }, []);
 
   // Filtrar e ordenar propriedades
   const filteredProperties = useMemo(() => {
@@ -282,7 +307,7 @@ const PropertyManagement: React.FC<PropertyManagementProps> = ({
                 
                 <div className="flex-shrink-0">
                   <img
-                    src={property.images[0] || '/placeholder-image.jpg'}
+                    src={property.images && property.images.length > 0 ? property.images[0] : '/placeholder-image.jpg'}
                     alt={property.title}
                     className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg object-cover"
                   />

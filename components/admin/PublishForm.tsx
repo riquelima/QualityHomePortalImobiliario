@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../supabaseClient';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { validateMediaFiles } from '../../utils/mediaValidation';
 
 interface PropertyFormData {
   titulo: string;
@@ -119,17 +120,41 @@ const PublishForm: React.FC = () => {
     }));
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const files = Array.from(e.target.files);
-      setImageFiles(prev => [...prev, ...files]);
+      const validation = await validateMediaFiles(files, imageFiles.length);
+      
+      if (!validation.isValid) {
+        const firstError = validation.errors[0];
+        setSubmitMessage(t(`mediaValidation.${firstError.type}`, firstError.context || {}));
+        
+        if (validation.validFiles.length > 0) {
+          setImageFiles(prev => [...prev, ...validation.validFiles]);
+        }
+        return;
+      }
+      
+      setImageFiles(prev => [...prev, ...validation.validFiles]);
     }
   };
 
-  const handleVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const files = Array.from(e.target.files);
-      setVideoFiles(prev => [...prev, ...files]);
+      const validation = await validateMediaFiles(files, videoFiles.length);
+      
+      if (!validation.isValid) {
+        const firstError = validation.errors[0];
+        setSubmitMessage(t(`mediaValidation.${firstError.type}`, firstError.context || {}));
+        
+        if (validation.validFiles.length > 0) {
+          setVideoFiles(prev => [...prev, ...validation.validFiles]);
+        }
+        return;
+      }
+      
+      setVideoFiles(prev => [...prev, ...validation.validFiles]);
     }
   };
 

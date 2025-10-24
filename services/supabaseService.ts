@@ -1,11 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '../supabaseClient';
 import { PropertyFormData } from '../components/admin/PropertyForm';
-
-// Configuração do Supabase
-const supabaseUrl = 'https://ckzhvurabmhvteekyjxg.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNremh2dXJhYm1odnRlZWt5anhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxMDI3ODAsImV4cCI6MjA3MzY3ODc4MH0.Flyk7vlukV-hr5wThG6IogQTBQuUcI164kbU0cFwvws';
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Interface para o imóvel no banco de dados
 export interface ImovelDB {

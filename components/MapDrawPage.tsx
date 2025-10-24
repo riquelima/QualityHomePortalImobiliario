@@ -3,6 +3,7 @@ import { GoogleMap, useJsApiLoader, Marker, Circle, DrawingManager } from '@reac
 import type { Property } from '../types';
 import PropertyCard from './PropertyCard';
 import { useLanguage } from '../contexts/LanguageContext';
+import { GOOGLE_MAPS_API_KEY } from '../config';
 import DrawIcon from './icons/DrawIcon';
 import CloseIcon from './icons/CloseIcon';
 import SpinnerIcon from './icons/SpinnerIcon';
@@ -43,7 +44,7 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewD
 
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script',
-    googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY || 'AIzaSyDukeY7JJI9UkHIFbsCZOrjPDRukqvUOfA',
+    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
     libraries,
   });
 
@@ -293,7 +294,7 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewD
                 </div>
             </div>
             <div className="overflow-y-auto p-4 flex-grow">
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {propertiesInZone.length > 0 ? (
                     propertiesInZone.map(prop => (
                         <PropertyCard 

@@ -22,6 +22,7 @@ interface HeaderProps {
   navigateToGuideToSell: () => void;
   navigateToDocumentsForSale: () => void;
   navigateHome: () => void;
+
   isAdminLoggedIn?: boolean;
   onAdminLogout?: () => void;
   onNavigateToAdminDashboard?: () => void;
@@ -191,6 +192,7 @@ const Header: React.FC<HeaderProps> = ({ navigateHome, onNavigateToBuy, onNaviga
                 >
                   {t('header.nav.season')}
                 </a>
+
               </div>
 
               {/* Seletor de idioma mobile */}
