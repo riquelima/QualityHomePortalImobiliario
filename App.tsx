@@ -22,7 +22,7 @@ import {
   LockIcon,
   SpinnerIcon
 } from '@components';
-import PublishPropertyPage from './pages/PublishPropertyPage';
+import { PublishPropertyPage } from '@pages';
 import { supabase } from './supabaseClient';
 import type { Property, Media, User } from './types';
 import { useLanguage } from './contexts/LanguageContext';

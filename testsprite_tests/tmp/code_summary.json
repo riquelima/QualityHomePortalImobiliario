@@ -1,0 +1,206 @@
+{
+  "tech_stack": [
+    "TypeScript",
+    "React 18.2.0",
+    "Vite 6.4.1",
+    "Tailwind CSS",
+    "Supabase",
+    "PostgreSQL",
+    "Google Maps API",
+    "Google Gemini AI",
+    "Node.js",
+    "PostCSS"
+  ],
+  "features": [
+    {
+      "name": "Property Listings Management",
+      "description": "Complete property management system with CRUD operations, filtering, and search functionality",
+      "files": [
+        "components/PropertyListings.tsx",
+        "components/PropertyCard.tsx",
+        "components/AllListingsPage.tsx",
+        "components/SearchResultsPage.tsx",
+        "components/PropertyDetailPage.tsx"
+      ]
+    },
+    {
+      "name": "Admin Dashboard",
+      "description": "Administrative panel with authentication, property management, and analytics",
+      "files": [
+        "components/admin/AdminDashboard.tsx",
+        "components/admin/AdminLayout.tsx",
+        "components/admin/AdminLoginPage.tsx",
+        "components/admin/PropertyManagement.tsx",
+        "components/admin/PropertyManagementNew.tsx",
+        "services/adminAuth.ts"
+      ]
+    },
+    {
+      "name": "Property Publication System",
+      "description": "Multi-step property publication with AI-generated content and media upload",
+      "files": [
+        "components/PublishJourneyPage.tsx",
+        "components/PublishAdPage.tsx",
+        "components/admin/PublishForm.tsx",
+        "components/admin/PropertyForm.tsx",
+        "pages/PublishPropertyPage.tsx"
+      ]
+    },
+    {
+      "name": "Google Maps Integration",
+      "description": "Interactive maps with location search, autocomplete, and geolocation features",
+      "files": [
+        "components/MapDrawPage.tsx",
+        "types/google-maps.d.ts",
+        "hooks/useGestures.ts"
+      ]
+    },
+    {
+      "name": "Advanced Search System",
+      "description": "Comprehensive search with filters, location-based search, and advanced criteria",
+      "files": [
+        "components/AdvancedSearchPage.tsx",
+        "components/AddressSearchByCEP.tsx"
+      ]
+    },
+    {
+      "name": "Supabase Integration",
+      "description": "Backend services including database operations, authentication, and file storage",
+      "files": [
+        "services/supabaseService.ts",
+        "supabaseClient.ts",
+        "seeds/admin_setup.sql",
+        "seeds/test_data.sql"
+      ]
+    },
+    {
+      "name": "Multi-language Support",
+      "description": "Internationalization system supporting Portuguese, English, and Spanish",
+      "files": [
+        "contexts/LanguageContext.tsx",
+        "locales/pt.json",
+        "locales/en.json",
+        "locales/es.json",
+        "public/locales/pt.json",
+        "public/locales/en.json",
+        "public/locales/es.json"
+      ]
+    },
+    {
+      "name": "Media Management",
+      "description": "Image and video upload, validation, and storage system",
+      "files": [
+        "utils/mediaValidation.ts"
+      ]
+    },
+    {
+      "name": "User Interface Components",
+      "description": "Reusable UI components including modals, forms, and navigation",
+      "files": [
+        "components/Header.tsx",
+        "components/Hero.tsx",
+        "components/SystemModal.tsx",
+        "components/ContactModal.tsx",
+        "components/ConfirmationModal.tsx",
+        "components/LocationConfirmationModal.tsx",
+        "components/LoginModal.tsx",
+        "components/LoadingIndicator.tsx",
+        "components/SplashScreen.tsx"
+      ]
+    },
+    {
+      "name": "Icon System",
+      "description": "Comprehensive icon library with SVG components for UI elements",
+      "files": [
+        "components/icons/AIIcon.tsx",
+        "components/icons/SearchIcon.tsx",
+        "components/icons/LocationIcon.tsx",
+        "components/icons/HeartIcon.tsx",
+        "components/icons/ShareIcon.tsx",
+        "components/icons/BedIcon.tsx",
+        "components/icons/BathIcon.tsx",
+        "components/icons/AreaIcon.tsx",
+        "components/icons/PlusIcon.tsx",
+        "components/icons/TrashIcon.tsx",
+        "components/icons/PencilIcon.tsx",
+        "components/icons/EyeIcon.tsx",
+        "components/icons/LockIcon.tsx",
+        "components/icons/SpinnerIcon.tsx"
+      ]
+    },
+    {
+      "name": "Geolocation Services",
+      "description": "Location detection and error handling for user positioning",
+      "files": [
+        "components/GeolocationErrorModal.tsx",
+        "components/InitialGeolocationModal.tsx"
+      ]
+    },
+    {
+      "name": "Property Features System",
+      "description": "Dynamic feature icons and descriptions for property characteristics",
+      "files": [
+        "components/FeatureIcon.tsx"
+      ]
+    },
+    {
+      "name": "Navigation and Routing",
+      "description": "Page state management and navigation system",
+      "files": [
+        "App.tsx"
+      ]
+    },
+    {
+      "name": "Type Definitions",
+      "description": "TypeScript type definitions for properties, users, and API interfaces",
+      "files": [
+        "types.ts",
+        "types/google-maps.d.ts"
+      ]
+    },
+    {
+      "name": "Configuration Management",
+      "description": "Application configuration and environment variable management",
+      "files": [
+        "config.ts",
+        "vite.config.ts",
+        "tailwind.config.js",
+        "tsconfig.json",
+        "postcss.config.js"
+      ]
+    },
+    {
+      "name": "Testing Infrastructure",
+      "description": "Automated testing suite with TestSprite integration",
+      "files": [
+        "testsprite_tests/TC001_Load_Property_Listings_within_3_Seconds.py",
+        "testsprite_tests/TC002_Advanced_Search_Returns_Accurate_Results.py",
+        "testsprite_tests/TC003_AI_Generated_Titles_and_Descriptions_Produce_Contextual_Content.py",
+        "testsprite_tests/TC004_Admin_Authentication_with_Role_Based_Access_Control.py",
+        "testsprite_tests/TC005_Reject_Upload_of_Unsupported_Media_Formats_or_Oversize_Files.py",
+        "testsprite_tests/TC006_Geolocation_and_Map_Features_Display_Correct_Coordinates.py",
+        "testsprite_tests/TC007_Multi_Language_Support_Switches_UI_Text_and_Content_Correctly.py",
+        "testsprite_tests/TC008_Accessibility_Compliance_with_Keyboard_Navigation_and_Screen_Reader_Support.py",
+        "testsprite_tests/TC009_Session_Persistence_and_Encrypted_Passwords_with_HTTPS_Communication.py",
+        "testsprite_tests/TC010_Complete_Property_Publication_Journey_with_All_Validations.py",
+        "testsprite_tests/TC011_Admin_Property_Management_Filters_and_Sorting.py",
+        "testsprite_tests/TC012_UI_Components_Render_Correctly_with_Responsive_Layout.py",
+        "testsprite_tests/TC013_Address_Autocomplete_Handles_Invalid_or_Partial_Inputs_Gracefully.py",
+        "testsprite_tests/TC014_Published_Property_Details_Display_All_Relevant_Information.py",
+        "testsprite_tests/TC015_User_Login_Session_Persists_and_Logout_Clears_Session.py"
+      ]
+    },
+    {
+      "name": "Documentation and Analysis",
+      "description": "Project documentation, bug analysis, and improvement tracking",
+      "files": [
+        "README.md",
+        "prd.md",
+        "ANALISE_MANUAL_BUGS.md",
+        "MELHORIAS_IMPLEMENTADAS.md",
+        "INSTRUCOES_CORRECOES.md",
+        "SUPABASE_SETUP.md"
+      ]
+    }
+  ]
+}
