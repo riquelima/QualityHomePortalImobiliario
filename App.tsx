@@ -1,30 +1,32 @@
 
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import Header from './components/Header';
-import PropertyListings from './components/PropertyListings';
-import MapDrawPage from './components/MapDrawPage';
-import { PublishJourneyPage } from './components/PublishJourneyPage';
-import GeolocationErrorModal from './components/GeolocationErrorModal';
-import InitialGeolocationModal from './components/InitialGeolocationModal';
-import SearchResultsPage from './components/SearchResultsPage';
-import PropertyDetailPage from './components/PropertyDetailPage';
-import SystemModal from './components/SystemModal';
-import AllListingsPage from './components/AllListingsPage';
-import ExplorePage from './components/ExplorePage';
-import { AdvancedSearchPage } from '@components';
-import GuideToSellPage from './components/GuideToSellPage';
-import DocumentsForSalePage from './components/DocumentsForSalePage';
-import SplashScreen from './components/SplashScreen';
-import AdminLoginPage from './components/admin/AdminLoginPage';
-import AdminLayout from './components/admin/AdminLayout';
+import {
+  Header,
+  PropertyListings,
+  MapDrawPage,
+  PublishJourneyPage,
+  GeolocationErrorModal,
+  InitialGeolocationModal,
+  SearchResultsPage,
+  PropertyDetailPage,
+  SystemModal,
+  AllListingsPage,
+  ExplorePage,
+  AdvancedSearchPage,
+  GuideToSellPage,
+  DocumentsForSalePage,
+  SplashScreen,
+  AdminLoginPage,
+  AdminLayout,
+  LockIcon,
+  SpinnerIcon
+} from '@components';
 import PublishPropertyPage from './pages/PublishPropertyPage';
 import { supabase } from './supabaseClient';
 import type { Property, Media, User } from './types';
 import { useLanguage } from './contexts/LanguageContext';
 import { QUALLITY_HOME_USER_ID, PRODUCTION_URL } from './config';
-import LockIcon from './components/icons/LockIcon';
-import SpinnerIcon from './components/icons/SpinnerIcon';
 
 interface PageState {
   page: 'home' | 'map' | 'publish-journey' | 'searchResults' | 'propertyDetail' | 'edit-journey' | 'allListings' | 'guideToSell' | 'documentsForSale' | 'adminLogin' | 'adminDashboard' | 'explore' | 'publish' | 'advancedSearch';

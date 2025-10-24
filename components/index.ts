@@ -30,3 +30,20 @@ export { default as ChatListPage } from './ChatListPage';
 export { default as FavoritesPage } from './FavoritesPage';
 export { default as AddressSearchByCEP } from './AddressSearchByCEP';
 export { default as PublishAdPage } from './PublishAdPage';
+
+// Admin components
+export { default as AdminLoginPage } from './admin/AdminLoginPage';
+export { default as AdminLayout } from './admin/AdminLayout';
+export { default as AdminDashboard } from './admin/AdminDashboard';
+export { default as AdminProtectedRoute } from './admin/AdminProtectedRoute';
+export { default as AdminSidebar } from './admin/AdminSidebar';
+export { default as PropertyForm } from './admin/PropertyForm';
+export { default as PropertyManagement } from './admin/PropertyManagement';
+export { default as PropertyManagementNew } from './admin/PropertyManagementNew';
+export { default as PublishForm } from './admin/PublishForm';
+export { default as PublishFormSimple } from './admin/PublishFormSimple';
+export { default as StatCard } from './admin/StatCard';
+
+// Icons
+export { default as LockIcon } from './icons/LockIcon';
+export { default as SpinnerIcon } from './icons/SpinnerIcon';
