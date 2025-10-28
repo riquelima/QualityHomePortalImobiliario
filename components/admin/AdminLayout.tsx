@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import AdminSidebar from './AdminSidebar';
-import AdminDashboard from './AdminDashboard';
-import PropertyManagementNew from './PropertyManagementNew';
-import { PropertyForm } from './PropertyForm';
+import { AdminSidebar, AdminDashboard, PropertyManagementNew } from './index';
+import PublishJourneyAdmin from './PublishJourneyAdmin';
 import { adminAuthService, AdminUser } from '../../services/adminAuth';
 import type { Property, User } from '../../types';
 import { supabase } from '../../supabaseClient';
@@ -109,10 +107,10 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
         );
       case 'publish':
         return (
-          <PropertyForm
+          <PublishJourneyAdmin
             onBack={() => handleSectionChange('dashboard')}
-            onSuccess={(status) => {
-              onPublishSuccess(status);
+            onSuccess={(property) => {
+              onPublishSuccess(propertyToEdit ? 'updated' : 'published');
               fetchProperties();
               handleSectionChange('dashboard');
             }}

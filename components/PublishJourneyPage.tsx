@@ -13,10 +13,11 @@ import CloseIcon from './icons/CloseIcon';
 import { GoogleGenAI } from '@google/genai';
 import AIIcon from './icons/AIIcon';
 import SpinnerIcon from './icons/SpinnerIcon';
-import { Autocomplete, useJsApiLoader } from '@react-google-maps/api';
+import { Autocomplete } from '@react-google-maps/api';
 // FIX: Import LocationIcon to fix "Cannot find name 'LocationIcon'" error.
 import LocationIcon from './icons/LocationIcon';
-import { PRODUCTION_URL, QUALLITY_HOME_USER_ID, GOOGLE_MAPS_API_KEY } from '../config';
+import { PRODUCTION_URL, QUALLITY_HOME_USER_ID } from '../config';
+import { useGoogleMaps } from '../contexts/GoogleMapsContext';
 import AddressSearchByCEP from './AddressSearchByCEP';
 import { validateMediaFiles, type ValidationResult } from '../utils/mediaValidation';
 
@@ -147,11 +148,7 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
     const formRef = useRef<HTMLFormElement>(null);
 
 
-    const { isLoaded, loadError } = useJsApiLoader({
-        id: 'google-map-script',
-        googleMapsApiKey: GOOGLE_MAPS_API_KEY,
-        libraries,
-    });
+    const { isLoaded, loadError } = useGoogleMaps();
 
     const propertyTypes = [
         { key: 'apartment', value: 'Apartamento' },
@@ -735,13 +732,13 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                          <Section title="Informações Principais">
                             <h3 className="text-lg font-semibold text-brand-navy mb-4">{t('publishJourney.form.operation.label')}</h3>
                             <div className="grid grid-cols-3 gap-2 mb-8">
-                                <button type="button" onClick={() => setFormData(p => ({...p, operation: 'venda'}))} className={`p-4 border rounded-lg text-center transition-colors ${formData.operation === 'venda' ? 'bg-red-600 text-white border-red-600' : 'bg-white hover:border-brand-dark'}`}>
+                                <button type="button" onClick={() => setFormData(p => ({...p, operation: 'venda'}))} className={`p-4 border rounded-lg text-center transition-colors ${formData.operation === 'venda' ? 'bg-red-600 text-black border-red-600' : 'bg-white hover:border-brand-dark'}`}>
                                     <span className="font-medium">{t('publishJourney.form.operation.sell')}</span>
                                 </button>
-                                <button type="button" onClick={() => setFormData(p => ({...p, operation: 'aluguel'}))} className={`p-4 border rounded-lg text-center transition-colors ${formData.operation === 'aluguel' ? 'bg-red-600 text-white border-red-600' : 'bg-white hover:border-brand-dark'}`}>
+                                <button type="button" onClick={() => setFormData(p => ({...p, operation: 'aluguel'}))} className={`p-4 border rounded-lg text-center transition-colors ${formData.operation === 'aluguel' ? 'bg-red-600 text-black border-red-600' : 'bg-white hover:border-brand-dark'}`}>
                                     <span className="font-medium">{t('publishJourney.form.operation.rent')}</span>
                                 </button>
-                                <button type="button" onClick={() => setFormData(p => ({...p, operation: 'temporada'}))} className={`p-4 border rounded-lg text-center transition-colors ${formData.operation === 'temporada' ? 'bg-red-600 text-white border-red-600' : 'bg-white hover:border-brand-dark'}`}>
+                                <button type="button" onClick={() => setFormData(p => ({...p, operation: 'temporada'}))} className={`p-4 border rounded-lg text-center transition-colors ${formData.operation === 'temporada' ? 'bg-red-600 text-black border-red-600' : 'bg-white hover:border-brand-dark'}`}>
                                     <span className="font-medium">{t('publishJourney.form.operation.season')}</span>
                                 </button>
                             </div>

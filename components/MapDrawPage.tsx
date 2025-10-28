@@ -1,9 +1,11 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { GoogleMap, useJsApiLoader, Marker, Circle, DrawingManager } from '@react-google-maps/api';
+import { GoogleMap, Marker, Circle, DrawingManager } from '@react-google-maps/api';
 import type { Property } from '../types';
 import PropertyCard from './PropertyCard';
 import { useLanguage } from '../contexts/LanguageContext';
-import { GOOGLE_MAPS_API_KEY } from '../config';
+import { useGestures } from '../hooks/useGestures';
+import GestureIndicator from './GestureIndicator';
+import { useGoogleMaps } from '../contexts/GoogleMapsContext';
 import DrawIcon from './icons/DrawIcon';
 import CloseIcon from './icons/CloseIcon';
 import SpinnerIcon from './icons/SpinnerIcon';
@@ -42,11 +44,7 @@ const MapDrawPage: React.FC<MapDrawPageProps> = ({ onBack, userLocation, onViewD
   const [zoom, setZoom] = useState(userLocation ? (initialMapMode === 'proximity' ? 14 : 13) : 13);
 
 
-  const { isLoaded, loadError } = useJsApiLoader({
-    id: 'google-map-script',
-    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
-    libraries,
-  });
+  const { isLoaded, loadError } = useGoogleMaps();
 
   const onLoad = useCallback(function callback(mapInstance: any) {
     setMap(mapInstance);

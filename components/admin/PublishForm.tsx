@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../supabaseClient';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { validateMediaFiles } from '../../utils/mediaValidation';
+import AddressSearchByCEP from '../AddressSearchByCEP';
+import MediaUpload from './MediaUpload';
+import type { MediaFile } from './types';
 
 interface PropertyFormData {
   titulo: string;
@@ -10,6 +13,7 @@ interface PropertyFormData {
   cidade: string;
   rua: string;
   numero: string;
+  cep: string;
   preco: number;
   tipo_operacao: 'venda' | 'aluguel' | 'temporada';
   tipo_imovel: string;
@@ -43,6 +47,7 @@ const PublishForm: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState('');
+  const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([]);
   
   const [formData, setFormData] = useState<PropertyFormData>({
     titulo: '',
@@ -51,6 +56,7 @@ const PublishForm: React.FC = () => {
     cidade: '',
     rua: '',
     numero: '',
+    cep: '',
     preco: 0,
     tipo_operacao: 'venda',
     tipo_imovel: '',
@@ -78,9 +84,6 @@ const PublishForm: React.FC = () => {
     images: [],
     videos: []
   });
-
-  const [imageFiles, setImageFiles] = useState<File[]>([]);
-  const [videoFiles, setVideoFiles] = useState<File[]>([]);
 
   const tiposImovel = [
     'Apartamento', 'Casa', 'Sobrado', 'Cobertura', 'Studio', 'Loft',
@@ -111,6 +114,28 @@ const PublishForm: React.FC = () => {
     }));
   };
 
+  const handleAddressChange = (address: {
+    cep?: string;
+    street?: string;
+    neighborhood?: string;
+    city?: string;
+    state?: string;
+    number?: string;
+    complement?: string;
+    latitude?: string;
+    longitude?: string;
+    fullAddress?: string;
+  }, isComplete: boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      cep: address.cep || '',
+      endereco_completo: address.fullAddress || `${address.street || ''}, ${address.number || ''}, ${address.neighborhood || ''}, ${address.city || ''} - ${address.state || ''}`.replace(/^,\s*|,\s*,/g, '').trim(),
+      cidade: address.city || '',
+      rua: address.street || '',
+      numero: address.number || ''
+    }));
+  };
+
   const handleArrayChange = (field: keyof PropertyFormData, value: string, checked: boolean) => {
     setFormData(prev => ({
       ...prev,
@@ -132,76 +157,55 @@ const PublishForm: React.FC = () => {
     }
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const files = Array.from(e.target.files);
-      const validation = await validateMediaFiles(files, imageFiles.length);
-      
-      if (!validation.isValid) {
-        const firstError = validation.errors[0];
-        setSubmitMessage(t(`mediaValidation.${firstError.type}`, firstError.context || {}));
-        
-        if (validation.validFiles.length > 0) {
-          setImageFiles(prev => [...prev, ...validation.validFiles]);
-        }
-        return;
-      }
-      
-      setImageFiles(prev => [...prev, ...validation.validFiles]);
-    }
+  const handleMediaFilesChange = (files: MediaFile[]) => {
+    setMediaFiles(files);
   };
 
-  const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const files = Array.from(e.target.files);
-      const validation = await validateMediaFiles(files, videoFiles.length);
-      
-      if (!validation.isValid) {
-        const firstError = validation.errors[0];
-        setSubmitMessage(t(`mediaValidation.${firstError.type}`, firstError.context || {}));
-        
-        if (validation.validFiles.length > 0) {
-          setVideoFiles(prev => [...prev, ...validation.validFiles]);
-        }
-        return;
-      }
-      
-      setVideoFiles(prev => [...prev, ...validation.validFiles]);
-    }
+  const handleMediaError = (message: string) => {
+    console.error('Erro de mídia:', message);
+    // Aqui você pode adicionar uma notificação toast ou modal de erro
   };
 
-  const uploadFiles = async (files: File[], bucket: string) => {
-    const uploadedUrls = [];
+  const uploadMediaFiles = async (files: MediaFile[]) => {
+    const uploadedMedia = [];
     
-    for (const file of files) {
-      const fileName = `${Date.now()}_${file.name}`;
-      const { data, error } = await supabase.storage
-        .from(bucket)
-        .upload(fileName, file);
-      
-      if (error) {
-        console.error('Erro no upload:', error);
-        continue;
+    for (const mediaFile of files) {
+      if (mediaFile.file) {
+        const fileExtension = mediaFile.file.name.split('.').pop();
+        const fileName = `${mediaFile.type}s/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExtension}`;
+        
+        const { data, error } = await supabase.storage
+          .from('midia')
+          .upload(fileName, mediaFile.file);
+        
+        if (error) {
+          console.error('Erro no upload:', error);
+          continue;
+        }
+        
+        const { data: { publicUrl } } = supabase.storage
+          .from('midia')
+          .getPublicUrl(fileName);
+        
+        uploadedMedia.push({
+          url: publicUrl,
+          type: mediaFile.type,
+          fileName: fileName
+        });
       }
-      
-      const { data: { publicUrl } } = supabase.storage
-        .from(bucket)
-        .getPublicUrl(fileName);
-      
-      uploadedUrls.push(publicUrl);
     }
     
-    return uploadedUrls;
+    return uploadedMedia;
   };
 
   const validateStep = (step: number): boolean => {
     switch (step) {
       case 1:
-        return !!(formData.titulo && formData.tipo_operacao && formData.tipo_imovel && formData.preco);
+        return !!(formData.titulo && formData.tipo_operacao && formData.tipo_imovel);
       case 2:
-        return !!(formData.endereco_completo && formData.cidade);
+        return !!(formData.preco > 0);
       case 3:
-        return formData.quartos >= 0 && formData.banheiros >= 0;
+        return !!(formData.endereco_completo && formData.cidade);
       case 4:
         return true; // Características são opcionais
       case 5:
@@ -221,23 +225,18 @@ const PublishForm: React.FC = () => {
     setSubmitMessage('');
 
     try {
-      // Upload de imagens
-      let imageUrls = [];
-      if (imageFiles.length > 0) {
-        imageUrls = await uploadFiles(imageFiles, 'property-images');
-      }
-
-      // Upload de vídeos
-      let videoUrls = [];
-      if (videoFiles.length > 0) {
-        videoUrls = await uploadFiles(videoFiles, 'property-videos');
-      }
+      // Upload de mídias
+      const uploadedMedia = await uploadMediaFiles(mediaFiles);
 
       // Obter usuário atual
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         throw new Error('Usuário não autenticado');
       }
+
+      // Separar URLs por tipo
+      const imageUrls = uploadedMedia.filter(media => media.type === 'image').map(media => media.url);
+      const videoUrls = uploadedMedia.filter(media => media.type === 'video').map(media => media.url);
 
       // Preparar dados para inserção
       const propertyData = {
@@ -259,31 +258,18 @@ const PublishForm: React.FC = () => {
         throw error;
       }
 
-      // Inserir mídias na tabela midias_imovel se necessário
-      if (imageUrls.length > 0) {
-        const mediaInserts = imageUrls.map((url, index) => ({
+      // Inserir mídias na tabela midias_imovel
+      if (uploadedMedia.length > 0) {
+        const mediaInserts = uploadedMedia.map((media, index) => ({
           imovel_id: data.id,
-          url: url,
-          tipo: 'imagem',
+          url: media.url,
+          tipo: media.type === 'image' ? 'imagem' : 'video',
           ordem: index
         }));
 
         await supabase
           .from('midias_imovel')
           .insert(mediaInserts);
-      }
-
-      if (videoUrls.length > 0) {
-        const videoInserts = videoUrls.map((url, index) => ({
-          imovel_id: data.id,
-          url: url,
-          tipo: 'video',
-          ordem: index
-        }));
-
-        await supabase
-          .from('midias_imovel')
-          .insert(videoInserts);
       }
 
       setSubmitMessage('Anúncio publicado com sucesso!');
@@ -323,8 +309,7 @@ const PublishForm: React.FC = () => {
         images: [],
         videos: []
       });
-      setImageFiles([]);
-      setVideoFiles([]);
+      setMediaFiles([]);
       setCurrentStep(1);
 
     } catch (error) {
@@ -427,72 +412,23 @@ const PublishForm: React.FC = () => {
 
   const renderStep2 = () => (
     <div className="space-y-6">
-      <h3 className="text-xl font-semibold text-gray-800">Localização</h3>
+      <h3 className="text-xl font-semibold text-gray-800">Características Básicas do Imóvel</h3>
       
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          Endereço Completo *
+          Preço (R$) *
         </label>
         <input
-          type="text"
-          value={formData.endereco_completo}
-          onChange={(e) => handleInputChange('endereco_completo', e.target.value)}
+          type="number"
+          value={formData.preco}
+          onChange={(e) => handleInputChange('preco', parseFloat(e.target.value) || 0)}
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="Rua, número, bairro, cidade, estado"
+          placeholder="0,00"
+          min="0"
+          step="0.01"
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Cidade *
-          </label>
-          <input
-            type="text"
-            value={formData.cidade}
-            onChange={(e) => handleInputChange('cidade', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Nome da cidade"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Rua
-          </label>
-          <input
-            type="text"
-            value={formData.rua}
-            onChange={(e) => handleInputChange('rua', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Nome da rua"
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Número
-          </label>
-          <input
-            type="text"
-            value={formData.numero}
-            onChange={(e) => handleInputChange('numero', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="123"
-          />
-        </div>
-
-
-      </div>
-    </div>
-  );
-
-  const renderStep3 = () => (
-    <div className="space-y-6">
-      <h3 className="text-xl font-semibold text-gray-800">Características do Imóvel</h3>
-      
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -560,6 +496,7 @@ const PublishForm: React.FC = () => {
             onChange={(e) => handleInputChange('taxa_condominio', parseFloat(e.target.value) || 0)}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             min="0"
+            step="0.01"
           />
         </div>
 
@@ -573,6 +510,7 @@ const PublishForm: React.FC = () => {
             onChange={(e) => handleInputChange('valor_iptu', parseFloat(e.target.value) || 0)}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             min="0"
+            step="0.01"
           />
         </div>
       </div>
@@ -682,10 +620,32 @@ const PublishForm: React.FC = () => {
               onChange={(e) => handleInputChange('taxa_limpeza', parseFloat(e.target.value) || 0)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               min="0"
+              step="0.01"
             />
           </div>
         </div>
       )}
+    </div>
+  );
+
+  const renderStep3 = () => (
+    <div className="space-y-6">
+      <h3 className="text-xl font-semibold text-gray-800">Localização</h3>
+      
+      <AddressSearchByCEP 
+        onAddressChange={handleAddressChange}
+        isLoaded={true}
+        initialAddress={{
+          cep: formData.cep || '',
+          street: formData.rua || '',
+          city: formData.cidade || '',
+          number: formData.numero || '',
+          fullAddress: formData.endereco_completo || '',
+          neighborhood: '',
+          state: '',
+          complement: ''
+        }}
+      />
     </div>
   );
 
@@ -815,73 +775,12 @@ const PublishForm: React.FC = () => {
     <div className="space-y-6">
       <h3 className="text-xl font-semibold text-gray-800">Fotos e Vídeos</h3>
       
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Fotos do Imóvel
-        </label>
-        <input
-          type="file"
-          multiple
-          accept="image/*"
-          onChange={handleImageUpload}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        {imageFiles.length > 0 && (
-          <div className="mt-2">
-            <p className="text-sm text-gray-600">{imageFiles.length} foto(s) selecionada(s)</p>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2">
-              {imageFiles.map((file, index) => (
-                <div key={index} className="relative">
-                  <img
-                    src={URL.createObjectURL(file)}
-                    alt={`Preview ${index}`}
-                    className="w-full h-20 object-cover rounded"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setImageFiles(prev => prev.filter((_, i) => i !== index))}
-                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Vídeos do Imóvel
-        </label>
-        <input
-          type="file"
-          multiple
-          accept="video/*"
-          onChange={handleVideoUpload}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        {videoFiles.length > 0 && (
-          <div className="mt-2">
-            <p className="text-sm text-gray-600">{videoFiles.length} vídeo(s) selecionado(s)</p>
-            <div className="space-y-2 mt-2">
-              {videoFiles.map((file, index) => (
-                <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
-                  <span className="text-sm text-gray-700">{file.name}</span>
-                  <button
-                    type="button"
-                    onClick={() => setVideoFiles(prev => prev.filter((_, i) => i !== index))}
-                    className="bg-red-500 text-white rounded px-2 py-1 text-xs"
-                  >
-                    Remover
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
+      <MediaUpload
+        files={mediaFiles}
+        onFilesChange={handleMediaFilesChange}
+        onError={handleMediaError}
+        maxFiles={20}
+      />
     </div>
   );
 
@@ -923,10 +822,10 @@ const PublishForm: React.FC = () => {
         {/* Step Labels */}
         <div className="grid grid-cols-5 gap-2 text-xs text-center text-gray-600 mb-6">
           <div>Básico</div>
-          <div>Localização</div>
           <div>Características</div>
+          <div>Localização</div>
           <div>Comodidades</div>
-          <div>Mídias</div>
+          <div>Fotos</div>
         </div>
       </div>
 

@@ -22,13 +22,15 @@ import {
   SpinnerIcon
 } from '@components';
 import { PublishPropertyPage } from '@pages';
+import TestMediaUploadSimple from './components/TestMediaUploadSimple';
+
 import { supabase } from './supabaseClient';
 import type { Property, Media, User } from './types';
 import { useLanguage } from './contexts/LanguageContext';
 import { QUALLITY_HOME_USER_ID, PRODUCTION_URL } from './config';
 
 interface PageState {
-  page: 'home' | 'map' | 'publish-journey' | 'searchResults' | 'propertyDetail' | 'edit-journey' | 'allListings' | 'guideToSell' | 'documentsForSale' | 'adminLogin' | 'adminDashboard' | 'explore' | 'publish';
+  page: 'home' | 'map' | 'publish-journey' | 'searchResults' | 'propertyDetail' | 'edit-journey' | 'allListings' | 'guideToSell' | 'documentsForSale' | 'adminLogin' | 'adminDashboard' | 'explore' | 'publish' | 'testMediaUpload';
   userLocation: { lat: number; lng: number } | null;
   searchQuery?: string;
   propertyId?: number;
@@ -304,12 +306,16 @@ const App: React.FC = () => {
       const params = new URLSearchParams(window.location.search);
       const page = params.get('page');
       const propertyId = params.get('propertyId');
+      const hash = window.location.hash.slice(1); // Remove o #
+      
       if (page === 'propertyDetail' && propertyId) {
           setPageState(prev => ({
               ...prev,
               page: 'propertyDetail',
               propertyId: parseInt(propertyId, 10),
           }));
+      } else if (hash && ['testMediaUpload', 'adminLogin', 'adminDashboard', 'explore', 'publish'].includes(hash)) {
+          setPageState(prev => ({ ...prev, page: hash as PageState['page'] }));
       } else {
           setPageState(prev => ({ ...prev, page: 'home' }));
       }
@@ -339,10 +345,14 @@ const App: React.FC = () => {
     const params = new URLSearchParams(window.location.search);
     const page = params.get('page');
     const propertyId = params.get('propertyId');
+    const hash = window.location.hash.slice(1); // Remove o #
     let navigatedFromUrl = false;
 
     if (page === 'propertyDetail' && propertyId) {
         setPageState(prev => ({ ...prev, page: 'propertyDetail', propertyId: parseInt(propertyId, 10) }));
+        navigatedFromUrl = true;
+    } else if (hash && ['testMediaUpload', 'adminLogin', 'adminDashboard', 'explore', 'publish'].includes(hash)) {
+        setPageState(prev => ({ ...prev, page: hash as PageState['page'] }));
         navigatedFromUrl = true;
     }
     
@@ -665,6 +675,8 @@ const App: React.FC = () => {
         );
       case 'publish':
         return <PublishPropertyPage onNavigateToAdminLogin={() => navigateTo('adminLogin')} />;
+      case 'testMediaUpload':
+        return <TestMediaUploadSimple />;
       default:
         const homeHeaderProps = {
             ...commonHeaderProps,

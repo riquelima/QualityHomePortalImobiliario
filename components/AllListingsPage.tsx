@@ -4,8 +4,8 @@ import PropertyListings from './PropertyListings';
 import type { Property } from '../types';
 import { useLanguage } from '../contexts/LanguageContext';
 import SearchIcon from './icons/SearchIcon';
-import { GoogleMap, useJsApiLoader, Marker, InfoWindow, Autocomplete } from '@react-google-maps/api';
-import { GOOGLE_MAPS_API_KEY } from '../config';
+import { GoogleMap, Marker, InfoWindow, Autocomplete } from '@react-google-maps/api';
+import { useGoogleMaps } from '../contexts/GoogleMapsContext';
 
 interface AllListingsPageProps {
   onBack: () => void;
@@ -51,11 +51,7 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
   const [mapCenter, setMapCenter] = useState<{lat: number, lng: number}>(props.deviceLocation || {lat: -12.9777, lng: -38.5016});
   const [zoom, setZoom] = useState(props.deviceLocation ? 14 : 13);
 
-  const { isLoaded, loadError } = useJsApiLoader({
-    id: 'google-map-script',
-    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
-    libraries,
-  });
+  const { isLoaded, loadError } = useGoogleMaps();
   
   const onLoad = useCallback(function callback(mapInstance: any) {
     setMap(mapInstance);

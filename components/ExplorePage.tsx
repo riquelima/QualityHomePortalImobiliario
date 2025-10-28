@@ -6,8 +6,8 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { useGestures } from '../hooks/useGestures';
 import GestureIndicator from './GestureIndicator';
 import SearchIcon from './icons/SearchIcon';
-import { GoogleMap, useJsApiLoader, Marker, InfoWindow, Autocomplete } from '@react-google-maps/api';
-import { GOOGLE_MAPS_API_KEY } from '../config';
+import { GoogleMap, Marker, InfoWindow, Autocomplete } from '@react-google-maps/api';
+import { useGoogleMaps } from '../contexts/GoogleMapsContext';
 import SpinnerIcon from './icons/SpinnerIcon';
 import LoadingIndicator from './LoadingIndicator';
 import MapIcon from './icons/MapIcon';
@@ -113,12 +113,7 @@ const ExplorePage: React.FC<ExplorePageProps> = (props) => {
     ],
   });
 
-  const { isLoaded, loadError } = useJsApiLoader({
-    id: 'google-map-script',
-    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
-    libraries,
-    preventGoogleFontsLoading: true, // Evita carregar fontes desnecessárias
-  });
+  const { isLoaded, loadError } = useGoogleMaps();
   
   const onLoad = useCallback(function callback(mapInstance: any) {
     // Otimizações para performance mobile

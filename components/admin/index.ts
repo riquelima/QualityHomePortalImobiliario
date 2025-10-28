@@ -9,4 +9,5 @@ export { default as PropertyManagement } from './PropertyManagement';
 export { default as PropertyManagementNew } from './PropertyManagementNew';
 export { default as PublishForm } from './PublishForm';
 export { default as PublishFormSimple } from './PublishFormSimple';
+export { default as PublishJourneyAdmin } from './PublishJourneyAdmin';
 export { default as StatCard } from './StatCard';

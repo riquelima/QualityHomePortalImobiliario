@@ -3,6 +3,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import { LanguageProvider } from './contexts/LanguageContext';
+import { GoogleMapsProvider } from './contexts/GoogleMapsContext';
 import './index.css';
 
 const rootElement = document.getElementById('root');
@@ -14,7 +15,9 @@ const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
     <LanguageProvider>
-      <App />
+      <GoogleMapsProvider>
+        <App />
+      </GoogleMapsProvider>
     </LanguageProvider>
   </React.StrictMode>
 );
