@@ -3,7 +3,6 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import type { Property, Media, User } from '../../types';
 import BoltIcon from '../icons/BoltIcon';
 import BriefcaseIcon from '../icons/BriefcaseIcon';
-import LocationConfirmationModal from '../LocationConfirmationModal';
 import VerifiedIcon from '../icons/VerifiedIcon';
 import PlusIcon from '../icons/PlusIcon';
 import MinusIcon from '../icons/MinusIcon';
@@ -105,7 +104,6 @@ const PublishJourneyAdmin: React.FC<PublishJourneyAdminProps> = ({
   const [filesToRemove, setFilesToRemove] = useState<string[]>([]);
 
   // Estados de UI
-  const [isLocationConfirmationModalOpen, setLocationConfirmationModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isVerifyingAddress, setIsVerifyingAddress] = useState(false);
   const [isGeneratingTitle, setIsGeneratingTitle] = useState(false);
@@ -228,9 +226,9 @@ const PublishJourneyAdmin: React.FC<PublishJourneyAdminProps> = ({
           lng: parseFloat(result.lon)
         };
 
+        // Aceitar automaticamente o endereço sem modal de confirmação
         setFormData(prev => ({ ...prev, coordinates }));
         setAddress(addressData);
-        setLocationConfirmationModalOpen(true);
       } else {
         onError?.('Não foi possível encontrar as coordenadas para este endereço.');
       }
@@ -242,10 +240,7 @@ const PublishJourneyAdmin: React.FC<PublishJourneyAdminProps> = ({
     }
   };
 
-  const handleConfirmLocation = (coordinates: { lat: number; lng: number }) => {
-    setFormData(prev => ({ ...prev, coordinates }));
-    setLocationConfirmationModalOpen(false);
-  };
+
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(event.target.files || []);
@@ -555,7 +550,7 @@ const PublishJourneyAdmin: React.FC<PublishJourneyAdminProps> = ({
                         onClick={() => handleInputChange('operacao', op)}
                         className={`p-4 rounded-lg border-2 text-center font-medium transition-all ${
                           formData.operacao === op
-                            ? 'border-brand-red bg-brand-red text-white'
+                            ? 'border-brand-red bg-brand-red !text-black font-semibold'
                             : 'border-gray-300 bg-white text-gray-700 hover:border-brand-red'
                         }`}
                       >
@@ -578,7 +573,7 @@ const PublishJourneyAdmin: React.FC<PublishJourneyAdminProps> = ({
                         onClick={() => handlePropertyTypeChange(type)}
                         className={`p-3 rounded-lg border-2 text-center font-medium transition-all ${
                           formData.tipo_imovel === type
-                            ? 'border-brand-red bg-brand-red text-white'
+                            ? 'border-brand-red bg-brand-red !text-black font-semibold'
                             : 'border-gray-300 bg-white text-gray-700 hover:border-brand-red'
                         }`}
                       >
@@ -1097,15 +1092,6 @@ const PublishJourneyAdmin: React.FC<PublishJourneyAdminProps> = ({
         </div>
       </div>
 
-      {/* Modal de Confirmação de Localização */}
-      <LocationConfirmationModal
-        isOpen={isLocationConfirmationModalOpen}
-        onClose={() => setLocationConfirmationModalOpen(false)}
-        onConfirm={handleConfirmLocation}
-        initialCoordinates={formData.coordinates}
-        isLoaded={isLoaded}
-        loadError={loadError}
-      />
     </div>
   );
 };

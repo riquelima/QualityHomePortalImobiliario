@@ -3,7 +3,6 @@ import { useLanguage } from '../contexts/LanguageContext';
 import type { Property, Media, User } from '../types';
 import BoltIcon from './icons/BoltIcon';
 import BriefcaseIcon from './icons/BriefcaseIcon';
-import LocationConfirmationModal from './LocationConfirmationModal';
 import VerifiedIcon from './icons/VerifiedIcon';
 import PlusIcon from './icons/PlusIcon';
 import MinusIcon from './icons/MinusIcon';
@@ -137,7 +136,6 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
     const [filesToRemove, setFilesToRemove] = useState<string[]>([]);
 
     // UI State
-    const [isLocationConfirmationModalOpen, setLocationConfirmationModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isVerifyingAddress, setIsVerifyingAddress] = useState(false);
     const [isGeneratingTitle, setIsGeneratingTitle] = useState(false);
@@ -342,8 +340,14 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
             if (data && data.length > 0) {
                 const { lat, lon } = data[0];
                 const coordinates = { lat: parseFloat(lat), lng: parseFloat(lon) };
-                setFormData(prev => ({ ...prev, coordinates }));
-                setLocationConfirmationModalOpen(true);
+                
+                // Aceitar automaticamente o endereço sem modal de confirmação
+                setFormData(prev => ({
+                    ...prev,
+                    coordinates,
+                    isAddressVerified: true,
+                    verifiedAddress: fullAddress
+                }));
             } else {
                  onRequestModal({
                     type: 'error',
@@ -362,17 +366,7 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
             setIsVerifyingAddress(false);
         }
     };
-    
-    const handleConfirmLocation = (coords: { lat: number, lng: number }) => {
-        const fullAddress = `${formData.street}, ${formData.number}, ${formData.city}`;
-        setFormData(prev => ({
-            ...prev,
-            coordinates: coords,
-            isAddressVerified: true,
-            verifiedAddress: fullAddress
-        }));
-        setLocationConfirmationModalOpen(false);
-    };
+
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
@@ -732,13 +726,13 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                          <Section title="Informações Principais">
                             <h3 className="text-lg font-semibold text-brand-navy mb-4">{t('publishJourney.form.operation.label')}</h3>
                             <div className="grid grid-cols-3 gap-2 mb-8">
-                                <button type="button" onClick={() => setFormData(p => ({...p, operation: 'venda'}))} className={`p-4 border rounded-lg text-center transition-colors ${formData.operation === 'venda' ? 'bg-red-600 text-black border-red-600' : 'bg-white hover:border-brand-dark'}`}>
+                                <button type="button" onClick={() => setFormData(p => ({...p, operation: 'venda'}))} className={`p-4 border rounded-lg text-center transition-colors ${formData.operation === 'venda' ? 'bg-red-600 !text-black font-semibold border-red-600' : 'bg-white hover:border-brand-dark'}`}>
                                     <span className="font-medium">{t('publishJourney.form.operation.sell')}</span>
                                 </button>
-                                <button type="button" onClick={() => setFormData(p => ({...p, operation: 'aluguel'}))} className={`p-4 border rounded-lg text-center transition-colors ${formData.operation === 'aluguel' ? 'bg-red-600 text-black border-red-600' : 'bg-white hover:border-brand-dark'}`}>
+                                <button type="button" onClick={() => setFormData(p => ({...p, operation: 'aluguel'}))} className={`p-4 border rounded-lg text-center transition-colors ${formData.operation === 'aluguel' ? 'bg-red-600 !text-black font-semibold border-red-600' : 'bg-white hover:border-brand-dark'}`}>
                                     <span className="font-medium">{t('publishJourney.form.operation.rent')}</span>
                                 </button>
-                                <button type="button" onClick={() => setFormData(p => ({...p, operation: 'temporada'}))} className={`p-4 border rounded-lg text-center transition-colors ${formData.operation === 'temporada' ? 'bg-red-600 text-black border-red-600' : 'bg-white hover:border-brand-dark'}`}>
+                                <button type="button" onClick={() => setFormData(p => ({...p, operation: 'temporada'}))} className={`p-4 border rounded-lg text-center transition-colors ${formData.operation === 'temporada' ? 'bg-red-600 !text-black font-semibold border-red-600' : 'bg-white hover:border-brand-dark'}`}>
                                     <span className="font-medium">{t('publishJourney.form.operation.season')}</span>
                                 </button>
                             </div>
@@ -1079,15 +1073,6 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                     </div>
                 </div>
             </div>
-            
-            <LocationConfirmationModal
-                isOpen={isLocationConfirmationModalOpen}
-                onClose={() => setLocationConfirmationModalOpen(false)}
-                onConfirm={handleConfirmLocation}
-                initialCoordinates={formData.coordinates}
-                isLoaded={isLoaded}
-                loadError={loadError}
-            />
         </div>
     );
 };
