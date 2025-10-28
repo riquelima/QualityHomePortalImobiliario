@@ -121,13 +121,13 @@ const LocationConfirmationModal: React.FC<LocationConfirmationModalProps> = ({ i
             <div className="absolute top-2 left-2 z-[1] bg-white rounded shadow-md">
                 <button 
                     onClick={() => setMapView('roadmap')} 
-                    className={`px-3 py-1 text-sm font-medium rounded-l ${mapView === 'roadmap' ? 'bg-brand-navy text-white' : 'bg-white text-brand-dark'}`}
+                    className={`px-3 py-1 text-sm font-medium rounded-l ${mapView === 'roadmap' ? 'bg-brand-navy !text-white font-semibold' : 'bg-white text-brand-dark'}`}
                 >
                     Mapa
                 </button>
                 <button 
                     onClick={() => setMapView('satellite')} 
-                    className={`px-3 py-1 text-sm font-medium rounded-r ${mapView === 'satellite' ? 'bg-brand-navy text-white' : 'bg-white text-brand-dark'}`}
+                    className={`px-3 py-1 text-sm font-medium rounded-r ${mapView === 'satellite' ? 'bg-brand-navy !text-white font-semibold' : 'bg-white text-brand-dark'}`}
                 >
                     Satélite
                 </button>

@@ -2,15 +2,17 @@
   "status": "commited",
   "type": "frontend",
   "scope": "codebase",
-  "localEndpoint": "http://localhost:4173",
+  "localEndpoint": "http://localhost:3000",
   "executionArgs": {
     "projectName": "QualityHomePortalImobiliario",
     "projectPath": "C:\\Users\\henri\\OneDrive\\Área de Trabalho\\QualityHomePortalImobiliario",
-    "testIds": [],
-    "additionalInstruction": "Validate all import errors and build issues that could affect Vercel deployment",
+    "testIds": [
+      "TC010"
+    ],
+    "additionalInstruction": "Focar especificamente na jornada completa de publicação de imóveis (TC010). Testar todos os campos do formulário multi-etapas, validações, upload de mídia, geração de conteúdo por IA, e submissão final. Verificar se há erros de interface, campos bloqueados, problemas de navegação entre etapas, e se a publicação é concluída com sucesso. Capturar screenshots em caso de erros.",
     "envs": {
       "API_KEY": "sk-user-PXTeGAvSLs_WycY_nFIbjSIL6gS8HsoMbqLls7qem90WUuQ10SYn61gRb-1SraAgjxrwP5DLKitIUYD9fMD6ll_CnCPlYXWq3Qq4-TDrDjCqTjSqFtBIv5TyEcJpZJvHp_E"
     }
   },
-  "proxy": "http://0a25bd30-e6d6-4a25-ac40-875c59a6f08f:i1wmv4k9FR5xf0Q0wqvXgCANUMbXR9Un@tun.testsprite.com:8080"
+  "proxy": "http://349b2c01-29f1-4c09-be95-547bdf49353c:yzFzZPVeP5rGFmUOThNGyULWZKKhYTMh@tun.testsprite.com:8080"
 }

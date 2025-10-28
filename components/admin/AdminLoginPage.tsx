@@ -130,15 +130,6 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin }) => {
               </button>
             </div>
           </form>
-
-          {/* Demo credentials */}
-          <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-            <p className="text-xs text-gray-600 text-center">
-              <strong>Credenciais de demonstração:</strong><br />
-              Email: quallity@admin.com<br />
-              Senha: 1234
-            </p>
-          </div>
         </div>
       </div>
     </div>

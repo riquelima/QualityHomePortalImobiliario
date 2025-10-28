@@ -23,6 +23,7 @@ import {
 } from '@components';
 import { PublishPropertyPage } from '@pages';
 import TestMediaUploadSimple from './components/TestMediaUploadSimple';
+import InputTestPage from './components/InputTestPage';
 
 import { supabase } from './supabaseClient';
 import type { Property, Media, User } from './types';
@@ -30,7 +31,7 @@ import { useLanguage } from './contexts/LanguageContext';
 import { QUALLITY_HOME_USER_ID, PRODUCTION_URL } from './config';
 
 interface PageState {
-  page: 'home' | 'map' | 'publish-journey' | 'searchResults' | 'propertyDetail' | 'edit-journey' | 'allListings' | 'guideToSell' | 'documentsForSale' | 'adminLogin' | 'adminDashboard' | 'explore' | 'publish' | 'testMediaUpload';
+  page: 'home' | 'map' | 'publish-journey' | 'searchResults' | 'propertyDetail' | 'edit-journey' | 'allListings' | 'guideToSell' | 'documentsForSale' | 'adminLogin' | 'adminDashboard' | 'explore' | 'publish' | 'testMediaUpload' | 'inputTest';
   userLocation: { lat: number; lng: number } | null;
   searchQuery?: string;
   propertyId?: number;
@@ -314,7 +315,7 @@ const App: React.FC = () => {
               page: 'propertyDetail',
               propertyId: parseInt(propertyId, 10),
           }));
-      } else if (hash && ['testMediaUpload', 'adminLogin', 'adminDashboard', 'explore', 'publish'].includes(hash)) {
+      } else if (hash && ['testMediaUpload', 'inputTest', 'adminLogin', 'adminDashboard', 'explore', 'publish'].includes(hash)) {
           setPageState(prev => ({ ...prev, page: hash as PageState['page'] }));
       } else {
           setPageState(prev => ({ ...prev, page: 'home' }));
@@ -334,10 +335,8 @@ const App: React.FC = () => {
         aud: 'authenticated',
         created_at: new Date().toISOString()
       });
-      // Usar setTimeout para evitar problemas de renderização
-      setTimeout(() => {
-        navigateTo('adminDashboard');
-      }, 0);
+      // Navegar diretamente sem setTimeout para evitar re-renderizações
+      setPageState(prev => ({ ...prev, page: 'adminDashboard' }));
     }
   }, []);
 
@@ -351,7 +350,7 @@ const App: React.FC = () => {
     if (page === 'propertyDetail' && propertyId) {
         setPageState(prev => ({ ...prev, page: 'propertyDetail', propertyId: parseInt(propertyId, 10) }));
         navigatedFromUrl = true;
-    } else if (hash && ['testMediaUpload', 'adminLogin', 'adminDashboard', 'explore', 'publish'].includes(hash)) {
+    } else if (hash && ['testMediaUpload', 'inputTest', 'adminLogin', 'adminDashboard', 'explore', 'publish'].includes(hash)) {
         setPageState(prev => ({ ...prev, page: hash as PageState['page'] }));
         navigatedFromUrl = true;
     }
@@ -479,10 +478,8 @@ const App: React.FC = () => {
     console.log('adminUser set');
     console.log('Navigating to adminDashboard...');
     
-    // Usar setTimeout para evitar problemas de renderização
-    setTimeout(() => {
-      navigateTo('adminDashboard');
-    }, 0);
+    // Navegar diretamente sem setTimeout para evitar re-renderizações
+    setPageState(prev => ({ ...prev, page: 'adminDashboard' }));
     console.log('Navigation completed');
   };
   
@@ -677,6 +674,8 @@ const App: React.FC = () => {
         return <PublishPropertyPage onNavigateToAdminLogin={() => navigateTo('adminLogin')} />;
       case 'testMediaUpload':
         return <TestMediaUploadSimple />;
+      case 'inputTest':
+        return <InputTestPage />;
       default:
         const homeHeaderProps = {
             ...commonHeaderProps,

@@ -46,26 +46,38 @@ async def run_test():
                 pass
         
         # Interact with the page elements to simulate user flow
-        # -> Click on 'Publicar Imóvel' to start the property publication process.
+        # -> Locate and click the link or button to access the property publication section as a publisher.
         frame = context.pages[-1]
-        # Click on 'Publicar Imóvel' to start the property publication process.
-        elem = frame.locator('xpath=html/body/div/div/header/nav/div[2]/a[4]').nth(0)
+        # Click on 'Acesso Restrito' link to access restricted area for publisher login or property publication section
+        elem = frame.locator('xpath=html/body/div/div/footer/div/a').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # -> Click on 'Acessar Painel Administrativo' to log in as admin and start the property publication workflow.
+        # -> Input valid email and password credentials and click the login button to access the property publication section.
         frame = context.pages[-1]
-        # Click on 'Acessar Painel Administrativo' to log in as admin and start the property publication workflow.
-        elem = frame.locator('xpath=html/body/div/div/div/div/div[3]/button').nth(0)
+        # Input valid email for publisher login
+        elem = frame.locator('xpath=html/body/div/div/div/div/div/form/div/input').nth(0)
+        await page.wait_for_timeout(3000); await elem.fill('publisher@example.com')
+        
+
+        frame = context.pages[-1]
+        # Input valid password for publisher login
+        elem = frame.locator('xpath=html/body/div/div/div/div/div/form/div[2]/div/input').nth(0)
+        await page.wait_for_timeout(3000); await elem.fill('ValidPassword123')
+        
+
+        frame = context.pages[-1]
+        # Click the login button to submit credentials
+        elem = frame.locator('xpath=html/body/div/div/div/div/div/form/div[3]/button').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
         # --> Assertions to verify final state
         frame = context.pages[-1]
         try:
-            await expect(frame.locator('text=Property publication completed successfully!').first).to_be_visible(timeout=1000)
+            await expect(frame.locator('text=Property Publication Completed Successfully').first).to_be_visible(timeout=1000)
         except AssertionError:
-            raise AssertionError("Test case failed: The property publishing workflow did not complete successfully as expected. The final confirmation message indicating successful listing creation was not found on the page.")
+            raise AssertionError('Test case failed: The end-to-end property publication flow did not complete successfully as expected. Validation errors, AI content generation issues, media upload failures, or submission problems were encountered.')
         await asyncio.sleep(5)
     
     finally:

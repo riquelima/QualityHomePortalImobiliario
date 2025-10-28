@@ -225,7 +225,7 @@ const PropertyManagement: React.FC<PropertyManagementProps> = ({
             <span className="text-sm text-gray-500 hidden sm:inline">Visualização:</span>
             <button
               onClick={() => setViewMode('grid')}
-              className={`p-2 rounded-md ${viewMode === 'grid' ? 'bg-brand-red text-white' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`p-2 rounded-md ${viewMode === 'grid' ? 'bg-brand-red !text-black font-semibold' : 'text-gray-500 hover:text-gray-700'}`}
               title="Grade"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -234,7 +234,7 @@ const PropertyManagement: React.FC<PropertyManagementProps> = ({
             </button>
             <button
               onClick={() => setViewMode('list')}
-              className={`p-2 rounded-md ${viewMode === 'list' ? 'bg-brand-red text-white' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`p-2 rounded-md ${viewMode === 'list' ? 'bg-brand-red !text-black font-semibold' : 'text-gray-500 hover:text-gray-700'}`}
               title="Lista"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
