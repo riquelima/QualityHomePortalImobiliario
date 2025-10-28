@@ -96,32 +96,74 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
     const { t } = useLanguage();
     const { onBack, onAddProperty, onUpdateProperty, onPublishError, propertyToEdit, deviceLocation, onRequestModal, adminUser } = props;
     
-    // Form State
-    const [formData, setFormData] = useState({
-        propertyType: 'Apartamento',
-        operation: 'venda',
-        city: '', street: '', number: '',
-        coordinates: null as { lat: number, lng: number } | null,
-        isAddressVerified: false,
-        verifiedAddress: '',
-        title: '', detailsPropertyType: 'Apartamento',
-        grossArea: '', netArea: '',
-        bedrooms: 1, bathrooms: 1,
-        hasElevator: null as boolean | null,
-        homeFeatures: [] as string[],
-        buildingFeatures: [] as string[],
-        description: '', salePrice: '', iptuAnnual: '',
-        acceptsFinancing: null as boolean | null,
-        occupationSituation: 'vacant',
-        monthlyRent: '', condoFee: '', iptuMonthly: '',
-        rentalConditions: [] as string[], petsAllowed: null as boolean | null,
-        dailyRate: '', minStay: '1', maxGuests: '2', cleaningFee: '',
-        availableDates: [] as string[],
-        // Land specific
-        topography: '',
-        zoning: '',
-        isWalled: null as boolean | null,
-        isGatedCommunity: null as boolean | null,
+    // Form State - inicializado uma única vez com useState
+    const [formData, setFormData] = useState(() => {
+        if (propertyToEdit) {
+            return {
+                propertyType: propertyToEdit.tipo_imovel || 'Apartamento',
+                operation: propertyToEdit.tipo_operacao || 'venda',
+                city: propertyToEdit.cidade || '',
+                street: propertyToEdit.rua || '',
+                number: propertyToEdit.numero || '',
+                coordinates: { lat: propertyToEdit.latitude, lng: propertyToEdit.longitude },
+                isAddressVerified: true,
+                verifiedAddress: propertyToEdit.endereco_completo,
+                title: propertyToEdit.titulo,
+                detailsPropertyType: propertyToEdit.tipo_imovel || 'Apartamento',
+                grossArea: String(propertyToEdit.area_bruta || ''),
+                netArea: String(propertyToEdit.area_util || ''),
+                bedrooms: propertyToEdit.quartos,
+                bathrooms: propertyToEdit.banheiros,
+                hasElevator: propertyToEdit.possui_elevador ?? null,
+                homeFeatures: propertyToEdit.caracteristicas_imovel || [],
+                buildingFeatures: propertyToEdit.caracteristicas_condominio || [],
+                description: propertyToEdit.descricao,
+                salePrice: propertyToEdit.tipo_operacao === 'venda' ? formatPrice(propertyToEdit.preco) : '',
+                iptuAnnual: propertyToEdit.tipo_operacao === 'venda' ? formatPrice(propertyToEdit.valor_iptu) : '',
+                acceptsFinancing: propertyToEdit.aceita_financiamento ?? null,
+                occupationSituation: propertyToEdit.situacao_ocupacao || 'vacant',
+                monthlyRent: propertyToEdit.tipo_operacao === 'aluguel' ? formatPrice(propertyToEdit.preco) : '',
+                condoFee: formatPrice(propertyToEdit.taxa_condominio),
+                iptuMonthly: propertyToEdit.tipo_operacao === 'aluguel' ? formatPrice(propertyToEdit.valor_iptu) : '',
+                rentalConditions: propertyToEdit.condicoes_aluguel || [],
+                petsAllowed: propertyToEdit.permite_animais ?? null,
+                dailyRate: propertyToEdit.tipo_operacao === 'temporada' ? formatPrice(propertyToEdit.preco) : '',
+                minStay: String(propertyToEdit.minimo_diarias || '1'),
+                maxGuests: String(propertyToEdit.maximo_hospedes || '2'),
+                cleaningFee: formatPrice(propertyToEdit.taxa_limpeza),
+                availableDates: propertyToEdit.datas_disponiveis || [],
+                topography: propertyToEdit.topografia || '',
+                zoning: propertyToEdit.zoneamento || '',
+                isWalled: propertyToEdit.murado ?? null,
+                isGatedCommunity: propertyToEdit.em_condominio ?? null,
+            };
+        }
+        return {
+            propertyType: 'Apartamento',
+            operation: 'venda',
+            city: '', street: '', number: '',
+            coordinates: null as { lat: number, lng: number } | null,
+            isAddressVerified: false,
+            verifiedAddress: '',
+            title: '', detailsPropertyType: 'Apartamento',
+            grossArea: '', netArea: '',
+            bedrooms: 1, bathrooms: 1,
+            hasElevator: null as boolean | null,
+            homeFeatures: [] as string[],
+            buildingFeatures: [] as string[],
+            description: '', salePrice: '', iptuAnnual: '',
+            acceptsFinancing: null as boolean | null,
+            occupationSituation: 'vacant',
+            monthlyRent: '', condoFee: '', iptuMonthly: '',
+            rentalConditions: [] as string[], petsAllowed: null as boolean | null,
+            dailyRate: '', minStay: '1', maxGuests: '2', cleaningFee: '',
+            availableDates: [] as string[],
+            // Land specific
+            topography: '',
+            zoning: '',
+            isWalled: null as boolean | null,
+            isGatedCommunity: null as boolean | null,
+        };
     });
 
     const [address, setAddress] = useState({
@@ -194,6 +236,7 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
         return true;
     }, [formData.title, formData.operation, formData.salePrice, formData.monthlyRent, formData.dailyRate, formData.grossArea, onRequestModal, t]);
 
+    // useEffect apenas para carregar mídias quando há propriedade para editar
     useEffect(() => {
         const fetchMedia = async (propertyId: number) => {
             const { data, error } = await supabase.from('midias_imovel').select('*').eq('imovel_id', propertyId);
@@ -207,48 +250,10 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
             }
         };
 
-        if (propertyToEdit) {
-            setFormData({
-                propertyType: propertyToEdit.tipo_imovel || 'Apartamento',
-                operation: propertyToEdit.tipo_operacao || 'venda',
-                city: propertyToEdit.cidade || '',
-                street: propertyToEdit.rua || '',
-                number: propertyToEdit.numero || '',
-                coordinates: { lat: propertyToEdit.latitude, lng: propertyToEdit.longitude },
-                isAddressVerified: true,
-                verifiedAddress: propertyToEdit.endereco_completo,
-                title: propertyToEdit.titulo,
-                detailsPropertyType: propertyToEdit.tipo_imovel || 'Apartamento',
-                grossArea: String(propertyToEdit.area_bruta || ''),
-                netArea: String(propertyToEdit.area_util || ''),
-                bedrooms: propertyToEdit.quartos,
-                bathrooms: propertyToEdit.banheiros,
-                hasElevator: propertyToEdit.possui_elevador ?? null,
-                homeFeatures: propertyToEdit.caracteristicas_imovel || [],
-                buildingFeatures: propertyToEdit.caracteristicas_condominio || [],
-                description: propertyToEdit.descricao,
-                salePrice: propertyToEdit.tipo_operacao === 'venda' ? formatPrice(propertyToEdit.preco) : '',
-                iptuAnnual: propertyToEdit.tipo_operacao === 'venda' ? formatPrice(propertyToEdit.valor_iptu) : '',
-                acceptsFinancing: propertyToEdit.aceita_financiamento ?? null,
-                occupationSituation: propertyToEdit.situacao_ocupacao || 'vacant',
-                monthlyRent: propertyToEdit.tipo_operacao === 'aluguel' ? formatPrice(propertyToEdit.preco) : '',
-                condoFee: formatPrice(propertyToEdit.taxa_condominio),
-                iptuMonthly: propertyToEdit.tipo_operacao === 'aluguel' ? formatPrice(propertyToEdit.valor_iptu) : '',
-                rentalConditions: propertyToEdit.condicoes_aluguel || [],
-                petsAllowed: propertyToEdit.permite_animais ?? null,
-                dailyRate: propertyToEdit.tipo_operacao === 'temporada' ? formatPrice(propertyToEdit.preco) : '',
-                minStay: String(propertyToEdit.minimo_diarias || '1'),
-                maxGuests: String(propertyToEdit.maximo_hospedes || '2'),
-                cleaningFee: formatPrice(propertyToEdit.taxa_limpeza),
-                availableDates: propertyToEdit.datas_disponiveis || [],
-                topography: propertyToEdit.topografia || '',
-                zoning: propertyToEdit.zoneamento || '',
-                isWalled: propertyToEdit.murado ?? null,
-                isGatedCommunity: propertyToEdit.em_condominio ?? null,
-            });
+        if (propertyToEdit?.id) {
             fetchMedia(propertyToEdit.id);
         }
-    }, [propertyToEdit]);
+    }, [propertyToEdit?.id]);
 
     const handleCurrencyChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -273,12 +278,12 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
         setFormData(prev => ({ ...prev, [name]: formattedValue }));
     }, []);
 
-    const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const handleFormChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
-    };
+    }, []);
     
-    const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>, category: 'homeFeatures' | 'buildingFeatures' | 'rentalConditions') => {
+    const handleCheckboxChange = useCallback((e: React.ChangeEvent<HTMLInputElement>, category: 'homeFeatures' | 'buildingFeatures' | 'rentalConditions') => {
         const { value, checked } = e.target;
         setFormData(prev => {
             const currentFeatures = prev[category];
@@ -288,16 +293,16 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                 return { ...prev, [category]: currentFeatures.filter(item => item !== value) };
             }
         });
-    };
+    }, []);
     
-    const handleRadioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleRadioChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         let finalValue: boolean | string | null = value;
         if (value === 'true') finalValue = true;
         if (value === 'false') finalValue = false;
         if (value === 'null') finalValue = null;
         setFormData(prev => ({ ...prev, [name]: finalValue }));
-    };
+    }, []);
 
     const handleNumberChange = (field: 'bedrooms' | 'bathrooms', delta: number) => {
         setFormData(prev => ({ ...prev, [field]: Math.max(0, prev[field] + delta) }));
