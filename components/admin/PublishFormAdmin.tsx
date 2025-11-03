@@ -194,7 +194,7 @@ const PublishFormAdmin: React.FC<PublishFormAdminProps> = ({
       try {
         const fileExt = mediaFile.file.name.split('.').pop();
         const fileName = `${propertyId}/${Date.now()}.${fileExt}`;
-        const bucket = mediaFile.type === 'image' ? 'property-images' : 'property-videos';
+        const bucket = 'midia';
 
         const { data, error } = await supabase.storage
           .from(bucket)
@@ -252,14 +252,15 @@ const PublishFormAdmin: React.FC<PublishFormAdminProps> = ({
         propertyId = data.id;
       } else {
         // Criar novo imóvel
+        const { QUALLITY_HOME_USER_ID } = await import('../../config');
         const { data, error } = await supabase
           .from('imoveis')
           .insert([{
             ...formData,
-            user_id: adminUser?.id || 'admin-quallity',
-            status: 'active',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
+            anunciante_id: adminUser?.id || QUALLITY_HOME_USER_ID,
+            status: 'ativo',
+            data_publicacao: new Date().toISOString(),
+            data_atualizacao: new Date().toISOString()
           }])
           .select()
           .single();

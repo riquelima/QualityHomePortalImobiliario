@@ -270,6 +270,18 @@ const PublishForm: React.FC = () => {
         await supabase
           .from('midias_imovel')
           .insert(mediaInserts);
+
+        // Atualizar as colunas images e videos na tabela imoveis para sincronização
+        const images = uploadedMedia.filter(m => m.type === 'image').map(m => m.url);
+        const videos = uploadedMedia.filter(m => m.type === 'video').map(m => m.url);
+
+        await supabase
+          .from('imoveis')
+          .update({
+            images: images.length > 0 ? images : null,
+            videos: videos.length > 0 ? videos : null,
+          })
+          .eq('id', data.id);
       }
 
       setSubmitMessage('Anúncio publicado com sucesso!');

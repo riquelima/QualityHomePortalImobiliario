@@ -1,5 +1,7 @@
 
 
+
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Header,
@@ -328,7 +330,7 @@ const App: React.FC = () => {
     if (savedAdminSession === 'true') {
       setIsAdminLoggedIn(true);
       setAdminUser({
-        id: 'admin-quallity',
+        id: QUALLITY_HOME_USER_ID,
         email: 'quallity@admin.com',
         user_metadata: {},
         app_metadata: {},

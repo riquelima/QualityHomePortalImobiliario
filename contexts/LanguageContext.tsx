@@ -168,7 +168,7 @@ const ptTranslations = {
       "netArea": "m² área útil (opcional)",
       "bedrooms": "Número de quartos",
       "bathrooms": "Número de banheiros",
-      "hasElevator": "Possui elevador?",
+      "hasElevator": "Elevador",
       "yes": "Sim",
       "no": "Não",
       "otherHomeFeatures": "Outras características do seu imóvel",

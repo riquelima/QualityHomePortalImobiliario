@@ -183,14 +183,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
             </h2>
             
             <div className="flex items-center space-x-4">
-              {/* Notifications */}
-              <button className="relative p-2 text-gray-400 hover:text-gray-600 transition-colors">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zM10.07 2.82l3.12 3.12M7.05 5.84l3.12 3.12M4.03 8.86l3.12 3.12M1.01 11.88l3.12 3.12" />
-                </svg>
-                <span className="absolute top-1 right-1 block h-2 w-2 rounded-full bg-red-400"></span>
-              </button>
-              
               {/* User Menu */}
               <div className="flex items-center space-x-3">
                 <img 

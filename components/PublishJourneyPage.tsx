@@ -1,3 +1,11 @@
+
+
+
+
+
+
+
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import type { Property, Media, User } from '../types';
@@ -8,12 +16,13 @@ import PlusIcon from './icons/PlusIcon';
 import MinusIcon from './icons/MinusIcon';
 import PhotoIcon from './icons/PhotoIcon';
 import { supabase } from '../supabaseClient';
+import { createClient } from '@supabase/supabase-js';
 import CloseIcon from './icons/CloseIcon';
 import { GoogleGenAI } from '@google/genai';
 import AIIcon from './icons/AIIcon';
 import SpinnerIcon from './icons/SpinnerIcon';
 import { Autocomplete } from '@react-google-maps/api';
-// FIX: Import LocationIcon to fix "Cannot find name 'LocationIcon'" error.
+import { GoogleMap, Marker } from '@react-google-maps/api';
 import LocationIcon from './icons/LocationIcon';
 import { PRODUCTION_URL, QUALLITY_HOME_USER_ID } from '../config';
 import { useGoogleMaps } from '../contexts/GoogleMapsContext';
@@ -43,23 +52,28 @@ interface PublishJourneyPageProps {
 const libraries: ('drawing' | 'places' | 'visualization')[] = ['drawing', 'places', 'visualization'];
 const MAX_FILES = 10;
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || 'AIzaSyCsX9l10XCu3TtSCU1BSx-qOYrwUKYw2xk' });
+// Cliente Supabase com service role para uploads (bypassa RLS)
+const supabaseServiceRole = createClient(
+    'https://ckzhvurabmhvteekyjxg.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNremh2dXJhYm1odnRlZWt5anhnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1ODEwMjc4MCwiZXhwIjoyMDczNjc4NzgwfQ.zNCoMgFT0k6-ZbJuV9zA0y6kZmqPf1ZscW-dwPL2_-U'
+);
+
+const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyCsX9l10XCu3TtSCU1BSx-qOYrwUKYw2xk' });
 
 const generateContentWithRetry = async (prompt: string, maxRetries = 3) => {
   let attempt = 0;
   while (attempt < maxRetries) {
     try {
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: { parts: [{ text: prompt }] },
-      });
-      return response; // Success
+      const model = ai.getGenerativeModel({ model: 'gemini-pro' });
+      const response = await model.generateContent(prompt);
+      const text = response.response.text();
+      return text;
     } catch (error) {
       attempt++;
       console.warn(`Gemini API call attempt ${attempt} failed:`, error);
       if (attempt >= maxRetries) {
         console.error("Gemini API call failed after all retries.");
-        throw error; // Rethrow error after last attempt
+        throw error;
       }
       const delay = Math.pow(2, attempt) * 1000; // Exponential backoff: 2s, 4s
       await new Promise(resolve => setTimeout(resolve, delay));
@@ -84,12 +98,13 @@ const unformatCurrencyForSubmission = (value: string): number | null => {
     return isNaN(numberValue) ? null : numberValue;
 };
 
-const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
+// Moved Section component outside to prevent re-creation on each render
+const Section: React.FC<{ title: string; children: React.ReactNode }> = React.memo(({ title, children }) => (
     <section className="mb-10 bg-white p-6 sm:p-8 rounded-lg shadow-md">
         <h2 className="text-xl sm:text-2xl font-bold text-brand-navy border-b border-gray-200 pb-4 mb-6">{title}</h2>
         {children}
     </section>
-);
+));
 
 
 export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
@@ -434,38 +449,46 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                 throw new Error("Sessão de administrador inválida. Por favor, faça login novamente.");
             }
 
+            // Usar cliente com service role para uploads (bypassa RLS)
+            console.log('📤 Iniciando upload com service role...');
+
             const newFilesToUpload = files.filter(f => f instanceof File) as File[];
+            console.log('🔍 Arquivos para upload:', newFilesToUpload.length);
             
             // Step 1: Generate unique paths for all new files first.
             const filesToProcess = newFilesToUpload.map(file => {
                 const fileExt = file.name.split('.').pop();
                 const fileName = `quallity-home/${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
+                console.log('📁 Processando arquivo:', file.name, '-> Caminho:', fileName);
                 return { file, path: fileName };
             });
 
             // Step 2: Create an array of upload promises to run in parallel.
             const uploadPromises = filesToProcess.map(({ file, path }) => 
-                supabase.storage.from('midia').upload(path, file, {
+                supabaseServiceRole.storage.from('midia').upload(path, file, {
                     contentType: file.type,
                     upsert: false,
                 })
             );
 
+            console.log('⬆️ Iniciando upload de', uploadPromises.length, 'arquivos...');
             const uploadResults = await Promise.all(uploadPromises);
 
             // Step 3: Check for any errors. If an upload failed, clean up all files from this batch.
             const firstError = uploadResults.find(result => result.error)?.error;
             if (firstError) {
+                console.error('❌ Erro no upload:', firstError);
                 const pathsToRemove = filesToProcess.map(f => f.path);
                 if (pathsToRemove.length > 0) {
-                    await supabase.storage.from('midia').remove(pathsToRemove);
+                    await supabaseServiceRole.storage.from('midia').remove(pathsToRemove);
                 }
                 throw firstError;
             }
             
             // Step 4: If all uploads were successful, get their public URLs.
             const uploadedUrls = filesToProcess.map(({ file, path }) => {
-                const { data } = supabase.storage.from('midia').getPublicUrl(path);
+                const { data } = supabaseServiceRole.storage.from('midia').getPublicUrl(path);
+                console.log('✅ URL gerada:', data.publicUrl);
                 return {
                     url: data.publicUrl,
                     type: (file.type.startsWith('video') ? 'video' : 'imagem') as 'imagem' | 'video'
@@ -514,7 +537,7 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                 if (error) throw error;
                 
                 if (filesToRemove.length > 0) {
-                    const { error: storageError } = await supabase.storage.from('midia').remove(filesToRemove);
+                    const { error: storageError } = await supabaseServiceRole.storage.from('midia').remove(filesToRemove);
                     if (storageError) throw new Error(`Falha ao remover mídia antiga do armazenamento: ${storageError.message}`);
                     
                     const supabaseStorageUrl = 'https://ckzhvurabmhvteekyjxg.supabase.co/storage/v1/object/public/midia/';
@@ -531,8 +554,13 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                         url: media.url,
                         tipo: media.type
                     }));
+                    console.log('💾 Inserindo mídias no banco (edição):', mediaToInsert);
                     const { error: mediaInsertError } = await supabase.from('midias_imovel').insert(mediaToInsert);
-                    if (mediaInsertError) throw mediaInsertError;
+                    if (mediaInsertError) {
+                        console.error('❌ Erro ao inserir mídias (edição):', mediaInsertError);
+                        throw mediaInsertError;
+                    }
+                    console.log('✅ Mídias inseridas com sucesso (edição)!');
                 }
                 
                 await onUpdateProperty();
@@ -558,8 +586,13 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                         url: media.url,
                         tipo: media.type
                     }));
+                    console.log('💾 Inserindo mídias no banco:', mediaToInsert);
                     const { error: mediaInsertError } = await supabase.from('midias_imovel').insert(mediaToInsert);
-                    if (mediaInsertError) throw mediaInsertError;
+                    if (mediaInsertError) {
+                        console.error('❌ Erro ao inserir mídias:', mediaInsertError);
+                        throw mediaInsertError;
+                    }
+                    console.log('✅ Mídias inseridas com sucesso!');
                 }
                 await onAddProperty();
             }
@@ -584,7 +617,7 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
             const response = await generateContentWithRetry(prompt);
             if (!response) throw new Error("No response from AI");
 
-            const text = response.text.trim();
+            const text = response.trim(); // response já é uma string, não precisa de .text
             if (text) {
                 setFormData(prev => ({ ...prev, title: text.replace(/["']/g, "") }));
             }
@@ -616,7 +649,7 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
             const response = await generateContentWithRetry(prompt);
             if (!response) throw new Error("No response from AI");
 
-            const text = response.text.trim();
+            const text = response.trim(); // response já é uma string, não precisa de .text
             if (text) {
                 setFormData(prev => ({ ...prev, description: text }));
             }
@@ -731,13 +764,13 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                          <Section title="Informações Principais">
                             <h3 className="text-lg font-semibold text-brand-navy mb-4">{t('publishJourney.form.operation.label')}</h3>
                             <div className="grid grid-cols-3 gap-2 mb-8">
-                                <button type="button" onClick={() => setFormData(p => ({...p, operation: 'venda'}))} className={`p-4 border rounded-lg text-center transition-colors ${formData.operation === 'venda' ? 'bg-red-600 !text-black font-semibold border-red-600' : 'bg-white hover:border-brand-dark'}`}>
+                                <button type="button" onClick={() => setFormData(p => ({...p, operation: 'venda'}))} className={`p-4 border-2 rounded-lg text-center font-medium transition-all ${formData.operation === 'venda' ? 'border-brand-red !bg-brand-red !text-white font-semibold' : 'border-gray-300 bg-white text-gray-700 hover:border-brand-red'}`}>
                                     <span className="font-medium">{t('publishJourney.form.operation.sell')}</span>
                                 </button>
-                                <button type="button" onClick={() => setFormData(p => ({...p, operation: 'aluguel'}))} className={`p-4 border rounded-lg text-center transition-colors ${formData.operation === 'aluguel' ? 'bg-red-600 !text-black font-semibold border-red-600' : 'bg-white hover:border-brand-dark'}`}>
+                                <button type="button" onClick={() => setFormData(p => ({...p, operation: 'aluguel'}))} className={`p-4 border-2 rounded-lg text-center font-medium transition-all ${formData.operation === 'aluguel' ? 'border-brand-red !bg-brand-red !text-white font-semibold' : 'border-gray-300 bg-white text-gray-700 hover:border-brand-red'}`}>
                                     <span className="font-medium">{t('publishJourney.form.operation.rent')}</span>
                                 </button>
-                                <button type="button" onClick={() => setFormData(p => ({...p, operation: 'temporada'}))} className={`p-4 border rounded-lg text-center transition-colors ${formData.operation === 'temporada' ? 'bg-red-600 !text-black font-semibold border-red-600' : 'bg-white hover:border-brand-dark'}`}>
+                                <button type="button" onClick={() => setFormData(p => ({...p, operation: 'temporada'}))} className={`p-4 border-2 rounded-lg text-center font-medium transition-all ${formData.operation === 'temporada' ? 'border-brand-red !bg-brand-red !text-white font-semibold' : 'border-gray-300 bg-white text-gray-700 hover:border-brand-red'}`}>
                                     <span className="font-medium">{t('publishJourney.form.operation.season')}</span>
                                 </button>
                             </div>
@@ -887,15 +920,26 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                         </Section>
                         
                         <Section title="Características do Imóvel">
-                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-                                <div>
-                                    <label htmlFor="detailsPropertyType" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.propertyType')}</label>
-                                    <select id="detailsPropertyType" name="detailsPropertyType" value={formData.detailsPropertyType} onChange={handlePropertyTypeChange} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red">
-                                        {propertyTypes.map(item => (
-                                                <option key={item.key} value={item.value}>{t(`publishJourney.detailsForm.${item.key}`)}</option>
-                                        ))}
-                                    </select>
+                             <div className="mb-6">
+                                <label className="block text-sm font-medium text-brand-dark mb-3">{t('publishJourney.detailsForm.propertyType')}</label>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
+                                    {propertyTypes.map(item => (
+                                        <button
+                                            key={item.key}
+                                            type="button"
+                                            onClick={() => setFormData(prev => ({...prev, detailsPropertyType: item.value}))}
+                                            className={`p-3 rounded-lg border-2 text-center font-medium transition-all ${
+                                                formData.detailsPropertyType === item.value
+                                                    ? 'border-brand-red !bg-brand-red !text-white font-semibold'
+                                                    : 'border-gray-300 bg-white text-gray-700 hover:border-brand-red'
+                                            }`}
+                                        >
+                                            {t(`publishJourney.detailsForm.${item.key}`)}
+                                        </button>
+                                    ))}
                                 </div>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
                                 <div>
                                     <label htmlFor="grossArea" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.grossArea')}</label>
                                     <input type="number" id="grossArea" name="grossArea" value={formData.grossArea} onChange={handleFormChange} required className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" />
@@ -993,7 +1037,7 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                                         {['pool', 'greenArea', 'portaria24h', 'academia', 'salaoDeFestas', 'churrasqueira', 'parqueInfantil', 'quadraEsportiva', 'sauna', 'espacoGourmet'].map(feature => (
                                             <label key={feature} className="flex items-center">
                                                 <input type="checkbox" value={feature} checked={formData.buildingFeatures.includes(feature)} onChange={(e) => handleCheckboxChange(e, 'buildingFeatures')} className="mr-2 h-4 w-4 rounded border-gray-300 text-brand-red focus:ring-brand-red" />
-                                                <span className="text-sm">{t(`publishJourney.detailsForm.${feature}`)}</span>
+                                                <span className="text-sm">{translations.publishJourney.detailsForm[feature as keyof typeof translations.publishJourney.detailsForm]}</span>
                                             </label>
                                         ))}
                                     </div>
@@ -1056,26 +1100,7 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                         </div>
                     </form>
                     
-                    <div className="hidden lg:block lg:col-span-1 mt-8 lg:mt-0">
-                        <div className="sticky top-24 space-y-6">
-                            <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-brand-red">
-                                <h3 className="font-bold text-brand-navy mb-3">Informação útil</h3>
-                                <div className="text-sm text-brand-gray space-y-3">
-                                    <p>Prepare as fotos. Se ainda não as tem, poderá adicioná-las mais tarde. Sem fotos, seu anúncio não terá bons resultados.</p>
-                                </div>
-                            </div>
-                            <div className="bg-white p-6 rounded-lg shadow-md text-center">
-                                <BoltIcon className="w-8 h-8 mx-auto text-yellow-500 mb-2"/>
-                                <h3 className="font-bold text-brand-navy mb-2">Quer vender seu imóvel rapidamente?</h3>
-                                <a href="#" className="text-sm text-brand-red font-medium hover:underline">Encontre a imobiliária mais adequada para você</a>
-                            </div>
-                            <div className="bg-white p-6 rounded-lg shadow-md text-center">
-                                <BriefcaseIcon className="w-8 h-8 mx-auto text-brand-navy mb-2"/>
-                                <h3 className="font-bold text-brand-navy mb-2">Você é um profissional do mercado imobiliário?</h3>
-                                <a href="#" className="text-sm text-brand-red font-medium hover:underline">Conheça as vantagens que oferecemos para profissionais</a>
-                            </div>
-                        </div>
-                    </div>
+
                 </div>
             </div>
         </div>

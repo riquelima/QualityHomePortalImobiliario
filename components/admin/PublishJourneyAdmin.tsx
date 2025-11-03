@@ -19,6 +19,16 @@ import { useGoogleMaps } from '../../contexts/GoogleMapsContext';
 import AddressSearchByCEP from '../AddressSearchByCEP';
 import { validateMediaFiles, type ValidationResult } from '../../utils/mediaValidation';
 
+// Componente Section memoizado para evitar re-renderizações desnecessárias
+const Section = React.memo<{ title: string; children: React.ReactNode }>(({ title, children }) => (
+  <div className="bg-white p-6 rounded-lg shadow-md">
+    <h3 className="text-xl font-semibold text-gray-800 mb-4">{title}</h3>
+    {children}
+  </div>
+));
+
+Section.displayName = 'Section';
+
 type MediaItem = File | (Media & { type: 'existing' });
 
 interface PublishJourneyAdminProps {
@@ -149,10 +159,10 @@ const PublishJourneyAdmin: React.FC<PublishJourneyAdminProps> = ({
     'greenArea',
     'portaria24h',
     'academia',
-    'playground',
-    'salaoFestas',
+    'parqueInfantil',
+    'salaoDeFestas',
     'quadraEsportiva',
-    'elevador'
+    'hasElevator'
   ];
 
   // Função de validação
@@ -377,7 +387,7 @@ const PublishJourneyAdmin: React.FC<PublishJourneyAdminProps> = ({
             const fileName = `${propertyResult.id}/${Date.now()}.${fileExt}`;
 
             const { error: uploadError } = await supabase.storage
-              .from('property-media')
+              .from('midia')
               .upload(fileName, file);
 
             if (uploadError) {
@@ -386,7 +396,7 @@ const PublishJourneyAdmin: React.FC<PublishJourneyAdminProps> = ({
             }
 
             const { data: urlData } = supabase.storage
-              .from('property-media')
+              .from('midia')
               .getPublicUrl(fileName);
 
             await supabase
@@ -399,6 +409,25 @@ const PublishJourneyAdmin: React.FC<PublishJourneyAdminProps> = ({
               }]);
           }
         }
+      }
+
+      // Atualizar as colunas images e videos na tabela imoveis para sincronização
+      const { data: mediasData } = await supabase
+        .from('midias_imovel')
+        .select('url, tipo')
+        .eq('imovel_id', propertyResult.id);
+
+      if (mediasData) {
+        const images = mediasData.filter(m => m.tipo === 'imagem').map(m => m.url);
+        const videos = mediasData.filter(m => m.tipo === 'video').map(m => m.url);
+
+        await supabase
+          .from('imoveis')
+          .update({
+            images: images.length > 0 ? images : null,
+            videos: videos.length > 0 ? videos : null,
+          })
+          .eq('id', propertyResult.id);
       }
 
       // Gerar URL de compartilhamento para novas propriedades
@@ -425,7 +454,7 @@ const PublishJourneyAdmin: React.FC<PublishJourneyAdminProps> = ({
 
     setIsGeneratingTitle(true);
     try {
-      const genAI = new GoogleGenAI(import.meta.env.VITE_GEMINI_API_KEY);
+      const genAI = new GoogleGenAI(import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyCsX9l10XCu3TtSCU1BSx-qOYrwUKYw2xk');
       const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
       const prompt = `Gere um título atrativo para um anúncio de ${formData.tipo_imovel.toLowerCase()} para ${formData.operacao.toLowerCase()} com as seguintes características:
@@ -462,7 +491,7 @@ const PublishJourneyAdmin: React.FC<PublishJourneyAdminProps> = ({
 
     setIsGeneratingDescription(true);
     try {
-      const genAI = new GoogleGenAI(import.meta.env.VITE_GEMINI_API_KEY);
+      const genAI = new GoogleGenAI(import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyCsX9l10XCu3TtSCU1BSx-qOYrwUKYw2xk');
       const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
       const prompt = `Gere uma descrição atrativa para um anúncio de ${formData.tipo_imovel.toLowerCase()} para ${formData.operacao.toLowerCase()} com as seguintes características:
@@ -491,13 +520,7 @@ const PublishJourneyAdmin: React.FC<PublishJourneyAdminProps> = ({
     }
   };
 
-  // Componente Section para organizar o layout
-  const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
-    <div className="bg-white p-6 rounded-lg shadow-md">
-      <h3 className="text-xl font-semibold text-gray-800 mb-4">{title}</h3>
-      {children}
-    </div>
-  );
+  // Section component foi movido para fora do componente principal
 
   // Combinar arquivos existentes e novos para exibição
   const allFiles = [
@@ -550,7 +573,7 @@ const PublishJourneyAdmin: React.FC<PublishJourneyAdminProps> = ({
                         onClick={() => handleInputChange('operacao', op)}
                         className={`p-4 rounded-lg border-2 text-center font-medium transition-all ${
                           formData.operacao === op
-                            ? 'border-brand-red bg-brand-red !text-black font-semibold'
+                            ? 'border-brand-red !bg-brand-red !text-white font-semibold'
                             : 'border-gray-300 bg-white text-gray-700 hover:border-brand-red'
                         }`}
                       >
@@ -573,7 +596,7 @@ const PublishJourneyAdmin: React.FC<PublishJourneyAdminProps> = ({
                         onClick={() => handlePropertyTypeChange(type)}
                         className={`p-3 rounded-lg border-2 text-center font-medium transition-all ${
                           formData.tipo_imovel === type
-                            ? 'border-brand-red bg-brand-red !text-black font-semibold'
+                            ? 'border-brand-red !bg-brand-red !text-white font-semibold'
                             : 'border-gray-300 bg-white text-gray-700 hover:border-brand-red'
                         }`}
                       >
@@ -1069,24 +1092,7 @@ const PublishJourneyAdmin: React.FC<PublishJourneyAdminProps> = ({
           {/* Sidebar com informações úteis */}
           <div className="hidden lg:block lg:col-span-1 mt-8 lg:mt-0">
             <div className="sticky top-24 space-y-6">
-              <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-brand-red">
-                <h3 className="font-bold text-gray-800 mb-3">Informação útil</h3>
-                <div className="text-sm text-gray-600 space-y-3">
-                  <p>Prepare as fotos. Se ainda não as tem, poderá adicioná-las mais tarde. Sem fotos, seu anúncio não terá bons resultados.</p>
-                </div>
-              </div>
-              
-              <div className="bg-white p-6 rounded-lg shadow-md text-center">
-                <BoltIcon className="w-8 h-8 mx-auto text-yellow-500 mb-2"/>
-                <h3 className="font-bold text-gray-800 mb-2">Quer vender seu imóvel rapidamente?</h3>
-                <a href="#" className="text-sm text-brand-red font-medium hover:underline">Encontre a imobiliária mais adequada para você</a>
-              </div>
-              
-              <div className="bg-white p-6 rounded-lg shadow-md text-center">
-                <BriefcaseIcon className="w-8 h-8 mx-auto text-gray-800 mb-2"/>
-                <h3 className="font-bold text-gray-800 mb-2">Você é um profissional do mercado imobiliário?</h3>
-                <a href="#" className="text-sm text-brand-red font-medium hover:underline">Conheça as vantagens que oferecemos para profissionais</a>
-              </div>
+              {/* Divs removidas conforme solicitado */}
             </div>
           </div>
         </div>

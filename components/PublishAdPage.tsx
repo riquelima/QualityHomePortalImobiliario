@@ -220,12 +220,12 @@ const PublishAdPage: React.FC<PublishAdPageProps> = ({ onBack }) => {
     try {
       // Upload das imagens
       const imageUrls = await Promise.all(
-        imageFiles.map(file => uploadFile(file, 'property-images'))
+        imageFiles.map(file => uploadFile(file, 'midia'))
       );
 
       // Upload dos vídeos
       const videoUrls = await Promise.all(
-        videoFiles.map(file => uploadFile(file, 'property-videos'))
+        videoFiles.map(file => uploadFile(file, 'midia'))
       );
 
       // Inserir propriedade
@@ -261,6 +261,15 @@ const PublishAdPage: React.FC<PublishAdPageProps> = ({ onBack }) => {
           .insert(mediaInserts);
 
         if (mediaError) throw mediaError;
+
+        // Atualizar as colunas images e videos na tabela imoveis para sincronização
+        await supabase
+          .from('imoveis')
+          .update({
+            images: imageUrls.length > 0 ? imageUrls : null,
+            videos: videoUrls.length > 0 ? videoUrls : null,
+          })
+          .eq('id', propertyData.id);
       }
 
       setSubmitMessage('Imóvel publicado com sucesso! Aguarde aprovação.');
