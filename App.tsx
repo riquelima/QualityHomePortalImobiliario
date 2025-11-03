@@ -51,7 +51,7 @@ export interface ModalConfig {
   onConfirm?: () => void;
 }
 
-const PAGE_SIZE = 6;
+const PAGE_SIZE = 50;
 
 // NOTE: This function is for development purposes and can be run from the browser console.
 // e.g., window.seedDatabase()
