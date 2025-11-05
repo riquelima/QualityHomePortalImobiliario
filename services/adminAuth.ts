@@ -48,6 +48,23 @@ class AdminAuthService {
         localStorage.setItem('admin_user', JSON.stringify(this.currentAdmin));
         localStorage.setItem('admin_token', `admin_${adminData.id}_${Date.now()}`);
 
+        // Vincular sessão do Supabase Auth para liberar políticas RLS nas tabelas
+        try {
+          const { data: authSignInData, error: authSignInError } = await supabase.auth.signInWithPassword({ email, password });
+          if (authSignInError) {
+            // Se não existir usuário no Auth, tenta criar e entrar
+            const { data: authSignUpData, error: authSignUpError } = await supabase.auth.signUp({ email, password });
+            if (!authSignUpError) {
+              // Após sign up, tentar sign in novamente
+              await supabase.auth.signInWithPassword({ email, password });
+            } else {
+              console.warn('Supabase Auth signUp falhou:', authSignUpError.message);
+            }
+          }
+        } catch (authError) {
+          console.warn('Falha ao vincular sessão ao Supabase Auth:', authError);
+        }
+
         return {
           success: true,
           user: this.currentAdmin

@@ -3,9 +3,10 @@ import { supabase } from '../../supabaseClient';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { validateMediaFiles } from '../../utils/mediaValidation';
 import AddressSearchByCEP from '../AddressSearchByCEP';
+import { useGoogleMaps } from '../../contexts/GoogleMapsContext';
 import MediaUpload from './MediaUpload';
 import type { MediaFile } from './types';
-import type { Property, User } from '../../types';
+import type { Property, User, Media } from '../../types';
 
 interface PropertyFormData {
   titulo: string;
@@ -43,11 +44,31 @@ interface PropertyFormData {
   videos: any[];
 }
 
+// Admin-specific extension for Property used in admin publish/edit contexts
+type AdminProperty = Property & {
+  operacao?: string;
+  preco_venda?: number;
+  preco_aluguel?: number;
+  preco_temporada?: number;
+  vagas_garagem?: number;
+  condominio?: number;
+  iptu?: number;
+  aceita_fgts?: boolean;
+  mobiliado?: boolean;
+  pet_friendly?: boolean;
+  coordinates?: { lat: number; lng: number };
+  cep?: string;
+  bairro?: string;
+  estado?: string;
+  complemento?: string;
+  media?: Media[];
+};
+
 interface PublishFormAdminProps {
   onBack: () => void;
   onSuccess: (status: 'published' | 'updated') => void;
   onError: (message: string) => void;
-  propertyToEdit?: Property | null;
+  propertyToEdit?: AdminProperty | null;
   adminUser: User | null;
 }
 
@@ -59,6 +80,7 @@ const PublishFormAdmin: React.FC<PublishFormAdminProps> = ({
   adminUser
 }) => {
   const { t } = useLanguage();
+  const { isLoaded } = useGoogleMaps();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState('');
@@ -186,9 +208,8 @@ const PublishFormAdmin: React.FC<PublishFormAdminProps> = ({
     }
   };
 
-  const uploadMediaFiles = async (propertyId: number): Promise<{ images: string[], videos: string[] }> => {
-    const images: string[] = [];
-    const videos: string[] = [];
+  const uploadMediaFiles = async (propertyId: number): Promise<{ url: string; type: 'image' | 'video' }[]> => {
+    const uploaded: { url: string; type: 'image' | 'video' }[] = [];
 
     for (const mediaFile of mediaFiles) {
       try {
@@ -196,7 +217,7 @@ const PublishFormAdmin: React.FC<PublishFormAdminProps> = ({
         const fileName = `${propertyId}/${Date.now()}.${fileExt}`;
         const bucket = 'midia';
 
-        const { data, error } = await supabase.storage
+        const { error } = await supabase.storage
           .from(bucket)
           .upload(fileName, mediaFile.file);
 
@@ -209,24 +230,24 @@ const PublishFormAdmin: React.FC<PublishFormAdminProps> = ({
           .from(bucket)
           .getPublicUrl(fileName);
 
-        if (mediaFile.type === 'image') {
-          images.push(publicUrl);
-        } else {
-          videos.push(publicUrl);
-        }
+        uploaded.push({
+          url: publicUrl,
+          type: mediaFile.type === 'image' ? 'image' : 'video'
+        });
       } catch (error) {
         console.error('Erro no upload do arquivo:', error);
       }
     }
 
-    return { images, videos };
+    return uploaded;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.titulo || !formData.preco || !formData.endereco_completo) {
-      onError('Por favor, preencha todos os campos obrigatórios.');
+    // Endereço é opcional; exigir apenas campos essenciais
+    if (!formData.titulo || !formData.preco) {
+      onError('Por favor, preencha título e preço.');
       return;
     }
 
@@ -234,6 +255,10 @@ const PublishFormAdmin: React.FC<PublishFormAdminProps> = ({
     setSubmitMessage('');
 
     try {
+      // Garantir que temos sessão do Supabase Auth para cumprir RLS
+      const { data: authData } = await supabase.auth.getUser();
+      const authUserId = authData?.user?.id || null;
+
       let propertyId: number;
 
       if (propertyToEdit) {
@@ -255,9 +280,10 @@ const PublishFormAdmin: React.FC<PublishFormAdminProps> = ({
         const { QUALLITY_HOME_USER_ID } = await import('../../config');
         const { data, error } = await supabase
           .from('imoveis')
-          .insert([{
+          .insert([{ 
             ...formData,
-            anunciante_id: adminUser?.id || QUALLITY_HOME_USER_ID,
+            // Preferir o usuário autenticado do Supabase Auth para respeitar políticas RLS
+            anunciante_id: authUserId || QUALLITY_HOME_USER_ID || (typeof adminUser?.id === 'string' ? adminUser.id : undefined),
             status: 'ativo',
             data_publicacao: new Date().toISOString(),
             data_atualizacao: new Date().toISOString()
@@ -271,19 +297,39 @@ const PublishFormAdmin: React.FC<PublishFormAdminProps> = ({
 
       // Upload de mídias se houver
       if (mediaFiles.length > 0) {
-        const { images, videos } = await uploadMediaFiles(propertyId);
-        
-        if (images.length > 0 || videos.length > 0) {
+        const uploadedMedia = await uploadMediaFiles(propertyId);
+
+        if (uploadedMedia.length > 0) {
+          // Inserir mídias na tabela midias_imovel com ordem preservada
+          const mediaInserts = uploadedMedia.map((m, index) => ({
+            imovel_id: propertyId,
+            url: m.url,
+            tipo: m.type === 'image' ? 'imagem' : 'video',
+            ordem: index
+          }));
+
+          const { error: insertMidiaError } = await supabase
+            .from('midias_imovel')
+            .insert(mediaInserts);
+
+          if (insertMidiaError) {
+            console.error('Erro ao inserir mídias em midias_imovel:', insertMidiaError);
+          }
+
+          // Atualizar colunas images/videos em imoveis para sincronização
+          const images = uploadedMedia.filter(m => m.type === 'image').map(m => m.url);
+          const videos = uploadedMedia.filter(m => m.type === 'video').map(m => m.url);
+
           const { error: updateError } = await supabase
             .from('imoveis')
             .update({
-              images: images,
-              videos: videos
+              images: images.length > 0 ? images : null,
+              videos: videos.length > 0 ? videos : null
             })
             .eq('id', propertyId);
 
           if (updateError) {
-            console.error('Erro ao atualizar mídias:', updateError);
+            console.error('Erro ao atualizar mídias em imoveis:', updateError);
           }
         }
       }
@@ -386,6 +432,7 @@ const PublishFormAdmin: React.FC<PublishFormAdminProps> = ({
       
       <AddressSearchByCEP
         onAddressChange={handleAddressChange}
+        isLoaded={isLoaded}
         initialAddress={{
           cep: formData.cep,
           street: formData.rua,

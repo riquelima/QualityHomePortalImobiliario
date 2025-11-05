@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { supabase } from '../../supabaseClient';
 import PlusIcon from '../icons/PlusIcon';
 import type { Property } from '../../types';
+import type { ImovelDB } from '../../services/supabaseService';
 
 interface PropertyManagementProps {
   onViewDetails: (id: number) => void;
@@ -18,7 +19,7 @@ const PropertyManagement: React.FC<PropertyManagementProps> = ({
   onShareProperty,
   onSectionChange
 }) => {
-  const [properties, setProperties] = useState<Property[]>([]);
+  const [properties, setProperties] = useState<ImovelDB[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -52,33 +53,50 @@ const PropertyManagement: React.FC<PropertyManagementProps> = ({
     fetchProperties();
   }, []);
 
+  // Helpers de normalização/mapeamento
+  const buildLocation = (p: ImovelDB) => {
+    if (p.endereco_completo) return p.endereco_completo;
+    const parts = [p.rua, p.numero, p.cidade].filter(Boolean);
+    return parts.join(', ');
+  };
+
+  const normalizeStatus = (s?: string) => {
+    switch ((s || '').toLowerCase()) {
+      case 'ativo': return 'active';
+      case 'pendente': return 'pending';
+      case 'vendido': return 'sold';
+      default: return (s || '').toLowerCase();
+    }
+  };
+
+  const getTypeValue = (p: ImovelDB) => (p.tipo_imovel || '').toLowerCase();
+  const getCreatedAt = (p: ImovelDB) => ((p as any).created_at || (p as any).data_publicacao || '') as string;
+
   // Filtrar e ordenar propriedades
   const filteredProperties = useMemo(() => {
-    let filtered = properties.filter(property => {
-      const matchesSearch = property.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           property.location.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesStatus = statusFilter === 'all' || property.status === statusFilter;
-      const matchesType = typeFilter === 'all' || property.type === typeFilter;
-      
+    let filtered = properties.filter(p => {
+      const title = (p.titulo || '').toLowerCase();
+      const location = buildLocation(p).toLowerCase();
+      const matchesSearch = title.includes(searchTerm.toLowerCase()) || location.includes(searchTerm.toLowerCase());
+      const matchesStatus = statusFilter === 'all' || normalizeStatus(p.status) === statusFilter;
+      const matchesType = typeFilter === 'all' || getTypeValue(p) === typeFilter;
       return matchesSearch && matchesStatus && matchesType;
     });
 
     // Ordenar
     filtered.sort((a, b) => {
       let comparison = 0;
-      
       switch (sortBy) {
         case 'date':
-          comparison = new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime();
+          comparison = new Date(getCreatedAt(a) || 0).getTime() - new Date(getCreatedAt(b) || 0).getTime();
           break;
         case 'price':
-          comparison = a.price - b.price;
+          comparison = (a.preco || 0) - (b.preco || 0);
           break;
         case 'title':
-          comparison = a.title.localeCompare(b.title);
+          comparison = (a.titulo || '').localeCompare(b.titulo || '');
           break;
       }
-      
       return sortOrder === 'asc' ? comparison : -comparison;
     });
 
@@ -117,7 +135,7 @@ const PropertyManagement: React.FC<PropertyManagementProps> = ({
   };
 
   const getStatusColor = (status: string) => {
-    switch (status) {
+    switch (normalizeStatus(status)) {
       case 'active': return 'bg-green-100 text-green-800';
       case 'pending': return 'bg-yellow-100 text-yellow-800';
       case 'sold': return 'bg-blue-100 text-blue-800';
@@ -126,13 +144,53 @@ const PropertyManagement: React.FC<PropertyManagementProps> = ({
   };
 
   const getStatusLabel = (status: string) => {
-    switch (status) {
+    switch (normalizeStatus(status)) {
       case 'active': return 'Ativo';
       case 'pending': return 'Pendente';
       case 'sold': return 'Vendido';
       default: return status;
     }
   };
+
+  const convertToProperty = (p: ImovelDB): Property => ({
+    id: p.id,
+    anunciante_id: p.anunciante_id,
+    titulo: p.titulo || '',
+    descricao: p.descricao || '',
+    endereco_completo: p.endereco_completo || buildLocation(p),
+    cidade: p.cidade || '',
+    rua: p.rua || '',
+    numero: p.numero || '',
+    latitude: p.latitude,
+    longitude: p.longitude,
+    preco: p.preco || 0,
+    tipo_operacao: p.tipo_operacao || 'venda',
+    tipo_imovel: p.tipo_imovel || 'casa',
+    quartos: p.quartos || 0,
+    banheiros: p.banheiros || 0,
+    area_bruta: p.area_bruta || 0,
+    area_util: p.area_util || 0,
+    possui_elevador: p.possui_elevador || false,
+    taxa_condominio: p.taxa_condominio || 0,
+    status: p.status || 'pendente',
+    caracteristicas_imovel: p.caracteristicas_imovel || [],
+    caracteristicas_condominio: p.caracteristicas_condominio || [],
+    situacao_ocupacao: p.situacao_ocupacao || '',
+    valor_iptu: p.valor_iptu || 0,
+    aceita_financiamento: p.aceita_financiamento || false,
+    condicoes_aluguel: p.condicoes_aluguel || '',
+    permite_animais: p.permite_animais || false,
+    minimo_diarias: p.minimo_diarias || 0,
+    maximo_hospedes: p.maximo_hospedes || 0,
+    taxa_limpeza: p.taxa_limpeza || 0,
+    datas_disponiveis: p.datas_disponiveis || [],
+    topografia: p.topografia || '',
+    zoneamento: p.zoneamento || '',
+    murado: p.murado || false,
+    em_condominio: p.em_condominio || false,
+    images: (p.images as any) || [],
+    videos: (p.videos as any) || []
+  } as Property);
 
   return (
     <div className="p-4 lg:p-6 space-y-4 lg:space-y-6">
@@ -307,8 +365,8 @@ const PropertyManagement: React.FC<PropertyManagementProps> = ({
                 
                 <div className="flex-shrink-0">
                   <img
-                    src={property.images && property.images.length > 0 ? property.images[0] : '/placeholder-image.jpg'}
-                    alt={property.title}
+                    src={(property as any).images && (property as any).images.length > 0 ? (property as any).images[0] : '/placeholder-image.jpg'}
+                    alt={property.titulo}
                     className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg object-cover"
                   />
                 </div>
@@ -317,28 +375,28 @@ const PropertyManagement: React.FC<PropertyManagementProps> = ({
                   <div className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0 flex-1">
                       <h3 className="text-sm font-medium text-gray-900 truncate">
-                        {property.title}
+                        {property.titulo}
                       </h3>
-                      <p className="text-xs sm:text-sm text-gray-500 truncate">{property.location}</p>
+                      <p className="text-xs sm:text-sm text-gray-500 truncate">{buildLocation(property)}</p>
                       <p className="text-base sm:text-lg font-bold text-brand-red mt-1">
-                        {formatCurrency(property.price)}
+                        {formatCurrency(property.preco || 0)}
                       </p>
                     </div>
                     
                     <div className="flex items-center justify-start sm:justify-end">
-                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(property.status)}`}>
-                        {getStatusLabel(property.status)}
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(property.status || '')}`}>
+                        {getStatusLabel(property.status || '')}
                       </span>
                     </div>
                   </div>
                   
                   <div className="flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between mt-3 lg:mt-4">
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-500">
-                      <span>{property.bedrooms} quartos</span>
+                      <span>{property.quartos} quartos</span>
                       <span className="hidden sm:inline">•</span>
-                      <span>{property.bathrooms} banheiros</span>
+                      <span>{property.banheiros} banheiros</span>
                       <span className="hidden sm:inline">•</span>
-                      <span>{property.area}m²</span>
+                      <span>{(property.area_util ?? property.area_bruta ?? 0)}m²</span>
                     </div>
                     
                     <div className="flex items-center justify-center sm:justify-end space-x-1">
@@ -354,7 +412,7 @@ const PropertyManagement: React.FC<PropertyManagementProps> = ({
                       </button>
                       
                       <button
-                        onClick={() => onEditProperty(property)}
+                        onClick={() => onEditProperty(convertToProperty(property))}
                         className="p-1.5 sm:p-1 text-gray-400 hover:text-green-600 transition-colors"
                         title="Editar"
                       >

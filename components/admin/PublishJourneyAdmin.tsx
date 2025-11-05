@@ -9,7 +9,7 @@ import MinusIcon from '../icons/MinusIcon';
 import PhotoIcon from '../icons/PhotoIcon';
 import { supabase } from '../../supabaseClient';
 import CloseIcon from '../icons/CloseIcon';
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import AIIcon from '../icons/AIIcon';
 import SpinnerIcon from '../icons/SpinnerIcon';
 import { Autocomplete } from '@react-google-maps/api';
@@ -285,11 +285,7 @@ const PublishJourneyAdmin: React.FC<PublishJourneyAdminProps> = ({
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
-    // Validar endereço
-    if (!address.cep || !address.street || !address.number || !address.city || !address.state) {
-      onError?.('Por favor, preencha todos os campos obrigatórios do endereço.');
-      return;
-    }
+    // Endereço é opcional: não bloquear submissão se faltarem campos
 
     // Validar detalhes
     const validation = validateDetails();
@@ -302,6 +298,13 @@ const PublishJourneyAdmin: React.FC<PublishJourneyAdminProps> = ({
 
     try {
       // Preparar dados para o banco
+      // Montar endereço completo de forma resiliente quando houver partes disponíveis
+      const addressParts = [address.street, address.number, address.complement, address.neighborhood]
+        .filter(Boolean)
+        .join(', ');
+      const cityState = [address.city, address.state].filter(Boolean).join(' - ');
+      const fullAddress = [addressParts, cityState].filter(Boolean).join(', ');
+
       const propertyDataForDb = {
         anunciante_id: adminUser?.id || QUALLITY_HOME_USER_ID,
         titulo: formData.titulo,
@@ -321,16 +324,16 @@ const PublishJourneyAdmin: React.FC<PublishJourneyAdminProps> = ({
         valor_iptu: formData.iptu ? unformatCurrencyForSubmission(formData.iptu) : null,
         aceita_financiamento: formData.aceita_financiamento,
         permite_animais: formData.pet_friendly,
-        cep: address.cep,
-        rua: address.street,
-        numero: address.number,
-        complemento: address.complement,
-        bairro: address.neighborhood,
-        cidade: address.city,
-        estado: address.state,
-        endereco_completo: `${address.street}, ${address.number}${address.complement ? `, ${address.complement}` : ''}, ${address.neighborhood}, ${address.city} - ${address.state}`,
-        latitude: formData.coordinates.lat,
-        longitude: formData.coordinates.lng,
+        cep: address.cep || null,
+        rua: address.street || null,
+        numero: address.number || null,
+        complemento: address.complement || null,
+        bairro: address.neighborhood || null,
+        cidade: address.city || null,
+        estado: address.state || null,
+        endereco_completo: fullAddress || null,
+        latitude: formData.coordinates?.lat ?? null,
+        longitude: formData.coordinates?.lng ?? null,
         // Campos específicos por tipo
         ...(formData.tipo_imovel === 'Terreno' && {
           topografia: formData.topografia,
@@ -454,7 +457,7 @@ const PublishJourneyAdmin: React.FC<PublishJourneyAdminProps> = ({
 
     setIsGeneratingTitle(true);
     try {
-      const genAI = new GoogleGenAI(import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyCsX9l10XCu3TtSCU1BSx-qOYrwUKYw2xk');
+const genAI = new GoogleGenerativeAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyCsX9l10XCu3TtSCU1BSx-qOYrwUKYw2xk' });
       const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
       const prompt = `Gere um título atrativo para um anúncio de ${formData.tipo_imovel.toLowerCase()} para ${formData.operacao.toLowerCase()} com as seguintes características:
@@ -491,7 +494,7 @@ const PublishJourneyAdmin: React.FC<PublishJourneyAdminProps> = ({
 
     setIsGeneratingDescription(true);
     try {
-      const genAI = new GoogleGenAI(import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyCsX9l10XCu3TtSCU1BSx-qOYrwUKYw2xk');
+const genAI = new GoogleGenerativeAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyCsX9l10XCu3TtSCU1BSx-qOYrwUKYw2xk' });
       const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
       const prompt = `Gere uma descrição atrativa para um anúncio de ${formData.tipo_imovel.toLowerCase()} para ${formData.operacao.toLowerCase()} com as seguintes características:

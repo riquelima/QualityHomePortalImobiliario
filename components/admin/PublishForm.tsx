@@ -205,7 +205,8 @@ const PublishForm: React.FC = () => {
       case 2:
         return !!(formData.preco > 0);
       case 3:
-        return !!(formData.endereco_completo && formData.cidade);
+        // Endereço é opcional; não bloquear avanço nesta etapa
+        return true;
       case 4:
         return true; // Características são opcionais
       case 5:

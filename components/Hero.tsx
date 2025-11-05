@@ -4,7 +4,7 @@ import SearchIcon from './icons/SearchIcon';
 import ChevronDownIcon from './icons/ChevronDownIcon';
 import DrawIcon from './icons/DrawIcon';
 import GeoIcon from './icons/GeoIcon';
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { useLanguage } from '../contexts/LanguageContext';
 
 interface HeroProps {
@@ -17,7 +17,7 @@ interface HeroProps {
   isSearchingNearMe: boolean;
 }
 
-const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyCsX9l10XCu3TtSCU1BSx-qOYrwUKYw2xk' });
+const ai = new GoogleGenerativeAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyCsX9l10XCu3TtSCU1BSx-qOYrwUKYw2xk' });
 
 const generateContentWithRetry = async (prompt: string, maxRetries = 3) => {
   let attempt = 0;

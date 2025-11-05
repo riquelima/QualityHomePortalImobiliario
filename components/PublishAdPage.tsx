@@ -672,7 +672,7 @@ const PublishAdPage: React.FC<PublishAdPageProps> = ({ onBack }) => {
               >
                 {isSubmitting ? (
                   <div className="flex items-center space-x-2">
-                    <LoadingIndicator size="sm" />
+                    <LoadingIndicator size="small" />
                     <span>Publicando...</span>
                   </div>
                 ) : (

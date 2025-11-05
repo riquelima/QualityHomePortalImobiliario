@@ -90,8 +90,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
         return (
           <AdminDashboard 
             properties={properties}
-            onNavigateToProperties={() => setActiveSection('properties')}
-            onNavigateToPublish={() => setActiveSection('publish')}
             onSectionChange={handleSectionChange}
           />
         );

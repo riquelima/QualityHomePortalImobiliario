@@ -110,13 +110,42 @@ export class PropertyService {
   // Buscar imóveis ativos
   static async getActiveProperties(): Promise<{ data: ImovelDB[] | null; error: any }> {
     try {
+      // Fetch related media and fallback to build images/videos arrays when needed
       const { data, error } = await supabase
         .from('imoveis')
-        .select('*')
+        .select('*, midias_imovel (id, url, tipo, ordem)')
         .eq('status', 'ativo')
         .order('data_publicacao', { ascending: false });
 
-      return { data, error };
+      if (error) return { data: null, error };
+
+      const mapped = (data || []).map((row: any) => {
+        const hasImages = Array.isArray(row.images) && row.images.length > 0;
+        const hasVideos = Array.isArray(row.videos) && row.videos.length > 0;
+
+        const media = Array.isArray(row.midias_imovel) ? row.midias_imovel : [];
+        const sortedMedia = media.sort((a, b) => {
+          const ao = typeof a.ordem === 'number' ? a.ordem : 0;
+          const bo = typeof b.ordem === 'number' ? b.ordem : 0;
+          return ao - bo;
+        });
+
+        const fallbackImages = sortedMedia
+          .filter((m: any) => m.tipo === 'imagem')
+          .map((m: any) => m.url);
+
+        const fallbackVideos = sortedMedia
+          .filter((m: any) => m.tipo === 'video')
+          .map((m: any) => m.url);
+
+        return {
+          ...row,
+          images: hasImages ? row.images : (fallbackImages.length ? fallbackImages : null),
+          videos: hasVideos ? row.videos : (fallbackVideos.length ? fallbackVideos : null),
+        } as ImovelDB;
+      });
+
+      return { data: mapped, error: null };
     } catch (error) {
       return { data: null, error };
     }

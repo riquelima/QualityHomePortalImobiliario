@@ -146,7 +146,8 @@ const AddressSearchByCEP: React.FC<AddressSearchByCEPProps> = ({
         componentRestrictions: { country: 'BR' },
         types: ['address']
       }, (predictions, status) => {
-        if (status === window.google.maps.places.PlacesServiceStatus.OK && predictions) {
+        // Comparar com string 'OK' evita conflitos de tipos em alguns ambientes
+        if (status === 'OK' && predictions) {
           setSuggestions(predictions.map(p => p.description));
         } else {
           setSuggestions([]);

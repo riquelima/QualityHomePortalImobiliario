@@ -11,18 +11,33 @@
     ],
     "skipLibCheck": true,
     "types": [
-      "node"
+      "node",
+      "vite/client",
+      "google.maps"
     ],
     "moduleResolution": "bundler",
     "isolatedModules": true,
     "moduleDetection": "force",
     "allowJs": true,
     "jsx": "react-jsx",
+    "baseUrl": ".",
     "paths": {
       "@/*": [
         "./*"
+      ],
+      "@components": [
+        "./components/index.ts"
+      ],
+      "@components/*": [
+        "./components/*"
+      ],
+      "@pages": [
+        "./pages/index.ts"
+      ],
+      "@pages/*": [
+        "./pages/*"
       ]
     },
-    "allowImportingTsExtensions": true
+    "noEmit": true
   }
 }

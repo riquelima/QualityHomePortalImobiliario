@@ -202,14 +202,7 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({
       }
     }
 
-    if (step === 2) {
-      if (!formData.endereco_completo?.trim()) {
-        newErrors.endereco_completo = 'Endereço é obrigatório';
-      }
-      if (!formData.cidade?.trim()) {
-        newErrors.cidade = 'Cidade é obrigatória';
-      }
-    }
+    // Etapa 2 (endereço) opcional: não adicionar erros se campos estiverem vazios
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;

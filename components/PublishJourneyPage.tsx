@@ -18,7 +18,7 @@ import PhotoIcon from './icons/PhotoIcon';
 import { supabase } from '../supabaseClient';
 import { createClient } from '@supabase/supabase-js';
 import CloseIcon from './icons/CloseIcon';
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import AIIcon from './icons/AIIcon';
 import SpinnerIcon from './icons/SpinnerIcon';
 import { Autocomplete } from '@react-google-maps/api';
@@ -43,7 +43,7 @@ interface PublishJourneyPageProps {
   onAddProperty: () => Promise<void>;
   onUpdateProperty: () => Promise<void>;
   onPublishError: (message: string) => void;
-  propertyToEdit?: Property | null;
+  propertyToEdit?: AdminProperty | null;
   onRequestModal: (config: ModalRequestConfig) => void;
   deviceLocation: { lat: number; lng: number } | null;
   adminUser: User | null;
@@ -58,7 +58,7 @@ const supabaseServiceRole = createClient(
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNremh2dXJhYm1odnRlZWt5anhnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1ODEwMjc4MCwiZXhwIjoyMDczNjc4NzgwfQ.zNCoMgFT0k6-ZbJuV9zA0y6kZmqPf1ZscW-dwPL2_-U'
 );
 
-const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyCsX9l10XCu3TtSCU1BSx-qOYrwUKYw2xk' });
+const ai = new GoogleGenerativeAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyCsX9l10XCu3TtSCU1BSx-qOYrwUKYw2xk' });
 
 const generateContentWithRetry = async (prompt: string, maxRetries = 3) => {
   let attempt = 0;
@@ -795,7 +795,7 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                                 </div>
                              ) : (
                                 <div>
-                                    <AddressSearchByCEP onAddressChange={handleAddressChange} />
+                                    <AddressSearchByCEP onAddressChange={handleAddressChange} isLoaded={isLoaded} />
                                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                         <div className="sm:col-span-3">
                                             <label htmlFor="city" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.form.location.city')}</label>
@@ -1105,4 +1105,23 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
             </div>
         </div>
     );
+};
+// Admin-specific extension for Property used in publish journey editing contexts
+type AdminProperty = Property & {
+  operacao?: string;
+  preco_venda?: number;
+  preco_aluguel?: number;
+  preco_temporada?: number;
+  vagas_garagem?: number;
+  condominio?: number;
+  iptu?: number;
+  aceita_fgts?: boolean;
+  mobiliado?: boolean;
+  pet_friendly?: boolean;
+  coordinates?: { lat: number; lng: number };
+  cep?: string;
+  bairro?: string;
+  estado?: string;
+  complemento?: string;
+  media?: Media[];
 };
